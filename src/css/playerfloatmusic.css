@@ -1,0 +1,140 @@
+/* src/css/playerfloatmusic.css */
+
+/* FLOATING PLAYER STYLE - GLOSSY & OPTIMIZED FOR ANIMATION */
+.dashboard-floating-player {
+  position: fixed;
+  bottom: 24px;
+  right: 5%; 
+  background-color: var(--bg-alpha);
+  -webkit-backdrop-filter: blur(15px);
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--border-color);
+  border-radius: 100px; 
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 9999;
+  /* Box-shadow ditambahkan agar efek muncul lebih pop-out */
+  /* box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); */ 
+  /* Transition dihapus agar tidak bentrok dengan Framer Motion */
+  will-change: transform, opacity;
+}
+
+.player-icon-box {
+  width: 54px;
+  height: 54px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border-color);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Container untuk Animasi Background */
+.music-spin-layer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, rgba(var(--primary-rgb), 0.15) 0%, transparent 70%);
+  transition: all 0.3s ease;
+}
+
+/* Status Animasi Berputar */
+.music-spin-layer.spinning {
+  animation: rotate-music 8s linear infinite;
+}
+
+/* Status Animasi Berdenyut pada Background */
+.music-spin-layer.beating {
+  /* Menggunakan scale terpisah agar tidak menimpa rotasi */
+  animation: rotate-music 8s linear infinite, heartbeat-bg 1.2s ease-in-out infinite;
+}
+
+.music-icon-static {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  z-index: 2;
+}
+
+.player-text-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 100px;
+}
+
+.player-genre-display {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.player-volume-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 8px;
+  font-weight: 800;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.player-action-btn {
+  background-color: var(--primary);
+  color: #ffffff;
+  border: none;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.player-action-btn:hover {
+  transform: scale(1.05);
+}
+
+.player-action-btn:active {
+  transform: scale(0.95);
+}
+
+/* KEYFRAMES */
+@keyframes rotate-music {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Heartbeat menggunakan properti 'scale' langsung agar lebih stabil */
+@keyframes heartbeat-bg {
+  0%, 100% { scale: 1; opacity: 0.8; }
+  15%, 45% { scale: 1.15; opacity: 1; }
+}
+
+/* Ripple Effect */
+.beat-ripple {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+  animation: ripple-out 1.2s infinite;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes ripple-out {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.5); opacity: 0; }
+}

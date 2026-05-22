@@ -1,0 +1,802 @@
+/* ============================================= */
+/* COLLECT PHOTO - MODERN DASHBOARD STYLE        */
+/* ============================================= */
+
+.collectphoto-container {
+  min-height: 100vh;
+  background: var(--bg);
+  padding: 80px 5% 40px;
+}
+
+/* Header */
+.collectphoto-header {
+  max-width: 1400px;
+  margin: 0 auto 48px;
+  text-align: center;
+}
+
+.collectphoto-header h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--text) 0%, var(--primary) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+.collectphoto-header > p {
+  color: var(--text-sub);
+  font-size: 0.95rem;
+  margin-bottom: 32px;
+}
+
+/* Controls */
+.collectphoto-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.collectphoto-search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 60px;
+  padding: 12px 24px;
+  transition: all 0.2s ease;
+}
+
+.collectphoto-search:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-alpha);
+}
+
+.collectphoto-search svg {
+  color: var(--text-sub);
+}
+
+.collectphoto-search input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.collectphoto-search input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Toggle Switch Modern */
+.collectphoto-toggle {
+  display: flex;
+  background: var(--card-bg);
+  padding: 4px;
+  border-radius: 60px;
+  border: 1px solid var(--border-color);
+  position: relative;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.toggle-btn {
+  position: relative;
+  padding: 10px 28px;
+  border-radius: 60px;
+  border: none;
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s;
+}
+
+.toggle-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.toggle-btn.active {
+  color: white;
+}
+
+.toggle-bg {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  background: var(--primary);
+  border-radius: 60px;
+  z-index: 0;
+  transition: left 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), width 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+/* Grid Cards */
+.collectphoto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 28px;
+  max-width: 1400px;
+  margin: 48px auto 0;
+}
+
+.collectphoto-card {
+  background: var(--card-bg);
+  border-radius: 24px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.collectphoto-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.2);
+  border-color: var(--primary-alpha);
+}
+
+.collectphoto-card-image {
+  aspect-ratio: 1;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.collectphoto-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.collectphoto-card:hover .collectphoto-card-image img {
+  transform: scale(1.02);
+}
+
+.no-selfie {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+}
+
+.no-selfie svg {
+  width: 48px;
+  height: 48px;
+  opacity: 0.5;
+}
+
+.collectphoto-card-info {
+  padding: 20px;
+}
+
+.collectphoto-card-info h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.collectphoto-card-info p {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  margin-bottom: 12px;
+  word-break: break-all;
+}
+
+.collectphoto-card-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.collectphoto-card-meta span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Loading & Error States */
+.collectphoto-loading,
+.collectphoto-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 20px;
+  text-align: center;
+}
+
+.collectphoto-error button {
+  margin-top: 8px;
+  padding: 10px 24px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 40px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.collectphoto-error button:hover {
+  opacity: 0.9;
+}
+
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Empty State */
+.collectphoto-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text-muted);
+}
+
+.collectphoto-empty svg {
+  opacity: 0.5;
+  margin-bottom: 16px;
+}
+
+.collectphoto-empty p:first-of-type {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.collectphoto-empty-sub {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
+/* ============================================= */
+/* MODAL - PREMIUM DESIGN                       */
+/* ============================================= */
+.collectphoto-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 24px;
+}
+
+.collectphoto-modal {
+  background: var(--card-bg);
+  border-radius: 0;
+  width: 100%;
+  max-width: 1000px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 30px 50px rgba(0, 0, 0, 0.3);
+  /* border: 1px solid var(--border-color); */
+}
+
+/* Custom scrollbar */
+.collectphoto-modal::-webkit-scrollbar {
+  width: 5px;
+}
+.collectphoto-modal::-webkit-scrollbar-track {
+  background: var(--border-color);
+  border-radius: 10px;
+}
+.collectphoto-modal::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 10px;
+}
+
+/* Tombol close - SOLID */
+.modal-close {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text);
+  z-index: 10;
+  transition: all 0.2s;
+  /* box-shadow: 0 2px 8px rgba(0,0,0,0.1); */
+}
+
+.modal-close:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* Modal Content Layout */
+.modal-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  padding: 32px;
+}
+
+/* Photo Carousel Section */
+.modal-photo-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Pastikan carousel-root memiliki ruang untuk dot */
+.carousel-root {
+  width: 100%;
+  position: relative;
+  margin-bottom: 0;
+}
+
+.carousel {
+  width: 100%;
+}
+
+.carousel-frame {
+  aspect-ratio: 1;
+  background: var(--bg);
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Overlay pada foto (tanpa badge teks) */
+.carousel-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: white;
+  pointer-events: none;
+}
+
+.carousel-overlay-top {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.carousel-fullscreen-btn {
+  background: rgba(0,0,0,0.5);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  pointer-events: auto;
+  transition: background 0.2s;
+}
+.carousel-fullscreen-btn:hover {
+  background: var(--primary);
+}
+
+.carousel-overlay-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.carousel-date {
+  font-size: 0.7rem;
+  font-weight: 500;
+  background: rgba(0,0,0,0.5);
+  padding: 4px 10px;
+  border-radius: 40px;
+  backdrop-filter: blur(4px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+}
+
+.carousel-download-btn {
+  background: var(--primary);
+  border: none;
+  border-radius: 40px;
+  padding: 6px 14px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: white;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+.carousel-download-btn:hover {
+  opacity: 0.85;
+}
+
+.no-selfie-carousel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 100%;
+  color: var(--text-muted);
+}
+
+/* ============================================= */
+/* DOT CAROUSEL - DITEMPATKAN DI BAWAH FOTO     */
+/* ============================================= */
+/* Reset semua posisi dot carousel */
+.carousel .control-dots {
+  position: relative !important;
+  bottom: auto !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  margin-top: 20px !important;
+  margin-bottom: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 12px !important;
+  background: transparent !important;
+  transform: none !important;
+  width: 100% !important;
+  z-index: 5 !important;
+  height: auto !important;
+}
+
+/* Gaya dot */
+.carousel .control-dots .dot {
+  background: var(--text-muted) !important;
+  box-shadow: none !important;
+  width: 8px !important;
+  height: 8px !important;
+  margin: 0 !important;
+  opacity: 0.5 !important;
+  transition: all 0.2s ease !important;
+  border-radius: 50% !important;
+  position: relative !important;
+  display: inline-block !important;
+}
+
+.carousel .control-dots .dot.selected {
+  background: var(--primary) !important;
+  width: 24px !important;
+  border-radius: 10px !important;
+  opacity: 1 !important;
+}
+
+/* Data Container */
+.modal-details-container {
+  background: var(--bg);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border: 1px solid var(--border-color);
+}
+
+.modal-user-header h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: var(--text);
+}
+
+.modal-email {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  word-break: break-all;
+}
+
+.detail-section {
+  margin-bottom: 4px;
+}
+
+.detail-section h4 {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--primary);
+  margin-bottom: 12px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.8rem;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.detail-row span:first-child {
+  color: var(--text-sub);
+  font-weight: 500;
+  flex-shrink: 0;
+  min-width: 90px;
+}
+.detail-row span:last-child,
+.detail-row code {
+  text-align: right;
+  word-break: break-word;
+  font-weight: 500;
+  flex: 1;
+}
+.detail-row code {
+  background: var(--primary-alpha);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  max-width: 70%;
+  display: inline-block;
+}
+
+/* Fullscreen Image Modal */
+.fullscreen-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20000;
+  cursor: pointer;
+}
+.fullscreen-overlay img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+.fullscreen-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255,255,255,0.2);
+  border: none;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  transition: background 0.2s;
+}
+.fullscreen-close:hover {
+  background: var(--primary);
+}
+
+/* Responsive */
+@media (max-width: 800px) {
+  .collectphoto-modal {
+    max-width: 95%;
+  }
+  .modal-content {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 24px;
+  }
+  .modal-details-container {
+    order: 2;
+  }
+  .modal-photo-section {
+    order: 1;
+  }
+  .carousel-overlay-bottom {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .carousel-date {
+    max-width: 100%;
+    white-space: normal;
+  }
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .detail-row span:first-child {
+    min-width: auto;
+  }
+  .detail-row span:last-child,
+  .detail-row code {
+    text-align: left;
+    max-width: 100%;
+  }
+  .collectphoto-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .collectphoto-toggle {
+    align-self: center;
+  }
+  .carousel .control-dots {
+    gap: 8px !important;
+    margin-top: 16px !important;
+  }
+  .carousel .control-dots .dot {
+    width: 6px !important;
+    height: 6px !important;
+  }
+  .carousel .control-dots .dot.selected {
+    width: 20px !important;
+  }
+}
+
+@media (max-width: 550px) {
+  .collectphoto-container {
+    padding: 70px 16px 30px;
+  }
+  .collectphoto-header h1 {
+    font-size: 1.8rem;
+  }
+  .collectphoto-search {
+    padding: 10px 18px;
+  }
+  .toggle-btn {
+    padding: 6px 16px;
+    font-size: 0.7rem;
+  }
+  .collectphoto-grid {
+    gap: 16px;
+  }
+  .collectphoto-card-info {
+    padding: 16px;
+  }
+  .modal-content {
+    padding: 20px;
+  }
+  .modal-details-container {
+    padding: 20px;
+  }
+  .modal-user-header h2 {
+    font-size: 1.2rem;
+  }
+  .carousel-overlay {
+    padding: 8px 12px;
+  }
+  .carousel-date {
+    font-size: 0.6rem;
+  }
+  .carousel-download-btn {
+    padding: 4px 10px;
+    font-size: 0.6rem;
+  }
+  .carousel .control-dots {
+    gap: 6px !important;
+    margin-top: 12px !important;
+  }
+  .carousel .control-dots .dot {
+    width: 5px !important;
+    height: 5px !important;
+  }
+  .carousel .control-dots .dot.selected {
+    width: 16px !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .collectphoto-modal {
+    max-width: 900px;
+  }
+}
+
+/* ============================================= */
+/* CUSTOM DOTS - DITEMPATKAN DI BAWAH FOTO      */
+/* ============================================= */
+
+.custom-dots-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-top: 20px;
+  padding: 8px 0;
+}
+
+.custom-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+}
+
+.custom-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+  opacity: 0.5;
+}
+
+.custom-dot.active {
+  width: 24px;
+  border-radius: 10px;
+  background: var(--primary);
+  opacity: 1;
+}
+
+.custom-dot:hover {
+  opacity: 0.8;
+  transform: scale(1.1);
+}
+
+/* Sembunyikan dot bawaan carousel */
+.carousel .control-dots {
+  display: none !important;
+}

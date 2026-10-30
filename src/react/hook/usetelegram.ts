@@ -7,6 +7,7 @@ import type { TelegramChat, TelegramFile, ViewMode, MobileView, SortField, SortD
 import { STORAGE_KEYS } from '@config/telegram';
 import { useScreenSize } from '@hook/usescreensize';
 import { getActiveBase } from '@config/api';
+import { openGlobalPlaylist, pauseGlobalPlaylist } from '@config/playlistglobal';
 
 export const useTelegram = (sessionString: string | null) => {
   const dispatch = useDispatch();
@@ -228,13 +229,22 @@ export const useTelegram = (sessionString: string | null) => {
   }, [screenSize]);
 
   const handleFileClick = useCallback((file: TelegramFile) => {
+    if (file.media_type === 'audio' && selectedChat) {
+      openGlobalPlaylist([{
+        id: String(file.id),
+        name: file.name,
+        url: getStreamUrl(selectedChat.id, file.id),
+      }]);
+      return;
+    }
+    if (file.media_type === 'video') pauseGlobalPlaylist();
     setSelectedFile(file);
     setFileMetadata(null);
     if (selectedChat) {
       fetchFileMetadata(selectedChat.id, file.id);
     }
     if (screenSize === 'mobile') setMobileView('player');
-  }, [screenSize, selectedChat, fetchFileMetadata]);
+  }, [screenSize, selectedChat, fetchFileMetadata, getStreamUrl]);
 
   const handleBackToRoot = useCallback(() => {
     setSelectedChat(null);

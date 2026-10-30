@@ -497,6 +497,15 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
   }, [isOpen]);
 
   useEffect(() => {
+    const pausePlaylist = () => {
+      audioRef.current?.pause();
+      setPlayIntent(false);
+    };
+    window.addEventListener('playlist:pause', pausePlaylist);
+    return () => window.removeEventListener('playlist:pause', pausePlaylist);
+  }, [setPlayIntent]);
+
+  useEffect(() => {
     if (!isOpen || minimized) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';

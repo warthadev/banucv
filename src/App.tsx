@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { Suspense, lazy, useState, useEffect } from "react";
+import React, { Suspense, lazy, useState, useEffect, useCallback } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import ThemeProvider from "./react/control/themeprovider";
 import Loading from "./react/control/loading";
@@ -9,6 +9,8 @@ import GateVisit from "./react/system/gatevisit";
 import PlayerFloatMusic from "./react/system/playerfloatmusic";
 import Quick from "./react/system/quick";
 import AudioPlayer from "./react/system/audioplayer";
+import CloudPlaylist, { type PlaylistTrack } from "./react/feature/cloudplaylist";
+import { useAudio } from "./react/hook/useaudio";
 import CollectPhoto from "./react/feature/collectphoto";
 import CloudView from "./react/feature/cloudview";
 
@@ -34,6 +36,10 @@ const ScrollToTop: React.FC = () => {
 const AppContent: React.FC = () => {
   const location = useLocation();
   const [hasVisited, setHasVisited] = useState(() => localStorage.getItem("hasVisitedBefore") === "true");
+  const [playlistOpen, setPlaylistOpen] = useState(false);
+  const [playlistTracks, setPlaylistTracks] = useState<PlaylistTrack[]>([]);
+  const [playlistStartIndex, setPlaylistStartIndex] = useState(0);
+  const { pauseBackgroundMusic, resumeBackgroundMusic } = useAudio();
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -50,6 +56,27 @@ const AppContent: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleOpen = (event: Event) => {
+      const detail = (event as CustomEvent<{ tracks?: PlaylistTrack[]; initialIndex?: number }>).detail;
+      if (!detail?.tracks?.length) return;
+      pauseBackgroundMusic();
+      setPlaylistTracks(detail.tracks);
+      setPlaylistStartIndex(detail.initialIndex || 0);
+      setPlaylistOpen(true);
+    };
+
+    window.addEventListener("playlist:open", handleOpen);
+    return () => window.removeEventListener("playlist:open", handleOpen);
+  }, [pauseBackgroundMusic]);
+
+  const closePlaylist = useCallback(() => {
+    setPlaylistOpen(false);
+    setPlaylistTracks([]);
+    setPlaylistStartIndex(0);
+    resumeBackgroundMusic();
+  }, [resumeBackgroundMusic]);
+
   const isDashboard = location.pathname === "/dashboard";
   const isLoginPage = location.pathname === "/login";
   
@@ -62,7 +89,14 @@ const AppContent: React.FC = () => {
       {!hideGlobalUI && <Navbar />}
       {!hideGlobalUI && <Quick />}
       
-      {!hideGlobalUI && <PlayerFloatMusic />}
+      {!hideGlobalUI && !playlistOpen && <PlayerFloatMusic />}
+
+      <CloudPlaylist
+        isOpen={playlistOpen}
+        tracks={playlistTracks}
+        initialIndex={playlistStartIndex}
+        onClose={closePlaylist}
+      />
 
       <AudioPlayer />
 

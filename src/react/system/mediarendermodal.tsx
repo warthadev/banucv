@@ -2,6 +2,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { ExternalLink, Download, Copy, Check, X } from 'lucide-react';
 import { getActiveBase } from '@config/api';
+import { pauseGlobalPlaylist } from '@config/playlistglobal';
 
 export const HF_SIGNED_URL_MAX_AGE_MS = 40 * 60 * 1000;
 
@@ -254,6 +255,7 @@ export const MediaRenderModal: React.FC<MediaRenderModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      pauseGlobalPlaylist();
       void prepareLink();
     } else {
       setExtUrl('');

@@ -22,8 +22,9 @@ import { downloadMediaWithName } from '@system/mediarendermodal';
 import { CloudModalTele } from './cloudmodaltele';
 import CloudRoot from './cloudroot';
 import CloudSlideshow, { type SlideItem } from './cloudslideshow';
-import CloudPlaylist, { type PlaylistTrack } from './cloudplaylist';
+import type { PlaylistTrack } from './cloudplaylist';
 import { useAudio } from '@hook/useaudio';
+import { openGlobalPlaylist, pauseGlobalPlaylist } from '@config/playlistglobal';
 import { getAuth, getDb } from '@config/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import Loading from '@control/loading';
@@ -163,10 +164,6 @@ const CloudView: React.FC = () => {
   const [slideshowItems, setSlideshowItems] = useState<SlideItem[]>([]);
   const [slideshowStartIndex, setSlideshowStartIndex] = useState(0);
 
-  const [playlistOpen, setPlaylistOpen] = useState(false);
-  const [playlistTracks, setPlaylistTracks] = useState<PlaylistTrack[]>([]);
-  const [playlistStartIndex, setPlaylistStartIndex] = useState(0);
-
   const [createFolderModalOpen, setCreateFolderModalOpen] = useState(false);
   const [createFolderValue, setCreateFolderValue] = useState('');
 
@@ -245,11 +242,10 @@ const CloudView: React.FC = () => {
     squashRepoModalOpen ||
     addRepoModalOpen ||
     visibilityRepoModalOpen ||
-    slideshowOpen ||
-    playlistOpen;
+    slideshowOpen;
 
   useEffect(() => {
-    if (hfSelectedFile || telegramHook.selectedFile || playlistOpen) {
+    if (hfSelectedFile || telegramHook.selectedFile) {
       pauseBackgroundMusic();
     } else {
       resumeBackgroundMusic();
@@ -257,7 +253,6 @@ const CloudView: React.FC = () => {
   }, [
     hfSelectedFile,
     telegramHook.selectedFile,
-    playlistOpen,
     pauseBackgroundMusic,
     resumeBackgroundMusic,
   ]);
@@ -547,7 +542,6 @@ const CloudView: React.FC = () => {
         setSquashRepoModalOpen(false);
         setAddRepoModalOpen(false);
         setSlideshowOpen(false);
-        setPlaylistOpen(false);
         try {
           window.history.pushState(lastHistorySnapshotRef.current, '');
           historyDepthRef.current += 1;
@@ -1299,6 +1293,17 @@ const CloudView: React.FC = () => {
       handleHfNavigateToFolder(file._folderName);
       return;
     }
+    if (file.media_type === 'audio' && file._streamUrl) {
+      openGlobalPlaylist([{
+        id: file.id,
+        name: file.name,
+        url: file._streamUrl,
+        thumbUrl: file._thumbUrl,
+        token: isPublicView ? undefined : activeSourceHfToken || undefined,
+      }]);
+      return;
+    }
+    if (file.media_type === 'video') pauseGlobalPlaylist();
     setHfSelectedFile(file);
     if (hfScreenSize === 'mobile') {
       setHfMobileView('player');
@@ -1654,9 +1659,7 @@ const CloudView: React.FC = () => {
         token: tokenForTracks,
       }));
 
-      setPlaylistTracks(tracks);
-      setPlaylistStartIndex(0);
-      setPlaylistOpen(true);
+      openGlobalPlaylist(tracks, 0);
       return;
     }
 
@@ -1686,9 +1689,20 @@ const CloudView: React.FC = () => {
     if (item._isFolder) return;
     if (!['video', 'audio'].includes(item.media_type)) return;
     if (!item._streamUrl) return;
+    if (item.media_type === 'audio') {
+      openGlobalPlaylist([{
+        id: item.id,
+        name: item.name,
+        url: item._streamUrl,
+        thumbUrl: item._thumbUrl,
+        token: isPublicView ? undefined : activeSourceHfToken || undefined,
+      }]);
+      return;
+    }
+    pauseGlobalPlaylist();
     setWatchExternalFile({ url: item._streamUrl, name: item.name });
     setWatchExternalOpen(true);
-  }, [selectedItems]);
+  }, [selectedItems, activeSourceHfToken, isPublicView]);
 
   const enterRepoSelectionMode = useCallback((repo: HFRepo) => {
     setRepoSelectionMode(true);
@@ -3193,16 +3207,6 @@ const CloudView: React.FC = () => {
             setSlideshowOpen(false);
             setSlideshowItems([]);
             setSlideshowStartIndex(0);
-          }}
-        />
-        <CloudPlaylist
-          isOpen={playlistOpen}
-          tracks={playlistTracks}
-          initialIndex={playlistStartIndex}
-          onClose={() => {
-            setPlaylistOpen(false);
-            setPlaylistTracks([]);
-            setPlaylistStartIndex(0);
           }}
         />
       </>

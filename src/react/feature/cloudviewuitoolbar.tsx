@@ -93,7 +93,7 @@ export const SelectionActionBar: React.FC<SelectionActionBarProps> = ({
   const isAudioPlaylist = slideshowKind === 'audio';
   const slideshowLabel = isAudioPlaylist ? 'Playlist' : 'Slideshow';
   const slideshowTitle = isAudioPlaylist
-    ? (canSlideshow ? 'Open playlist' : 'Select at least 2 audio files')
+    ? (canSlideshow ? 'Open playlist' : 'Select at least 1 audio file')
     : (canSlideshow ? 'Open slideshow' : 'Select at least 1 image (images only)');
 
   return (

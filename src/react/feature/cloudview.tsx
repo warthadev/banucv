@@ -1630,7 +1630,7 @@ const CloudView: React.FC = () => {
   const canSlideshow = useMemo(() => {
     if (selectedItems.length === 0) return false;
     if (selectedItems.some((i) => i._isFolder)) return false;
-    if (slideshowKind === 'audio') return selectedItems.length >= 2;
+    if (slideshowKind === 'audio') return selectedItems.length >= 1;
     return selectedItems.every((i) => i.media_type === 'image');
   }, [selectedItems, slideshowKind]);
 

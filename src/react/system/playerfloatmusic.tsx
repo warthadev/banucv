@@ -1,5 +1,6 @@
 // src/react/system/playerfloatmusic.tsx
 import React, { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Music, Pause, Play, Volume2 } from 'lucide-react';
 import { useAudio } from '@hook/useaudio';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,11 +35,12 @@ const formatTime = (seconds: number): string => {
 };
 
 const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
+  const location = useLocation();
   const { isPlaying, setIsPlaying, selectedGenre, volume, isStopped } = useAudio();
   const playlistMode = !!playlist;
   const playing = playlist?.playing ?? isPlaying;
   const title = playlist?.title || selectedGenre;
-  const visible = playlistMode || (!isStopped && !!selectedGenre);
+  const visible = location.pathname !== '/setting' && (playlistMode ? playing : (playing && !isStopped && !!selectedGenre));
   const playerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

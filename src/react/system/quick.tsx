@@ -39,7 +39,7 @@ const quickMenuItems = [
 const Quick: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isStopped, selectedGenre } = useAudio();
+  const { isPlaying, isStopped, selectedGenre } = useAudio();
   const isQuickVisible = useSelector((state: RootState) => state.visible.isQuickVisible);
   const menuRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -57,7 +57,8 @@ const Quick: React.FC = () => {
   const [floatingBounds, setFloatingBounds] = useState<{ left: number; right: number; top: number; bottom: number } | null>(null);
 
   const isDashboard = location.pathname === "/dashboard";
-  const isPlayerActive = (!!selectedGenre && !isStopped) || isCloudPlaylistActive;
+  const isPlayerActive = (!!selectedGenre && isPlaying && !isStopped) || isCloudPlaylistActive;
+  const isSettingPage = location.pathname === "/setting";
 
   useEffect(() => {
     const handlePlaylistState = (event: Event) => {
@@ -342,15 +343,9 @@ const Quick: React.FC = () => {
   const maxX = window.innerWidth - btnSize - padding;
   const maxY = window.innerHeight - btnSize - padding;
   
-  let finalX = position.x;
-  let finalY = position.y;
-  
-  if (position.x > maxX || position.x < -100) finalX = 0;
-  if (position.y > maxY || position.y < -100) finalY = 0;
-  if (position.x === 0 && position.y === 0) {
-    finalX = 0;
-    finalY = 0;
-  }
+  const hasCustomPosition = hasMoved && position.x >= padding && position.x <= maxX && position.y >= padding && position.y <= maxY;
+  const finalX = hasCustomPosition ? position.x : 0;
+  const finalY = hasCustomPosition ? position.y : 0;
 
   const bottomPosition = isPlayerActive ? 110 : 24;
 
@@ -377,7 +372,7 @@ const Quick: React.FC = () => {
   };
 
   const getVariant = () => {
-    if (finalX > 0 || finalY > 0) return 'dragged';
+    if (hasCustomPosition) return 'dragged';
     return isPlayerActive ? 'withPlayer' : 'withoutPlayer';
   };
 
@@ -388,7 +383,7 @@ const Quick: React.FC = () => {
     return `quick-toggle-btn ${isOpen ? 'active' : ''}`;
   };
 
-  if (!isQuickVisible) {
+  if (!isQuickVisible || isSettingPage) {
     return null;
   }
 
@@ -483,12 +478,17 @@ const Quick: React.FC = () => {
           userSelect: 'none',
           touchAction: 'none',
           cursor: isDragging ? 'grabbing' : 'default',
-          ...(finalX > 0 || finalY > 0 ? {
+          ...(hasCustomPosition ? {
             left: Math.max(padding, Math.min(finalX, maxX)) + 'px',
             top: Math.max(padding, Math.min(finalY, maxY)) + 'px',
             right: 'auto',
             bottom: 'auto',
-          } : {})
+          } : {
+            left: 'auto',
+            top: 'auto',
+            right: '5%',
+            bottom: `${bottomPosition}px`,
+          })
         }}
       >
         <motion.button 

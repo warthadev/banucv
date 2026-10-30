@@ -98,9 +98,9 @@ const AppContent: React.FC = () => {
       <ScrollToTop />
 
       {!hideGlobalUI && <Navbar />}
-      {!hideGlobalUI && <Quick />}
+      {!hideGlobalUI && !isSettingPage && <Quick />}
       
-      {!hideGlobalUI && !playlistOpen && <PlayerFloatMusic />}
+      {!hideGlobalUI && !isSettingPage && !playlistOpen && <PlayerFloatMusic />}
 
       <CloudPlaylist
         isOpen={playlistOpen && !isSettingPage}

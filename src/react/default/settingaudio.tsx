@@ -26,7 +26,12 @@ const SettingAudio: React.FC = () => {
   const dispatch = useDispatch();
   const isQuickVisible = useSelector((state: RootState) => state.visible.isQuickVisible);
 
+  const closeCloudPlaylist = () => {
+    window.dispatchEvent(new Event('playlist:close'));
+  };
+
   const handlePlayPause = () => {
+    if (!isPlaying) closeCloudPlaylist();
     setIsPlaying(!isPlaying);
     if (isStopped) setIsStopped(false);
   };
@@ -37,6 +42,7 @@ const SettingAudio: React.FC = () => {
   };
 
   const handleGenreSelect = (genre: string) => {
+    closeCloudPlaylist();
     setSelectedGenre(genre);
     setIsPlaying(true);
     setIsStopped(false);

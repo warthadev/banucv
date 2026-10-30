@@ -313,6 +313,12 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
     setPlaying(v);
   }, []);
 
+  const closePlaylist = useCallback(() => {
+    audioRef.current?.pause();
+    setPlayIntent(false);
+    onClose();
+  }, [onClose, setPlayIntent]);
+
   useEffect(() => {
     if (isOpen && total > 0) {
       reset(total, Math.min(Math.max(initialIndex, 0), total - 1));
@@ -321,6 +327,8 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
       setMinimized(false);
       errStreakRef.current = 0;
     } else {
+      audioRef.current?.pause();
+      setPlayIntent(false);
       reset(0, 0);
       setSrc('');
     }
@@ -471,8 +479,8 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
 
   useEffect(() => {
     failRef.current = failTrack;
-    actionsRef.current = { prev: handlePrev, next: handleNext, toggle: togglePlay, close: onClose, closeQueue: () => setQueueOpen(false), queueOpen };
-  });
+    actionsRef.current = { prev: handlePrev, next: handleNext, toggle: togglePlay, close: closePlaylist, closeQueue: () => setQueueOpen(false), queueOpen };
+  }, [closePlaylist, failTrack, handleNext, handlePrev, togglePlay, queueOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -501,9 +509,18 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
       audioRef.current?.pause();
       setPlayIntent(false);
     };
+    const closePlaylist = () => {
+      audioRef.current?.pause();
+      setPlayIntent(false);
+      onClose();
+    };
     window.addEventListener('playlist:pause', pausePlaylist);
-    return () => window.removeEventListener('playlist:pause', pausePlaylist);
-  }, [setPlayIntent]);
+    window.addEventListener('playlist:close', closePlaylist);
+    return () => {
+      window.removeEventListener('playlist:pause', pausePlaylist);
+      window.removeEventListener('playlist:close', closePlaylist);
+    };
+  }, [onClose, setPlayIntent]);
 
   useEffect(() => {
     if (!isOpen || minimized) return;
@@ -599,7 +616,7 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
                 onToggleShuffle: toggleShuffle,
                 onCycleRepeat: cycleRepeat,
                 onOpen: () => setMinimized(false),
-                onClose,
+                onClose: closePlaylist,
               }}
             />
           </div>
@@ -646,7 +663,7 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
               </button>
               <button
                 className="cloudplaylist-btn"
-                onClick={(e) => { e.preventDefault(); e.currentTarget.focus({ preventScroll: true }); onClose(); }}
+                onClick={(e) => { e.preventDefault(); e.currentTarget.focus({ preventScroll: true }); closePlaylist(); }}
                 title="Close"
               >
                 <X size={28} />

@@ -62,7 +62,7 @@ const AppContent: React.FC = () => {
       {!hideGlobalUI && <Navbar />}
       {!hideGlobalUI && <Quick />}
       
-      {isDashboard && hasVisited && <PlayerFloatMusic />}
+      {!hideGlobalUI && <PlayerFloatMusic />}
 
       <AudioPlayer />
 

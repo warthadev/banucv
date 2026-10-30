@@ -54,6 +54,7 @@ const Quick: React.FC = () => {
   const [buttonRect, setButtonRect] = useState<DOMRect | null>(null);
   const [screenSize, setScreenSize] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
   const [isCloudPlaylistActive, setIsCloudPlaylistActive] = useState(false);
+  const [floatingBounds, setFloatingBounds] = useState<{ left: number; right: number; top: number; bottom: number } | null>(null);
 
   const isDashboard = location.pathname === "/dashboard";
   const isPlayerActive = (!!selectedGenre && !isStopped) || isCloudPlaylistActive;
@@ -65,6 +66,19 @@ const Quick: React.FC = () => {
     };
     window.addEventListener('playlist:state', handlePlaylistState);
     return () => window.removeEventListener('playlist:state', handlePlaylistState);
+  }, []);
+
+  useEffect(() => {
+    const handleFloatingBounds = (event: Event) => {
+      const detail = (event as CustomEvent<{ active?: boolean; left?: number; right?: number; top?: number; bottom?: number }>).detail;
+      if (detail?.active && [detail.left, detail.right, detail.top, detail.bottom].every((value) => typeof value === 'number')) {
+        setFloatingBounds({ left: detail.left!, right: detail.right!, top: detail.top!, bottom: detail.bottom! });
+      } else {
+        setFloatingBounds(null);
+      }
+    };
+    window.addEventListener('floating:bounds', handleFloatingBounds);
+    return () => window.removeEventListener('floating:bounds', handleFloatingBounds);
   }, []);
 
   useEffect(() => {
@@ -90,10 +104,31 @@ const Quick: React.FC = () => {
       return { x: 0, y: 0 };
     }
     
-    return {
+    const safe = {
       x: Math.max(padding, Math.min(pos.x, maxX)),
       y: Math.max(padding, Math.min(pos.y, maxY))
     };
+    if (!floatingBounds) return safe;
+
+    const gap = 12;
+    const overlaps = (x: number, y: number) => (
+      x < floatingBounds.right + gap &&
+      x + btnSize > floatingBounds.left - gap &&
+      y < floatingBounds.bottom + gap &&
+      y + btnSize > floatingBounds.top - gap
+    );
+    if (!overlaps(safe.x, safe.y)) return safe;
+
+    const aboveY = floatingBounds.top - btnSize - gap;
+    if (aboveY >= padding && !overlaps(safe.x, aboveY)) return { x: safe.x, y: aboveY };
+
+    const leftX = floatingBounds.left - btnSize - gap;
+    if (leftX >= padding && !overlaps(leftX, safe.y)) return { x: leftX, y: safe.y };
+
+    const rightX = floatingBounds.right + gap;
+    if (rightX <= maxX && !overlaps(rightX, safe.y)) return { x: rightX, y: safe.y };
+
+    return { x: safe.x, y: Math.max(padding, aboveY) };
   };
 
   useEffect(() => {
@@ -108,7 +143,7 @@ const Quick: React.FC = () => {
         console.warn('Failed to load quick position');
       }
     }
-  }, [screenSize]);
+  }, [screenSize, floatingBounds]);
 
   useEffect(() => {
     if (hasMoved) {
@@ -117,7 +152,7 @@ const Quick: React.FC = () => {
         setPosition(clamped);
       }
     }
-  }, [screenSize]);
+  }, [screenSize, floatingBounds]);
 
   useEffect(() => {
     if (hasMoved) {
@@ -205,15 +240,7 @@ const Quick: React.FC = () => {
     const newX = clientX - dragOffset.x;
     const newY = clientY - dragOffset.y;
     
-    const btnSize = screenSize === 'mobile' ? 48 : 54;
-    const padding = 10;
-    const maxX = window.innerWidth - btnSize - padding;
-    const maxY = window.innerHeight - btnSize - padding;
-    
-    setPosition({
-      x: Math.max(padding, Math.min(newX, maxX)),
-      y: Math.max(padding, Math.min(newY, maxY))
-    });
+    setPosition(clampPosition({ x: newX, y: newY }));
     setHasMoved(true);
   };
 

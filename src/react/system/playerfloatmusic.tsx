@@ -1,5 +1,5 @@
 // src/react/system/playerfloatmusic.tsx
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Music, Pause, Play, Volume2 } from 'lucide-react';
 import { useAudio } from '@hook/useaudio';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -39,6 +39,28 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
   const playing = playlist?.playing ?? isPlaying;
   const title = playlist?.title || selectedGenre;
   const visible = playlistMode || (!isStopped && !!selectedGenre);
+  const playerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const publishBounds = () => {
+      const rect = playerRef.current?.getBoundingClientRect();
+      window.dispatchEvent(new CustomEvent('floating:bounds', {
+        detail: rect && visible ? {
+          active: true,
+          left: rect.left,
+          right: rect.right,
+          top: rect.top,
+          bottom: rect.bottom,
+        } : { active: false },
+      }));
+    };
+    publishBounds();
+    window.addEventListener('resize', publishBounds);
+    return () => {
+      window.removeEventListener('resize', publishBounds);
+      window.dispatchEvent(new CustomEvent('floating:bounds', { detail: { active: false } }));
+    };
+  }, [visible, title, playing]);
 
   return (
     <AnimatePresence>
@@ -51,6 +73,7 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
           transition={{ duration: 0.4, ease: 'easeOut' }}
         >
           <div
+            ref={playerRef}
             className={`dashboard-floating-player ${playing ? 'is-playing' : ''} ${playlistMode ? 'playlist-floating-player' : ''}`}
             onClick={(e) => {
               e.stopPropagation();

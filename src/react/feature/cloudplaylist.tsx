@@ -7,6 +7,7 @@ import { fetchWithGlobalCache } from '@config/imagecache';
 import { getCover, setCover } from '@config/thumbnailstore';
 import { resolveHfSignedUrl, HF_SIGNED_URL_MAX_AGE_MS, downloadMediaWithName } from '@system/mediarendermodal';
 import { usePlaylist } from '@hook/useplaylist';
+import PlayerFloatMusic from '@system/playerfloatmusic';
 
 export interface PlaylistTrack {
   id: string;
@@ -281,7 +282,7 @@ QueueRow.displayName = 'QueueRow';
 
 const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIndex = 0, onClose }) => {
   const total = tracks.length;
-  const { index, order, shuffle, repeat, hasNext, nextIndex, reset, goNext, goPrev, jumpTo, toggleShuffle, cycleRepeat } = usePlaylist(total, initialIndex);
+  const { index, order, shuffle, repeat, hasPrev, hasNext, nextIndex, reset, goNext, goPrev, jumpTo, toggleShuffle, cycleRepeat } = usePlaylist(total, initialIndex);
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const signedCache = useRef<SignedCache>(new Map());
@@ -571,6 +572,29 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
         exit={{ opacity: 0 }}
         transition={{ duration: 0.18 }}
       >
+        {minimized && (
+          <div style={{ pointerEvents: 'auto' }}>
+            <PlayerFloatMusic
+              playlist={{
+                title: displayName(track.name),
+                currentTime,
+                duration,
+                playing,
+                shuffle,
+                repeat,
+                canPrevious: hasPrev,
+                canNext: hasNext,
+                onTogglePlay: togglePlay,
+                onPrevious: handlePrev,
+                onNext: handleNext,
+                onToggleShuffle: toggleShuffle,
+                onCycleRepeat: cycleRepeat,
+                onOpen: () => setMinimized(false),
+                onClose,
+              }}
+            />
+          </div>
+        )}
         <motion.div
           className="cloudplaylist-stage"
           style={minimized ? {
@@ -578,6 +602,7 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
             height: 'auto',
             maxHeight: 'none',
             pointerEvents: 'auto',
+            display: 'none',
           } : undefined}
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}

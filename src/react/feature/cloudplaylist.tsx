@@ -1,7 +1,7 @@
 // src/react/feature/cloudplaylist.tsx
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, ListMusic, Music, Download } from 'lucide-react';
+import { X, Minimize2, Maximize2, Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, ListMusic, Music, Download } from 'lucide-react';
 import { parseBlob } from 'music-metadata';
 import { fetchWithGlobalCache } from '@config/imagecache';
 import { getCover, setCover } from '@config/thumbnailstore';
@@ -300,6 +300,7 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
   const [seeking, setSeeking] = useState(false);
   const [seekValue, setSeekValue] = useState(0);
   const [queueOpen, setQueueOpen] = useState(false);
+  const [minimized, setMinimized] = useState(false);
   const [metadataReady, setMetadataReady] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
@@ -316,6 +317,7 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
       reset(total, Math.min(Math.max(initialIndex, 0), total - 1));
       setPlayIntent(true);
       setQueueOpen(false);
+      setMinimized(false);
       errStreakRef.current = 0;
     } else {
       reset(0, 0);
@@ -494,11 +496,11 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || minimized) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = prevOverflow; };
-  }, [isOpen]);
+  }, [isOpen, minimized]);
 
   const artSrc = useTrackCover(track, ready);
 
@@ -556,6 +558,14 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
     <AnimatePresence>
       <motion.div
         className="cloudplaylist-overlay"
+        style={minimized ? {
+          background: 'transparent',
+          backdropFilter: 'none',
+          WebkitBackdropFilter: 'none',
+          alignItems: 'flex-end',
+          justifyContent: 'flex-end',
+          pointerEvents: 'none',
+        } : undefined}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -563,6 +573,12 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
       >
         <motion.div
           className="cloudplaylist-stage"
+          style={minimized ? {
+            width: 'min(360px, calc(100vw - 32px))',
+            height: 'auto',
+            maxHeight: 'none',
+            pointerEvents: 'auto',
+          } : undefined}
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
@@ -589,6 +605,13 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
               </button>
               <button
                 className="cloudplaylist-btn"
+                onClick={(e) => { e.preventDefault(); e.currentTarget.focus({ preventScroll: true }); setMinimized((value) => !value); setQueueOpen(false); }}
+                title={minimized ? 'Restore' : 'Minimize'}
+              >
+                {minimized ? <Maximize2 size={22} /> : <Minimize2 size={22} />}
+              </button>
+              <button
+                className="cloudplaylist-btn"
                 onClick={(e) => { e.preventDefault(); e.currentTarget.focus({ preventScroll: true }); onClose(); }}
                 title="Close"
               >
@@ -597,7 +620,7 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
             </div>
           </div>
 
-          <div className="cloudplaylist-body">
+          <div className="cloudplaylist-body" style={{ display: minimized ? 'none' : undefined }}>
             <div className="cloudplaylist-art">
               <AnimatePresence mode="wait">
                 {status === 'loading' && !artSrc ? (
@@ -670,8 +693,25 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
             </div>
           </div>
 
+          {minimized && (
+            <div
+              className="cloudplaylist-body"
+              style={{ flex: 'none', flexDirection: 'row', gap: 10, padding: '8px 12px 10px' }}
+            >
+              <div className="cloudplaylist-info" style={{ textAlign: 'left' }}>
+                <h3 className="cloudplaylist-name">{displayName(track.name)}</h3>
+                <span className={`cloudplaylist-sub ${status === 'error' ? 'cloudplaylist-sub--error' : ''}`}>
+                  {status === 'error' ? 'Failed to load' : `${formatTime(currentTime)} / ${formatTime(duration)}`}
+                </span>
+              </div>
+              <button className="cloudplaylist-play" onClick={togglePlay} title={playing ? 'Pause' : 'Play'}>
+                {playing ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" />}
+              </button>
+            </div>
+          )}
+
           <AnimatePresence initial={false}>
-            {queueOpen && (
+            {!minimized && queueOpen && (
               <motion.div
                 key="queue"
                 className="cloudplaylist-queue"

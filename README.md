@@ -216,10 +216,6 @@ Kontribusi yang menjaga aplikasi tetap modular dan mudah dirawat sangat terbuka.
 
 Proyek ini merupakan personal project WarthaDev dan masih aktif dikembangkan. Detail lisensi dapat ditambahkan pada tahap berikutnya sesuai keputusan pemilik repository.
 
-## Kredit kontribusi
-
-Pembaruan dan perapihan dokumentasi README ini dikontribusikan oleh **Manus** atas permintaan pemilik repository.
-
 ---
 
 **WarthaDev — Engineering with passion.**

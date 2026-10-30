@@ -39,7 +39,7 @@ const AppContent: React.FC = () => {
   const [playlistOpen, setPlaylistOpen] = useState(false);
   const [playlistTracks, setPlaylistTracks] = useState<PlaylistTrack[]>([]);
   const [playlistStartIndex, setPlaylistStartIndex] = useState(0);
-  const { pauseBackgroundMusic, resumeBackgroundMusic } = useAudio();
+  const { isPlaying, pauseBackgroundMusic, resumeBackgroundMusic } = useAudio();
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -59,7 +59,7 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     const handleOpen = (event: Event) => {
       const detail = (event as CustomEvent<{ tracks?: PlaylistTrack[]; initialIndex?: number }>).detail;
-      if (!detail?.tracks?.length) return;
+      if (!detail?.tracks?.length || location.pathname === "/setting") return;
       pauseBackgroundMusic();
       setPlaylistTracks(detail.tracks);
       setPlaylistStartIndex(detail.initialIndex || 0);
@@ -68,7 +68,7 @@ const AppContent: React.FC = () => {
 
     window.addEventListener("playlist:open", handleOpen);
     return () => window.removeEventListener("playlist:open", handleOpen);
-  }, [pauseBackgroundMusic]);
+  }, [location.pathname, pauseBackgroundMusic]);
 
   const closePlaylist = useCallback(() => {
     setPlaylistOpen(false);
@@ -79,6 +79,17 @@ const AppContent: React.FC = () => {
 
   const isDashboard = location.pathname === "/dashboard";
   const isLoginPage = location.pathname === "/login";
+  const isSettingPage = location.pathname === "/setting";
+
+  useEffect(() => {
+    if (isSettingPage && playlistOpen) {
+      closePlaylist();
+      return;
+    }
+    if (playlistOpen && isPlaying) {
+      closePlaylist();
+    }
+  }, [isSettingPage, playlistOpen, isPlaying, closePlaylist]);
   
   const hideGlobalUI = isLoginPage || (isDashboard && !hasVisited);
 
@@ -92,7 +103,7 @@ const AppContent: React.FC = () => {
       {!hideGlobalUI && !playlistOpen && <PlayerFloatMusic />}
 
       <CloudPlaylist
-        isOpen={playlistOpen}
+        isOpen={playlistOpen && !isSettingPage}
         tracks={playlistTracks}
         initialIndex={playlistStartIndex}
         onClose={closePlaylist}

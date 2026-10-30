@@ -696,7 +696,8 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
           {minimized && (
             <div
               className="cloudplaylist-body"
-              style={{ flex: 'none', flexDirection: 'row', gap: 10, padding: '8px 12px 10px' }}
+              style={{ flex: 'none', flexDirection: 'row', gap: 6, padding: '8px 12px 10px', cursor: 'pointer' }}
+              onClick={() => setMinimized(false)}
             >
               <div className="cloudplaylist-info" style={{ textAlign: 'left' }}>
                 <h3 className="cloudplaylist-name">{displayName(track.name)}</h3>
@@ -704,8 +705,38 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
                   {status === 'error' ? 'Failed to load' : `${formatTime(currentTime)} / ${formatTime(duration)}`}
                 </span>
               </div>
+              <button
+                className={`cloudplaylist-ctrl ${shuffle ? 'active' : ''}`}
+                onClick={(e) => { e.stopPropagation(); toggleShuffle(); }}
+                aria-pressed={shuffle}
+                title={shuffle ? 'Shuffle: on' : 'Shuffle: off'}
+              >
+                <Shuffle size={17} />
+              </button>
+              <button
+                className="cloudplaylist-ctrl"
+                onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+                title="Previous"
+              >
+                <SkipBack size={19} fill="currentColor" />
+              </button>
               <button className="cloudplaylist-play" onClick={togglePlay} title={playing ? 'Pause' : 'Play'}>
                 {playing ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" />}
+              </button>
+              <button
+                className="cloudplaylist-ctrl"
+                onClick={(e) => { e.stopPropagation(); handleNext(); }}
+                disabled={!hasNext}
+                title="Next"
+              >
+                <SkipForward size={19} fill="currentColor" />
+              </button>
+              <button
+                className={`cloudplaylist-ctrl ${repeat !== 'off' ? 'active' : ''}`}
+                onClick={(e) => { e.stopPropagation(); cycleRepeat(); }}
+                title={repeatTitle}
+              >
+                {repeat === 'one' ? <Repeat1 size={17} /> : <Repeat size={17} />}
               </button>
             </div>
           )}

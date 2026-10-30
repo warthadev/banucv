@@ -53,9 +53,19 @@ const Quick: React.FC = () => {
   const [isClick, setIsClick] = useState(true);
   const [buttonRect, setButtonRect] = useState<DOMRect | null>(null);
   const [screenSize, setScreenSize] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
+  const [isCloudPlaylistActive, setIsCloudPlaylistActive] = useState(false);
 
   const isDashboard = location.pathname === "/dashboard";
-  const isPlayerActive = isDashboard && selectedGenre && !isStopped;
+  const isPlayerActive = (!!selectedGenre && !isStopped) || isCloudPlaylistActive;
+
+  useEffect(() => {
+    const handlePlaylistState = (event: Event) => {
+      const active = (event as CustomEvent<{ active?: boolean }>).detail?.active === true;
+      setIsCloudPlaylistActive(active);
+    };
+    window.addEventListener('playlist:state', handlePlaylistState);
+    return () => window.removeEventListener('playlist:state', handlePlaylistState);
+  }, []);
 
   useEffect(() => {
     const updateScreenSize = () => {

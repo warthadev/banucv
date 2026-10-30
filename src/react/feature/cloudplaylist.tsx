@@ -320,6 +320,13 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
   }, [onClose, setPlayIntent]);
 
   useEffect(() => {
+    window.dispatchEvent(new CustomEvent('playlist:state', { detail: { active: isOpen } }));
+    return () => {
+      window.dispatchEvent(new CustomEvent('playlist:state', { detail: { active: false } }));
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
     if (isOpen && total > 0) {
       reset(total, Math.min(Math.max(initialIndex, 0), total - 1));
       setPlayIntent(true);

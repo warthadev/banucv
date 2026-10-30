@@ -13,7 +13,7 @@
 
 .dashboard-floating-player {
   position: relative;
-  background-color: var(--card-bg);
+  background-color: var(--bg-alpha);
   -webkit-backdrop-filter: blur(15px);
   backdrop-filter: blur(15px);
   border: none;
@@ -22,9 +22,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  max-width: 100%;
   pointer-events: auto;
-  box-sizing: border-box;
 }
 
 .player-icon-box {
@@ -70,9 +68,7 @@
 .player-text-group {
   display: flex;
   flex-direction: column;
-  min-width: 0;
-  flex: 1 1 auto;
-  overflow: hidden;
+  min-width: 100px;
 }
 
 .player-genre-display {
@@ -80,9 +76,6 @@
   font-weight: 700;
   color: var(--text);
   line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .player-volume-info {
@@ -141,25 +134,4 @@
 @keyframes ripple-out {
   0% { transform: scale(1); opacity: 0.5; }
   100% { transform: scale(1.5); opacity: 0; }
-}
-
-@media (max-width: 480px) {
-  .dashboard-floating-player-shell {
-    bottom: 16px;
-  }
-
-  .dashboard-floating-player {
-    gap: 10px;
-    padding: 8px 10px;
-  }
-
-  .player-icon-box {
-    width: 46px;
-    height: 46px;
-  }
-
-  .player-action-btn {
-    width: 40px;
-    height: 40px;
-  }
 }

@@ -13,7 +13,7 @@
 
 .dashboard-floating-player {
   position: relative;
-  background-color: var(--bg-alpha);
+  background-color: var(--card-bg);
   -webkit-backdrop-filter: blur(15px);
   backdrop-filter: blur(15px);
   border: none;

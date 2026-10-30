@@ -1,6 +1,6 @@
 // src/react/system/playerfloatmusic.tsx
 import React from 'react';
-import { Maximize2, Music, Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward, Volume2, X } from 'lucide-react';
+import { Music, Pause, Play, Volume2 } from 'lucide-react';
 import { useAudio } from '@hook/useaudio';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -77,75 +77,17 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
             )}
           </div>
 
-          {playlistMode ? (
-            <div className="playlist-floating-actions">
-              <button
-                className={`player-action-btn ${playlist.shuffle ? 'active' : ''}`}
-                onClick={(e) => { e.stopPropagation(); playlist.onToggleShuffle(); }}
-                aria-label="Toggle shuffle"
-              >
-                <Shuffle size={16} />
-              </button>
-              <button
-                className="player-action-btn"
-                onClick={(e) => { e.stopPropagation(); playlist.onPrevious(); }}
-                disabled={!playlist.canPrevious}
-                aria-label="Previous track"
-              >
-                <SkipBack size={16} fill="currentColor" />
-              </button>
-              <button
-                className="player-action-btn"
-                onClick={(e) => { e.stopPropagation(); playlist.onTogglePlay(); }}
-                aria-label={playing ? 'Pause track' : 'Play track'}
-              >
-                {playing ? <Pause size={18} fill="currentColor" strokeWidth={2.5} /> : <Play size={18} fill="currentColor" strokeWidth={2.5} />}
-              </button>
-              <button
-                className="player-action-btn"
-                onClick={(e) => { e.stopPropagation(); playlist.onNext(); }}
-                disabled={!playlist.canNext}
-                aria-label="Next track"
-              >
-                <SkipForward size={16} fill="currentColor" />
-              </button>
-              <button
-                className={`player-action-btn ${playlist.repeat !== 'off' ? 'active' : ''}`}
-                onClick={(e) => { e.stopPropagation(); playlist.onCycleRepeat(); }}
-                aria-label="Toggle repeat"
-              >
-                {playlist.repeat === 'one' ? <Repeat1 size={16} /> : <Repeat size={16} />}
-              </button>
-              <button
-                className="player-action-btn"
-                onClick={(e) => { e.stopPropagation(); playlist.onClose(); }}
-                aria-label="Close playlist"
-              >
-                <X size={17} />
-              </button>
-            </div>
-          ) : (
-            <button
-              className="player-action-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsPlaying(!isPlaying);
-              }}
-              aria-label={isPlaying ? 'Pause music' : 'Play music'}
-            >
-              {isPlaying ? <Pause size={20} fill="currentColor" strokeWidth={2.5} /> : <Play size={20} fill="currentColor" strokeWidth={2.5} style={{ transform: 'translateX(1px)' }} />}
-            </button>
-          )}
-
-          {playlistMode && (
-            <button
-              className="player-action-btn"
-              onClick={(e) => { e.stopPropagation(); playlist.onOpen(); }}
-              aria-label="Open playlist"
-            >
-              <Maximize2 size={17} />
-            </button>
-          )}
+          <button
+            className="player-action-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (playlistMode) playlist.onTogglePlay();
+              else setIsPlaying(!isPlaying);
+            }}
+            aria-label={playing ? 'Pause music' : 'Play music'}
+          >
+            {playing ? <Pause size={20} fill="currentColor" strokeWidth={2.5} /> : <Play size={20} fill="currentColor" strokeWidth={2.5} style={{ transform: 'translateX(1px)' }} />}
+          </button>
         </motion.div>
       )}
     </AnimatePresence>

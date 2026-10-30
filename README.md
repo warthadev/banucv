@@ -80,6 +80,28 @@ Bukan sekadar landing page atau template dashboard. Wartha Sensei dirancang seba
 | Content | React Markdown, Prism syntax highlighting |
 | Deployment | Firebase Hosting |
 
+## Arsitektur frontend ↔ backend
+
+`banucv` adalah repository **frontend**. Fitur yang membutuhkan proses server, credential, streaming, atau integrasi eksternal dilayani oleh repository backend terpisah:
+
+- Frontend: [`warthadev/banucv`](https://github.com/warthadev/banucv)
+- Backend: [`warthadev/warthadev-backend`](https://github.com/warthadev/warthadev-backend)
+- Backend stack: FastAPI + Python, dikemas dengan Docker dan dideploy ke Hugging Face Spaces.
+
+Saat aplikasi dimulai, frontend mencoba endpoint `/health` pada backend, memilih base URL yang aktif, lalu mengambil konfigurasi Firebase dan feature flags dari `/config`.
+
+| Backend module | Prefix | Dipakai untuk |
+| --- | --- | --- |
+| Telegram | `/telegram` | Session, metadata, streaming file, dan sinkronisasi Firestore |
+| Hugging Face | `/hf` | Repository, file/folder, dataset, model, dan space |
+| Universal downloader | `/universal` | Ekstraksi serta orkestrasi download media |
+| Torrent | `/torrent` | Metadata, session, progress, dan sinkronisasi torrent |
+| Proxy | `/proxy` | Streaming media, direct download, dan signed URL |
+| Token API | `/token` | Validasi API key dan akses model Gemini |
+| Media extractor | `/extract` | Ekstraksi video/audio dengan yt-dlp dan fallback Cobalt |
+
+Konfigurasi CORS backend perlu mengizinkan origin frontend, misalnya `http://localhost:5173` untuk development atau `https://warthasensei.web.app` untuk production.
+
 ## Struktur proyek
 
 ```text

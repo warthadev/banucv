@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "esnext",
+    "types": ["vite/client", "node"],
+    "skipLibCheck": true,
+
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "ignoreDeprecations": "6.0",
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@react/*": ["src/react/*"],
+      "@system/*": ["src/react/system/*"],
+      "@hook/*": ["src/react/hook/*"],
+      "@config/*": ["src/react/config/*"],
+      "@default/*": ["src/react/default/*"],
+      "@redux/*": ["src/react/redux/*"],
+      "@control/*": ["src/react/control/*"],
+      "@feature/*": ["src/react/feature/*"],
+      "@animation/*": ["src/react/animation/*"]
+    }
+  },
+  "include": ["src"]
+}

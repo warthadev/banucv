@@ -119,9 +119,9 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
       {visible && !isMinimized && (
         <motion.div
           className="dashboard-floating-player-shell"
-          initial={{ opacity: 0, x: 80, scale: 0.95 }}
-          animate={{ opacity: 1, x: 0, scale: 1 }}
-          exit={{ opacity: 0, x: 80, scale: 0.95 }}
+          initial={{ opacity: 0, y: 80, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 80, scale: 0.95 }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
         >
           <div
@@ -178,9 +178,9 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
         <motion.button
           className={`floating-player-restore${playlist?.cover ? ' has-cover' : ''}`}
           type="button"
-          initial={{ opacity: 0, x: 48 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 48 }}
+          initial={{ opacity: 0, y: 48 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 48 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
           style={playlist?.cover ? { backgroundImage: `url(${playlist.cover})` } : undefined}
           onPointerDown={(event) => {

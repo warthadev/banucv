@@ -7,7 +7,7 @@ import { fetchWithGlobalCache } from '@config/imagecache';
 import { getCover, setCover } from '@config/thumbnailstore';
 import { resolveHfSignedUrl, HF_SIGNED_URL_MAX_AGE_MS, downloadMediaWithName } from '@system/mediarendermodal';
 import { usePlaylist } from '@hook/useplaylist';
-import PlayerFloatMusic from '@system/playerfloatmusic';
+import PlayerFloatMusic from '@system/playerfloatmusic.tsx';
 
 export interface PlaylistTrack {
   id: string;

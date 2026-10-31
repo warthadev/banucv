@@ -6,7 +6,7 @@ import Loading from "./react/control/loading";
 import Navbar from "./react/default/navbar";
 import GateAuth from "./react/system/gateauth";
 import GateVisit from "./react/system/gatevisit";
-import PlayerFloatMusic from "./react/system/playerfloatmusic";
+import PlayerFloatMusic from "./react/system/playerfloatmusic.tsx";
 import Quick from "./react/system/quick";
 import AudioPlayer from "./react/system/audioplayer";
 import CloudPlaylist, { type PlaylistTrack } from "./react/feature/cloudplaylist";

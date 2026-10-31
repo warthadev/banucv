@@ -27,6 +27,30 @@
   transform: translateZ(0);
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
+  touch-action: pan-y;
+}
+
+.floating-player-restore {
+  position: fixed;
+  right: 0;
+  bottom: 24px;
+  width: 34px;
+  height: 58px;
+  border: 1px solid var(--border-color);
+  border-right: none;
+  border-radius: 18px 0 0 18px;
+  background-color: var(--bg-alpha);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+}
+
+.floating-player-restore:hover {
+  width: 40px;
 }
 
 .player-icon-box {

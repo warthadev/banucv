@@ -600,10 +600,10 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
           justifyContent: 'flex-end',
           pointerEvents: 'none',
         } : undefined}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.18 }}
+        initial={{ opacity: 0, y: 80 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 80 }}
+        transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
       >
         {minimized && (
           <div style={{ pointerEvents: 'auto' }}>
@@ -634,13 +634,12 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
             width: 'min(360px, calc(100vw - 32px))',
             height: 'auto',
             maxHeight: 'none',
-            pointerEvents: 'auto',
-            display: 'none',
+            pointerEvents: 'none',
           } : undefined}
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.98 }}
-          transition={{ duration: 0.2 }}
+          initial={{ opacity: 0, y: 80, scale: 0.98 }}
+          animate={minimized ? { opacity: 0, y: 80, scale: 0.98 } : { opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 80, scale: 0.98 }}
+          transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
         >
           <div className="cloudplaylist-header">
             <span className="cloudplaylist-title">Playlist</span>

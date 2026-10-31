@@ -38,11 +38,42 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
   const location = useLocation();
   const { isPlaying, setIsPlaying, selectedGenre, volume, isStopped } = useAudio();
   const [mediaOverlays, setMediaOverlays] = useState({ mediarender: false, slideshow: false });
+  const [isMinimized, setIsMinimized] = useState(false);
   const playlistMode = !!playlist;
   const playing = playlist?.playing ?? isPlaying;
   const title = playlist?.title || selectedGenre;
   const visible = location.pathname !== '/setting' && !mediaOverlays.mediarender && !mediaOverlays.slideshow && (playlistMode || (!isStopped && !!selectedGenre));
   const playerRef = useRef<HTMLDivElement>(null);
+  const dragStartXRef = useRef<number | null>(null);
+  const dragDistanceRef = useRef(0);
+  const suppressClickRef = useRef(false);
+
+  useEffect(() => {
+    if (!visible) setIsMinimized(false);
+  }, [visible]);
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    dragStartXRef.current = event.clientX;
+    dragDistanceRef.current = 0;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (dragStartXRef.current === null) return;
+    dragDistanceRef.current = event.clientX - dragStartXRef.current;
+  };
+
+  const handlePointerUp = () => {
+    if (dragStartXRef.current === null) return;
+    if (dragDistanceRef.current > 80) {
+      setIsMinimized(true);
+      suppressClickRef.current = true;
+      window.setTimeout(() => { suppressClickRef.current = false; }, 0);
+    }
+    dragStartXRef.current = null;
+    dragDistanceRef.current = 0;
+  };
 
   useEffect(() => {
     const handleOverlayState = (event: Event) => {
@@ -62,7 +93,7 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
     const publishBounds = () => {
       const rect = playerRef.current?.getBoundingClientRect();
       window.dispatchEvent(new CustomEvent('floating:bounds', {
-        detail: rect && visible ? {
+        detail: rect && visible && !isMinimized ? {
           active: true,
           left: rect.left,
           right: rect.right,
@@ -77,23 +108,28 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
       window.removeEventListener('resize', publishBounds);
       window.dispatchEvent(new CustomEvent('floating:bounds', { detail: { active: false } }));
     };
-  }, [visible, title, playing]);
+  }, [visible, title, playing, isMinimized]);
 
   return (
     <AnimatePresence>
-      {visible && (
+      {visible && !isMinimized && (
         <motion.div
           className="dashboard-floating-player-shell"
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          initial={{ opacity: 0, y: 80, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.95 }}
+          exit={{ opacity: 0, y: 80, scale: 0.95 }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
         >
           <div
             ref={playerRef}
             className={`dashboard-floating-player ${playing ? 'is-playing' : ''} ${playlistMode ? 'playlist-floating-player' : ''}`}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
             onClick={(e) => {
               e.stopPropagation();
+              if (suppressClickRef.current) return;
               playlist?.onOpen();
             }}
           >
@@ -133,6 +169,20 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
             </button>
           </div>
         </motion.div>
+      )}
+      {visible && isMinimized && (
+        <motion.button
+          className="floating-player-restore"
+          type="button"
+          initial={{ opacity: 0, x: 48 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 48 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          onClick={() => setIsMinimized(false)}
+          aria-label="Show floating player"
+        >
+          <Music size={18} strokeWidth={2.5} />
+        </motion.button>
       )}
     </AnimatePresence>
   );

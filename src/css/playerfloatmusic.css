@@ -34,7 +34,7 @@
   position: fixed;
   right: 0;
   bottom: 24px;
-  width: 34px;
+  width: 14px;
   height: 58px;
   border: 1px solid var(--border-color);
   border-right: none;
@@ -47,10 +47,25 @@
   cursor: pointer;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   z-index: 10000;
+  padding: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  touch-action: pan-y;
 }
 
 .floating-player-restore:hover {
   width: 40px;
+}
+
+.floating-player-restore.has-cover {
+  width: 58px;
+  border-radius: 18px 0 0 18px;
+  border: 1px solid var(--border-color);
+}
+
+.floating-player-restore.has-cover:hover {
+  width: 64px;
 }
 
 .player-icon-box {

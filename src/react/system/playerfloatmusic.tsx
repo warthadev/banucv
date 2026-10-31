@@ -12,6 +12,7 @@ export interface PlaylistFloatProps {
   playing: boolean;
   shuffle: boolean;
   repeat: 'off' | 'all' | 'one';
+  cover?: string;
   canPrevious: boolean;
   canNext: boolean;
   onTogglePlay: () => void;
@@ -47,6 +48,9 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
   const dragStartXRef = useRef<number | null>(null);
   const dragDistanceRef = useRef(0);
   const suppressClickRef = useRef(false);
+  const restoreDragStartXRef = useRef<number | null>(null);
+  const restoreDragDistanceRef = useRef(0);
+  const suppressRestoreClickRef = useRef(false);
 
   useEffect(() => {
     if (!visible) setIsMinimized(false);
@@ -172,17 +176,42 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
       )}
       {visible && isMinimized && (
         <motion.button
-          className="floating-player-restore"
+          className={`floating-player-restore${playlist?.cover ? ' has-cover' : ''}`}
           type="button"
           initial={{ opacity: 0, x: 48 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 48 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
-          onClick={() => setIsMinimized(false)}
+          style={playlist?.cover ? { backgroundImage: `url(${playlist.cover})` } : undefined}
+          onPointerDown={(event) => {
+            restoreDragStartXRef.current = event.clientX;
+            restoreDragDistanceRef.current = 0;
+            event.currentTarget.setPointerCapture?.(event.pointerId);
+          }}
+          onPointerMove={(event) => {
+            if (restoreDragStartXRef.current !== null) {
+              restoreDragDistanceRef.current = event.clientX - restoreDragStartXRef.current;
+            }
+          }}
+          onPointerUp={() => {
+            if (restoreDragStartXRef.current === null) return;
+            if (restoreDragDistanceRef.current < -40) {
+              setIsMinimized(false);
+              suppressRestoreClickRef.current = true;
+              window.setTimeout(() => { suppressRestoreClickRef.current = false; }, 0);
+            }
+            restoreDragStartXRef.current = null;
+            restoreDragDistanceRef.current = 0;
+          }}
+          onPointerCancel={() => {
+            restoreDragStartXRef.current = null;
+            restoreDragDistanceRef.current = 0;
+          }}
+          onClick={() => {
+            if (!suppressRestoreClickRef.current) setIsMinimized(false);
+          }}
           aria-label="Show floating player"
-        >
-          <Music size={18} strokeWidth={2.5} />
-        </motion.button>
+        />
       )}
     </AnimatePresence>
   );

@@ -613,6 +613,7 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
                 currentTime,
                 duration,
                 playing,
+                cover: artSrc || undefined,
                 shuffle,
                 repeat,
                 canPrevious: hasPrev,

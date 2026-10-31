@@ -20,8 +20,7 @@ import {
   quickMenuVariants, 
   quickToggleVariants, 
   quickItemVariants,
-  quickOverlayVariants,
-  quickWrapperVariants
+  quickOverlayVariants
 } from '@animation/quick';
 import { GithubIcon } from '@control/icon';
 
@@ -101,13 +100,11 @@ const Quick: React.FC = () => {
     const maxX = window.innerWidth - btnSize - padding;
     const maxY = window.innerHeight - btnSize - padding;
     
-    if (pos.x > maxX || pos.y > maxY || pos.x < -100 || pos.y < -100) {
-      return { x: 0, y: 0 };
-    }
-    
+    if (pos.x === 0 && pos.y === 0) return { x: 0, y: 0 };
+
     const safe = {
-      x: Math.max(padding, Math.min(pos.x, maxX)),
-      y: Math.max(padding, Math.min(pos.y, maxY))
+      x: Math.max(padding, Math.min(Number.isFinite(pos.x) ? pos.x : padding, maxX)),
+      y: Math.max(padding, Math.min(Number.isFinite(pos.y) ? pos.y : padding, maxY))
     };
     if (!floatingBounds) return safe;
 
@@ -349,33 +346,6 @@ const Quick: React.FC = () => {
 
   const bottomPosition = isPlayerActive ? 110 : 24;
 
-  const wrapperVariants = {
-    withPlayer: {
-      bottom: 110,
-      right: '5%',
-      transition: { 
-        duration: 0.3,
-        ease: [0.4, 0, 0.2, 1]
-      }
-    },
-    withoutPlayer: {
-      bottom: 24,
-      right: '5%',
-      transition: { 
-        duration: 0.3,
-        ease: [0.4, 0, 0.2, 1]
-      }
-    },
-    dragged: {
-      transition: { duration: 0 }
-    }
-  };
-
-  const getVariant = () => {
-    if (hasCustomPosition) return 'dragged';
-    return isPlayerActive ? 'withPlayer' : 'withoutPlayer';
-  };
-
   const getToggleClassName = () => {
     if (isDashboard) {
       return 'quick-toggle-btn dashboard-active';
@@ -465,9 +435,19 @@ const Quick: React.FC = () => {
       <motion.div 
         ref={menuRef}
         className="quick-action-wrapper"
-        variants={wrapperVariants}
-        initial={getVariant()}
-        animate={getVariant()}
+        animate={hasCustomPosition ? {
+          left: Math.max(padding, Math.min(finalX, maxX)) + 'px',
+          top: Math.max(padding, Math.min(finalY, maxY)) + 'px',
+          right: 'auto',
+          bottom: 'auto',
+          transition: { duration: 0 },
+        } : {
+          left: 'auto',
+          top: 'auto',
+          right: '5%',
+          bottom: bottomPosition,
+          transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
+        }}
         style={{
           position: 'fixed',
           zIndex: 10000,

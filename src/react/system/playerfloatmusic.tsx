@@ -103,14 +103,16 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
           right: rect.right,
           top: rect.top,
           bottom: rect.bottom,
-        } : { active: false },
+          minimized: false,
+          suppressed: false,
+        } : { active: false, minimized: isMinimized, suppressed: true },
       }));
     };
     publishBounds();
     window.addEventListener('resize', publishBounds);
     return () => {
       window.removeEventListener('resize', publishBounds);
-      window.dispatchEvent(new CustomEvent('floating:bounds', { detail: { active: false } }));
+      window.dispatchEvent(new CustomEvent('floating:bounds', { detail: { active: false, minimized: isMinimized, suppressed: true } }));
     };
   }, [visible, title, playing, isMinimized]);
 

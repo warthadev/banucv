@@ -38,7 +38,7 @@ const quickMenuItems = [
 const Quick: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isPlaying, isStopped, selectedGenre } = useAudio();
+  const { isStopped, selectedGenre } = useAudio();
   const isQuickVisible = useSelector((state: RootState) => state.visible.isQuickVisible);
   const menuRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -56,8 +56,21 @@ const Quick: React.FC = () => {
   const [floatingBounds, setFloatingBounds] = useState<{ left: number; right: number; top: number; bottom: number } | null>(null);
 
   const isDashboard = location.pathname === "/dashboard";
-  const isPlayerActive = (!!selectedGenre && isPlaying && !isStopped) || isCloudPlaylistActive;
+  const isPlayerActive = (!!selectedGenre && !isStopped) || isCloudPlaylistActive;
   const isSettingPage = location.pathname === "/setting";
+
+  const getFloatingBarrier = () => {
+    if (floatingBounds) return floatingBounds;
+    if (!isPlayerActive) return null;
+    const barrierWidth = screenSize === 'mobile' ? 270 : 320;
+    const barrierHeight = 104;
+    return {
+      left: window.innerWidth - barrierWidth - 10,
+      right: window.innerWidth - 10,
+      top: window.innerHeight - barrierHeight - 10,
+      bottom: window.innerHeight - 10,
+    };
+  };
 
   useEffect(() => {
     const handlePlaylistState = (event: Event) => {
@@ -106,24 +119,25 @@ const Quick: React.FC = () => {
       x: Math.max(padding, Math.min(Number.isFinite(pos.x) ? pos.x : padding, maxX)),
       y: Math.max(padding, Math.min(Number.isFinite(pos.y) ? pos.y : padding, maxY))
     };
-    if (!floatingBounds) return safe;
+    const barrier = getFloatingBarrier();
+    if (!barrier) return safe;
 
     const gap = 12;
     const overlaps = (x: number, y: number) => (
-      x < floatingBounds.right + gap &&
-      x + btnSize > floatingBounds.left - gap &&
-      y < floatingBounds.bottom + gap &&
-      y + btnSize > floatingBounds.top - gap
+      x < barrier.right + gap &&
+      x + btnSize > barrier.left - gap &&
+      y < barrier.bottom + gap &&
+      y + btnSize > barrier.top - gap
     );
     if (!overlaps(safe.x, safe.y)) return safe;
 
-    const aboveY = floatingBounds.top - btnSize - gap;
+    const aboveY = barrier.top - btnSize - gap;
     if (aboveY >= padding && !overlaps(safe.x, aboveY)) return { x: safe.x, y: aboveY };
 
-    const leftX = floatingBounds.left - btnSize - gap;
+    const leftX = barrier.left - btnSize - gap;
     if (leftX >= padding && !overlaps(leftX, safe.y)) return { x: leftX, y: safe.y };
 
-    const rightX = floatingBounds.right + gap;
+    const rightX = barrier.right + gap;
     if (rightX <= maxX && !overlaps(rightX, safe.y)) return { x: rightX, y: safe.y };
 
     return { x: safe.x, y: Math.max(padding, aboveY) };
@@ -141,7 +155,7 @@ const Quick: React.FC = () => {
         console.warn('Failed to load quick position');
       }
     }
-  }, [screenSize, floatingBounds]);
+  }, [screenSize, floatingBounds, isPlayerActive]);
 
   useEffect(() => {
     if (hasMoved) {
@@ -150,7 +164,7 @@ const Quick: React.FC = () => {
         setPosition(clamped);
       }
     }
-  }, [screenSize, floatingBounds]);
+  }, [screenSize, floatingBounds, isPlayerActive]);
 
   useEffect(() => {
     if (hasMoved) {

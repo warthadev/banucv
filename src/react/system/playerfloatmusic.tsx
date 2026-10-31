@@ -39,7 +39,7 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
   const location = useLocation();
   const { isPlaying, setIsPlaying, selectedGenre, volume, isStopped } = useAudio();
   const [mediaOverlays, setMediaOverlays] = useState({ mediarender: false, slideshow: false });
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(() => !playlist && localStorage.getItem('floating_player_minimized') === 'true');
   const playlistMode = !!playlist;
   const playing = playlist?.playing ?? isPlaying;
   const title = playlist?.title || selectedGenre;
@@ -53,8 +53,8 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
   const suppressRestoreClickRef = useRef(false);
 
   useEffect(() => {
-    if (!visible) setIsMinimized(false);
-  }, [visible]);
+    if (!playlistMode) localStorage.setItem('floating_player_minimized', String(isMinimized));
+  }, [isMinimized, playlistMode]);
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
@@ -119,9 +119,9 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
       {visible && !isMinimized && (
         <motion.div
           className="dashboard-floating-player-shell"
-          initial={{ opacity: 0, y: 80, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 80, scale: 0.95 }}
+          initial={{ opacity: 0, x: 80, scale: 0.95 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          exit={{ opacity: 0, x: 80, scale: 0.95 }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
         >
           <div

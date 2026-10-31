@@ -51,6 +51,7 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
   const restoreDragStartXRef = useRef<number | null>(null);
   const restoreDragDistanceRef = useRef(0);
   const suppressRestoreClickRef = useRef(false);
+  const minimizeExitRef = useRef(false);
 
   useEffect(() => {
     if (!playlistMode) localStorage.setItem('floating_player_minimized', String(isMinimized));
@@ -71,6 +72,7 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
   const handlePointerUp = () => {
     if (dragStartXRef.current === null) return;
     if (dragDistanceRef.current > 80) {
+      minimizeExitRef.current = true;
       setIsMinimized(true);
       suppressClickRef.current = true;
       window.setTimeout(() => { suppressClickRef.current = false; }, 0);
@@ -123,7 +125,7 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
           className="dashboard-floating-player-shell"
           initial={{ opacity: 0, y: 80, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 80, scale: 0.95 }}
+          exit={minimizeExitRef.current ? { opacity: 0, x: 80, scale: 0.95 } : { opacity: 0, y: 80, scale: 0.95 }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
         >
           <div
@@ -198,6 +200,7 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
           onPointerUp={() => {
             if (restoreDragStartXRef.current === null) return;
             if (restoreDragDistanceRef.current < -40) {
+              minimizeExitRef.current = false;
               setIsMinimized(false);
               suppressRestoreClickRef.current = true;
               window.setTimeout(() => { suppressRestoreClickRef.current = false; }, 0);
@@ -210,7 +213,10 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
             restoreDragDistanceRef.current = 0;
           }}
           onClick={() => {
-            if (!suppressRestoreClickRef.current) setIsMinimized(false);
+            if (!suppressRestoreClickRef.current) {
+              minimizeExitRef.current = false;
+              setIsMinimized(false);
+            }
           }}
           aria-label="Show floating player"
         />

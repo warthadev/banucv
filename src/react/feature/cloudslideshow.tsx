@@ -317,6 +317,17 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('media-overlay:state', {
+      detail: { source: 'slideshow', active: isOpen },
+    }));
+    return () => {
+      window.dispatchEvent(new CustomEvent('media-overlay:state', {
+        detail: { source: 'slideshow', active: false },
+      }));
+    };
+  }, [isOpen]);
+
   const currentItem = useMemo(() => items[index], [items, index]);
   const currentSrc = loaded[index];
   const currentError = !!error[index];

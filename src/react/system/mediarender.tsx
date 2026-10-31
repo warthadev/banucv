@@ -122,6 +122,17 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
   const isAudio = item.type === 'audio';
   const isImage = item.type === 'image';
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('media-overlay:state', {
+      detail: { source: 'mediarender', active: true },
+    }));
+    return () => {
+      window.dispatchEvent(new CustomEvent('media-overlay:state', {
+        detail: { source: 'mediarender', active: false },
+      }));
+    };
+  }, [item.url, item.type]);
+
   const needsAuthFetch = !!token;
   const isHfSource = isHfUrl(item.url);
   const [mediaSrc, setMediaSrc] = useState<string>(needsAuthFetch || isHfSource ? '' : item.url);

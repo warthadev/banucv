@@ -1,5 +1,5 @@
 // src/react/system/playerfloatmusic.tsx
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Music, Pause, Play, Volume2 } from 'lucide-react';
 import { useAudio } from '@hook/useaudio';
@@ -37,11 +37,26 @@ const formatTime = (seconds: number): string => {
 const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
   const location = useLocation();
   const { isPlaying, setIsPlaying, selectedGenre, volume, isStopped } = useAudio();
+  const [mediaOverlays, setMediaOverlays] = useState({ mediarender: false, slideshow: false });
   const playlistMode = !!playlist;
   const playing = playlist?.playing ?? isPlaying;
   const title = playlist?.title || selectedGenre;
-  const visible = location.pathname !== '/setting' && (playlistMode ? playing : (playing && !isStopped && !!selectedGenre));
+  const visible = location.pathname !== '/setting' && !mediaOverlays.mediarender && !mediaOverlays.slideshow && (playlistMode || (!isStopped && !!selectedGenre));
   const playerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOverlayState = (event: Event) => {
+      const detail = (event as CustomEvent<{ source?: 'mediarender' | 'slideshow'; active?: boolean }>).detail;
+      if (!detail?.source) return;
+      setMediaOverlays((current) => ({ ...current, [detail.source]: detail.active === true }));
+    };
+    window.addEventListener('media-overlay:state', handleOverlayState);
+    setMediaOverlays({
+      mediarender: !!document.querySelector('.mediarender-container'),
+      slideshow: !!document.querySelector('.cloudslideshow-overlay'),
+    });
+    return () => window.removeEventListener('media-overlay:state', handleOverlayState);
+  }, []);
 
   useEffect(() => {
     const publishBounds = () => {

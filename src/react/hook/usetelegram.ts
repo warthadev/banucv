@@ -9,7 +9,7 @@ import { useScreenSize } from '@hook/usescreensize';
 import { getActiveBase } from '@config/api';
 import { openGlobalPlaylist, pauseGlobalPlaylist } from '@config/playlistglobal';
 
-export const useTelegram = (sessionString: string | null) => {
+export const useTelegram = (sessionString: string | null, onImageClick?: (file: TelegramFile, url: string) => void) => {
   const dispatch = useDispatch();
   const reduxSelectedChatId = useSelector((state: RootState) => state.cloud.selectedChatId);
 
@@ -229,6 +229,10 @@ export const useTelegram = (sessionString: string | null) => {
   }, [screenSize]);
 
   const handleFileClick = useCallback((file: TelegramFile) => {
+    if (file.media_type === 'image' && selectedChat) {
+      onImageClick?.(file, getStreamUrl(selectedChat.id, file.id));
+      return;
+    }
     if (file.media_type === 'audio' && selectedChat) {
       openGlobalPlaylist([{
         id: String(file.id),
@@ -244,7 +248,7 @@ export const useTelegram = (sessionString: string | null) => {
       fetchFileMetadata(selectedChat.id, file.id);
     }
     if (screenSize === 'mobile') setMobileView('player');
-  }, [screenSize, selectedChat, fetchFileMetadata, getStreamUrl]);
+  }, [screenSize, selectedChat, fetchFileMetadata, getStreamUrl, onImageClick]);
 
   const handleBackToRoot = useCallback(() => {
     setSelectedChat(null);

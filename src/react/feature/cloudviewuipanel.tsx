@@ -722,6 +722,20 @@ export const PlayerPanel: React.FC<{
     );
   }
 
+  if (selectedFile.media_type === 'image') {
+    return (
+      <div className="cloudview-player-panel">
+        <div className="cloudview-file-preview-placeholder">
+          <div className="cloudview-preview-icon" style={{ color: getColor(selectedFile.media_type) }}>
+            <ImageIcon size={56} />
+          </div>
+          <p style={{ fontWeight: 600, fontSize: '18px' }}>{sanitizeText(selectedFile.name)}</p>
+          <span>Open the file from the image list to view it in slideshow</span>
+        </div>
+      </div>
+    );
+  }
+
   const handleMediaError = async () => {
     if (selectedFile.media_type === 'image' || selectedFile.media_type === 'audio') {
       onImageError(selectedFile.id);

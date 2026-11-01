@@ -228,7 +228,28 @@ const CloudView: React.FC = () => {
   const activeSourceDatasetId = activeSource?.datasetId || null;
   const activeSourceHfToken = activeSource?.hfToken || null;
 
-  const telegramHook = useTelegram(activeSourceType === 'telegram' ? activeSourceSession : null);
+  const openImageSlideshow = useCallback((file: any, url: string, token?: string) => {
+    setSlideshowItems([{
+      id: String(file.id),
+      name: file.name,
+      url,
+      thumbUrl: file._thumbUrl,
+      token,
+      size: file.size,
+      mimeType: file.mime_type || file.media_type,
+      width: file.width,
+      height: file.height,
+      date: file.date,
+      caption: file.caption,
+    }]);
+    setSlideshowStartIndex(0);
+    setSlideshowOpen(true);
+  }, []);
+
+  const telegramHook = useTelegram(
+    activeSourceType === 'telegram' ? activeSourceSession : null,
+    (file, url) => openImageSlideshow(file, url),
+  );
   telegramHookRef.current = telegramHook;
   overlayOpenRef.current =
     selectionMode ||
@@ -1301,6 +1322,10 @@ const CloudView: React.FC = () => {
         thumbUrl: file._thumbUrl,
         token: isPublicView ? undefined : activeSourceHfToken || undefined,
       }]);
+      return;
+    }
+    if (file.media_type === 'image' && file._streamUrl) {
+      openImageSlideshow(file, file._streamUrl, isPublicView ? undefined : activeSourceHfToken || undefined);
       return;
     }
     if (file.media_type === 'video') pauseGlobalPlaylist();

@@ -4295,7 +4295,8 @@
 .cloudslideshow-properties {
   position: absolute;
   right: 16px;
-  bottom: 78px;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 30;
   width: min(360px, calc(100% - 32px));
   max-height: min(52vh, 420px);
@@ -4330,7 +4331,7 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: #ffffff;
+  color: inherit;
   cursor: pointer;
 }
 
@@ -4382,6 +4383,15 @@
   text-align: left;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+@media (max-width: 768px) {
+  .cloudslideshow-properties {
+    top: auto;
+    right: 16px;
+    bottom: 78px;
+    transform: none;
+  }
 }
 
 .cloudslideshow-speed-menu {

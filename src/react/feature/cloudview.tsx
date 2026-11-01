@@ -2777,7 +2777,8 @@ const CloudView: React.FC = () => {
     }
 
     return (
-      <CloudViewPack
+      <>
+        <CloudViewPack
         {...telegramHook}
         clearSession={handleClearSingleSession}
         sessionString={activeSourceSession}
@@ -2853,10 +2854,21 @@ const CloudView: React.FC = () => {
         onDeleteRepoConfirm={() => {}}
         onDeleteRepoClose={() => {}}
         visibilityRepoModalOpen={false}
-        visibilityRepoTarget={null}
-        onVisibilityRepoConfirm={() => {}}
-        onVisibilityRepoClose={() => {}}
-      />
+          visibilityRepoTarget={null}
+          onVisibilityRepoConfirm={() => {}}
+          onVisibilityRepoClose={() => {}}
+        />
+        <CloudSlideshow
+          isOpen={slideshowOpen}
+          items={slideshowItems}
+          initialIndex={slideshowStartIndex}
+          onClose={() => {
+            setSlideshowOpen(false);
+            setSlideshowItems([]);
+            setSlideshowStartIndex(0);
+          }}
+        />
+      </>
     );
   }
 

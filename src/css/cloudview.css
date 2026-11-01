@@ -5467,7 +5467,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 6px 4px 16px;
+  padding: 10px 6px 10px 16px;
   font-size: 13px;
   font-weight: 600;
   color: var(--text);

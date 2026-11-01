@@ -97,7 +97,7 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
     const publishBounds = () => {
       const rect = playerRef.current?.getBoundingClientRect();
       window.dispatchEvent(new CustomEvent('floating:bounds', {
-        detail: rect && visible && !isMinimized ? {
+        detail: rect && visible ? {
           active: true,
           left: rect.left,
           right: rect.right,
@@ -176,6 +176,7 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
       )}
       {visible && isMinimized && (
         <motion.button
+          ref={playerRef}
           className={`floating-player-restore${playlist?.cover ? ' has-cover' : ''}`}
           type="button"
           initial={{ opacity: 0, x: 48 }}

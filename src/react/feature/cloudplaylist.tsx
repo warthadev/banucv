@@ -230,7 +230,7 @@ const QueueRow: React.FC<QueueRowProps> = React.memo(({ track, number, active, p
   }, []);
 
   useEffect(() => {
-    if (active) ref.current?.scrollIntoView({ block: 'center' });
+    if (active) ref.current?.scrollIntoView({ block: 'nearest' });
   }, [active]);
 
   const thumb = useTrackCover(track, visible);

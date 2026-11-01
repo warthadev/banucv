@@ -548,12 +548,15 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
                   animate={{ scale: 1 }}
                   exit={{ scale: 0.98 }}
                   transition={{ duration: 0.16 }}
+                  drag
+                  dragMomentum={false}
+                  dragElastic={0.05}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="cloudslideshow-properties-head">
                     <span>Properties</span>
                     <button
-                      className="cloudslideshow-properties-close"
+                      className="cloudslideshow-btn-close"
                       onClick={() => setShowProperties(false)}
                       aria-label="Close properties"
                     >

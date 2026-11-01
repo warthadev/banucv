@@ -229,8 +229,10 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
   }, [screenSize]);
 
   const handleFileClick = useCallback((file: TelegramFile) => {
-    if (file.media_type === 'image' && selectedChat) {
-      onImageClick?.(file, getStreamUrl(selectedChat.id, file.id));
+    const chatId = selectedChat?.id ?? reduxSelectedChatId;
+    const isImage = file.media_type === 'image' || file.media_type === 'photo' || file.mime_type?.startsWith('image/');
+    if (isImage && chatId != null) {
+      onImageClick?.(file, getStreamUrl(chatId, file.id));
       return;
     }
     if (file.media_type === 'audio' && selectedChat) {
@@ -248,7 +250,7 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
       fetchFileMetadata(selectedChat.id, file.id);
     }
     if (screenSize === 'mobile') setMobileView('player');
-  }, [screenSize, selectedChat, fetchFileMetadata, getStreamUrl, onImageClick]);
+  }, [screenSize, selectedChat, reduxSelectedChatId, fetchFileMetadata, getStreamUrl, onImageClick]);
 
   const handleBackToRoot = useCallback(() => {
     setSelectedChat(null);

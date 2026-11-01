@@ -4362,6 +4362,28 @@
   overflow-wrap: anywhere;
 }
 
+.cloudslideshow-properties-list .cloudslideshow-caption-row {
+  display: block;
+  margin-top: 4px;
+}
+
+.cloudslideshow-properties-list .cloudslideshow-caption-row span {
+  display: block;
+  margin-bottom: 6px;
+  text-align: left;
+}
+
+.cloudslideshow-properties-list .cloudslideshow-caption-row strong {
+  display: block;
+  max-width: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .cloudslideshow-speed-menu {
   position: absolute;
   bottom: calc(100% + 12px);

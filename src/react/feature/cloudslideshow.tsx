@@ -558,7 +558,7 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
                   <div><span>Size</span><strong>{formatBytes(currentItem.size)}</strong></div>
                   <div><span>Resolution</span><strong>{currentItem.width && currentItem.height ? `${currentItem.width} × ${currentItem.height}` : '—'}</strong></div>
                   <div><span>Date</span><strong>{formatDate(currentItem.date)}</strong></div>
-                  {currentItem.caption && <div><span>Caption</span><strong>{sanitizeText(currentItem.caption)}</strong></div>}
+                  {currentItem.caption && <div className="cloudslideshow-caption-row"><span>Caption</span><strong>{sanitizeText(currentItem.caption)}</strong></div>}
                 </div>
               </motion.div>
             )}

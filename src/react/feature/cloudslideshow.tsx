@@ -1,7 +1,7 @@
 // src/react/feature/cloudslideshow.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, Pause, Play, Timer, Maximize, Info } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Pause, Play, Timer, Maximize, Info, Download } from 'lucide-react';
 
 const COMPRESS_MAX_SIZE = 1440;
 const COMPRESS_QUALITY = 0.85;
@@ -356,6 +356,23 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
   const currentSrc = loaded[index];
   const currentError = !!error[index];
 
+  const handleDownload = useCallback(async () => {
+    if (!currentItem?.url) return;
+    try {
+      const blob = await fetchAsBlob(currentItem.url, currentItem.token);
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = sanitizeText(currentItem.name) || 'download';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    } catch (err) {
+      console.error('Download failed:', err);
+    }
+  }, [currentItem]);
+
   if (!isOpen || total === 0) return null;
 
   return (
@@ -432,6 +449,33 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
             </>
           )}
 
+          <div className={`cloudslideshow-top-actions ${controlsVisible ? 'visible' : 'hidden'}`}>
+            <button
+              className="cloudslideshow-top-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                void handleDownload();
+                showControlsTemporarily();
+              }}
+              title="Download original file"
+              aria-label="Download original file"
+            >
+              <Download size={24} strokeWidth={2.5} />
+            </button>
+            <button
+              className="cloudslideshow-top-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowProperties((value) => !value);
+                showControlsTemporarily();
+              }}
+              title="Properties"
+              aria-label="Properties"
+            >
+              <Info size={24} strokeWidth={2.5} />
+            </button>
+          </div>
+
           <div className={`cloudslideshow-bar ${controlsVisible ? 'visible' : 'hidden'}`}>
             <div className="cloudslideshow-meta">
               <span className="cloudslideshow-counter">
@@ -442,19 +486,6 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
               </span>
             </div>
             <div className="cloudslideshow-actions">
-              <button
-                className="cloudslideshow-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowProperties((value) => !value);
-                  showControlsTemporarily();
-                }}
-                title="Properties"
-                aria-label="Properties"
-              >
-                <Info size={24} strokeWidth={2.5} color="#ffffff" />
-              </button>
-              
               <button
                 className="cloudslideshow-btn"
                 onClick={(e) => {

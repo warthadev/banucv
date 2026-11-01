@@ -1,7 +1,7 @@
 // src/react/feature/cloudslideshow.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, Pause, Play, Timer, Maximize, Info, Download } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Pause, Play, Timer, Maximize, Info, Download, LoaderCircle } from 'lucide-react';
 
 const COMPRESS_MAX_SIZE = 1440;
 const COMPRESS_QUALITY = 0.85;
@@ -132,6 +132,7 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
   const [speed, setSpeed] = useState(3000);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showProperties, setShowProperties] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   // State Full Cover
   const [isCover, setIsCover] = useState(false);
@@ -357,7 +358,8 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
   const currentError = !!error[index];
 
   const handleDownload = useCallback(async () => {
-    if (!currentItem?.url) return;
+    if (!currentItem?.url || downloading) return;
+    setDownloading(true);
     try {
       const blob = await fetchAsBlob(currentItem.url, currentItem.token);
       const objectUrl = URL.createObjectURL(blob);
@@ -370,8 +372,10 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
       window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
     } catch (err) {
       console.error('Download failed:', err);
+    } finally {
+      setDownloading(false);
     }
-  }, [currentItem]);
+  }, [currentItem, downloading]);
 
   if (!isOpen || total === 0) return null;
 
@@ -452,6 +456,7 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
           <div className={`cloudslideshow-top-actions ${controlsVisible ? 'visible' : 'hidden'}`}>
             <button
               className="cloudslideshow-top-btn"
+              disabled={downloading}
               onClick={(e) => {
                 e.stopPropagation();
                 void handleDownload();
@@ -460,7 +465,7 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
               title="Download original file"
               aria-label="Download original file"
             >
-              <Download size={24} strokeWidth={2.5} />
+              {downloading ? <LoaderCircle className="cloudslideshow-download-spinner" size={24} strokeWidth={2.5} /> : <Download size={24} strokeWidth={2.5} />}
             </button>
             <button
               className="cloudslideshow-top-btn"

@@ -4230,6 +4230,17 @@
   transform: scale(1.05);
 }
 
+.cloudslideshow-top-btn:disabled {
+  opacity: 0.75;
+  cursor: wait;
+  transform: none;
+}
+
+.cloudslideshow-download-spinner {
+  color: #ffffff !important;
+  animation: cloudslideshow-spin 0.8s linear infinite;
+}
+
 .cloudslideshow-bar {
   display: flex;
   align-items: center;
@@ -4519,13 +4530,15 @@
   
   .cloudslideshow-btn, 
   .cloudslideshow-btn-close,
+  .cloudslideshow-top-btn,
   .cloudslideshow-nav { 
-    width: 44px; 
-    height: 44px; 
+    width: 46px;
+    height: 46px;
   }
   
   .cloudslideshow-btn svg, 
   .cloudslideshow-btn-close svg,
+  .cloudslideshow-top-btn svg,
   .cloudslideshow-nav svg { 
     width: 24px; 
     height: 24px; 

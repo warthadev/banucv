@@ -5403,6 +5403,13 @@
   }
 }
 
+.cloudplaylist-ctrl:active:not(:disabled),
+.cloudplaylist-btn:active:not(:disabled),
+.cloudplaylist-qrow:active {
+  background: var(--primary-alpha);
+  color: var(--primary);
+}
+
 .cloudplaylist-ctrl.active {
   color: var(--primary);
 }

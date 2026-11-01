@@ -82,10 +82,6 @@ const AppContent: React.FC = () => {
   const isSettingPage = location.pathname === "/setting";
 
   useEffect(() => {
-    if (isSettingPage && playlistOpen) {
-      closePlaylist();
-      return;
-    }
     if (playlistOpen && isPlaying) {
       closePlaylist();
     }
@@ -103,7 +99,8 @@ const AppContent: React.FC = () => {
       {!hideGlobalUI && !isSettingPage && !playlistOpen && <PlayerFloatMusic />}
 
       <CloudPlaylist
-        isOpen={playlistOpen && !isSettingPage}
+        isOpen={playlistOpen}
+        showUI={!isSettingPage}
         tracks={playlistTracks}
         initialIndex={playlistStartIndex}
         onClose={closePlaylist}

@@ -19,6 +19,7 @@ export interface PlaylistTrack {
 
 interface CloudPlaylistProps {
   isOpen: boolean;
+  showUI?: boolean;
   tracks: PlaylistTrack[];
   initialIndex?: number;
   onClose: () => void;
@@ -280,7 +281,7 @@ const QueueRow: React.FC<QueueRowProps> = React.memo(({ track, number, active, p
 });
 QueueRow.displayName = 'QueueRow';
 
-const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIndex = 0, onClose }) => {
+const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, showUI = true, tracks, initialIndex = 0, onClose }) => {
   const total = tracks.length;
   const { index, order, shuffle, repeat, hasPrev, hasNext, nextIndex, reset, goNext, goPrev, jumpTo, toggleShuffle, cycleRepeat } = usePlaylist(total, initialIndex);
 
@@ -530,11 +531,11 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
   }, [onClose, setPlayIntent]);
 
   useEffect(() => {
-    if (!isOpen || minimized) return;
+    if (!isOpen || !showUI || minimized) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = prevOverflow; };
-  }, [isOpen, minimized]);
+  }, [isOpen, showUI, minimized]);
 
   const artSrc = useTrackCover(track, ready);
 
@@ -580,7 +581,7 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
     }
   };
 
-  if (!isOpen || total === 0 || !track) return null;
+  if (!isOpen || !showUI || total === 0 || !track) return null;
 
   const percent = duration > 0 ? (currentTime / duration) * 100 : 0;
   const shownPercent = seeking ? seekValue : percent;

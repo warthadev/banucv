@@ -535,31 +535,40 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
           <AnimatePresence>
             {showProperties && currentItem && (
               <motion.div
-                className="cloudslideshow-properties"
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.98 }}
+                className="cloudslideshow-properties-overlay"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 transition={{ duration: 0.16 }}
-                onClick={(e) => e.stopPropagation()}
+                onClick={() => setShowProperties(false)}
               >
-                <div className="cloudslideshow-properties-head">
-                  <span>Properties</span>
-                  <button
-                    className="cloudslideshow-properties-close"
-                    onClick={() => setShowProperties(false)}
-                    aria-label="Close properties"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-                <div className="cloudslideshow-properties-list">
-                  <div><span>Name</span><strong>{sanitizeText(currentItem.name) || '—'}</strong></div>
-                  <div><span>Type</span><strong>{sanitizeText(currentItem.mimeType) || 'Image'}</strong></div>
-                  <div><span>Size</span><strong>{formatBytes(currentItem.size)}</strong></div>
-                  <div><span>Resolution</span><strong>{currentItem.width && currentItem.height ? `${currentItem.width} × ${currentItem.height}` : '—'}</strong></div>
-                  <div><span>Date</span><strong>{formatDate(currentItem.date)}</strong></div>
-                  {currentItem.caption && <div className="cloudslideshow-caption-row"><span>Caption</span><strong>{sanitizeText(currentItem.caption)}</strong></div>}
-                </div>
+                <motion.div
+                  className="cloudslideshow-properties"
+                  initial={{ scale: 0.98 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0.98 }}
+                  transition={{ duration: 0.16 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="cloudslideshow-properties-head">
+                    <span>Properties</span>
+                    <button
+                      className="cloudslideshow-properties-close"
+                      onClick={() => setShowProperties(false)}
+                      aria-label="Close properties"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                  <div className="cloudslideshow-properties-list">
+                    <div><span>Name</span><strong>{sanitizeText(currentItem.name) || '—'}</strong></div>
+                    <div><span>Type</span><strong>{sanitizeText(currentItem.mimeType) || 'Image'}</strong></div>
+                    <div><span>Size</span><strong>{formatBytes(currentItem.size)}</strong></div>
+                    <div><span>Resolution</span><strong>{currentItem.width && currentItem.height ? `${currentItem.width} × ${currentItem.height}` : '—'}</strong></div>
+                    <div><span>Date</span><strong>{formatDate(currentItem.date)}</strong></div>
+                    {currentItem.caption && <div className="cloudslideshow-caption-row"><span>Caption</span><strong>{sanitizeText(currentItem.caption)}</strong></div>}
+                  </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>

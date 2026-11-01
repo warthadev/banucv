@@ -54,14 +54,12 @@ const Quick: React.FC = () => {
   const [screenSize, setScreenSize] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
   const [isCloudPlaylistActive, setIsCloudPlaylistActive] = useState(false);
   const [floatingBounds, setFloatingBounds] = useState<{ left: number; right: number; top: number; bottom: number } | null>(null);
-  const [floatingSuppressed, setFloatingSuppressed] = useState(false);
 
   const isDashboard = location.pathname === "/dashboard";
   const isPlayerActive = (!!selectedGenre && !isStopped) || isCloudPlaylistActive;
   const isSettingPage = location.pathname === "/setting";
 
   const getFloatingBarrier = () => {
-    if (floatingSuppressed) return null;
     if (floatingBounds) return floatingBounds;
     if (!isPlayerActive) return null;
     const barrierWidth = screenSize === 'mobile' ? 270 : 320;
@@ -85,12 +83,10 @@ const Quick: React.FC = () => {
 
   useEffect(() => {
     const handleFloatingBounds = (event: Event) => {
-      const detail = (event as CustomEvent<{ active?: boolean; left?: number; right?: number; top?: number; bottom?: number; suppressed?: boolean }>).detail;
+      const detail = (event as CustomEvent<{ active?: boolean; left?: number; right?: number; top?: number; bottom?: number }>).detail;
       if (detail?.active && [detail.left, detail.right, detail.top, detail.bottom].every((value) => typeof value === 'number')) {
-        setFloatingSuppressed(false);
         setFloatingBounds({ left: detail.left!, right: detail.right!, top: detail.top!, bottom: detail.bottom! });
       } else {
-        setFloatingSuppressed(detail?.suppressed === true);
         setFloatingBounds(null);
       }
     };
@@ -159,7 +155,7 @@ const Quick: React.FC = () => {
         console.warn('Failed to load quick position');
       }
     }
-  }, [screenSize, floatingBounds, floatingSuppressed, isPlayerActive]);
+  }, [screenSize, floatingBounds, isPlayerActive]);
 
   useEffect(() => {
     if (hasMoved) {
@@ -168,7 +164,7 @@ const Quick: React.FC = () => {
         setPosition(clamped);
       }
     }
-  }, [screenSize, floatingBounds, floatingSuppressed, isPlayerActive]);
+  }, [screenSize, floatingBounds, isPlayerActive]);
 
   useEffect(() => {
     if (hasMoved) {

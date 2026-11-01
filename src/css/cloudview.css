@@ -5396,9 +5396,11 @@
   fill: currentColor;
 }
 
-.cloudplaylist-ctrl:hover:not(:disabled) {
-  background: var(--primary-alpha);
-  color: var(--primary);
+@media (hover: hover) {
+  .cloudplaylist-ctrl:hover:not(:disabled) {
+    background: var(--primary-alpha);
+    color: var(--primary);
+  }
 }
 
 .cloudplaylist-ctrl.active {
@@ -5442,9 +5444,11 @@
   fill: currentColor;
 }
 
-.cloudplaylist-play:hover {
-  transform: scale(1.05);
-  opacity: 0.9;
+@media (hover: hover) {
+  .cloudplaylist-play:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
 }
 
 .cloudplaylist-queue {

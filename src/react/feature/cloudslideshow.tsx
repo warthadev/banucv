@@ -1,7 +1,7 @@
 // src/react/feature/cloudslideshow.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, Pause, Play, Timer, Maximize } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Pause, Play, Timer, Maximize, Info } from 'lucide-react';
 
 const COMPRESS_MAX_SIZE = 1440;
 const COMPRESS_QUALITY = 0.85;
@@ -21,6 +21,12 @@ export interface SlideItem {
   url: string;
   thumbUrl?: string;
   token?: string;
+  size?: number;
+  mimeType?: string;
+  width?: number;
+  height?: number;
+  date?: number;
+  caption?: string;
 }
 
 interface CloudSlideshowProps {
@@ -35,6 +41,20 @@ const sanitizeText = (text: string | undefined | null): string => {
   const element = document.createElement('div');
   element.textContent = text;
   return element.textContent || '';
+};
+
+const formatBytes = (bytes?: number): string => {
+  if (!Number.isFinite(bytes) || !bytes || bytes <= 0) return '—';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const unit = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  return `${(bytes / (1024 ** unit)).toFixed(unit === 0 ? 0 : 2)} ${units[unit]}`;
+};
+
+const formatDate = (timestamp?: number): string => {
+  if (!timestamp) return '—';
+  const value = timestamp > 1e12 ? timestamp : timestamp * 1000;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString();
 };
 
 const fetchAsBlob = async (url: string, token?: string): Promise<Blob> => {
@@ -111,6 +131,7 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
   
   const [speed, setSpeed] = useState(3000);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const [showProperties, setShowProperties] = useState(false);
 
   // State Full Cover
   const [isCover, setIsCover] = useState(false);
@@ -173,6 +194,7 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
       setControlsVisible(true);
       setShowSpeedMenu(false);
       setIsCover(false);
+      setShowProperties(false);
       resetControlsTimeout();
 
       urlsRef.current.forEach((u) => {
@@ -247,11 +269,13 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
 
   const next = useCallback(() => {
     setIndex((prev) => (prev + 1) % total);
+    setShowProperties(false);
     showControlsTemporarily();
   }, [total, showControlsTemporarily]);
 
   const prev = useCallback(() => {
     setIndex((prev) => (prev - 1 + total) % total);
+    setShowProperties(false);
     showControlsTemporarily();
   }, [total, showControlsTemporarily]);
 
@@ -418,6 +442,18 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
               </span>
             </div>
             <div className="cloudslideshow-actions">
+              <button
+                className="cloudslideshow-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowProperties((value) => !value);
+                  showControlsTemporarily();
+                }}
+                title="Properties"
+                aria-label="Properties"
+              >
+                <Info size={24} strokeWidth={2.5} color="#ffffff" />
+              </button>
               
               <button
                 className="cloudslideshow-btn"
@@ -496,6 +532,37 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
               </button>
             </div>
           </div>
+          <AnimatePresence>
+            {showProperties && currentItem && (
+              <motion.div
+                className="cloudslideshow-properties"
+                initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 12, scale: 0.98 }}
+                transition={{ duration: 0.16 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="cloudslideshow-properties-head">
+                  <span>Properties</span>
+                  <button
+                    className="cloudslideshow-properties-close"
+                    onClick={() => setShowProperties(false)}
+                    aria-label="Close properties"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className="cloudslideshow-properties-list">
+                  <div><span>Name</span><strong>{sanitizeText(currentItem.name) || '—'}</strong></div>
+                  <div><span>Type</span><strong>{sanitizeText(currentItem.mimeType) || 'Image'}</strong></div>
+                  <div><span>Size</span><strong>{formatBytes(currentItem.size)}</strong></div>
+                  <div><span>Resolution</span><strong>{currentItem.width && currentItem.height ? `${currentItem.width} × ${currentItem.height}` : '—'}</strong></div>
+                  <div><span>Date</span><strong>{formatDate(currentItem.date)}</strong></div>
+                  {currentItem.caption && <div><span>Caption</span><strong>{sanitizeText(currentItem.caption)}</strong></div>}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </motion.div>
     </AnimatePresence>

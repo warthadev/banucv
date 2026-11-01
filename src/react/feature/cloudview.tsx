@@ -1676,6 +1676,12 @@ const CloudView: React.FC = () => {
       url: i._streamUrl,
       thumbUrl: i._thumbUrl,
       token: tokenForSlides,
+      size: i.size,
+      mimeType: i.mime_type || i.media_type,
+      width: i.width,
+      height: i.height,
+      date: i.date,
+      caption: i.caption,
     }));
 
     setSlideshowItems(items);

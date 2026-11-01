@@ -4397,6 +4397,15 @@
   word-break: break-word;
 }
 
+.cloudslideshow-properties .cloudslideshow-btn-close {
+  color: #ffffff !important;
+}
+
+.cloudslideshow-properties .cloudslideshow-btn-close svg {
+  color: #ffffff !important;
+  stroke: currentColor;
+}
+
 @media (max-width: 768px) {
   .cloudslideshow-properties-overlay {
     align-items: flex-end;

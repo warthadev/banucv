@@ -581,7 +581,7 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, showUI = true, tr
     }
   };
 
-  if (!isOpen || !showUI || total === 0 || !track) return null;
+  if (!isOpen || total === 0 || !track) return null;
 
   const percent = duration > 0 ? (currentTime / duration) * 100 : 0;
   const shownPercent = seeking ? seekValue : percent;
@@ -593,7 +593,7 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, showUI = true, tr
     <AnimatePresence>
       <motion.div
         className="cloudplaylist-overlay"
-        style={minimized ? {
+        style={!showUI ? { display: 'none' } : minimized ? {
           background: 'transparent',
           backdropFilter: 'none',
           WebkitBackdropFilter: 'none',

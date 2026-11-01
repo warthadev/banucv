@@ -103,6 +103,8 @@ const compressBlob = async (raw: Blob): Promise<string> => {
 };
 
 const loadImage = async (item: SlideItem): Promise<string> => {
+  if (item.url.includes('/telegram/stream/')) return item.url;
+
   if (item.thumbUrl && item.thumbUrl.length > 0) {
     try {
       const raw = await fetchAsBlob(item.thumbUrl, item.token);

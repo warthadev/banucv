@@ -647,7 +647,7 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
             <div className="cloudplaylist-header-actions">
               <button
                 className="cloudplaylist-btn"
-                onClick={(e) => { e.preventDefault(); e.currentTarget.focus({ preventScroll: true }); handleDownload(); }}
+                onClick={(e) => { e.preventDefault(); handleDownload(); }}
                 title="Download current track"
                 disabled={downloading}
                 style={{ opacity: downloading ? 0.5 : 1 }}
@@ -656,21 +656,21 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
               </button>
               <button
                 className={`cloudplaylist-btn ${queueOpen ? 'active' : ''}`}
-                onClick={(e) => { e.preventDefault(); e.currentTarget.focus({ preventScroll: true }); setQueueOpen((o) => !o); }}
+                onClick={(e) => { e.preventDefault(); setQueueOpen((o) => !o); }}
                 title="Queue"
               >
                 <ListMusic size={24} />
               </button>
               <button
                 className="cloudplaylist-btn"
-                onClick={(e) => { e.preventDefault(); e.currentTarget.focus({ preventScroll: true }); setMinimized((value) => !value); setQueueOpen(false); }}
+                onClick={(e) => { e.preventDefault(); setMinimized((value) => !value); setQueueOpen(false); }}
                 title={minimized ? 'Restore' : 'Minimize'}
               >
                 {minimized ? <Maximize2 size={22} /> : <Minimize2 size={22} />}
               </button>
               <button
                 className="cloudplaylist-btn"
-                onClick={(e) => { e.preventDefault(); e.currentTarget.focus({ preventScroll: true }); closePlaylist(); }}
+                onClick={(e) => { e.preventDefault(); closePlaylist(); }}
                 title="Close"
               >
                 <X size={28} />
@@ -814,7 +814,7 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, tracks, initialIn
                     <span>{total} tracks</span>
                     <button
                       className="cloudplaylist-btn"
-                      onClick={(e) => { e.preventDefault(); e.currentTarget.focus({ preventScroll: true }); setQueueOpen(false); }}
+                      onClick={(e) => { e.preventDefault(); setQueueOpen(false); }}
                       title="Close queue"
                     >
                       <X size={22} />

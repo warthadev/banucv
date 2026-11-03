@@ -206,7 +206,7 @@ const Quick: React.FC = () => {
   };
 
   const handleDragStart = (e: React.MouseEvent<HTMLButtonElement> | React.TouchEvent<HTMLButtonElement>) => {
-    e.preventDefault();
+    if (!('touches' in e)) e.preventDefault();
     
     let clientX, clientY;
     if ('touches' in e) {

@@ -6,8 +6,7 @@ import { auth, db } from '@config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { HuggingFaceIcon } from '@control/icon';
 import { getActiveBase } from '@config/api';
-
-const HF_API_BASE = 'https://huggingface.co/api';
+import { HF_API_BASE } from '@config/huggingface';
 
 export interface HFAccount {
   id: string;

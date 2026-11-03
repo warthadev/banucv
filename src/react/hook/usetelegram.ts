@@ -329,9 +329,9 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
       } else if (sortField === 'date') {
         const dateA = a.date || 0;
         const dateB = b.date || 0;
-        cmp = dateA - dateB;
+        cmp = dateB - dateA;
       } else if (sortField === 'size') {
-        cmp = (a.size || 0) - (b.size || 0);
+        cmp = (b.size || 0) - (a.size || 0);
       } else if (sortField === 'type') {
         cmp = a.media_type.localeCompare(b.media_type);
       }

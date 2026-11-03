@@ -156,6 +156,8 @@ const CloudView: React.FC = () => {
   const folderLoadedRef = useRef<string>('');
   const isFetchingRef = useRef<boolean>(false);
   const isFetchingReposRef = useRef<boolean>(false);
+  const hfDatesFetchingRef = useRef<Set<string>>(new Set());
+  const hfDatesVersionRef = useRef<Record<string, number>>({});
   const hfFileRestoreDoneRef = useRef<boolean>(!reduxSelectedFileId);
   const hfAdaptedItemsRef = useRef<any[]>([]);
   const transferReposCacheRef = useRef<Record<string, TransferRepo[]>>({});

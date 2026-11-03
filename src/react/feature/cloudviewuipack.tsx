@@ -9,7 +9,7 @@ import type { TelegramChat, TelegramFile, ViewMode, MobileView, SortField, SortD
 import type { HFRepo } from '@config/cloudsource';
 import Loading from '@control/loading';
 import { CloudModalHFSearch } from './cloudmodalhfsrch';
-import type { HFSearchRepo } from './cloudmodalhfsrch';
+import type { HFSearchRepo } from '@config/huggingface';
 import CloudModalSelection from './cloudmodalselection';
 import type { TransferAccount, TransferRepo } from './cloudmodalselection';
 import type { CloudViewPackProps } from '@config/cloudviewtypes';

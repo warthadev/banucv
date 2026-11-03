@@ -3,24 +3,8 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, Loader2, User, Folder, Lock, ChevronRight, AlertCircle } from "lucide-react";
 import { modalVariants, overlayVariants } from "@animation/githubeditor";
-
-export interface HFSearchRepo {
-  id: string;
-  name: string;
-  full_name: string;
-  type: "dataset" | "model" | "space";
-  private: boolean;
-  likes?: number;
-  downloads?: number;
-}
-
-export interface HFSearchUser {
-  id: string;
-  username: string;
-  fullname?: string;
-  avatarUrl?: string;
-  isOrg?: boolean;
-}
+import { HF_API_BASE, type HFSearchRepo, type HFSearchUser } from "@config/huggingface";
+export type { HFSearchRepo, HFSearchUser } from "@config/huggingface";
 
 interface CloudModalHFSearchProps {
   isOpen: boolean;
@@ -28,8 +12,6 @@ interface CloudModalHFSearchProps {
   onSelectRepo: (repo: HFSearchRepo) => void;
   token?: string;
 }
-
-const HF_API_BASE = "https://huggingface.co/api";
 
 const REPO_TYPE_ORDER: Record<string, number> = {
   dataset: 0,

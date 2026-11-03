@@ -1,5 +1,7 @@
 // src/react/config/cloudsource.ts
 export type CloudSourceType = 'telegram' | 'hf_dataset';
+import type { HFRepo } from './huggingface';
+export type { HFFile, HFRepo, HFFolderStructure } from './huggingface';
 
 export interface CloudSource {
   id: string;
@@ -27,34 +29,6 @@ export interface CloudSource {
   currentRepo?: string;         // repo yang sedang dipilih
   currentRepoType?: 'dataset' | 'model' | 'space' | '';
   currentPath?: string;         // path folder saat ini
-}
-
-export interface HFFile {
-  id: string;
-  name: string;
-  size: number;
-  type: string;
-  url: string;
-  path?: string;
-  createdAt?: Date;
-}
-
-export interface HFRepo {
-  name: string;
-  full_name: string;
-  type: 'dataset' | 'model' | 'space';
-  private: boolean;
-  last_modified?: string;
-  size?: number;
-  description?: string;
-  likes?: number;
-  downloads?: number;
-}
-
-export interface HFFolderStructure {
-  folders: string[];
-  files: HFFile[];
-  totalSize: number;
 }
 
 export const DEFAULT_SOURCES: CloudSource[] = [];

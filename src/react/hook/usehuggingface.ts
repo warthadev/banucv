@@ -1,53 +1,25 @@
 // src/react/hook/usehuggingface.ts
 import { useCallback, useMemo, useState } from 'react';
-import type { HFFile } from '@config/cloudsource';
 import { getActiveBase } from '@config/api';
+import {
+  HF_API_BASE,
+  COVER_IMAGE_EXT,
+  COVER_VIDEO_EXT,
+  buildAvatarUrl,
+  type HFFile,
+  type HFRepo,
+  type HFFolderStructure,
+  type HFSearchUser,
+  type HFSearchRepo,
+} from '@config/huggingface';
 
-const HF_API_BASE = 'https://huggingface.co/api';
-
-export interface HFRepo {
-  name: string;
-  full_name: string;
-  type: 'dataset' | 'model' | 'space';
-  private: boolean;
-  last_modified?: string;
-  size?: number;
-  description?: string;
-  likes?: number;
-  downloads?: number;
-}
-
-const COVER_IMAGE_EXT = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'avif']);
-const COVER_VIDEO_EXT = new Set(['mp4', 'mkv', 'webm', 'mov', 'avi', 'm4v']);
-
-export interface HFFolderStructure {
-  folders: { name: string; size: number; coverPath?: string; coverSize?: number }[];
-  files: HFFile[];
-  totalSize: number;
-}
-
-export interface HFSearchUser {
-  id: string;
-  username: string;
-  fullname?: string;
-  avatarUrl?: string;
-  isOrg?: boolean;
-}
-
-export interface HFSearchRepo {
-  id: string;
-  name: string;
-  full_name: string;
-  type: 'dataset' | 'model' | 'space';
-  private: boolean;
-  likes?: number;
-  downloads?: number;
-}
-
-const buildAvatarUrl = (name: string, avatar?: string): string => {
-  if (avatar && avatar.length > 0) return avatar;
-  return `https://huggingface.co/api/avatars/${encodeURIComponent(name)}`;
-};
+export type {
+  HFFile,
+  HFRepo,
+  HFFolderStructure,
+  HFSearchUser,
+  HFSearchRepo,
+} from '@config/huggingface';
 
 export const useHuggingFace = () => {
   const [loading, setLoading] = useState(false);

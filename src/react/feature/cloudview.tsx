@@ -15,7 +15,8 @@ import { useTelegram } from '@hook/usetelegram';
 import { useScreenSize } from '@hook/usescreensize';
 import { useCloudSource, generateUniqueName, clearAllHFSessions } from '@hook/usecloudsource';
 import { useTelegramAuth } from '@hook/usetelegramauth';
-import { useHuggingFace, type HFRepo, type HFFolderStructure } from '@hook/usehuggingface';
+import { useHuggingFace } from '@hook/usehuggingface';
+import type { HFRepo, HFFolderStructure } from '@config/huggingface';
 import { CloudViewPack } from './cloudviewuipack';
 import { MediaRenderModal } from '@system/mediarendermodal';
 import { downloadMediaWithName } from '@system/mediarendermodal';
@@ -30,7 +31,7 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import Loading from '@control/loading';
 import { SAME_ACCOUNT_ID } from './cloudmodalselection';
 import type { TransferAccount, TransferRepo } from './cloudmodalselection';
-import type { HFSearchRepo } from './cloudmodalhfsrch';
+import type { HFSearchRepo } from '@config/huggingface';
 import type { HFBulkContext, NavSnapshot } from '@config/cloudviewtypes';
 import {
   HF_SIDEBAR_WIDTH_KEY,

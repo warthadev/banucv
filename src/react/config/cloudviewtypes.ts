@@ -1,6 +1,6 @@
 // src/react/config/cloudviewtypes.ts
 import type React from 'react';
-import type { HFSearchRepo } from '@feature/cloudmodalhfsrch';
+import type { HFSearchRepo } from '@config/huggingface';
 import type { TransferAccount, TransferRepo } from '@feature/cloudmodalselection';
 
 export interface HFBulkContext {

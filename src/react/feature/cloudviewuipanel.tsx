@@ -684,7 +684,7 @@ export const PlayerPanel: React.FC<{
   getStreamUrl
 }) => {
   const isFolder = (selectedFile as any)?._isFolder === true;
-  const isMedia = !!selectedFile && !isFolder && ['video', 'audio', 'image', 'gif'].includes(selectedFile.media_type);
+  const isMedia = !!selectedFile && !isFolder && ['video', 'gif'].includes(selectedFile.media_type);
   const rawStreamUrl = selectedFile && !isFolder ? getStreamUrl(selectedChat?.id ?? 0, selectedFile.id) : '';
 
   if (!selectedFile || (sourceType === 'telegram' && !selectedChat)) return <div className="cloudview-state-box"><Play size={48} className="cloudview-state-icon" /><p>Select a file</p></div>;
@@ -737,7 +737,7 @@ export const PlayerPanel: React.FC<{
   }
 
   const handleMediaError = async () => {
-    if (selectedFile.media_type === 'image' || selectedFile.media_type === 'audio') {
+    if (selectedFile.media_type === 'image') {
       onImageError(selectedFile.id);
       onFileGone(selectedFile.id);
     } else {

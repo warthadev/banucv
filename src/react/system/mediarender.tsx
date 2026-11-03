@@ -1,6 +1,6 @@
 // src/react/system/mediarender.tsx
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Play, Pause, Volume2, VolumeX, Maximize2, Download, SkipBack, SkipForward, Music, ExternalLink, AlertTriangle } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize2, Download, ExternalLink, AlertTriangle } from 'lucide-react';
 import { formatDuration, formatBytes } from '@config/utils';
 import Loading from '@control/loading';
 import {
@@ -13,7 +13,7 @@ import {
 
 const HF_SIGNED_URL_REFRESH_MS = 5 * 60 * 1000;
 
-export type VideoMediaType = 'video' | 'audio' | 'gif';
+export type VideoMediaType = 'video' | 'gif';
 
 export interface VideoMediaItem {
   id: string | number;
@@ -52,8 +52,6 @@ const sanitizeText = (text: string | undefined | null): string => {
 const MIME_BY_EXT: Record<string, string> = {
   mp4: 'video/mp4', m4v: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm',
   mkv: 'video/x-matroska', ogv: 'video/ogg', gif: 'image/gif',
-  mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav',
-  ogg: 'audio/ogg', oga: 'audio/ogg', opus: 'audio/ogg', flac: 'audio/flac',
 };
 
 const guessMime = (name: string | undefined, type: VideoMediaType, current: string): string => {
@@ -63,7 +61,7 @@ const guessMime = (name: string | undefined, type: VideoMediaType, current: stri
   const ext = (name?.split('.').pop() || '').toLowerCase();
   if (MIME_BY_EXT[ext]) return MIME_BY_EXT[ext];
   if (type === 'video' || type === 'gif') return 'video/mp4';
-  return 'audio/mpeg';
+  return 'video/mp4';
 };
 
 const classifyVideoError = (videoEl: HTMLVideoElement | null): MediaErrorKind => {
@@ -95,7 +93,6 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
   token,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [isPlaying, setIsPlaying] = useState(autoPlay);
@@ -114,7 +111,6 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
   const [videoOrientation, setVideoOrientation] = useState<'landscape' | 'portrait' | null>(null);
 
   const isVideo = item.type === 'video' || item.type === 'gif';
-  const isAudio = item.type === 'audio';
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('media-overlay:state', {
@@ -173,7 +169,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
 
     (async () => {
       try {
-        if (item.type === 'video' || item.type === 'gif' || item.type === 'audio') {
+        if (item.type === 'video' || item.type === 'gif') {
           const signed = await resolveHfSignedUrl(item.url, token, controller.signal);
           if (cancelled) return;
           if (signed) {
@@ -227,22 +223,17 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
         videoRef.current.removeAttribute('src');
         videoRef.current.load();
       }
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.removeAttribute('src');
-        audioRef.current.load();
-      }
     };
   }, []);
 
   const refreshSigned = useCallback(async (force = false) => {
     if (!isHfSource) return;
-    if (item.type !== 'video' && item.type !== 'audio') return;
+    if (!isVideo) return;
     if (!mediaSrc || codecIssue) return;
     if (autoRefreshInFlightRef.current) return;
     if (!force && Date.now() - signedAtRef.current < HF_SIGNED_URL_MAX_AGE_MS) return;
 
-    const element = isVideo ? videoRef.current : audioRef.current;
+    const element = videoRef.current;
     if (!element) return;
 
     autoRefreshInFlightRef.current = true;
@@ -262,15 +253,15 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
     } finally {
       autoRefreshInFlightRef.current = false;
     }
-  }, [isHfSource, item.url, item.type, token, isVideo, mediaSrc, codecIssue]);
+  }, [isHfSource, item.url, token, isVideo, mediaSrc, codecIssue]);
 
   useEffect(() => {
     if (!isHfSource) return;
-    if (item.type !== 'video' && item.type !== 'audio') return;
+    if (!isVideo) return;
     if (!mediaSrc) return;
 
     const interval = setInterval(() => {
-      const element = isVideo ? videoRef.current : audioRef.current;
+      const element = videoRef.current;
       if (document.hidden && (!element || element.paused)) return;
       void refreshSigned(false);
     }, HF_SIGNED_URL_REFRESH_MS);
@@ -284,7 +275,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
       clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [isHfSource, item.type, mediaSrc, isVideo, refreshSigned]);
+  }, [isHfSource, mediaSrc, isVideo, refreshSigned]);
 
   const resetControlsTimeout = useCallback(() => {
     if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
@@ -355,7 +346,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
   }, [showControlsTemporarily]);
 
   const handleLoadedMetadata = useCallback(() => {
-    const element = isVideo ? videoRef.current : audioRef.current;
+    const element = videoRef.current;
     if (element) {
       if (isVideo && videoRef.current) {
         const { videoWidth, videoHeight } = videoRef.current;
@@ -387,7 +378,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
   }, [isVideo, showControlsTemporarily]);
 
   const handleDurationChange = useCallback(() => {
-    const element = isVideo ? videoRef.current : audioRef.current;
+    const element = videoRef.current;
     if (element && isFinite(element.duration)) {
       setDuration(element.duration);
     }
@@ -395,7 +386,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
 
   const handlePlayPause = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    const element = isVideo ? videoRef.current : audioRef.current;
+    const element = videoRef.current;
     if (!element) return;
     if (isPlaying) {
       element.pause();
@@ -409,7 +400,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
   }, [isPlaying, isVideo, showControlsTemporarily]);
 
   const handleSeek = useCallback((value: number) => {
-    const element = isVideo ? videoRef.current : audioRef.current;
+    const element = videoRef.current;
     if (!element || !duration) return;
     const newTime = (value / 100) * duration;
     element.currentTime = newTime;
@@ -433,14 +424,6 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
     e.stopPropagation();
     setIsDragging(false);
   }, []);
-
-  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isVideo) return;
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    setIsMuted(newVolume === 0);
-    if (videoRef.current) videoRef.current.volume = newVolume;
-  }, [isVideo]);
 
   const handleToggleMute = useCallback((e: React.MouseEvent) => {
     if (!isVideo) return;
@@ -472,7 +455,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
 
   const handleTimeUpdate = useCallback(() => {
     if (isDragging) return;
-    const element = isVideo ? videoRef.current : audioRef.current;
+    const element = videoRef.current;
     if (element) {
       const time = element.currentTime;
       savedTimeRef.current = time;
@@ -515,7 +498,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
   const handleError = useCallback(() => {
     const videoEl = videoRef.current;
 
-    if (isVideo || isAudio) {
+    if (isVideo) {
       let kind: MediaErrorKind = 'unknown';
 
       if (videoEl) {
@@ -564,7 +547,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
     setError(`Failed to load ${item.type}`);
     onError?.(new Error(`Failed to load ${item.type}`));
     setIsLoading(false);
-  }, [item.type, onError, token, isVideo, isAudio, mediaSrc, isHfSource]);
+  }, [item.type, onError, token, isVideo, mediaSrc, isHfSource]);
 
   const handleVideoEnded = useCallback(() => {
     setIsPlaying(false);
@@ -572,7 +555,6 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
     setCurrentTime(0);
     setDragValue(0);
     if (videoRef.current) videoRef.current.currentTime = 0;
-    if (audioRef.current) audioRef.current.currentTime = 0;
     showControlsTemporarily();
   }, [showControlsTemporarily]);
 
@@ -594,8 +576,8 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
   }, [volume, isVideo]);
 
   useEffect(() => {
-    if (autoPlay && (isVideo || isAudio)) {
-      const element = isVideo ? videoRef.current : audioRef.current;
+    if (autoPlay && isVideo) {
+      const element = videoRef.current;
       playingIntentRef.current = true;
       element?.play().catch(() => {
         setIsPlaying(false);
@@ -603,7 +585,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
         setIsLoading(false);
       });
     }
-  }, [autoPlay, isVideo, isAudio]);
+  }, [autoPlay, isVideo]);
 
   useEffect(() => {
     resetControlsTimeout();
@@ -619,114 +601,6 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
-  if (isAudio) {
-    const sanitizedName = sanitizeText(item.name);
-    const sanitizedCaption = sanitizeText(item.caption);
-    const audioUrl = mediaSrc;
-    return (
-      <div ref={containerRef} className={`mediarender-container ${className}`}>
-        <div className="mediarender-audio-wrap">
-          <div className="mediarender-audio-art">
-            <div className="mediarender-audio-art-inner">
-              <Music size={56} strokeWidth={1.5} />
-            </div>
-          </div>
-
-          {isLoading && <Loading />}
-
-          <div className="mediarender-audio-meta">
-            <h3 className="mediarender-audio-name">{sanitizedName || 'Unknown Track'}</h3>
-            <span className="mediarender-audio-sub">
-              Audio • {item.duration ? formatDuration(item.duration) : (duration && isFinite(duration) ? formatDuration(duration) : '—')}
-            </span>
-          </div>
-
-          <div className="mediarender-audio-progress-area">
-            <input
-              type="range"
-              className="mediarender-audio-progress"
-              min="0"
-              max="100"
-              step="0.01"
-              value={dragValue}
-              onChange={handleProgressChange}
-              onMouseDown={handleProgressMouseDown}
-              onMouseUp={handleProgressMouseUp}
-              onTouchStart={handleProgressMouseDown}
-              onTouchEnd={handleProgressMouseUp}
-              style={{ '--progress-percent': `${progressPercent}%` } as React.CSSProperties}
-            />
-            <div className="mediarender-audio-time">
-              <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(duration)}</span>
-            </div>
-          </div>
-
-          <div className="mediarender-audio-controls">
-            <button className="mediarender-control-btn" onClick={() => { const a = audioRef.current; if (a) a.currentTime = Math.max(0, a.currentTime - 10); }} title="Rewind 10s">
-              <SkipBack size={20} />
-            </button>
-            <button className="mediarender-play-btn" onClick={handlePlayPause}>
-              {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" />}
-            </button>
-            <button className="mediarender-control-btn" onClick={() => { const a = audioRef.current; if (a && duration) a.currentTime = Math.min(duration, a.currentTime + 10); }} title="Forward 10s">
-              <SkipForward size={20} />
-            </button>
-            {showDownload && (
-              <button className="mediarender-control-btn" onClick={handleDownloadBtn}>
-                <Download size={20} />
-              </button>
-            )}
-          </div>
-
-          <audio
-            ref={audioRef}
-            src={audioUrl}
-            preload="metadata"
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleLoadedMetadata}
-            onDurationChange={handleDurationChange}
-            onCanPlay={handleCanPlay}
-            onSeeking={() => void refreshSigned(false)}
-            onError={handleError}
-            onEnded={handleVideoEnded}
-            onPause={handleVideoPause}
-            onPlay={handleVideoPlay}
-          />
-        </div>
-
-        {showMeta && (item.name || item.size || item.duration) && !error && (
-          <div className="mediarender-meta">
-            {item.name && <p className="mediarender-title">{sanitizedName}</p>}
-            <div className="mediarender-info">
-              {item.size && <span>{formatBytes(item.size)}</span>}
-              {item.duration && <span>{formatDuration(item.duration)}</span>}
-              {item.width && item.height && <span>{item.width}×{item.height}</span>}
-            </div>
-            {item.caption && <p className="mediarender-caption">{sanitizedCaption}</p>}
-          </div>
-        )}
-        {error && (
-          <div className="mediarender-error">
-            <span>{error}</span>
-            <div className="mediarender-error-actions">
-              <button className="mediarender-error-secondary" onClick={openExternalMenu}>Watch in another app</button>
-              {showDownload && <button className="mediarender-error-secondary" onClick={handleDownloadBtn}>Download</button>}
-            </div>
-          </div>
-        )}
-
-        <MediaRenderModal
-          isOpen={extOpen}
-          url={item.url}
-          name={item.name}
-          token={token}
-          onClose={() => setExtOpen(false)}
-        />
-      </div>
-    );
-  }
-
   const sanitizedName = sanitizeText(item.name);
   const sanitizedCaption = sanitizeText(item.caption);
   const videoUrl = mediaSrc;
@@ -734,7 +608,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
   return (
     <div ref={containerRef} className={`mediarender-container ${className} ${isFullscreen ? 'is-fullscreen' : ''}`}>
       <div
-        className={`mediarender-video-wrap ${codecIssue || (error && (isVideo || isAudio)) ? 'has-codec-issue' : ''}`}
+        className={`mediarender-video-wrap ${codecIssue || (error && isVideo) ? 'has-codec-issue' : ''}`}
         onClick={handleVideoClick}
       >
         <video
@@ -766,7 +640,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
           </div>
         )}
 
-        {(codecIssue || (error && (isVideo || isAudio))) && (
+        {(codecIssue || (error && isVideo)) && (
           <div className="mediarender-codec-notice" onClick={(e) => e.stopPropagation()}>
             <div className="mediarender-codec-inner">
               <AlertTriangle size={30} />

@@ -16,7 +16,6 @@ import { useScreenSize } from '@hook/usescreensize';
 import { useCloudSource, generateUniqueName, clearAllHFSessions } from '@hook/usecloudsource';
 import { useTelegramAuth } from '@hook/usetelegramauth';
 import { useHuggingFace, type HFRepo, type HFFolderStructure } from '@hook/usehuggingface';
-import { sortItems } from '@config/sortinghelper';
 import { CloudViewPack } from './cloudviewuipack';
 import { MediaRenderModal } from '@system/mediarendermodal';
 import { downloadMediaWithName } from '@system/mediarendermodal';
@@ -42,6 +41,7 @@ import {
   HF_SIDEBAR_DEFAULT_WIDTH,
   HF_SIDEBAR_MIN_WIDTH,
   HF_SIDEBAR_MAX_WIDTH,
+  sortItems,
   THUMB_PREFIX,
   areSnapshotsEqual,
   safeDecodeFilename,

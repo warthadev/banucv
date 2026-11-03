@@ -5,7 +5,7 @@ import type { RootState } from '@redux/store';
 import { setSelectedChatId, setSelectedFileId } from '@redux/cloudslice';
 import type { TelegramChat, TelegramFile, ViewMode, MobileView, SortField, SortDir, TelegramFileMetadata } from '@config/telegram';
 import { STORAGE_KEYS } from '@config/telegram';
-import { sortItems } from '@config/sortinghelper';
+import { sortItems } from '@config/cloudviewhelper';
 import { useScreenSize } from '@hook/usescreensize';
 import { getActiveBase } from '@config/api';
 import { openGlobalPlaylist, pauseGlobalPlaylist } from '@config/playlistglobal';

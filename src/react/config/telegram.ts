@@ -1,6 +1,6 @@
 // src/react/config/telegram.ts
 import { formatBytes, formatDuration, formatRelativeDate } from './utils';
-export type { SortField, SortDir } from './sortinghelper';
+export type { SortField, SortDir } from './cloudviewhelper';
 
 export interface TelegramChat {
   id: number;

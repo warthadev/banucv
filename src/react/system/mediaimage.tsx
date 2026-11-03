@@ -441,14 +441,14 @@ const MediaImage: React.FC<MediaImageProps> = ({
                 onClick={prev}
                 title="Previous"
               >
-                <ChevronLeft size={40} strokeWidth={3} color="#ffffff" />
+                <ChevronLeft size={40} strokeWidth={3} />
               </button>
               <button
                 className={`cloudslideshow-nav cloudslideshow-nav--next ${controlsVisible ? 'visible' : 'hidden'}`}
                 onClick={next}
                 title="Next"
               >
-                <ChevronRight size={40} strokeWidth={3} color="#ffffff" />
+                <ChevronRight size={40} strokeWidth={3} />
               </button>
             </>
           )}

@@ -209,12 +209,14 @@
 }
 
 .mediarender-center-play {
-  color: var(--primary);
+  color: #ffffff;
 }
 
-.mediarender-center-play:hover {
-  background: var(--primary-alpha);
-  color: var(--primary);
+.mediarender-center-play:hover,
+.mediarender-center-play:active,
+.mediarender-center-play:focus-visible {
+  background: rgba(0, 0, 0, 0.8);
+  color: #ffffff;
 }
 
 .mediarender-btn-transparent {

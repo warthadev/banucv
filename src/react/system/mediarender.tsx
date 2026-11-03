@@ -661,7 +661,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
         {isLoading && !codecIssue && !error && <Loading />}
 
         <button className={`mediarender-center-play ${controlsVisible && !isLoading && !codecIssue && !error ? 'visible' : ''}`} onClick={handlePlayPause}>
-          {isPlaying ? <Pause size={44} /> : <Play size={44} />}
+          {isPlaying ? <Pause size={30} fill="currentColor" /> : <Play size={30} fill="currentColor" />}
         </button>
 
         {showControls && !error && !codecIssue && (

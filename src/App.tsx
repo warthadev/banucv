@@ -94,7 +94,7 @@ const AppContent: React.FC = () => {
       <ScrollToTop />
 
       {!hideGlobalUI && <Navbar />}
-      {!hideGlobalUI && !isSettingPage && <Quick />}
+      {!hideGlobalUI && <Quick />}
       
       {!hideGlobalUI && !isSettingPage && !playlistOpen && <PlayerFloatMusic />}
 

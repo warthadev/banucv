@@ -54,10 +54,18 @@ const Quick: React.FC = () => {
   const [screenSize, setScreenSize] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
   const [isCloudPlaylistActive, setIsCloudPlaylistActive] = useState(false);
   const [floatingBounds, setFloatingBounds] = useState<{ left: number; right: number; top: number; bottom: number } | null>(null);
+  const [isLoadingOverlay, setIsLoadingOverlay] = useState(() => typeof document !== 'undefined' && Number(document.body.dataset.loadingOverlayCount || 0) > 0);
 
   const isDashboard = location.pathname === "/dashboard";
   const isPlayerActive = (!!selectedGenre && !isStopped) || isCloudPlaylistActive;
-  const isSettingPage = location.pathname === "/setting";
+
+  useEffect(() => {
+    const handleLoadingOverlayChange = () => {
+      setIsLoadingOverlay(Number(document.body.dataset.loadingOverlayCount || 0) > 0);
+    };
+    window.addEventListener('loading-overlay-change', handleLoadingOverlayChange);
+    return () => window.removeEventListener('loading-overlay-change', handleLoadingOverlayChange);
+  }, []);
 
   const getFloatingBarrier = () => {
     if (floatingBounds) return floatingBounds;
@@ -367,7 +375,7 @@ const Quick: React.FC = () => {
     return `quick-toggle-btn ${isOpen ? 'active' : ''}`;
   };
 
-  if (!isQuickVisible || isSettingPage) {
+  if (!isQuickVisible || isLoadingOverlay || location.pathname === '/loading') {
     return null;
   }
 

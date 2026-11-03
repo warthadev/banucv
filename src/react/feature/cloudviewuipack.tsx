@@ -273,7 +273,7 @@ export const CloudViewPack: React.FC<CloudViewPackProps> = (props) => {
   }, [sourceType, renameModalOpen, renameValue, renameTarget, setRenameValue, onRenameConfirm, onRenameClose, deleteModalOpen, deleteTargets, onDeleteConfirm, onDeleteClose, createFolderModalOpen, createFolderValue, currentPath, setCreateFolderValue, onCreateFolderConfirm, onCreateFolderClose, transferModalOpen, transferMode, transferTargets, transferSourceAccountId, transferSourceAccountLabel, transferSourceRepoId, transferSourceRepoType, transferAccounts, transferReposByAccount, transferReposLoading, transferReposError, onTransferFetchRepos, transferDestFoldersByRepo, transferDestFoldersLoading, transferDestFoldersError, onTransferFetchDestFolders, transferDisabledPaths, onTransferConfirm, onTransferClose, bulkActionLoading, transferIsPublicSource, renameRepoModalOpen, renameRepoValue, renameRepoTarget, setRenameRepoValue, onRenameRepoConfirm, onRenameRepoClose, deleteRepoModalOpen, deleteRepoTargets, onDeleteRepoConfirm, onDeleteRepoClose, visibilityRepoModalOpen, visibilityRepoTarget, onVisibilityRepoConfirm, onVisibilityRepoClose, squashRepoModalOpen, squashRepoTargets, onSquashRepoConfirm, onSquashRepoClose, addRepoModalOpen, onAddRepoConfirm, onAddRepoClose]);
 
   if (isMobile) {
-    if (loading) return <Loading />;
+    if (loading && dialogs.length === 0 && !selectedChat) return <Loading />;
 
     const isInsideRepo = sourceType === 'hf_dataset' && !!hfSelectedRepo;
 

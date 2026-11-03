@@ -1,4 +1,4 @@
-// src/react/hook/usehfdataset.ts
+// src/react/hook/usehuggingface.ts
 import { useCallback, useMemo, useState } from 'react';
 import type { HFFile } from '@config/cloudsource';
 import { getActiveBase } from '@config/api';
@@ -49,7 +49,7 @@ const buildAvatarUrl = (name: string, avatar?: string): string => {
   return `https://huggingface.co/api/avatars/${encodeURIComponent(name)}`;
 };
 
-export const useHFDataset = () => {
+export const useHuggingFace = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

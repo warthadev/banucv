@@ -5,6 +5,7 @@ import type { RootState } from '@redux/store';
 import { setSelectedChatId, setSelectedFileId } from '@redux/cloudslice';
 import type { TelegramChat, TelegramFile, ViewMode, MobileView, SortField, SortDir, TelegramFileMetadata } from '@config/telegram';
 import { STORAGE_KEYS } from '@config/telegram';
+import { sortItems } from '@config/sortinghelper';
 import { useScreenSize } from '@hook/usescreensize';
 import { getActiveBase } from '@config/api';
 import { openGlobalPlaylist, pauseGlobalPlaylist } from '@config/playlistglobal';
@@ -322,21 +323,7 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
   }, []);
 
   const sortFiles = useCallback((arr: TelegramFile[]) => {
-    return [...arr].sort((a, b) => {
-      let cmp = 0;
-      if (sortField === 'name') {
-        cmp = a.name.localeCompare(b.name);
-      } else if (sortField === 'date') {
-        const dateA = a.date || 0;
-        const dateB = b.date || 0;
-        cmp = dateB - dateA;
-      } else if (sortField === 'size') {
-        cmp = (b.size || 0) - (a.size || 0);
-      } else if (sortField === 'type') {
-        cmp = a.media_type.localeCompare(b.media_type);
-      }
-      return sortDir === 'asc' ? cmp : -cmp;
-    });
+    return sortItems(arr, sortField, sortDir);
   }, [sortField, sortDir]);
 
   const filteredFiles = files.filter(f => f.name.toLowerCase().includes(searchQuery.toLowerCase()));

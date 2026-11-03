@@ -15,7 +15,8 @@ import { useTelegram } from '@hook/usetelegram';
 import { useScreenSize } from '@hook/usescreensize';
 import { useCloudSource, generateUniqueName, clearAllHFSessions } from '@hook/usecloudsource';
 import { useTelegramAuth } from '@hook/usetelegramauth';
-import { useHFDataset, type HFRepo, type HFFolderStructure } from '@hook/usehfdataset';
+import { useHuggingFace, type HFRepo, type HFFolderStructure } from '@hook/usehuggingface';
+import { sortItems } from '@config/sortinghelper';
 import { CloudViewPack } from './cloudviewuipack';
 import { MediaRenderModal } from '@system/mediarendermodal';
 import { downloadMediaWithName } from '@system/mediarendermodal';
@@ -82,7 +83,7 @@ const CloudView: React.FC = () => {
   } = useCloudSource();
 
   const { saveSession, clearAllTelegramSessions } = useTelegramAuth();
-  const hfHook = useHFDataset();
+  const hfHook = useHuggingFace();
 
   const [hfRepos, setHfRepos] = useState<HFRepo[]>([]);
   const [hfView, setHfViewState] = useState<'repos' | 'files'>(reduxHfView);
@@ -1521,16 +1522,7 @@ const CloudView: React.FC = () => {
   }, [hfSelectedFile, activeSourceType, dispatch]);
 
   const sortedHfItems = useMemo(() => {
-    return [...filteredHfItems].sort((a, b) => {
-      if (a._isFolder && !b._isFolder) return -1;
-      if (!a._isFolder && b._isFolder) return 1;
-      let cmp = 0;
-      if (hfSortField === 'name') cmp = a.name.localeCompare(b.name);
-      else if (hfSortField === 'size') cmp = (b.size || 0) - (a.size || 0);
-      else if (hfSortField === 'type') cmp = (a.media_type || '').localeCompare(b.media_type || '');
-      else if (hfSortField === 'date') cmp = (b.date || 0) - (a.date || 0);
-      return hfSortDir === 'asc' ? cmp : -cmp;
-    });
+    return sortItems(filteredHfItems, hfSortField, hfSortDir, true);
   }, [filteredHfItems, hfSortField, hfSortDir]);
 
   const toggleHfSort = (field: 'name' | 'date' | 'size' | 'type') => {

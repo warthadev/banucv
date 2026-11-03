@@ -1,5 +1,6 @@
 // src/react/config/telegram.ts
 import { formatBytes, formatDuration, formatRelativeDate } from './utils';
+export type { SortField, SortDir } from './sortinghelper';
 
 export interface TelegramChat {
   id: number;
@@ -45,8 +46,6 @@ export interface TelegramFileMetadata {
 
 export type ViewMode = 'list' | 'grid' | 'thumbnail';
 export type MobileView = 'chats' | 'files' | 'player';
-export type SortField = 'name' | 'date' | 'size' | 'type';
-export type SortDir = 'asc' | 'desc';
 
 export const STORAGE_KEYS = {
   SELECTED_CHAT_ID: 'tg_selected_chat_id',

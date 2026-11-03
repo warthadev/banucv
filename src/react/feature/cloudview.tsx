@@ -1526,9 +1526,9 @@ const CloudView: React.FC = () => {
       if (!a._isFolder && b._isFolder) return 1;
       let cmp = 0;
       if (hfSortField === 'name') cmp = a.name.localeCompare(b.name);
-      else if (hfSortField === 'size') cmp = (a.size || 0) - (b.size || 0);
+      else if (hfSortField === 'size') cmp = (b.size || 0) - (a.size || 0);
       else if (hfSortField === 'type') cmp = (a.media_type || '').localeCompare(b.media_type || '');
-      else if (hfSortField === 'date') cmp = (a.date || 0) - (b.date || 0);
+      else if (hfSortField === 'date') cmp = (b.date || 0) - (a.date || 0);
       return hfSortDir === 'asc' ? cmp : -cmp;
     });
   }, [filteredHfItems, hfSortField, hfSortDir]);

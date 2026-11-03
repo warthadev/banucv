@@ -21,8 +21,8 @@ import { MediaRenderModal } from '@system/mediarendermodal';
 import { downloadMediaWithName } from '@system/mediarendermodal';
 import { CloudModalTele } from './cloudmodaltele';
 import CloudRoot from './cloudroot';
-import CloudSlideshow, { type SlideItem } from './cloudslideshow';
-import type { PlaylistTrack } from './cloudplaylist';
+import MediaImage, { type SlideItem } from '../system/mediaimage';
+import type { PlaylistTrack } from '../system/mediaaudio';
 import { useAudio } from '@hook/useaudio';
 import { openGlobalPlaylist, pauseGlobalPlaylist } from '@config/playlistglobal';
 import { getAuth, getDb } from '@config/firebase';
@@ -2780,7 +2780,7 @@ const CloudView: React.FC = () => {
           onVisibilityRepoConfirm={() => {}}
           onVisibilityRepoClose={() => {}}
         />
-        <CloudSlideshow
+        <MediaImage
           isOpen={slideshowOpen}
           items={slideshowItems}
           initialIndex={slideshowStartIndex}
@@ -3164,7 +3164,7 @@ const CloudView: React.FC = () => {
             setWatchExternalFile(null);
           }}
         />
-        <CloudSlideshow
+        <MediaImage
           isOpen={slideshowOpen}
           items={slideshowItems}
           initialIndex={slideshowStartIndex}

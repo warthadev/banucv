@@ -9,7 +9,7 @@ import GateVisit from "./react/system/gatevisit";
 import PlayerFloatMusic from "./react/system/playerfloatmusic.tsx";
 import Quick from "./react/system/quick";
 import AudioPlayer from "./react/system/audioplayer";
-import CloudPlaylist, { type PlaylistTrack } from "./react/feature/cloudplaylist";
+import MediaAudio, { type PlaylistTrack } from "./react/system/mediaaudio";
 import { useAudio } from "./react/hook/useaudio";
 import CollectPhoto from "./react/feature/collectphoto";
 import CloudView from "./react/feature/cloudview";
@@ -98,7 +98,7 @@ const AppContent: React.FC = () => {
       
       {!hideGlobalUI && !isSettingPage && !playlistOpen && <PlayerFloatMusic />}
 
-      <CloudPlaylist
+      <MediaAudio
         isOpen={playlistOpen}
         showUI={!isSettingPage}
         tracks={playlistTracks}

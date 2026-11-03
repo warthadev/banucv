@@ -1,4 +1,4 @@
-// src/react/feature/cloudslideshow.tsx
+// src/react/system/mediaimage.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, Pause, Play, Timer, Maximize, Info, Download, LoaderCircle } from 'lucide-react';
@@ -29,7 +29,7 @@ export interface SlideItem {
   caption?: string;
 }
 
-interface CloudSlideshowProps {
+interface MediaImageProps {
   isOpen: boolean;
   items: SlideItem[];
   initialIndex?: number;
@@ -117,7 +117,7 @@ const loadImage = async (item: SlideItem): Promise<string> => {
   return await compressBlob(raw);
 };
 
-const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
+const MediaImage: React.FC<MediaImageProps> = ({
   isOpen,
   items,
   initialIndex = 0,
@@ -617,4 +617,4 @@ const CloudSlideshow: React.FC<CloudSlideshowProps> = ({
   );
 };
 
-export default CloudSlideshow;
+export default MediaImage;

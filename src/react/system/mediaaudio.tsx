@@ -1,4 +1,4 @@
-// src/react/feature/cloudplaylist.tsx
+// src/react/system/mediaaudio.tsx
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minimize2, Maximize2, Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, ListMusic, Music, Download } from 'lucide-react';
@@ -17,7 +17,7 @@ export interface PlaylistTrack {
   token?: string;
 }
 
-interface CloudPlaylistProps {
+interface MediaAudioProps {
   isOpen: boolean;
   showUI?: boolean;
   tracks: PlaylistTrack[];
@@ -281,7 +281,7 @@ const QueueRow: React.FC<QueueRowProps> = React.memo(({ track, number, active, p
 });
 QueueRow.displayName = 'QueueRow';
 
-const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, showUI = true, tracks, initialIndex = 0, onClose }) => {
+const MediaAudio: React.FC<MediaAudioProps> = ({ isOpen, showUI = true, tracks, initialIndex = 0, onClose }) => {
   const total = tracks.length;
   const { index, order, shuffle, repeat, hasPrev, hasNext, nextIndex, reset, goNext, goPrev, jumpTo, toggleShuffle, cycleRepeat } = usePlaylist(total, initialIndex);
 
@@ -872,4 +872,4 @@ const CloudPlaylist: React.FC<CloudPlaylistProps> = ({ isOpen, showUI = true, tr
   );
 };
 
-export default CloudPlaylist;
+export default MediaAudio;

@@ -206,7 +206,7 @@ const Quick: React.FC = () => {
   };
 
   const handleDragStart = (e: React.MouseEvent<HTMLButtonElement> | React.TouchEvent<HTMLButtonElement>) => {
-    if (!('touches' in e)) e.preventDefault();
+    e.preventDefault();
     
     let clientX, clientY;
     if ('touches' in e) {
@@ -231,6 +231,7 @@ const Quick: React.FC = () => {
 
   const handleDragMove = (e: MouseEvent | TouchEvent) => {
     if (!isDragging) return;
+    e.preventDefault();
     
     let clientX, clientY;
     if ('touches' in e) {

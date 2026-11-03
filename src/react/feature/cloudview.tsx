@@ -93,6 +93,7 @@ const CloudView: React.FC = () => {
     setHfSidebarCollapsed, hfSidebarWidth, setHfSidebarWidth, hfShowDetail,
     setHfShowDetail, hfTotalSize, setHfTotalSize, isHfInitialLoading,
     setIsHfInitialLoading, hfHasLoadedOnce, setHfHasLoadedOnce, hfScreenSize,
+    getFolderStructure, getFolderDates, listRepositories, createFolder,
   } = hfHook;
 
   const [selectionMode, setSelectionMode] = useState(false);
@@ -724,7 +725,7 @@ const CloudView: React.FC = () => {
     setHfError(null);
 
     try {
-      const structure = await hfHook.getFolderStructure(
+      const structure = await getFolderStructure(
         selectedRepo,
         selectedRepoType,
         currentPath,
@@ -755,7 +756,7 @@ const CloudView: React.FC = () => {
     currentPath,
     activeSourceDatasetId,
     activeSourceHfToken,
-    hfHook,
+    getFolderStructure,
     hfScreenSize,
     getHFTokenFromFirestore,
     isPublicView,
@@ -775,7 +776,7 @@ const CloudView: React.FC = () => {
         const token = isPublicView
           ? ''
           : activeSourceHfToken || (await getHFTokenFromFirestore()) || '';
-        const dates = await hfHook.getFolderDates(
+        const dates = await getFolderDates(
           selectedRepo,
           selectedRepoType,
           currentPath,
@@ -801,7 +802,7 @@ const CloudView: React.FC = () => {
     isPublicView,
     activeSourceHfToken,
     getHFTokenFromFirestore,
-    hfHook,
+    getFolderDates,
   ]);
 
   const loadHfRepositories = useCallback(
@@ -828,7 +829,7 @@ const CloudView: React.FC = () => {
           setHfError('No account');
           return;
         }
-        const repos = await hfHook.listRepositories(username, token);
+        const repos = await listRepositories(username, token);
         setHfRepos(repos);
         hasLoadedRef.current = sourceId;
         setHfHasLoadedOnce(true);
@@ -865,7 +866,7 @@ const CloudView: React.FC = () => {
       activeSourceId,
       activeSourceDatasetId,
       activeSourceHfToken,
-      hfHook,
+      listRepositories,
       getHFTokenFromFirestore,
       reduxSelectedRepo,
       reduxSelectedRepoType,
@@ -1876,7 +1877,7 @@ const CloudView: React.FC = () => {
     setBulkActionLoading(true);
 
     try {
-      const result = await hfHook.createFolder(selectedRepo, selectedRepoType, fullPath, token);
+      const result = await createFolder(selectedRepo, selectedRepoType, fullPath, token);
 
       if (result.ok) {
         setBulkSuccess(`Folder "${folderName}" created`);
@@ -1897,7 +1898,7 @@ const CloudView: React.FC = () => {
     currentPath,
     activeSourceHfToken,
     getHFTokenFromFirestore,
-    hfHook,
+    createFolder,
     closeCreateFolderModal,
     refreshHFFilesNow,
   ]);

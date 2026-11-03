@@ -1,4 +1,4 @@
-// src/react/hook/usescreensize.ts
+// src/react/hook/usecloudscreensize.ts
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 export type ScreenSize = 'mobile' | 'tablet' | 'desktop';
@@ -22,7 +22,7 @@ const isCurrentlyFullscreen = () =>
  * panel mobile (video ke-tendang keluar dari fullscreen). Lihat bug fullscreen
  * HF di area hf-media-playback.md.
  */
-export const useScreenSize = (): ScreenSize => {
+export const useCloudScreenSize = (): ScreenSize => {
   const [screenSize, setScreenSize] = useState<ScreenSize>(() =>
     getBreakpoint(typeof window !== 'undefined' ? window.innerWidth : 1024)
   );
@@ -61,4 +61,4 @@ export const useScreenSize = (): ScreenSize => {
   return screenSize;
 };
 
-export default useScreenSize;
+export default useCloudScreenSize;

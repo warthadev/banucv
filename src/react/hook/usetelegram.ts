@@ -6,7 +6,7 @@ import { setSelectedChatId, setSelectedFileId } from '@redux/cloudslice';
 import type { TelegramChat, TelegramFile, ViewMode, MobileView, SortField, SortDir, TelegramFileMetadata } from '@config/telegram';
 import { STORAGE_KEYS } from '@config/telegram';
 import { sortItems } from '@config/cloudviewhelper';
-import { useScreenSize } from '@hook/usescreensize';
+import { useCloudScreenSize } from '@hook/usecloudscreensize';
 import { getActiveBase } from '@config/api';
 import { openGlobalPlaylist, pauseGlobalPlaylist } from '@config/playlistglobal';
 
@@ -35,7 +35,7 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
     return saved ? parseInt(saved, 10) : 220;
   });
   const [showDetail, setShowDetail] = useState(true);
-  const screenSize = useScreenSize();
+  const screenSize = useCloudScreenSize();
   const [mobileView, setMobileView] = useState<MobileView>('chats');
   const [totalSize, setTotalSize] = useState<number>(0);
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});

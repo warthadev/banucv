@@ -12,11 +12,10 @@ import {
   addSourceLocal,
 } from '@redux/cloudslice';
 import { useTelegram } from '@hook/usetelegram';
-import { useScreenSize } from '@hook/usescreensize';
 import { useCloudSource, generateUniqueName, clearAllHFSessions } from '@hook/usecloudsource';
 import { useTelegramAuth } from '@hook/usetelegramauth';
 import { useHuggingFace } from '@hook/usehuggingface';
-import type { HFRepo, HFFolderStructure } from '@config/huggingface';
+import type { HFRepo } from '@config/huggingface';
 import { CloudViewPack } from './cloudviewuipack';
 import { MediaRenderModal } from '@system/mediarendermodal';
 import { downloadMediaWithName } from '@system/mediarendermodal';
@@ -34,14 +33,6 @@ import type { TransferAccount, TransferRepo } from './cloudmodalselection';
 import type { HFSearchRepo } from '@config/huggingface';
 import type { HFBulkContext, NavSnapshot } from '@config/cloudviewtypes';
 import {
-  HF_SIDEBAR_WIDTH_KEY,
-  HF_VIEW_MODE_KEY,
-  HF_SORT_FIELD_KEY,
-  HF_SORT_DIR_KEY,
-  HF_SORT_FIELDS,
-  HF_SIDEBAR_DEFAULT_WIDTH,
-  HF_SIDEBAR_MIN_WIDTH,
-  HF_SIDEBAR_MAX_WIDTH,
   sortItems,
   THUMB_PREFIX,
   areSnapshotsEqual,
@@ -84,72 +75,25 @@ const CloudView: React.FC = () => {
   } = useCloudSource();
 
   const { saveSession, clearAllTelegramSessions } = useTelegramAuth();
-  const hfHook = useHuggingFace();
-
-  const [hfRepos, setHfRepos] = useState<HFRepo[]>([]);
-  const [hfView, setHfViewState] = useState<'repos' | 'files'>(reduxHfView);
-  const [selectedRepo, setSelectedRepoState] = useState<string>(reduxSelectedRepo);
-  const [selectedRepoType, setSelectedRepoTypeState] = useState<'dataset' | 'model' | 'space' | ''>(
-    reduxSelectedRepoType
-  );
-  const [currentPath, setCurrentPathState] = useState<string>(reduxCurrentPath);
-  const [folderStructure, setFolderStructure] = useState<HFFolderStructure>({
-    folders: [],
-    files: [],
-    totalSize: 0,
+  const hfHook = useHuggingFace({
+    initialHfView: reduxHfView,
+    initialSelectedRepo: reduxSelectedRepo,
+    initialSelectedRepoType: reduxSelectedRepoType,
+    initialCurrentPath: reduxCurrentPath,
+    initialSelectedFileId: reduxSelectedFileId,
   });
-  const [hfFolderDates, setHfFolderDates] = useState<Record<string, Record<string, number>>>({});
-  const hfDatesFetchingRef = useRef<Set<string>>(new Set());
-  const hfDatesVersionRef = useRef<Record<string, number>>({});
-  const [hfLoading, setHfLoading] = useState(false);
-  const [hfError, setHfError] = useState<string | null>(null);
-  const [hfSelectedFile, setHfSelectedFile] = useState<any>(null);
-  const [hfMobileView, setHfMobileView] = useState<'chats' | 'files' | 'player'>('chats');
-  const [hfSearchQuery, setHfSearchQuery] = useState('');
-  const [hfViewMode, setHfViewMode] = useState<'list' | 'grid' | 'thumbnail' | 'poster'>(() => {
-    try {
-      const saved = localStorage.getItem(HF_VIEW_MODE_KEY);
-      return saved === 'grid' || saved === 'thumbnail' || saved === 'poster' ? saved : 'list';
-    } catch {
-      return 'list';
-    }
-  });
-  const [hfSortField, setHfSortField] = useState<'name' | 'date' | 'size' | 'type'>(() => {
-    try {
-      const saved = localStorage.getItem(HF_SORT_FIELD_KEY);
-      return (HF_SORT_FIELDS as readonly string[]).includes(saved || '')
-        ? (saved as 'name' | 'date' | 'size' | 'type')
-        : 'name';
-    } catch {
-      return 'name';
-    }
-  });
-  const [hfSortDir, setHfSortDir] = useState<'asc' | 'desc'>(() => {
-    try {
-      return localStorage.getItem(HF_SORT_DIR_KEY) === 'desc' ? 'desc' : 'asc';
-    } catch {
-      return 'asc';
-    }
-  });
-  const [hfShowSortMenu, setHfShowSortMenu] = useState(false);
-  const [hfSidebarCollapsed, setHfSidebarCollapsed] = useState(false);
-  const [hfSidebarWidth, setHfSidebarWidth] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem(HF_SIDEBAR_WIDTH_KEY);
-      if (saved) {
-        const parsed = parseInt(saved, 10);
-        if (!isNaN(parsed) && parsed >= HF_SIDEBAR_MIN_WIDTH && parsed <= HF_SIDEBAR_MAX_WIDTH) {
-          return parsed;
-        }
-      }
-    } catch {}
-    return HF_SIDEBAR_DEFAULT_WIDTH;
-  });
-  const [hfShowDetail, setHfShowDetail] = useState(true);
-  const hfScreenSize = useScreenSize();
-  const [hfTotalSize, setHfTotalSize] = useState(0);
-  const [isHfInitialLoading, setIsHfInitialLoading] = useState(true);
-  const [hfHasLoadedOnce, setHfHasLoadedOnce] = useState(false);
+  const {
+    loading: hfLoading, setLoading: setHfLoading, error: hfError, setError: setHfError,
+    hfRepos, setHfRepos, hfView, setHfViewState, selectedRepo, setSelectedRepoState,
+    selectedRepoType, setSelectedRepoTypeState, currentPath, setCurrentPathState,
+    folderStructure, setFolderStructure, hfFolderDates, setHfFolderDates,
+    hfSelectedFile, setHfSelectedFile, hfMobileView, setHfMobileView, hfSearchQuery,
+    setHfSearchQuery, hfViewMode, setHfViewMode, hfSortField, setHfSortField,
+    hfSortDir, setHfSortDir, hfShowSortMenu, setHfShowSortMenu, hfSidebarCollapsed,
+    setHfSidebarCollapsed, hfSidebarWidth, setHfSidebarWidth, hfShowDetail,
+    setHfShowDetail, hfTotalSize, setHfTotalSize, isHfInitialLoading,
+    setIsHfInitialLoading, hfHasLoadedOnce, setHfHasLoadedOnce, hfScreenSize,
+  } = hfHook;
 
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -280,24 +224,6 @@ const CloudView: React.FC = () => {
     resumeBackgroundMusic,
   ]);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(HF_SIDEBAR_WIDTH_KEY, String(hfSidebarWidth));
-    } catch {}
-  }, [hfSidebarWidth]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(HF_VIEW_MODE_KEY, hfViewMode);
-    } catch {}
-  }, [hfViewMode]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(HF_SORT_FIELD_KEY, hfSortField);
-      localStorage.setItem(HF_SORT_DIR_KEY, hfSortDir);
-    } catch {}
-  }, [hfSortField, hfSortDir]);
 
   useEffect(() => {
     if (!selectionMode) {

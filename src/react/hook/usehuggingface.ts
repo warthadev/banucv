@@ -1,6 +1,17 @@
 // src/react/hook/usehuggingface.ts
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getActiveBase } from '@config/api';
+import { useCloudScreenSize } from '@hook/usecloudscreensize';
+import {
+  HF_SIDEBAR_WIDTH_KEY,
+  HF_VIEW_MODE_KEY,
+  HF_SORT_FIELD_KEY,
+  HF_SORT_DIR_KEY,
+  HF_SORT_FIELDS,
+  HF_SIDEBAR_DEFAULT_WIDTH,
+  HF_SIDEBAR_MIN_WIDTH,
+  HF_SIDEBAR_MAX_WIDTH,
+} from '@config/cloudviewhelper';
 import {
   HF_API_BASE,
   COVER_IMAGE_EXT,
@@ -21,9 +32,63 @@ export type {
   HFSearchRepo,
 } from '@config/huggingface';
 
-export const useHuggingFace = () => {
+export type HuggingFaceStateOptions = {
+  initialHfView?: 'repos' | 'files';
+  initialSelectedRepo?: string;
+  initialSelectedRepoType?: 'dataset' | 'model' | 'space' | '';
+  initialCurrentPath?: string;
+  initialSelectedFileId?: string | null;
+};
+
+export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hfRepos, setHfRepos] = useState<HFRepo[]>([]);
+  const [hfView, setHfViewState] = useState<'repos' | 'files'>(options.initialHfView || 'repos');
+  const [selectedRepo, setSelectedRepoState] = useState(options.initialSelectedRepo || '');
+  const [selectedRepoType, setSelectedRepoTypeState] = useState<'dataset' | 'model' | 'space' | ''>(options.initialSelectedRepoType || '');
+  const [currentPath, setCurrentPathState] = useState(options.initialCurrentPath || '');
+  const [folderStructure, setFolderStructure] = useState<HFFolderStructure>({ folders: [], files: [], totalSize: 0 });
+  const [hfFolderDates, setHfFolderDates] = useState<Record<string, Record<string, number>>>({});
+  const [hfSelectedFile, setHfSelectedFile] = useState<any>(null);
+  const [hfMobileView, setHfMobileView] = useState<'chats' | 'files' | 'player'>('chats');
+  const [hfSearchQuery, setHfSearchQuery] = useState('');
+  const [hfViewMode, setHfViewMode] = useState<'list' | 'grid' | 'thumbnail' | 'poster'>(() => {
+    try {
+      const saved = localStorage.getItem(HF_VIEW_MODE_KEY);
+      return saved === 'grid' || saved === 'thumbnail' || saved === 'poster' ? saved : 'list';
+    } catch { return 'list'; }
+  });
+  const [hfSortField, setHfSortField] = useState<'name' | 'date' | 'size' | 'type'>(() => {
+    try {
+      const saved = localStorage.getItem(HF_SORT_FIELD_KEY);
+      return (HF_SORT_FIELDS as readonly string[]).includes(saved || '') ? (saved as 'name' | 'date' | 'size' | 'type') : 'name';
+    } catch { return 'name'; }
+  });
+  const [hfSortDir, setHfSortDir] = useState<'asc' | 'desc'>(() => {
+    try { return localStorage.getItem(HF_SORT_DIR_KEY) === 'desc' ? 'desc' : 'asc'; } catch { return 'asc'; }
+  });
+  const [hfShowSortMenu, setHfShowSortMenu] = useState(false);
+  const [hfSidebarCollapsed, setHfSidebarCollapsed] = useState(false);
+  const [hfSidebarWidth, setHfSidebarWidth] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem(HF_SIDEBAR_WIDTH_KEY);
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= HF_SIDEBAR_MIN_WIDTH && parsed <= HF_SIDEBAR_MAX_WIDTH) return parsed;
+      }
+    } catch {}
+    return HF_SIDEBAR_DEFAULT_WIDTH;
+  });
+  const [hfShowDetail, setHfShowDetail] = useState(true);
+  const [hfTotalSize, setHfTotalSize] = useState(0);
+  const [isHfInitialLoading, setIsHfInitialLoading] = useState(true);
+  const [hfHasLoadedOnce, setHfHasLoadedOnce] = useState(false);
+  const hfScreenSize = useCloudScreenSize();
+
+  useEffect(() => { try { localStorage.setItem(HF_SIDEBAR_WIDTH_KEY, String(hfSidebarWidth)); } catch {} }, [hfSidebarWidth]);
+  useEffect(() => { try { localStorage.setItem(HF_VIEW_MODE_KEY, hfViewMode); } catch {} }, [hfViewMode]);
+  useEffect(() => { try { localStorage.setItem(HF_SORT_FIELD_KEY, hfSortField); localStorage.setItem(HF_SORT_DIR_KEY, hfSortDir); } catch {} }, [hfSortField, hfSortDir]);
 
   const fetchWithAuth = useCallback(async (url: string, token?: string) => {
     const headers: HeadersInit = {};
@@ -500,7 +565,50 @@ export const useHuggingFace = () => {
 
   return useMemo(() => ({
     loading,
+    setLoading,
     error,
+    setError,
+    hfRepos,
+    setHfRepos,
+    hfView,
+    setHfViewState,
+    selectedRepo,
+    setSelectedRepoState,
+    selectedRepoType,
+    setSelectedRepoTypeState,
+    currentPath,
+    setCurrentPathState,
+    folderStructure,
+    setFolderStructure,
+    hfFolderDates,
+    setHfFolderDates,
+    hfSelectedFile,
+    setHfSelectedFile,
+    hfMobileView,
+    setHfMobileView,
+    hfSearchQuery,
+    setHfSearchQuery,
+    hfViewMode,
+    setHfViewMode,
+    hfSortField,
+    setHfSortField,
+    hfSortDir,
+    setHfSortDir,
+    hfShowSortMenu,
+    setHfShowSortMenu,
+    hfSidebarCollapsed,
+    setHfSidebarCollapsed,
+    hfSidebarWidth,
+    setHfSidebarWidth,
+    hfShowDetail,
+    setHfShowDetail,
+    hfTotalSize,
+    setHfTotalSize,
+    isHfInitialLoading,
+    setIsHfInitialLoading,
+    hfHasLoadedOnce,
+    setHfHasLoadedOnce,
+    hfScreenSize,
     listRepositories,
     getFolderStructure,
     getFolderDates,
@@ -515,20 +623,12 @@ export const useHuggingFace = () => {
     getFileUrl,
     getRawFileUrl,
   }), [
-    loading,
-    error,
-    listRepositories,
-    getFolderStructure,
-    getFolderDates,
-    getRepoSize,
-    searchHFUsers,
-    searchHFRepos,
-    listUserRepos,
-    fetchDatasetInfo,
-    fetchDatasetFiles,
-    fetchFileContent,
-    createFolder,
-    getFileUrl,
-    getRawFileUrl,
-  ]);
+    loading, setLoading, error, setError, hfRepos, hfView, selectedRepo, selectedRepoType, currentPath,
+    folderStructure, hfFolderDates, hfSelectedFile, hfMobileView, hfSearchQuery,
+    hfViewMode, hfSortField, hfSortDir, hfShowSortMenu, hfSidebarCollapsed,
+    hfSidebarWidth, hfShowDetail, hfTotalSize, isHfInitialLoading, hfHasLoadedOnce,
+    hfScreenSize, listRepositories, getFolderStructure, getFolderDates, getRepoSize,
+    searchHFUsers, searchHFRepos, listUserRepos, fetchDatasetInfo, fetchDatasetFiles,
+    fetchFileContent, createFolder, getFileUrl, getRawFileUrl,
+  ])
 };

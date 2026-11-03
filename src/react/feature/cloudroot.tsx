@@ -14,7 +14,7 @@ import {
   setHfView,
 } from '@redux/cloudslice';
 import { useCloudSource, generateUniqueName } from '@hook/usecloudsource';
-import { useScreenSize } from '@hook/usescreensize';
+import { useCloudScreenSize } from '@hook/usecloudscreensize';
 import type { CloudSource } from '@config/cloudsource';
 import { getSourceStatusColor } from '@config/cloudsource';
 import { CloudModalTele } from './cloudmodaltele';
@@ -45,7 +45,7 @@ const CloudRoot: React.FC<CloudRootProps> = ({ onSelectSource, clearSession }) =
   const [showTeleModal, setShowTeleModal] = useState(false);
   const [showHFModal, setShowHFModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const isMobile = useScreenSize() === 'mobile';
+  const isMobile = useCloudScreenSize() === 'mobile';
 
   const handleAddTelegram = useCallback(() => {
     setShowAddModal(false);

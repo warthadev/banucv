@@ -3,7 +3,6 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize2, Download, SkipBack, SkipForward, Music, ExternalLink, AlertTriangle } from 'lucide-react';
 import { formatDuration, formatBytes } from '@config/utils';
 import Loading from '@control/loading';
-import { fetchWithGlobalCache } from '@config/imagecache';
 import {
   MediaRenderModal,
   resolveHfSignedUrl,
@@ -14,7 +13,7 @@ import {
 
 const HF_SIGNED_URL_REFRESH_MS = 5 * 60 * 1000;
 
-export type VideoMediaType = 'video' | 'audio' | 'image' | 'gif';
+export type VideoMediaType = 'video' | 'audio' | 'gif';
 
 export interface VideoMediaItem {
   id: string | number;
@@ -26,7 +25,6 @@ export interface VideoMediaItem {
   width?: number;
   height?: number;
   caption?: string;
-  thumbnail?: string;
   file?: File;
 }
 
@@ -56,8 +54,6 @@ const MIME_BY_EXT: Record<string, string> = {
   mkv: 'video/x-matroska', ogv: 'video/ogg', gif: 'image/gif',
   mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav',
   ogg: 'audio/ogg', oga: 'audio/ogg', opus: 'audio/ogg', flac: 'audio/flac',
-  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
-  avif: 'image/avif', bmp: 'image/bmp', svg: 'image/svg+xml',
 };
 
 const guessMime = (name: string | undefined, type: VideoMediaType, current: string): string => {
@@ -67,8 +63,7 @@ const guessMime = (name: string | undefined, type: VideoMediaType, current: stri
   const ext = (name?.split('.').pop() || '').toLowerCase();
   if (MIME_BY_EXT[ext]) return MIME_BY_EXT[ext];
   if (type === 'video' || type === 'gif') return 'video/mp4';
-  if (type === 'audio') return 'audio/mpeg';
-  return 'image/jpeg';
+  return 'audio/mpeg';
 };
 
 const classifyVideoError = (videoEl: HTMLVideoElement | null): MediaErrorKind => {
@@ -120,7 +115,6 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
 
   const isVideo = item.type === 'video' || item.type === 'gif';
   const isAudio = item.type === 'audio';
-  const isImage = item.type === 'image';
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('media-overlay:state', {
@@ -136,7 +130,6 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
   const needsAuthFetch = !!token;
   const isHfSource = isHfUrl(item.url);
   const [mediaSrc, setMediaSrc] = useState<string>(needsAuthFetch || isHfSource ? '' : item.url);
-  const [imageSrc, setImageSrc] = useState<string>('');
   
   const [srcTick, setSrcTick] = useState(0);
   const retriedRef = useRef(false);
@@ -165,33 +158,6 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
   }, [item.url]);
 
   useEffect(() => {
-    if (!isImage || !item.thumbnail) {
-      setImageSrc(item.thumbnail || mediaSrc);
-      return;
-    }
-    
-    let cancelled = false;
-    setIsLoading(true);
-    
-    fetchWithGlobalCache(item.thumbnail, token)
-      .then((url) => {
-        if (!cancelled) {
-          setImageSrc(url);
-        }
-      })
-      .catch(() => {
-        if (cancelled) return;
-        fetchWithGlobalCache(item.url, token)
-          .then((u) => { if (!cancelled) setImageSrc(u); })
-          .catch(() => { if (!cancelled) setImageSrc(mediaSrc || item.url); });
-      });
-      
-    return () => { cancelled = true; };
-  }, [isImage, item.thumbnail, item.url, token, mediaSrc]);
-
-  useEffect(() => {
-    if (isImage) return;
-
     if (!needsAuthFetch && !isHfSource) {
       setMediaSrc(item.url);
       return;
@@ -252,7 +218,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
       controller.abort();
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [item.url, item.name, item.type, token, needsAuthFetch, isHfSource, srcTick, isImage]);
+  }, [item.url, item.name, item.type, token, needsAuthFetch, isHfSource, srcTick]);
 
   useEffect(() => {
     return () => {
@@ -585,7 +551,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
         return;
       }
 
-      const canRetrySigned = (token || isHfSource) && !isImage && !retriedRef.current && mediaSrc.startsWith('http');
+      const canRetrySigned = (token || isHfSource) && !retriedRef.current && mediaSrc.startsWith('http');
       if (canRetrySigned) {
         retriedRef.current = true;
         resumeTimeRef.current = savedTimeRef.current;
@@ -598,7 +564,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
     setError(`Failed to load ${item.type}`);
     onError?.(new Error(`Failed to load ${item.type}`));
     setIsLoading(false);
-  }, [item.type, onError, token, isImage, isVideo, isAudio, mediaSrc, isHfSource]);
+  }, [item.type, onError, token, isVideo, isAudio, mediaSrc, isHfSource]);
 
   const handleVideoEnded = useCallback(() => {
     setIsPlaying(false);
@@ -652,63 +618,6 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
   };
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-
-  if (isImage) {
-    const sanitizedName = sanitizeText(item.name);
-    const sanitizedCaption = sanitizeText(item.caption);
-
-    return (
-      <div ref={containerRef} className={`mediarender-container ${className}`}>
-        <div className="mediarender-image-wrap" style={{ position: 'relative' }}>
-          <img 
-            src={imageSrc || undefined} 
-            alt={sanitizedName || 'Image'} 
-            className="mediarender-image" 
-            onLoad={() => setIsLoading(false)} 
-            onError={handleError} 
-          />
-          
-          {showDownload && !isLoading && !error && (
-            <button 
-              onClick={handleDownloadBtn}
-              style={{
-                position: 'absolute',
-                bottom: '16px',
-                right: '16px',
-                background: 'var(--primary)',
-                color: 'var(--btn-text)',
-                border: 'none',
-                borderRadius: '50%',
-                width: '46px',
-                height: '46px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                zIndex: 10
-              }}
-              title="Download"
-            >
-              <Download size={22} />
-            </button>
-          )}
-
-          {isLoading && <Loading />}
-        </div>
-        {showMeta && (item.name || item.size) && (
-          <div className="mediarender-meta">
-            {item.name && <p className="mediarender-title">{sanitizedName}</p>}
-            <div className="mediarender-info">
-              {item.size && <span>{formatBytes(item.size)}</span>}
-              {item.width && item.height && <span>{item.width}×{item.height}</span>}
-            </div>
-            {item.caption && <p className="mediarender-caption">{sanitizedCaption}</p>}
-          </div>
-        )}
-      </div>
-    );
-  }
 
   if (isAudio) {
     const sanitizedName = sanitizeText(item.name);

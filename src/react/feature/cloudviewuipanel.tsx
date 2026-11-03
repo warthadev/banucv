@@ -764,7 +764,6 @@ export const PlayerPanel: React.FC<{
     width: selectedFile.width || fileMetadata?.width,
     height: selectedFile.height || fileMetadata?.height,
     caption: selectedFile.caption,
-    thumbnail: sourceType === 'hf_dataset' ? (selectedFile as any)._thumbUrl : undefined,
   };
 
   if (!isMedia) return (

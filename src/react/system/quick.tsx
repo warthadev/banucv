@@ -231,7 +231,6 @@ const Quick: React.FC = () => {
 
   const handleDragMove = (e: MouseEvent | TouchEvent) => {
     if (!isDragging) return;
-    e.preventDefault();
     
     let clientX, clientY;
     if ('touches' in e) {

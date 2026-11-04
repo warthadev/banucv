@@ -24,7 +24,6 @@ import Loading from '@control/loading';
 import { auth, db } from '@config/firebase';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { toast } from 'sonner';
-import { getTelegramBase } from '@config/api';
 
 interface CloudRootProps {
   onSelectSource: (sourceId: string) => void;
@@ -113,7 +112,7 @@ const CloudRoot: React.FC<CloudRootProps> = ({ onSelectSource, clearSession }) =
       for (const source of sources) {
         if (source.type === 'telegram' && source.sessionString) {
           try {
-            await fetch(`${getTelegramBase()}/telegram/validate_session`, {
+            await fetch(`${import.meta.env.VITE_API_URL}/telegram/validate_session`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ session_string: source.sessionString }),

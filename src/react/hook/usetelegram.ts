@@ -7,7 +7,7 @@ import type { TelegramChat, TelegramFile, ViewMode, MobileView, SortField, SortD
 import { STORAGE_KEYS } from '@config/telegram';
 import { sortItems } from '@config/cloudviewhelper';
 import { useCloudScreenSize } from '@hook/usecloudscreensize';
-import { getTelegramBase } from '@config/api';
+import { getActiveBase } from '@config/api';
 import { openGlobalPlaylist, pauseGlobalPlaylist } from '@config/playlistglobal';
 
 export const useTelegram = (sessionString: string | null, onImageClick?: (file: TelegramFile, url: string) => void) => {
@@ -70,7 +70,7 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
   }, []);
 
   const getStreamUrl = useCallback((chatId: number, msgId: number) => {
-    const API_BASE = getTelegramBase();
+    const API_BASE = getActiveBase();
     let url = `${API_BASE}/telegram/stream/${chatId}/${msgId}`;
     const session = sessionRef.current;
     if (session) {
@@ -83,7 +83,7 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
     const session = sessionRef.current;
     if (!session) return;
 
-    const API_BASE = getTelegramBase();
+    const API_BASE = getActiveBase();
     const backendUrl = `${API_BASE}/telegram/download/${chatId}/${msgId}`;
     const params = new URLSearchParams();
     params.set('url', backendUrl);
@@ -101,7 +101,7 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
 
   const fetchFileMetadata = useCallback(async (chatId: number, msgId: number): Promise<TelegramFileMetadata | null> => {
     if (!sessionRef.current) return null;
-    const API_BASE = getTelegramBase();
+    const API_BASE = getActiveBase();
     setIsLoadingMetadata(true);
     try {
       const res = await apiFetch(`${API_BASE}/telegram/chat/${chatId}/file/${msgId}/metadata`);
@@ -142,7 +142,7 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
 
   const fetchDialogs = useCallback(async () => {
     if (!sessionRef.current) return;
-    const API_BASE = getTelegramBase();
+    const API_BASE = getActiveBase();
     setLoading(true);
     setError(null);
     try {
@@ -178,7 +178,7 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
 
   const fetchChatFiles = useCallback(async (chatId: number, silent = false) => {
     if (!sessionRef.current) return;
-    const API_BASE = getTelegramBase();
+    const API_BASE = getActiveBase();
     if (!silent) setLoadingFiles(true);
     try {
       const res = await apiFetch(`${API_BASE}/telegram/chat/${chatId}/files`);
@@ -209,7 +209,7 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
 
   const refreshCurrentChatFiles = useCallback(async () => {
     if (!selectedChat || !sessionRef.current) return;
-    const API_BASE = getTelegramBase();
+    const API_BASE = getActiveBase();
     setLoadingFiles(true);
     try {
       await apiFetch(`${API_BASE}/telegram/chat/${selectedChat.id}/refresh`, { method: 'POST' });

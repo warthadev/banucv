@@ -6,7 +6,7 @@ import { modalVariants, overlayVariants } from "@animation/githubeditor";
 import { auth, db } from "@config/firebase";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { TelegramIcon } from "@control/icon";
-import { getTelegramBase } from "@config/api";
+import { getActiveBase } from "@config/api";
 
 interface CloudModalTeleProps {
   isOpen: boolean;
@@ -296,7 +296,7 @@ export const CloudModalTele: React.FC<CloudModalTeleProps> = ({
 
   const validateSession = useCallback(async (session: string): Promise<boolean> => {
     try {
-      const API_BASE = getTelegramBase();
+      const API_BASE = getActiveBase();
       const res = await fetch(`${API_BASE}/telegram/validate_session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -311,7 +311,7 @@ export const CloudModalTele: React.FC<CloudModalTeleProps> = ({
 
   const getAccountInfo = useCallback(async (session: string): Promise<string> => {
     try {
-      const API_BASE = getTelegramBase();
+      const API_BASE = getActiveBase();
       const res = await fetch(`${API_BASE}/telegram/get_me`, {
         method: "GET",
         headers: {
@@ -345,7 +345,7 @@ export const CloudModalTele: React.FC<CloudModalTeleProps> = ({
     setError("");
 
     try {
-      const API_BASE = getTelegramBase();
+      const API_BASE = getActiveBase();
       const res = await fetch(`${API_BASE}/telegram/send_code`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -387,7 +387,7 @@ export const CloudModalTele: React.FC<CloudModalTeleProps> = ({
     setError("");
 
     try {
-      const API_BASE = getTelegramBase();
+      const API_BASE = getActiveBase();
       const res = await fetch(`${API_BASE}/telegram/sign_in`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

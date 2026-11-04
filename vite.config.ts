@@ -29,7 +29,7 @@ const cacheImageMotionPlugin = (): Plugin => ({
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const API_URL = env.VITE_API_URL || 'https://warthadev-wartha-backend.hf.space'
+  const API_URL = env.VITE_API_URL || 'https://7680-agq2firibhstlf6sr7k3ydjoim.instabox.tech'
 
   return {
     plugins: [react(), cacheImageMotionPlugin()],

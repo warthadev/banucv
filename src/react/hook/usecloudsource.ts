@@ -19,7 +19,7 @@ import type { CloudSource, CloudSourceType, HFFile } from '@config/cloudsource';
 import { generateSourceId, getSourceIcon, getPlatformLabel } from '@config/cloudsource';
 import { auth, db } from '@config/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { getActiveBase } from '@config/api';
+import { getActiveBase, getTelegramBase } from '@config/api';
 
 const hashToId = (prefix: string, value: string): string => {
   let hash = 0;
@@ -259,7 +259,7 @@ export const useCloudSource = () => {
 
     dispatch(addSourceLocal(newSource));
 
-    const API_BASE = getActiveBase();
+    const API_BASE = type === 'telegram' ? getTelegramBase() : getActiveBase();
 
     if (type === 'telegram' && sessionString) {
       try {
@@ -397,7 +397,7 @@ export const useCloudSource = () => {
   }, [sources]);
 
   const refreshSources = useCallback(async () => {
-    const API_BASE = getActiveBase();
+    const API_BASE = getTelegramBase();
     for (const source of sources) {
       if (source.type === 'telegram' && source.sessionString) {
         try {

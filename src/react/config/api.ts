@@ -102,6 +102,10 @@ const initialBase: string = envBase && envBase.length > 0
 
 export let API_BASE: string = initialBase;
 
+export const getTelegramBase = (): string => normalize(
+  (import.meta.env.VITE_TELEGRAM_API_URL as string | undefined)?.trim() || API_BASE
+);
+
 export const getActiveBase = (): string => API_BASE;
 
 const buildCandidates = (): string[] => {

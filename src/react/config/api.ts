@@ -104,6 +104,8 @@ export let API_BASE: string = initialBase;
 
 export const getActiveBase = (): string => API_BASE;
 
+export const AGENT_API_BASE = (import.meta.env.VITE_AGENT_API_URL as string | undefined)?.trim().replace(/\/+$/, "") || API_BASE;
+
 const buildCandidates = (): string[] => {
   const candidates: string[] = [];
   const seen = new Set<string>();

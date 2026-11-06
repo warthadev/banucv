@@ -6,7 +6,7 @@ import {
   Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Globe, Wand2, Link, ChevronDown
 } from "lucide-react";
 import useGemini from "@hook/usegemini";
-import { getActiveBase } from "@config/api";
+import { AGENT_API_BASE } from "@config/api";
 import { useAudio } from "@hook/useaudio";
 import { GeminiAuthModal } from "./geminiauthmodal";
 import Loading from "@control/loading";
@@ -694,7 +694,7 @@ const AIChat: React.FC = () => {
     if (!user) throw new Error("Please sign in before using AI Agent");
     const idToken = await user.getIdToken();
     const prompt = `${textContext}${images.length ? `\n\n[${images.length} image(s) attached]` : ""}`;
-    const response = await fetch(`${getActiveBase()}/agent/chat`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` }, body: JSON.stringify({ provider: "9router", model: modelName, prompt, history }) });
+    const response = await fetch(`${AGENT_API_BASE}/agent/chat`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` }, body: JSON.stringify({ provider: "9router", model: modelName, prompt, history }) });
     const data = await response.json();
     if (!response.ok) throw new Error(data?.detail || `AI Agent request failed: ${response.status}`);
     const result = data?.data?.result || {};

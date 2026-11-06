@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { heroVariants } from "@/react/animation/home";
 import { Play, AlertCircle, Loader2, Cpu, Copy, Check, Key, Globe, Eye, EyeOff, Terminal } from "lucide-react";
 import { ROUTER_ENDPOINT } from "@hook/usegemini";
+import { getAuth } from "@config/firebase";
+import { getActiveBase } from "@config/api";
 
 const listContainerVariants = {
   hidden: { opacity: 0 },
@@ -43,9 +45,18 @@ const AICheck: React.FC = () => {
     try {
       let models: any[] = [];
 
-      const token = authMode === "custom" ? customKey.trim() : localStorage.getItem("9router_api_token") || "";
-      if (!token) throw new Error("Enter a 9router token.");
-      const response = await fetch(`${ROUTER_ENDPOINT}/models`, { headers: { Authorization: `Bearer ${token}` } });
+      let response: Response;
+      if (authMode === "system") {
+        const firebaseAuth = await getAuth();
+        const user = firebaseAuth.currentUser;
+        if (!user) throw new Error("Please sign in before checking system models.");
+        const idToken = await user.getIdToken();
+        response = await fetch(`${getActiveBase()}/agent/models`, { headers: { Authorization: `Bearer ${idToken}` } });
+      } else {
+        const token = customKey.trim();
+        if (!token) throw new Error("Enter a 9router token.");
+        response = await fetch(`${ROUTER_ENDPOINT}/models`, { headers: { Authorization: `Bearer ${token}` } });
+      }
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error?.message || `Error ${response.status}`);
       models = data.data || data.models || [];

@@ -5,8 +5,7 @@ import {
   Send, Bot, Trash2, Volume2, VolumeX, AlertCircle,
   Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Globe, Wand2, Link, ChevronDown
 } from "lucide-react";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import useGemini, { getCachedGeminiKey } from "@hook/usegemini";
+import useGemini, { getCachedGeminiKey, ROUTER_ENDPOINT } from "@hook/usegemini";
 import { useAudio } from "@hook/useaudio";
 import { GeminiAuthModal } from "./geminiauthmodal";
 import Loading from "@control/loading";
@@ -18,55 +17,10 @@ import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 const AVAILABLE_MODELS = [
-  "gemini-3.5-flash",
-  "gemini-3.5-flash-lite",
-  "gemini-3.6-flash",
-  "gemini-3.7-flash",
-  "gemini-3-flash-preview",
-  "gemini-3.1-pro-preview",
-  "gemini-3.1-pro-preview-customtools",
-  "gemini-3.1-flash-lite-preview",
-  "gemini-3.1-flash-lite",
-  "gemini-3.1-flash-image-preview",
-  "gemini-3.1-flash-image",
-  "gemini-3.1-flash-lite-image",
-  "gemini-3.1-flash-tts-preview",
-  "gemini-3-pro-image-preview",
-  "gemini-3-pro-image",
-  "gemini-2.5-flash",
-  "gemini-2.5-flash-lite",
-  "gemini-2.5-flash-image",
-  "gemini-2.5-flash-preview-tts",
-  "gemini-2.5-flash-native-audio-latest",
-  "gemini-2.5-flash-native-audio-preview-09-2025",
-  "gemini-2.5-flash-native-audio-preview-12-2025",
-  "gemini-2.5-pro",
-  "gemini-2.5-pro-preview-tts",
-  "gemini-2.5-computer-use-preview-10-2025",
-  "gemini-flash-latest",
-  "gemini-flash-lite-latest",
-  "gemini-pro-latest",
-  "gemini-omni-flash-preview",
-  "gemini-robotics-er-1.6-preview",
-  "gemini-robotics-er-2-preview",
-  "gemini-embedding-001",
-  "gemini-embedding-2-preview",
-  "gemini-embedding-2",
-  "gemma-4-26b-a4b-it",
-  "gemma-4-31b-it",
-  "nano-banana-pro-preview",
-  "lyria-3-clip-preview",
-  "lyria-3-pro-preview",
-  "antigravity-preview-05-2026",
-  "deep-research-max-preview-04-2026",
-  "deep-research-preview-04-2026",
-  "deep-research-pro-preview-12-2025",
-  "imagen-4.0-generate-001",
-  "imagen-4.0-ultra-generate-001",
-  "imagen-4.0-fast-generate-001",
-  "veo-3.1-generate-preview",
-  "veo-3.1-fast-generate-preview",
-  "veo-3.1-lite-generate-preview",
+  "openrouter/openrouter/free",
+  "openrouter/nvidia/nemotron-3.5-super-vl:free",
+  "gemini/gemini-3.6-flash",
+  "gemini/gemini-3.5-flash-lite",
 ];
 
 interface Message {
@@ -729,65 +683,19 @@ const AIChat: React.FC = () => {
     originalUserMessage?: string
   ): Promise<{ text: string; model: string; sources?: { title: string; url: string }[]; searchImages?: string[] }> => {
     const modelName = AVAILABLE_MODELS[modelIndex];
-    if (!modelName) throw new Error(`Model ${modelName} not found`);
+    if (!modelName) throw new Error("Model not found");
     const apiKey = getCachedGeminiKey();
-    if (!apiKey) throw new Error("No API key");
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const modelConfig: any = { model: modelName };
-    if (webSearchEnabled) {
-      modelConfig.tools = [{ googleSearch: {} }];
-    }
-    const model = genAI.getGenerativeModel(modelConfig);
-    const fullMessage = messageText + buildContextFromFiles(files);
-    
-    let result;
-    try {
-      if (images && images.length > 0) {
-        const parts: any[] = [{ text: fullMessage || "Describe these images" }];
-        for (const img of images) {
-          parts.push({ inlineData: { mimeType: img.mimeType, data: img.data } });
-        }
-        result = await model.generateContent(parts);
-      } else {
-        const history = currentMessages.filter(m => !m.error && !(isRetry && m.role === "user" && m.content === originalUserMessage)).map(m => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.content }] }));
-        const chat = model.startChat({ history });
-        result = await chat.sendMessage(fullMessage);
-      }
-    } catch (error: any) {
-      console.error("API Error:", {
-        message: error.message,
-        status: error.status,
-        details: error,
-        model: modelName,
-        errorType: getErrorType(error)
-      });
-      throw error;
-    }
-
-    const response = await result.response;
-    const text = cleanMarkdown(response.text());
-    const sources: { title: string; url: string }[] = [];
-    const searchImages: string[] = [];
-
-    const candidate = response.candidates?.[0];
-    if (candidate?.groundingMetadata) {
-      const chunks = candidate.groundingMetadata.groundingChunks || [];
-      for (const chunk of chunks) {
-        if (chunk.web) {
-          const title = chunk.web.title || chunk.web.uri || "Source";
-          const url = chunk.web.uri;
-          if (url) {
-            sources.push({ title, url });
-          }
-        }
-        if (chunk.image) {
-          const imgUrl = chunk.image.uri || chunk.image.base64;
-          if (imgUrl) searchImages.push(imgUrl);
-        }
-      }
-    }
-
-    return { text, model: modelName, sources, searchImages };
+    if (!apiKey) throw new Error("9router token is not configured");
+    const history = currentMessages.filter(m => !m.error && !(isRetry && m.role === "user" && m.content === originalUserMessage)).map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.content }));
+    const textContext = messageText + buildContextFromFiles(files);
+    const content: any[] = [{ type: "text", text: textContext || "Describe these images" }];
+    for (const image of images) content.push({ type: "image_url", image_url: { url: `data:${image.mimeType};base64,${image.data}` } });
+    const response = await fetch(`${ROUTER_ENDPOINT}/chat/completions`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` }, body: JSON.stringify({ model: modelName, messages: [...history, { role: "user", content: images.length ? content : textContext }], temperature: 0.2, max_tokens: 8192, stream: false }) });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error?.message || `9router request failed: ${response.status}`);
+    const text = cleanMarkdown(data?.choices?.[0]?.message?.content || "");
+    if (!text) throw new Error("9router returned an empty response");
+    return { text, model: data.model || modelName, sources: [], searchImages: [] };
   };
 
   const generateImage = async (prompt: string): Promise<string> => {

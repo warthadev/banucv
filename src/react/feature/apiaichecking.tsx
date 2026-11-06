@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { heroVariants } from "@/react/animation/home";
 import { Play, AlertCircle, Loader2, Cpu, Copy, Check, Key, Globe, Eye, EyeOff, Terminal } from "lucide-react";
-import { getActiveBase } from "@config/api";
+import { ROUTER_ENDPOINT } from "@hook/usegemini";
 
 const listContainerVariants = {
   hidden: { opacity: 0 },
@@ -43,24 +43,13 @@ const AICheck: React.FC = () => {
     try {
       let models: any[] = [];
 
-      if (authMode === "system") {
-        const API_BASE = getActiveBase();
-        const res = await fetch(`${API_BASE}/token/gemini/models`);
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.detail || "Failed to fetch models");
-        }
-        const data = await res.json();
-        models = data.models || [];
-        setSystemModels(models);
-      } else {
-        if (!customKey) throw new Error("Enter API Key.");
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${customKey}`);
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error?.message || `Error ${response.status}`);
-        models = data.models || [];
-        setCustomModels(models);
-      }
+      const token = authMode === "custom" ? customKey.trim() : localStorage.getItem("9router_api_token") || "";
+      if (!token) throw new Error("Enter a 9router token.");
+      const response = await fetch(`${ROUTER_ENDPOINT}/models`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error?.message || `Error ${response.status}`);
+      models = data.data || data.models || [];
+      if (authMode === "system") setSystemModels(models); else setCustomModels(models);
 
       setStatus("idle");
     } catch (err: any) {
@@ -92,8 +81,8 @@ const AICheck: React.FC = () => {
           animate="animate"
           className="aic-hero-wrapper"
         >
-          <h1 className="home-title">API Explorer</h1>
-          <p className="home-subtitle">Verify connectivity and available models.</p>
+          <h1 className="home-title">9router Model Check</h1>
+          <p className="home-subtitle">Verify 9router connectivity and available models.</p>
 
           <div className="aic-controls">
             

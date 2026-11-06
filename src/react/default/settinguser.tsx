@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { GithubIcon } from "@/react/control/icon";
 import { formatTimestamp } from "@config/userstorage";
-import { GEMINI_KEY_UPDATED_EVENT } from "@hook/usegemini";
 
 interface UserProfile {
   uid: string;
@@ -24,7 +23,6 @@ interface UserProfile {
   lastLoginAt?: any;
   lastSeen?: any;
   loginCount?: number;
-  geminiApiKey?: string;
   githubUsername?: string;
   githubToken?: string;
   telegramSessions?: string[];
@@ -66,8 +64,6 @@ const SettingUser: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
-  const [geminiKey, setGeminiKey] = useState("");
-  const [showGemini, setShowGemini] = useState(false);
   const [githubUser, setGithubUser] = useState("");
   const [githubToken, setGithubToken] = useState("");
   const [showGithubToken, setShowGithubToken] = useState(false);
@@ -105,7 +101,6 @@ const SettingUser: React.FC = () => {
       if (userSnap.exists()) {
         const data = userSnap.data() as UserProfile;
         setProfile(data);
-        setGeminiKey(data.geminiApiKey || "");
         setGithubUser(data.githubUsername || "");
         setGithubToken(data.githubToken || "");
         
@@ -149,13 +144,7 @@ const SettingUser: React.FC = () => {
     try {
       const userRef = doc(db, "users", currentUser.uid);
       const updateData: any = {};
-      let geminiKeyChanged = false;
-      
-      if (geminiKey !== profile?.geminiApiKey) {
-        updateData.geminiApiKey = geminiKey.trim() || null;
-        geminiKeyChanged = true;
-      }
-      
+
       if (githubUser !== profile?.githubUsername) {
         updateData.githubUsername = githubUser.trim() || null;
       }
@@ -170,9 +159,6 @@ const SettingUser: React.FC = () => {
         if (updatedSnap.exists()) {
           const data = updatedSnap.data() as UserProfile;
           setProfile(data);
-        }
-        if (geminiKeyChanged) {
-          window.dispatchEvent(new Event(GEMINI_KEY_UPDATED_EVENT));
         }
         setMessage({ type: "success", text: "Credentials updated successfully" });
       } else {
@@ -325,29 +311,6 @@ const SettingUser: React.FC = () => {
           </div>
         </div>
       )}
-
-      <div className="su-input-group">
-        <label className="su-input-label">
-          <Key size={14} color="var(--primary)" />
-          GEMINI API KEY
-        </label>
-        <div className="su-input-wrapper">
-          <input
-            type={showGemini ? "text" : "password"}
-            value={geminiKey}
-            onChange={(e) => setGeminiKey(e.target.value)}
-            placeholder="Token Access"
-            className="setting-sensitive-input"
-          />
-          <button
-            type="button"
-            className="setting-eye-btn"
-            onClick={() => setShowGemini(!showGemini)}
-          >
-            {showGemini ? <EyeOff size={16} color="var(--primary)" /> : <Eye size={16} color="var(--primary)" />}
-          </button>
-        </div>
-      </div>
 
       <div className="su-input-group">
         <label className="su-input-label">

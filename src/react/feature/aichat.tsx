@@ -61,7 +61,6 @@ const AVAILABLE_MODELS = [
   "deep-research-max-preview-04-2026",
   "deep-research-preview-04-2026",
   "deep-research-pro-preview-12-2025",
-  "aqa",
   "imagen-4.0-generate-001",
   "imagen-4.0-ultra-generate-001",
   "imagen-4.0-fast-generate-001",

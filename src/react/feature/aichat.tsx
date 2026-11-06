@@ -5,7 +5,7 @@ import {
   Send, Bot, Trash2, Volume2, VolumeX, AlertCircle,
   Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Globe, Wand2, Link, ChevronDown
 } from "lucide-react";
-import useGemini from "@hook/usegemini";
+import useGemini, { AUTOMATIC_AGENT_MODEL } from "@hook/usegemini";
 import { AGENT_API_BASE } from "@config/api";
 import { useAudio } from "@hook/useaudio";
 import { GeminiAuthModal } from "./geminiauthmodal";
@@ -18,6 +18,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 const AVAILABLE_MODELS = [
+  AUTOMATIC_AGENT_MODEL,
   "openrouter/openrouter/free",
   "openrouter/nvidia/nemotron-3.5-super-vl:free",
   "gemini/gemini-3.6-flash",
@@ -471,13 +472,12 @@ const AIChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>(() => loadMessages());
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState(AVAILABLE_MODELS[0]);
+  const [selectedModel] = useState(AUTOMATIC_AGENT_MODEL);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentSpeakingId, setCurrentSpeakingId] = useState<string | null>(null);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isUploadDropdownOpen, setIsUploadDropdownOpen] = useState(false);
-  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [imageGenEnabled, setImageGenEnabled] = useState(false);
   const [retryingMessageId, setRetryingMessageId] = useState<string | null>(null);
@@ -485,7 +485,6 @@ const AIChat: React.FC = () => {
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<string>("Unknown");
   const [uploadDropdownPos, setUploadDropdownPos] = useState<{ bottom: number; left: number; maxHeight: number }>({ bottom: 0, left: 0, maxHeight: 0 });
-  const [modelDropdownPos, setModelDropdownPos] = useState<{ bottom: number; left: number; maxHeight: number }>({ bottom: 0, left: 0, maxHeight: 0 });
   const [textareaOverflow, setTextareaOverflow] = useState<"hidden" | "auto">("hidden");
   const [sourcesVisibility, setSourcesVisibility] = useState<Record<string, boolean>>({});
   
@@ -495,7 +494,6 @@ const AIChat: React.FC = () => {
   const multiFileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
   const uploadDropdownRef = useRef<HTMLDivElement>(null);
-  const modelDropdownRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesRef = useRef<Message[]>([]);
   
@@ -552,7 +550,6 @@ const AIChat: React.FC = () => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (uploadDropdownRef.current && !uploadDropdownRef.current.contains(event.target as Node)) setIsUploadDropdownOpen(false);
-      if (modelDropdownRef.current && !modelDropdownRef.current.contains(event.target as Node)) setIsModelDropdownOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -793,8 +790,6 @@ const AIChat: React.FC = () => {
       const isRateLimit = errorType === "RATE_LIMIT" || error.message?.includes("429");
       
       if ((isServiceUnavailable || isRateLimit) && retryModelIndex < AVAILABLE_MODELS.length - 1) {
-        const nextModel = AVAILABLE_MODELS[retryModelIndex + 1];
-        setSelectedModel(nextModel);
         await new Promise(resolve => setTimeout(resolve, 1000));
         await sendMessage(messageText, images, files, retryModelIndex + 1, true);
         return;
@@ -1114,25 +1109,9 @@ const AIChat: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <div className="aichat-model-wrapper" ref={modelDropdownRef}>
-                  <button className="aichat-icon-btn" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setModelDropdownPos(calcDropdownPos(r, 220, 260)); setIsModelDropdownOpen(!isModelDropdownOpen); }}><Bot size={24} /></button>
-                  {isModelDropdownOpen && (
-                    <div
-                      className="model-dropdown-menu"
-                      style={{
-                        position: "fixed",
-                        bottom: modelDropdownPos.bottom,
-                        left: modelDropdownPos.left,
-                        maxHeight: modelDropdownPos.maxHeight,
-                      }}
-                    >
-                      {AVAILABLE_MODELS.map(model => (
-                        <button key={model} className={model === selectedModel ? 'active' : ''} onClick={() => { setSelectedModel(model); setIsModelDropdownOpen(false); }}>
-                          {model}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                <div className="aichat-model-wrapper" title="Model dipilih otomatis oleh AI Agent">
+                  <span className="aichat-icon-btn" aria-label={`Model otomatis: ${selectedModel}`}><Bot size={24} /></span>
+                  <span className="aichat-automatic-model">Auto: {selectedModel}</span>
                 </div>
                 <button 
                   className={`aichat-icon-btn globe-btn${webSearchEnabled ? " web-search-active" : ""}`} 

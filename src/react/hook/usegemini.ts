@@ -6,8 +6,9 @@ import { auth } from "@config/firebase";
 export const ROUTER_ENDPOINT = "https://20128-agq2firibhstlf6sr7k3ydjoim.instabox.tech/v1";
 const TOKEN_KEY = "9router_api_token";
 const MODEL_KEY = "9router_model";
+export const AUTOMATIC_AGENT_MODEL = "gemini/gemini-3.6-flash";
 let cachedApiKey: string | null = null;
-let cachedModel = localStorage.getItem(MODEL_KEY) || "openrouter/openrouter/free";
+let cachedModel = AUTOMATIC_AGENT_MODEL;
 
 export const getCachedGeminiKey = (): string | null => cachedApiKey || localStorage.getItem(TOKEN_KEY);
 export const getCachedRouterModel = (): string => cachedModel || "openrouter/openrouter/free";
@@ -36,11 +37,11 @@ export const useGemini = () => {
     return () => window.removeEventListener(GEMINI_KEY_UPDATED_EVENT, update);
   }, []);
 
-  const saveApiKey = useCallback(async (apiKey: string, model = "openrouter/openrouter/free") => {
+  const saveApiKey = useCallback(async (apiKey: string, model = AUTOMATIC_AGENT_MODEL) => {
     localStorage.setItem(TOKEN_KEY, apiKey.trim());
-    localStorage.setItem(MODEL_KEY, model.trim() || "openrouter/openrouter/free");
+    localStorage.setItem(MODEL_KEY, model.trim() || AUTOMATIC_AGENT_MODEL);
     cachedApiKey = apiKey.trim();
-    cachedModel = model.trim() || "openrouter/openrouter/free";
+    cachedModel = model.trim() || AUTOMATIC_AGENT_MODEL;
     setIsConfigured(true);
     setShowAuthModal(false);
     window.dispatchEvent(new Event(GEMINI_KEY_UPDATED_EVENT));

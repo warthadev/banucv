@@ -1141,6 +1141,14 @@
   flex-shrink: 0;
 }
 
+.aichat-automatic-model {
+  margin-left: 6px;
+  color: var(--text-sub);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
 .upload-dropdown-menu,
 .model-dropdown-menu {
   position: fixed;

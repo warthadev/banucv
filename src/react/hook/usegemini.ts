@@ -23,9 +23,9 @@ export const useGemini = () => {
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, () => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!mountedRef.current) return;
-      setIsConfigured(Boolean(localStorage.getItem(TOKEN_KEY)));
+      setIsConfigured(Boolean(user));
       setIsLoading(false);
     });
     return () => unsubscribe();

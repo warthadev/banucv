@@ -5,7 +5,8 @@ import {
   Send, Bot, Trash2, Volume2, VolumeX, AlertCircle,
   Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Globe, Wand2, Link, ChevronDown
 } from "lucide-react";
-import useGemini, { getCachedGeminiKey, ROUTER_ENDPOINT } from "@hook/usegemini";
+import useGemini from "@hook/usegemini";
+import { getActiveBase } from "@config/api";
 import { useAudio } from "@hook/useaudio";
 import { GeminiAuthModal } from "./geminiauthmodal";
 import Loading from "@control/loading";
@@ -684,18 +685,22 @@ const AIChat: React.FC = () => {
   ): Promise<{ text: string; model: string; sources?: { title: string; url: string }[]; searchImages?: string[] }> => {
     const modelName = AVAILABLE_MODELS[modelIndex];
     if (!modelName) throw new Error("Model not found");
-    const apiKey = getCachedGeminiKey();
-    if (!apiKey) throw new Error("9router token is not configured");
     const history = currentMessages.filter(m => !m.error && !(isRetry && m.role === "user" && m.content === originalUserMessage)).map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.content }));
     const textContext = messageText + buildContextFromFiles(files);
     const content: any[] = [{ type: "text", text: textContext || "Describe these images" }];
     for (const image of images) content.push({ type: "image_url", image_url: { url: `data:${image.mimeType};base64,${image.data}` } });
-    const response = await fetch(`${ROUTER_ENDPOINT}/chat/completions`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` }, body: JSON.stringify({ model: modelName, messages: [...history, { role: "user", content: images.length ? content : textContext }], temperature: 0.2, max_tokens: 8192, stream: false }) });
+    const firebaseAuth = await getAuth();
+    const user = firebaseAuth.currentUser;
+    if (!user) throw new Error("Please sign in before using AI Agent");
+    const idToken = await user.getIdToken();
+    const prompt = `${textContext}${images.length ? `\n\n[${images.length} image(s) attached]` : ""}`;
+    const response = await fetch(`${getActiveBase()}/agent/chat`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` }, body: JSON.stringify({ provider: "9router", model: modelName, prompt, history }) });
     const data = await response.json();
-    if (!response.ok) throw new Error(data?.error?.message || `9router request failed: ${response.status}`);
-    const text = cleanMarkdown(data?.choices?.[0]?.message?.content || "");
-    if (!text) throw new Error("9router returned an empty response");
-    return { text, model: data.model || modelName, sources: [], searchImages: [] };
+    if (!response.ok) throw new Error(data?.detail || `AI Agent request failed: ${response.status}`);
+    const result = data?.data?.result || {};
+    const text = cleanMarkdown(result.content || "");
+    if (!text) throw new Error("AI Agent returned an empty response");
+    return { text, model: result.model || modelName, sources: [], searchImages: [] };
   };
 
   const generateImage = async (prompt: string): Promise<string> => {

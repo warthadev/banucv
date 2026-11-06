@@ -50,7 +50,7 @@ const AICheck: React.FC = () => {
         const firebaseAuth = await getAuth();
         const user = firebaseAuth.currentUser;
         if (!user) throw new Error("Please sign in before checking system models.");
-        const idToken = await user.getIdToken();
+        const idToken = await user.getIdToken(true);
         response = await fetch(`${AGENT_API_BASE}/agent/models`, { headers: { Authorization: `Bearer ${idToken}` } });
       } else {
         const token = customKey.trim();

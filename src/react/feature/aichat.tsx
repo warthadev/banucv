@@ -692,7 +692,7 @@ const AIChat: React.FC = () => {
     const firebaseAuth = await getAuth();
     const user = firebaseAuth.currentUser;
     if (!user) throw new Error("Please sign in before using AI Agent");
-    const idToken = await user.getIdToken();
+    const idToken = await user.getIdToken(true);
     const prompt = `${textContext}${images.length ? `\n\n[${images.length} image(s) attached]` : ""}`;
     const response = await fetch(`${AGENT_API_BASE}/agent/chat`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` }, body: JSON.stringify({ provider: "9router", model: modelName, prompt, history }) });
     const data = await response.json();

@@ -150,8 +150,8 @@ const techItems: TechItem[] = [
   {
     category: "AI & Intelligence",
     items: [
-      "Google Generative AI",
-      "Gemini API",
+      "9router AI Agent",
+      "Hermes Agent",
       "Pollinations",
       "OpenSubtitles Extractor",
       "Video Metadata Extractor",
@@ -291,7 +291,7 @@ const thanksItems: string[] = [
   "Google Colab",
   "DeepSeek",
   "Claude",
-  "Google Gemini",
+  "9router",
   "Stack Overflow",
   "GitHub",
   "Hugging Face",
@@ -310,12 +310,12 @@ const projectItems: ProjectItem[] = [
       "Analyze system status and API connectivity in real time. Verify available models, monitor token usage, and ensure your AI services are running as expected without interruption.",
   },
   {
-    name: "AI Chat",
+    name: "AI Agent",
     path: "/ai-chat",
     category: "AI Tools",
     icon: MessageSquareText,
     description:
-      "Interact with a powerful AI assistant powered by Gemini. Upload images, files, or folders, generate visuals, and get contextual responses tailored to your needs in a seamless conversational interface.",
+      "Connect to the Instabox AI Agent through 9router using your configured token and model. Work with files, workspace tools, and routed AI models from one interface.",
   },
   {
     name: "Downloader",
@@ -357,7 +357,7 @@ const featureItems: FeatureItem[] = [
     category: "Intelligence",
     icon: Cpu,
     description:
-      "Google Gemini embedded directly in the browser with image upload, folder context, web search grounding, image generation, and voice narration. Automatic model failover rotates to the next available model when the current one is rate limited, keeping conversations uninterrupted.",
+      "Instabox AI Agent connected through 9router with configurable tokens and models. The agent can work with workspace files and tools while keeping the existing conversational interface.",
   },
   {
     name: "Full-Stack Integration",

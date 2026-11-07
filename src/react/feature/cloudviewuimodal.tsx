@@ -123,12 +123,14 @@ export const DeleteRepoModal: React.FC<{
   );
 };
 
-export const AddRepoModal: React.FC<{
+type AddRepoModalProps = {
   open: boolean;
   onConfirm: (params: { name: string; type: 'dataset' | 'model' | 'space'; isPrivate: boolean }) => void;
   onClose: () => void;
   loading: boolean;
-}> = ({ open, onConfirm, onClose, loading }) => {
+};
+
+const AddRepoModalContent: React.FC<AddRepoModalProps> = ({ open, onConfirm, onClose, loading }) => {
   const [name, setName] = useState('');
   const [type, setType] = useState<'dataset' | 'model' | 'space'>('dataset');
   const [isPrivate, setIsPrivate] = useState(true);
@@ -137,17 +139,6 @@ export const AddRepoModal: React.FC<{
   const [visMenuOpen, setVisMenuOpen] = useState(false);
   const typeRef = useRef<HTMLDivElement>(null);
   const visRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (open) {
-      setName('');
-      setType('dataset');
-      setIsPrivate(true);
-      setTouched(false);
-      setTypeMenuOpen(false);
-      setVisMenuOpen(false);
-    }
-  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -177,8 +168,6 @@ export const AddRepoModal: React.FC<{
   };
 
   return (
-    <AnimatePresence>
-      {open && (
         <motion.div
           className="cloudview-modal-overlay"
           initial={{ opacity: 0 }}
@@ -308,10 +297,14 @@ export const AddRepoModal: React.FC<{
             </div>
           </motion.div>
         </motion.div>
-      )}
-    </AnimatePresence>
   );
 };
+
+export const AddRepoModal: React.FC<AddRepoModalProps> = (props) => (
+  <AnimatePresence>
+    {props.open && <AddRepoModalContent key="add-repo-modal" {...props} />}
+  </AnimatePresence>
+);
 
 export const SquashRepoModal: React.FC<{
   open: boolean;

@@ -29,8 +29,8 @@ const GithubEditor: React.FC = () => {
     activeId,
     isLoading,
     isClearing,
-    setSelectedRepo,
-    setCurrentPath,
+    openRepository,
+    navigateToPath,
     setEditingFile,
     setStatus,
     setActiveId,
@@ -79,19 +79,18 @@ const GithubEditor: React.FC = () => {
 
   const handleRepoClick = (name: string, id: number) => {
     setActiveId(id);
-    setSelectedRepo(name);
-    setCurrentPath("");
+    openRepository(name, "");
     setEditingFile(null);
   };
 
   const handleUpDir = () => {
     if (currentPath === "") {
-      setSelectedRepo(null);
+      openRepository(null, "");
       setActiveId("");
       setEditingFile(null);
     } else {
       const newPath = currentPath.split("/").slice(0, -1).join("/");
-      setCurrentPath(newPath);
+      navigateToPath(newPath);
       setEditingFile(null);
     }
   };

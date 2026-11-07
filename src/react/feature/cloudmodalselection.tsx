@@ -438,9 +438,15 @@ const TransferModal: React.FC<TransferModalProps> = ({
 }) => {
   const isCopy = mode === 'copy';
   const verb = isCopy ? 'Copy' : 'Move';
-  const [selectedAccountId, setSelectedAccountId] = useState('');
-  const [selectedRepoId, setSelectedRepoId] = useState('');
-  const [selectedRepoType, setSelectedRepoType] = useState<'dataset' | 'model' | 'space'>('dataset');
+  const [selectedAccountId, setSelectedAccountId] = useState(() =>
+    isPublicSource ? '' : sourceAccountId ? SAME_ACCOUNT_ID : ''
+  );
+  const [selectedRepoIdState, setSelectedRepoIdState] = useState(() =>
+    isPublicSource || !sourceAccountId ? '' : sourceRepoId
+  );
+  const [selectedRepoTypeState, setSelectedRepoTypeState] = useState<'dataset' | 'model' | 'space'>(() =>
+    isPublicSource ? 'dataset' : sourceRepoType || 'dataset'
+  );
   const [selectedDestFolder, setSelectedDestFolder] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [folderSearch, setFolderSearch] = useState('');
@@ -471,32 +477,6 @@ const TransferModal: React.FC<TransferModalProps> = ({
   const showSameAccount = hasSourceAccount && !isPublicSource;
 
   useEffect(() => {
-    if (open) {
-      if (isPublicSource) {
-        setSelectedAccountId('');
-        setSelectedRepoId('');
-        setSelectedRepoType('dataset');
-        setSelectedDestFolder('');
-        setConfirmOpen(false);
-        setFolderSearch('');
-        setExpandedPaths(new Set());
-        setAccountDropdownOpen(false);
-        setRepoDropdownOpen(false);
-        return;
-      }
-      setSelectedAccountId(hasSourceAccount ? SAME_ACCOUNT_ID : '');
-      setSelectedRepoId(hasSourceAccount ? sourceRepoId : '');
-      setSelectedRepoType(sourceRepoType || 'dataset');
-      setSelectedDestFolder('');
-      setConfirmOpen(false);
-      setFolderSearch('');
-      setExpandedPaths(new Set());
-      setAccountDropdownOpen(false);
-      setRepoDropdownOpen(false);
-    }
-  }, [open, isPublicSource, hasSourceAccount, sourceRepoId, sourceRepoType]);
-
-  useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (accountDropdownRef.current && !accountDropdownRef.current.contains(e.target as Node)) {
         setAccountDropdownOpen(false);
@@ -515,16 +495,9 @@ const TransferModal: React.FC<TransferModalProps> = ({
   }, [selectedAccountId, sourceAccountId]);
 
   useEffect(() => {
-    if (!open) return;
-    if (!resolvedAccountId) {
-      setSelectedRepoId('');
-      return;
-    }
-
+    if (!open || !resolvedAccountId) return;
     const repos = reposByAccount[resolvedAccountId];
-    if (!repos && !reposLoading) {
-      fetchReposForAccount(resolvedAccountId);
-    }
+    if (!repos && !reposLoading) fetchReposForAccount(resolvedAccountId);
   }, [resolvedAccountId, reposByAccount, reposLoading, fetchReposForAccount, open]);
 
   const currentRepos = useMemo<TransferRepo[]>(() => {
@@ -544,16 +517,28 @@ const TransferModal: React.FC<TransferModalProps> = ({
     return repos;
   }, [resolvedAccountId, reposByAccount, sourceRepoId, sourceRepoType, isPublicSource, selectedAccountId]);
 
-  useEffect(() => {
-    if (currentRepos.length === 0) {
-      setSelectedRepoId('');
-      return;
-    }
-    if (!currentRepos.some(r => r.id === selectedRepoId)) {
-      setSelectedRepoId(currentRepos[0].id);
-      setSelectedRepoType(currentRepos[0].type);
-    }
-  }, [currentRepos, selectedRepoId]);
+  const selectedRepo = useMemo(
+    () => currentRepos.find((repo) => repo.id === selectedRepoIdState) || currentRepos[0] || null,
+    [currentRepos, selectedRepoIdState]
+  );
+  const selectedRepoId = selectedRepo?.id || '';
+  const selectedRepoType = selectedRepo?.type || selectedRepoTypeState;
+
+  const selectAccount = useCallback((accountId: string) => {
+    setSelectedAccountId(accountId);
+    setSelectedRepoIdState('');
+    setSelectedDestFolder('');
+    setFolderSearch('');
+    setExpandedPaths(new Set());
+  }, []);
+
+  const selectRepo = useCallback((repo: TransferRepo) => {
+    setSelectedRepoIdState(repo.id);
+    setSelectedRepoTypeState(repo.type);
+    setSelectedDestFolder('');
+    setFolderSearch('');
+    setExpandedPaths(new Set());
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -564,12 +549,6 @@ const TransferModal: React.FC<TransferModalProps> = ({
       fetchDestFolders(resolvedAccountId, selectedRepoId);
     }
   }, [open, resolvedAccountId, selectedRepoId, destFoldersByRepo, destFoldersLoading, fetchDestFolders]);
-
-  useEffect(() => {
-    setSelectedDestFolder('');
-    setFolderSearch('');
-    setExpandedPaths(new Set());
-  }, [selectedAccountId, selectedRepoId]);
 
   const currentDestFoldersKey = resolvedAccountId && selectedRepoId
     ? `${resolvedAccountId}:${selectedRepoId}`
@@ -631,9 +610,6 @@ const TransferModal: React.FC<TransferModalProps> = ({
     return availableAccounts.find(a => a.id === selectedAccountId);
   }, [availableAccounts, selectedAccountId, sourceAccount]);
 
-  const selectedRepo = useMemo(() => (
-    currentRepos.find(r => r.id === selectedRepoId)
-  ), [currentRepos, selectedRepoId]);
 
   const shouldShowFolderPicker = !!selectedAccountId && !!selectedRepoId;
 
@@ -739,7 +715,7 @@ const TransferModal: React.FC<TransferModalProps> = ({
                               type="button"
                               className={`cloudview-transfer-select-item ${isSameAccountSelection ? 'active' : ''}`}
                               onClick={() => {
-                                setSelectedAccountId(SAME_ACCOUNT_ID);
+                                selectAccount(SAME_ACCOUNT_ID);
                                 setAccountDropdownOpen(false);
                               }}
                             >
@@ -752,7 +728,7 @@ const TransferModal: React.FC<TransferModalProps> = ({
                               type="button"
                               className={`cloudview-transfer-select-item ${selectedAccountId === acc.id ? 'active' : ''}`}
                               onClick={() => {
-                                setSelectedAccountId(acc.id);
+                                selectAccount(acc.id);
                                 setAccountDropdownOpen(false);
                               }}
                             >
@@ -827,8 +803,7 @@ const TransferModal: React.FC<TransferModalProps> = ({
                                   type="button"
                                   className={`cloudview-transfer-select-item ${selectedRepoId === repo.id ? 'active' : ''}`}
                                   onClick={() => {
-                                    setSelectedRepoId(repo.id);
-                                    setSelectedRepoType(repo.type);
+                                    selectRepo(repo);
                                     setRepoDropdownOpen(false);
                                   }}
                                 >
@@ -1124,7 +1099,9 @@ const CloudModalSelection: React.FC<CloudModalSelectionProps> = (props) => {
         onClose={props.onCreateFolderClose}
         loading={props.loading}
       />
+      {props.transferOpen && (
       <TransferModal
+        key={`${props.transferSourceAccountId || ''}:${props.transferSourceRepoId}:${props.transferSourceRepoType}:${props.isPublicSource ? 'public' : 'private'}`}
         open={props.transferOpen}
         targets={props.transferTargets}
         sourceAccountId={props.transferSourceAccountId}
@@ -1147,6 +1124,7 @@ const CloudModalSelection: React.FC<CloudModalSelectionProps> = (props) => {
         loading={props.loading}
         isPublicSource={props.isPublicSource || false}
       />
+      )}
     </>
   );
 };

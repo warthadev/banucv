@@ -177,21 +177,13 @@ const loadCover = async (track: PlaylistTrack): Promise<string> => {
 };
 
 const useTrackCover = (track: PlaylistTrack | undefined, enabled: boolean) => {
-  const [thumb, setThumb] = useState('');
+  const [cover, setCover] = useState<{ trackId: PlaylistTrack['id']; url: string } | null>(null);
+  const thumb = enabled && track && cover?.trackId === track.id ? cover.url : '';
   useEffect(() => {
-    if (!enabled || !track) {
-      setThumb('');
-      return;
-    }
-    const cached = coverMemCache.get(track.id);
-    if (cached) {
-      setThumb(cached);
-      return;
-    }
-    setThumb('');
+    if (!enabled || !track) return;
     let cancelled = false;
     loadCover(track).then((url) => {
-      if (!cancelled && url) setThumb(url);
+      if (!cancelled) setCover({ trackId: track.id, url });
     }).catch(() => {});
     return () => { cancelled = true; };
   }, [track, enabled]);
@@ -208,27 +200,25 @@ interface QueueRowProps {
 
 const QueueRow: React.FC<QueueRowProps> = React.memo(({ track, number, active, playing, onSelect }) => {
   const ref = useRef<HTMLButtonElement>(null);
-  const [visible, setVisible] = useState(false);
-
+  const [visible, setVisible] = useState(() => typeof IntersectionObserver === 'undefined');
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
+    if (entries.some((entry) => entry.isIntersecting)) {
+      setVisible(true);
+      observerRef.current?.disconnect();
+    }
+  }, []);
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-    if (typeof IntersectionObserver === 'undefined') {
-      setVisible(true);
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setVisible(true);
-          io.disconnect();
-        }
-      },
-      { rootMargin: '120px' }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
+    if (!el || visible || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(handleIntersection, { rootMargin: '120px' });
+    observerRef.current = observer;
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      if (observerRef.current === observer) observerRef.current = null;
+    };
+  }, [handleIntersection, visible]);
 
   useEffect(() => {
     if (active) ref.current?.scrollIntoView({ block: 'nearest' });
@@ -328,18 +318,25 @@ const MediaAudio: React.FC<MediaAudioProps> = ({ isOpen, showUI = true, tracks, 
   }, [isOpen]);
 
   useEffect(() => {
-    if (isOpen && total > 0) {
-      reset(total, Math.min(Math.max(initialIndex, 0), total - 1));
-      setPlayIntent(true);
-      setQueueOpen(false);
-      setMinimized(false);
-      errStreakRef.current = 0;
-    } else {
-      audioRef.current?.pause();
-      setPlayIntent(false);
-      reset(0, 0);
-      setSrc('');
-    }
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      if (isOpen && total > 0) {
+        reset(total, Math.min(Math.max(initialIndex, 0), total - 1));
+        setPlayIntent(true);
+        setQueueOpen(false);
+        setMinimized(false);
+        errStreakRef.current = 0;
+      } else {
+        audioRef.current?.pause();
+        setPlayIntent(false);
+        reset(0, 0);
+        setSrc('');
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen, total, initialIndex, reset, setPlayIntent]);
 
   const failRef = useRef<() => void>(() => {});
@@ -367,12 +364,15 @@ const MediaAudio: React.FC<MediaAudioProps> = ({ isOpen, showUI = true, tracks, 
     audioRef.current?.pause();
     retriedRef.current = false;
     resumeAtRef.current = 0;
-    setStatus('loading');
-    setSrc('');
-    setCurrentTime(0);
-    setDuration(0);
-    setSeeking(false);
-    setMetadataReady(false);
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setStatus('loading');
+      setSrc('');
+      setCurrentTime(0);
+      setDuration(0);
+      setSeeking(false);
+      setMetadataReady(false);
+    });
 
     (async () => {
       try {

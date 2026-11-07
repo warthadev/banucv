@@ -203,8 +203,17 @@ export const CloudModalTele: React.FC<CloudModalTeleProps> = ({
   const [isValidating, setIsValidating] = useState(false);
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const [countrySearch, setCountrySearch] = useState("");
-  const [filteredCountries, setFilteredCountries] = useState(countryCodes);
-  const [showTabs, setShowTabs] = useState(true);
+  const filteredCountries = countrySearch.trim()
+    ? countryCodes.filter((country) => {
+        const search = countrySearch.toLowerCase().trim();
+        return (
+          country.country.toLowerCase().includes(search) ||
+          country.code.includes(search) ||
+          country.flag.includes(search)
+        );
+      })
+    : countryCodes;
+  const showTabs = step !== "code";
   const [manualName, setManualName] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -217,7 +226,6 @@ export const CloudModalTele: React.FC<CloudModalTeleProps> = ({
     setPhoneCodeHash("");
     setStep("phone");
     setError("");
-    setShowTabs(true);
     setManualName("");
     setSessionString("");
     setSaveSuccess(false);
@@ -225,40 +233,15 @@ export const CloudModalTele: React.FC<CloudModalTeleProps> = ({
     setIsValidating(false);
     setIsSendingCode(false);
     setCountrySearch("");
-    setFilteredCountries(countryCodes);
   }, []);
 
-  useEffect(() => {
-    if (!isOpen) {
-      resetForm();
-      setMode("auto");
-    }
-  }, [isOpen, resetForm]);
 
-  useEffect(() => {
-    const filterCountries = () => {
-      if (!countrySearch.trim()) {
-        setFilteredCountries(countryCodes);
-        return;
-      }
-      const search = countrySearch.toLowerCase().trim();
-      const filtered = countryCodes.filter(
-        (c) =>
-          c.country.toLowerCase().includes(search) ||
-          c.code.includes(search) ||
-          c.flag.includes(search)
-      );
-      setFilteredCountries(filtered);
-    };
-    filterCountries();
-  }, [countrySearch]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsCountryDropdownOpen(false);
         setCountrySearch("");
-        setFilteredCountries(countryCodes);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -271,13 +254,6 @@ export const CloudModalTele: React.FC<CloudModalTeleProps> = ({
     }
   }, [isCountryDropdownOpen]);
 
-  useEffect(() => {
-    if (step === "code") {
-      setShowTabs(false);
-    } else {
-      setShowTabs(true);
-    }
-  }, [step]);
 
   const isValidPhoneNumber = useCallback((phone: string) => {
     const cleaned = phone.replace(/\D/g, '');
@@ -481,7 +457,6 @@ export const CloudModalTele: React.FC<CloudModalTeleProps> = ({
   const handleBack = useCallback(() => {
     if (step === "code") {
       resetForm();
-      setShowTabs(true);
     } else {
       resetForm();
       if (onBack) {
@@ -617,7 +592,6 @@ export const CloudModalTele: React.FC<CloudModalTeleProps> = ({
                                       setSelectedCountry(country);
                                       setIsCountryDropdownOpen(false);
                                       setCountrySearch("");
-                                      setFilteredCountries(countryCodes);
                                     }}
                                   >
                                     <span className="cva-country-flag">{country.flag}</span>

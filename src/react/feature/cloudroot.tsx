@@ -321,11 +321,13 @@ const CloudRoot: React.FC<CloudRootProps> = ({ onSelectSource, clearSession }) =
         )}
       </AnimatePresence>
 
-      <CloudModalTele
-        isOpen={showTeleModal}
-        onSave={handleTeleAuthSuccess}
-        onClose={() => setShowTeleModal(false)}
-      />
+      {showTeleModal && (
+        <CloudModalTele
+          isOpen={showTeleModal}
+          onSave={handleTeleAuthSuccess}
+          onClose={() => setShowTeleModal(false)}
+        />
+      )}
 
       <CloudModalHF
         isOpen={showHFModal}

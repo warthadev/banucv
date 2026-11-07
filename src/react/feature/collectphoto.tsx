@@ -1,5 +1,5 @@
 // src/react/feature/collectphoto.tsx
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { db, auth } from "@config/firebase";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,11 +44,19 @@ const sanitizeText = (text: string | undefined | null): string => {
 
 const CollectPhoto: React.FC = () => {
   const [users, setUsers] = useState<UserData[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const filteredUsers = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return users;
+    return users.filter(user =>
+      user.displayName?.toLowerCase().includes(query) ||
+      user.email?.toLowerCase().includes(query) ||
+      user.uid.toLowerCase().includes(query)
+    );
+  }, [searchQuery, users]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAuthorizing, setIsAuthorizing] = useState(true);
   const [viewMode, setViewMode] = useState<"first" | "latest">("latest");
@@ -143,27 +151,12 @@ const CollectPhoto: React.FC = () => {
         return dateB.getTime() - dateA.getTime();
       });
       setUsers(usersData);
-      setFilteredUsers(usersData);
     } catch (err: any) {
       setError(err.message || "Failed to load users");
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredUsers(users);
-    } else {
-      const query = searchQuery.toLowerCase();
-      const filtered = users.filter(user =>
-        user.displayName?.toLowerCase().includes(query) ||
-        user.email?.toLowerCase().includes(query) ||
-        user.uid.toLowerCase().includes(query)
-      );
-      setFilteredUsers(filtered);
-    }
-  }, [searchQuery, users]);
 
   const downloadSelfie = (imageData: string, username: string, type: string) => {
     const link = document.createElement("a");

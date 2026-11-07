@@ -309,14 +309,21 @@ const probeVideoResolution = async (url: string, token: string | undefined, sign
 
 const useVideoResolution = (url: string, token: string | undefined, fileSize: number, enabled: boolean) => {
   const key = enabled && url ? videoResKey(url, fileSize) : '';
-  const [res, setRes] = useState<{ w: number; h: number } | null>(() => (key ? getCachedVideoRes(key) : null));
+  const [resolutionSnapshot, setResolutionSnapshot] = useState<{
+    key: string;
+    value: { w: number; h: number } | null;
+  } | null>(null);
+  const res = resolutionSnapshot?.key === key
+    ? resolutionSnapshot.value
+    : key ? getCachedVideoRes(key) : null;
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    if (!key) { setRes(null); return; }
-    setRes(getCachedVideoRes(key));
-    return subscribeVideoRes(key, () => setRes(getCachedVideoRes(key)));
+    if (!key) return;
+    return subscribeVideoRes(key, () => {
+      setResolutionSnapshot({ key, value: getCachedVideoRes(key) });
+    });
   }, [key]);
 
   useEffect(() => {
@@ -432,11 +439,10 @@ export const ThumbnailImage: React.FC<ThumbnailImageProps> = ({ url, alt, type, 
 
   const handleImageError = useCallback(() => { clearRenderTimeout(); handleRetryOnce(); }, [clearRenderTimeout, handleRetryOnce]);
 
+  const invalidSource = (type !== 'image' && type !== 'video') || !activeUrl || activeUrl.length === 0;
+
   useEffect(() => {
-    if (!isVisible) return;
-    if ((type !== 'image' && type !== 'video') || !activeUrl || activeUrl.length === 0) {
-      setLoading(false); setError(true); return;
-    }
+    if (!isVisible || invalidSource) return;
 
     let cancelled = false;
     const controller = new AbortController();
@@ -569,7 +575,7 @@ export const ThumbnailImage: React.FC<ThumbnailImageProps> = ({ url, alt, type, 
     return () => { clearRenderTimeout(); };
   }, [imgSrc, renderKey, clearRenderTimeout, handleRetryOnce]);
 
-  if (loading) return (
+  if (loading && !(isVisible && invalidSource)) return (
     <div ref={containerRef} className="cloudview-thumb-fallback" style={{ background: getColor(visualType) + '18', color: getColor(visualType) }}>
       <div className="cloudview-loading-spinner" />
     </div>

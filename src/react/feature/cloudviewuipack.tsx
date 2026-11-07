@@ -150,11 +150,10 @@ export const CloudViewPack: React.FC<CloudViewPackProps> = (props) => {
     isPublicView = false,
   } = props;
 
-  const [isMobile, setIsMobile] = useState(screenSize === 'mobile');
-  const [internalSidebarWidth, setInternalSidebarWidth] = useState(sidebarWidth || 220);
+  const isMobile = screenSize === 'mobile';
+  const [uncontrolledSidebarWidth, setUncontrolledSidebarWidth] = useState(sidebarWidth || 220);
+  const internalSidebarWidth = sidebarWidth ?? uncontrolledSidebarWidth;
   const [hfSearchOpen, setHfSearchOpen] = useState(false);
-
-  useEffect(() => { setIsMobile(screenSize === 'mobile'); }, [screenSize]);
 
   const scrollAllToTop = useCallback(() => {
     window.scrollTo(0, 0);
@@ -186,12 +185,8 @@ export const CloudViewPack: React.FC<CloudViewPackProps> = (props) => {
     scrollAllToTop();
     pendingTopRef.current = false;
   }, [loadingFiles, scrollAllToTop]);
-  useEffect(() => {
-    if (sidebarWidth !== internalSidebarWidth) setInternalSidebarWidth(sidebarWidth);
-  }, [sidebarWidth]);
-
   const handleWidthChange = useCallback((newWidth: number) => {
-    setInternalSidebarWidth(newWidth);
+    setUncontrolledSidebarWidth(newWidth);
     if (setSidebarWidth) setSidebarWidth(newWidth);
   }, [setSidebarWidth]);
 

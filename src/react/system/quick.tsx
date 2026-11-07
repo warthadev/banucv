@@ -35,6 +35,21 @@ const quickMenuItems = [
   { name: 'Cloud Manager', path: '/cloudview', icon: Cloud, description: 'Browse Telegram files' },
 ];
 
+const readQuickPosition = (): { x: number; y: number } => {
+  if (typeof window === 'undefined') return { x: 0, y: 0 };
+  try {
+    const saved = window.localStorage.getItem('quick_position');
+    if (!saved) return { x: 0, y: 0 };
+    const parsed = JSON.parse(saved) as { x?: unknown; y?: unknown };
+    return {
+      x: typeof parsed.x === 'number' && Number.isFinite(parsed.x) ? parsed.x : 0,
+      y: typeof parsed.y === 'number' && Number.isFinite(parsed.y) ? parsed.y : 0,
+    };
+  } catch {
+    return { x: 0, y: 0 };
+  }
+};
+
 const Quick: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,10 +59,13 @@ const Quick: React.FC = () => {
   const toggleRef = useRef<HTMLButtonElement>(null);
   
   const [isOpen, setIsOpen] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [position, setPosition] = useState(readQuickPosition);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [hasMoved, setHasMoved] = useState(false);
+  const [hasMoved, setHasMoved] = useState(() => {
+    const saved = readQuickPosition();
+    return saved.x !== 0 || saved.y !== 0;
+  });
   const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
   const [isClick, setIsClick] = useState(true);
   const [buttonRect, setButtonRect] = useState<DOMRect | null>(null);
@@ -143,26 +161,18 @@ const Quick: React.FC = () => {
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem('quick_position');
-    if (saved) {
-      try {
-        const pos = JSON.parse(saved);
-        const clamped = clampPosition(pos);
-        setPosition(clamped);
-        setHasMoved(clamped.x !== 0 || clamped.y !== 0);
-      } catch (e) {
-        console.warn('Failed to load quick position');
-      }
-    }
-  }, [screenSize, floatingBounds, isPlayerActive]);
-
-  useEffect(() => {
-    if (hasMoved) {
+    if (!hasMoved) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
       const clamped = clampPosition(position);
       if (clamped.x !== position.x || clamped.y !== position.y) {
         setPosition(clamped);
       }
-    }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [screenSize, floatingBounds, isPlayerActive]);
 
   useEffect(() => {

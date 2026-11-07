@@ -1,5 +1,5 @@
 // src/react/feature/dltorrent.tsx
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Check, ExternalLink, CheckCircle2, Circle, Loader2 } from 'lucide-react';
 import { formatBytes } from '@config/utils';
 import type { TorrentFile } from '@hook/usedltorrent';
@@ -39,12 +39,6 @@ const DlTorrent: React.FC<DlTorrentProps> = ({
 
   const allSelected = sortedFiles.length > 0 && selectedIndexes.size === sortedFiles.length;
 
-  useEffect(() => {
-    if (isBusy) {
-      setSelectedIndexes(prev => (prev.size === 0 ? prev : new Set()));
-    }
-  }, [isBusy]);
-
   const toggleSelection = useCallback((file: TorrentFile) => {
     if (isBusy) return;
     setSelectedIndexes(prev => {
@@ -73,8 +67,8 @@ const DlTorrent: React.FC<DlTorrentProps> = ({
     if (!onColab || selectedIndexes.size === 0) return;
     const selected = sortedFiles.filter(f => selectedIndexes.has(f.index));
     if (selected.length === 0) return;
-    onColab(selected);
     setSelectedIndexes(new Set());
+    onColab(selected);
   }, [isBusy, onColab, selectedIndexes, sortedFiles]);
 
   return (

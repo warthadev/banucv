@@ -1,5 +1,5 @@
 // src/react/feature/barcode.tsx - UPDATED: Inline styles moved to CSS classes
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QrCode, Download, Link, MessageCircle, Wifi } from "lucide-react";
@@ -13,20 +13,16 @@ const BarcodePage: React.FC = () => {
   const [waMessage, setWaMessage] = useState<string>("");
   const [wifiSsid, setWifiSsid] = useState<string>("");
   const [wifiPass, setWifiPass] = useState<string>("");
-  const [finalValue, setFinalValue] = useState<string>(" ");
-  
-  const qrRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (type === "text") {
-      setFinalValue(inputValue.trim() || " ");
-    } else if (type === "wa") {
+  const finalValue = useMemo(() => {
+    if (type === "text") return inputValue.trim() || " ";
+    if (type === "wa") {
       const cleanNum = waNumber.replace(/\D/g, "");
-      setFinalValue(cleanNum ? `https://wa.me/${cleanNum}?text=${encodeURIComponent(waMessage)}` : " ");
-    } else if (type === "wifi") {
-      setFinalValue(wifiSsid ? `WIFI:S:${wifiSsid};T:WPA;P:${wifiPass};;` : " ");
+      return cleanNum ? `https://wa.me/${cleanNum}?text=${encodeURIComponent(waMessage)}` : " ";
     }
+    return wifiSsid ? `WIFI:S:${wifiSsid};T:WPA;P:${wifiPass};;` : " ";
   }, [type, inputValue, waNumber, waMessage, wifiSsid, wifiPass]);
+
+  const qrRef = useRef<HTMLDivElement>(null);
 
   const handleDownload = () => {
     const svg = qrRef.current?.querySelector("svg");

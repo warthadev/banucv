@@ -74,12 +74,10 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!isOpen) {
-      resetState();
-      return;
-    }
-    setTimeout(() => inputRef.current?.focus(), 100);
-  }, [isOpen, resetState]);
+    if (!isOpen) return;
+    const focusTimer = window.setTimeout(() => inputRef.current?.focus(), 100);
+    return () => window.clearTimeout(focusTimer);
+  }, [isOpen]);
 
   const searchUsers = useCallback(async (q: string, signal: AbortSignal) => {
     const safeFetch = async (url: string): Promise<any[]> => {
@@ -280,15 +278,17 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
     setUserRepos([]);
   }, []);
 
+  const handleClose = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    abortRef.current?.abort();
+    resetState();
+    onClose();
+  }, [onClose, resetState]);
+
   const handleSelectRepo = useCallback((repo: HFSearchRepo) => {
     onSelectRepo(repo);
-    onClose();
-  }, [onSelectRepo, onClose]);
-
-  const handleClose = useCallback(() => {
-    if (abortRef.current) abortRef.current.abort();
-    onClose();
-  }, [onClose]);
+    handleClose();
+  }, [handleClose, onSelectRepo]);
 
   const handleQueryChange = useCallback((v: string) => {
     setQuery(v);

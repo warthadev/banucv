@@ -186,19 +186,43 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
       const list = data.files || [];
       setFiles(list);
       setTotalSize(list.reduce((acc: number, f: TelegramFile) => acc + (f.size || 0), 0));
+      if (!silent && list.length > 0 && sessionString && !fileRestoreDoneRef.current) {
+        fileRestoreDoneRef.current = true;
+        const match = list.find((file: TelegramFile) => String(file.id) === String(reduxSelectedFileId));
+        if (match) {
+          setSelectedFile(match);
+          void fetchFileMetadata(chatId, match.id);
+          if (screenSize === 'mobile') setMobileView('player');
+        } else {
+          dispatch(setSelectedFileId(null));
+        }
+      }
     } catch (e: any) {
       if (!silent) setError(e.message);
     } finally {
       if (!silent) setLoadingFiles(false);
     }
-  }, [apiFetch]);
-
+  }, [apiFetch, dispatch, fetchFileMetadata, reduxSelectedFileId, screenSize, sessionString]);
   useEffect(() => {
-    if (sessionString) fetchDialogs();
+    if (!sessionString) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) void fetchDialogs();
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [sessionString, fetchDialogs]);
 
   useEffect(() => {
-    if (selectedChat && sessionString) fetchChatFiles(selectedChat.id, false);
+    if (!selectedChat || !sessionString) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) void fetchChatFiles(selectedChat.id, false);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [selectedChat, sessionString, fetchChatFiles]);
 
   useEffect(() => {
@@ -284,20 +308,6 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
       setFileMetadata(null);
     }
   }, [selectedFile]);
-
-  useEffect(() => {
-    if (!sessionString || fileRestoreDoneRef.current) return;
-    if (!selectedChat || loadingFiles || files.length === 0) return;
-    fileRestoreDoneRef.current = true;
-    const match = files.find(f => String(f.id) === String(reduxSelectedFileId));
-    if (match) {
-      setSelectedFile(match);
-      fetchFileMetadata(selectedChat.id, match.id);
-      if (screenSize === 'mobile') setMobileView('player');
-    } else {
-      dispatch(setSelectedFileId(null));
-    }
-  }, [sessionString, selectedChat, loadingFiles, files, reduxSelectedFileId, fetchFileMetadata, screenSize, dispatch]);
 
   useEffect(() => {
     if (!sessionString || !fileRestoreDoneRef.current) return;

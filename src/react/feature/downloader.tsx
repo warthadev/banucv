@@ -57,7 +57,13 @@ const Downloader: React.FC = () => {
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
   const [saveSelection, setSaveSelectionState] = useState<DlSaveSelection>(() => readStoredSaveSelection());
 
-  const [detectedType, setDetectedType] = useState<'torrent' | 'universal' | 'invalid' | null>(null);
+  const detectedType = useMemo<'torrent' | 'universal' | 'invalid' | null>(() => {
+    const trimmed = inputUrl.trim();
+    if (!trimmed) return null;
+    if (isMagnetLink(trimmed)) return 'torrent';
+    if (isValidUrl(trimmed)) return 'universal';
+    return 'invalid';
+  }, [inputUrl]);
   
   const [thumbFailed, setThumbFailed] = useState(false);
   const [selectedFormatIndexes, setSelectedFormatIndexes] = useState<Set<number>>(new Set());
@@ -170,38 +176,20 @@ const Downloader: React.FC = () => {
   }, [logs]);
 
   useEffect(() => {
-    setSelectedFormatIndexes(new Set());
-    setThumbFailed(false);
-  }, [uResolved]);
-
-  useEffect(() => {
-    if (torrentFiles.length > 0) {
-      setTSelectedIndexes(new Set());
-    }
-  }, [torrentFiles]);
-
-  useEffect(() => {
     const trimmed = inputUrl.trim();
     uClearResolved();
-
     if (!trimmed) {
-      setDetectedType(null);
       if (detectLogIdRef.current !== null) { removeLogById(detectLogIdRef.current); detectLogIdRef.current = null; }
       return;
     }
-
-    if (isMagnetLink(trimmed)) {
-      setDetectedType('torrent');
+    if (detectedType === 'torrent') {
       upsertDetectLog('Link detected: Magnet (Torrent)', 'success');
-    } else if (isValidUrl(trimmed)) {
-      setDetectedType('universal');
+    } else if (detectedType === 'universal') {
       upsertDetectLog('Link detected: Universal URL', 'success');
     } else {
-      setDetectedType('invalid');
       upsertDetectLog('Link detected: Invalid URL or Magnet', 'critical');
     }
-  }, [inputUrl, upsertDetectLog, removeLogById, uClearResolved]);
-
+  }, [inputUrl, detectedType, upsertDetectLog, removeLogById, uClearResolved]);
   const copyToClipboard = useCallback(() => {
     if (!logs.length) return;
     navigator.clipboard.writeText(logs.map(l => l.msg).join('\n\n')).then(() => {
@@ -214,9 +202,12 @@ const Downloader: React.FC = () => {
     if (!inputUrl.trim()) { addLog('URL must not be empty', 'critical'); return; }
     
     if (detectedType === 'torrent') {
+      setTSelectedIndexes(new Set());
       resetLogs();
       await handleTorrentStart(inputUrl.trim());
     } else if (detectedType === 'universal') {
+      setSelectedFormatIndexes(new Set());
+      setThumbFailed(false);
       uClearResolved();
       const trimmed = inputUrl.trim();
       if (lastResolvedUrlRef.current && lastResolvedUrlRef.current !== trimmed) {

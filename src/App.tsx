@@ -82,9 +82,14 @@ const AppContent: React.FC = () => {
   const isSettingPage = location.pathname === "/setting";
 
   useEffect(() => {
-    if (playlistOpen && isPlaying) {
-      closePlaylist();
-    }
+    if (!playlistOpen || !isPlaying) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) closePlaylist();
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [isSettingPage, playlistOpen, isPlaying, closePlaylist]);
   
   const hideGlobalUI = isLoginPage || (isDashboard && !hasVisited);

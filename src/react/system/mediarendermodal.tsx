@@ -254,15 +254,22 @@ export const MediaRenderModal: React.FC<MediaRenderModalProps> = ({
   }, [url, name, token]);
 
   useEffect(() => {
-    if (isOpen) {
-      pauseGlobalPlaylist();
-      void prepareLink();
-    } else {
-      setExtUrl('');
-      setExtError('');
-      setExtCopied(false);
-      setExtLoading(false);
-    }
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      if (isOpen) {
+        pauseGlobalPlaylist();
+        void prepareLink();
+      } else {
+        setExtUrl('');
+        setExtError('');
+        setExtCopied(false);
+        setExtLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen, prepareLink]);
 
   useEffect(() => {

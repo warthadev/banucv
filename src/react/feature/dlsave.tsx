@@ -360,25 +360,23 @@ const DlSave: React.FC<DlSaveProps> = ({ selection, onChange }) => {
     }
   }, [hfAccounts]);
 
-  useEffect(() => {
-    if (!dropdownOpen) return;
-    if (hfAccounts.length > 0 || hfAccountsLoading || hfAccountsError) return;
-    void loadHfAccounts();
-  }, [dropdownOpen, hfAccounts.length, hfAccountsLoading, hfAccountsError, loadHfAccounts]);
-
-  useEffect(() => {
-    if (!dropdownOpen) return;
-    if (!selection.accountId) return;
-    if (hfRepos.length > 0 || hfReposLoading || hfReposError) return;
-    void loadHfRepos(selection.accountId, selection.token || undefined);
-  }, [dropdownOpen, selection.accountId, selection.token, hfRepos.length, hfReposLoading, hfReposError, loadHfRepos]);
-
-  useEffect(() => {
-    if (!dropdownOpen) return;
-    if (!selection.accountId || !selection.repoId) return;
-    if (hfFolderPaths.length > 0 || hfFoldersLoading || hfFoldersError) return;
-    void loadHfFolders(selection.accountId, selection.repoId, selection.repoType, selection.token || undefined);
-  }, [dropdownOpen, selection.accountId, selection.repoId, selection.repoType, selection.token, hfFolderPaths.length, hfFoldersLoading, hfFoldersError, loadHfFolders]);
+  const handleDropdownToggle = () => {
+    if (!dropdownOpen) {
+      if (hfAccounts.length === 0 && !hfAccountsLoading && !hfAccountsError) {
+        void loadHfAccounts();
+      }
+      if (selection.accountId && hfRepos.length === 0 && !hfReposLoading && !hfReposError) {
+        void loadHfRepos(selection.accountId, selection.token || undefined);
+      }
+      if (
+        selection.accountId && selection.repoId && hfFolderPaths.length === 0 &&
+        !hfFoldersLoading && !hfFoldersError
+      ) {
+        void loadHfFolders(selection.accountId, selection.repoId, selection.repoType, selection.token || undefined);
+      }
+    }
+    setDropdownOpen((open) => !open);
+  };
 
   const handleAccountSelect = (accountId: string) => {
     const account = hfAccounts.find(a => a.id === accountId);
@@ -438,7 +436,7 @@ const DlSave: React.FC<DlSaveProps> = ({ selection, onChange }) => {
       <button
         type="button"
         className="cloudview-transfer-select-trigger"
-        onClick={() => setDropdownOpen(v => !v)}
+        onClick={handleDropdownToggle}
       >
         <span>Save to Hugging Face</span>
         <ChevronDown size={16} className={`cloudview-transfer-select-chevron${dropdownOpen ? ' open' : ''}`} />

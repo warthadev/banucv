@@ -133,12 +133,19 @@ const SettingUser: React.FC = () => {
 
   useEffect(() => {
     if (!authReady) return;
-    if (currentUser) {
-      fetchUserData();
-    } else {
-      setLoading(false);
-      setError("Not logged in");
-    }
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      if (currentUser) {
+        void fetchUserData();
+      } else {
+        setLoading(false);
+        setError("Not logged in");
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [authReady, currentUser, fetchUserData]);
 
   const handleSaveAll = async () => {

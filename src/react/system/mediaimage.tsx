@@ -187,15 +187,17 @@ const MediaImage: React.FC<MediaImageProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setIndex(initialIndex);
-      setPlaying(true);
-      setLoaded({});
-      setLoading({});
-      setError({});
-      setControlsVisible(true);
-      setShowSpeedMenu(false);
-      setIsCover(false);
-      setShowProperties(false);
+      queueMicrotask(() => {
+        setIndex(initialIndex);
+        setPlaying(true);
+        setLoaded({});
+        setLoading({});
+        setError({});
+        setControlsVisible(true);
+        setShowSpeedMenu(false);
+        setIsCover(false);
+        setShowProperties(false);
+      });
       resetControlsTimeout();
 
       urlsRef.current.forEach((u) => {
@@ -259,13 +261,15 @@ const MediaImage: React.FC<MediaImageProps> = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    void loadOne(index);
-    for (let k = 1; k <= PREFETCH_AHEAD; k++) {
-      void loadOne((index + k) % total);
-    }
-    for (let k = 1; k <= PREFETCH_AHEAD; k++) {
-      void loadOne((index - k + total) % total);
-    }
+    queueMicrotask(() => {
+      void loadOne(index);
+      for (let k = 1; k <= PREFETCH_AHEAD; k++) {
+        void loadOne((index + k) % total);
+      }
+      for (let k = 1; k <= PREFETCH_AHEAD; k++) {
+        void loadOne((index - k + total) % total);
+      }
+    });
   }, [isOpen, index, total, loadOne]);
 
   const next = useCallback(() => {

@@ -96,8 +96,8 @@ const CloudView: React.FC = () => {
     getFolderStructure, getFolderDates, listRepositories, createFolder,
   } = hfHook;
 
-  const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectionModeState, setSelectionModeState] = useState(false);
+  const [selectedIdsState, setSelectedIdsState] = useState<Set<string>>(new Set());
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -130,8 +130,8 @@ const CloudView: React.FC = () => {
   const [transferDestFoldersLoading, setTransferDestFoldersLoading] = useState(false);
   const [transferDestFoldersError, setTransferDestFoldersError] = useState<string | null>(null);
 
-  const [repoSelectionMode, setRepoSelectionMode] = useState(false);
-  const [selectedRepoIds, setSelectedRepoIds] = useState<Set<string>>(new Set());
+  const [repoSelectionModeState, setRepoSelectionModeState] = useState(false);
+  const [selectedRepoIdsState, setSelectedRepoIdsState] = useState<Set<string>>(new Set());
   const [renameRepoModalOpen, setRenameRepoModalOpen] = useState(false);
   const [renameRepoValue, setRenameRepoValue] = useState('');
   const [renameRepoTarget, setRenameRepoTarget] = useState<HFRepo | null>(null);
@@ -176,6 +176,27 @@ const CloudView: React.FC = () => {
   const activeSourceSession = activeSource?.sessionString || null;
   const activeSourceDatasetId = activeSource?.datasetId || null;
   const activeSourceHfToken = activeSource?.hfToken || null;
+  const selectionMode = activeSourceType === 'hf_dataset' ? false : selectionModeState;
+  const repoSelectionMode = activeSourceType === 'hf_dataset' ? false : repoSelectionModeState;
+  const selectedIds = useMemo(
+    () => (selectionMode ? selectedIdsState : new Set<string>()),
+    [selectionMode, selectedIdsState]
+  );
+  const selectedRepoIds = useMemo(() => {
+    if (!repoSelectionMode) return new Set<string>();
+    const validIds = new Set(hfRepos.map((repo) => repo.full_name));
+    return new Set([...selectedRepoIdsState].filter((id) => validIds.has(id)));
+  }, [repoSelectionMode, hfRepos, selectedRepoIdsState]);
+  const setSelectedIds = setSelectedIdsState;
+  const setSelectedRepoIds = setSelectedRepoIdsState;
+  const setSelectionMode = useCallback((enabled: boolean) => {
+    setSelectionModeState(enabled);
+    if (!enabled) setSelectedIdsState(new Set());
+  }, []);
+  const setRepoSelectionMode = useCallback((enabled: boolean) => {
+    setRepoSelectionModeState(enabled);
+    if (!enabled) setSelectedRepoIdsState(new Set());
+  }, []);
 
   const openImageSlideshow = useCallback((file: any, url: string, token?: string) => {
     setSlideshowItems([{
@@ -227,49 +248,6 @@ const CloudView: React.FC = () => {
     resumeBackgroundMusic,
   ]);
 
-
-  useEffect(() => {
-    if (!selectionMode) {
-      setSelectedIds(new Set());
-    }
-  }, [selectionMode]);
-
-  useEffect(() => {
-    if (!repoSelectionMode) {
-      setSelectedRepoIds(new Set());
-    }
-  }, [repoSelectionMode]);
-
-  useEffect(() => {
-    if (activeSourceType === 'hf_dataset') {
-      setSelectionMode(false);
-      setRepoSelectionMode(false);
-    }
-  }, [activeSourceId, selectedRepo, currentPath, hfView, activeSourceType]);
-
-  useEffect(() => {
-    if (activeSourceType !== 'hf_dataset' || !selectionMode) return;
-    const validIds = new Set(hfAdaptedItemsRef.current.map((i) => i.id));
-    setSelectedIds((prev) => {
-      const next = new Set<string>();
-      prev.forEach((id) => {
-        if (validIds.has(id)) next.add(id);
-      });
-      return next;
-    });
-  }, [folderStructure, activeSourceType, selectionMode]);
-
-  useEffect(() => {
-    if (activeSourceType !== 'hf_dataset' || !repoSelectionMode) return;
-    const validIds = new Set(hfRepos.map((r) => r.full_name));
-    setSelectedRepoIds((prev) => {
-      const next = new Set<string>();
-      prev.forEach((id) => {
-        if (validIds.has(id)) next.add(id);
-      });
-      return next;
-    });
-  }, [hfRepos, activeSourceType, repoSelectionMode]);
 
   useEffect(() => {
     if (!bulkSuccess) return;

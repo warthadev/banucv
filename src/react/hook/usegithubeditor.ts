@@ -58,6 +58,11 @@ export const useGithubEditor = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const handleSelectedRepoChange = useCallback((repo: string | null) => {
+    setSelectedRepo(repo);
+    setFiles([]);
+    setIsLoading(Boolean(repo && isConfigured));
+  }, [isConfigured]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -185,12 +190,27 @@ export const useGithubEditor = () => {
     }
   }, [isConfigured]);
 
+  const openRepository = useCallback((repo: string | null, path = '') => {
+    setSelectedRepo(repo);
+    setCurrentPath(path);
+    setEditingFile(null);
+    setActiveId('');
+    setFiles([]);
+    setIsLoading(Boolean(repo && isConfigured));
+    if (repo && isConfigured) void fetchContents(path, repo);
+  }, [fetchContents, isConfigured]);
+
+  const navigateToPath = useCallback((path: string) => {
+    setCurrentPath(path);
+    setEditingFile(null);
+    if (selectedRepo && isConfigured) void fetchContents(path, selectedRepo);
+  }, [fetchContents, isConfigured, selectedRepo]);
+
   const handleFileClick = useCallback(async (file: any, repo: string) => {
     if (!isConfigured) return;
     setActiveId(file.sha);
     if (file.type === "dir") {
-      setCurrentPath(file.path);
-      setEditingFile(null);
+      navigateToPath(file.path);
       return;
     }
     setIsLoading(true);
@@ -208,7 +228,7 @@ export const useGithubEditor = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [isConfigured]);
+  }, [isConfigured, navigateToPath]);
 
   const handleSave = useCallback(async (repo: string, path: string, content: string, sha: string) => {
     if (!isConfigured) return { success: false };
@@ -349,6 +369,8 @@ export const useGithubEditor = () => {
     if (wasSelected) {
       setSelectedRepo(null);
       setCurrentPath("");
+      setFiles([]);
+      setIsLoading(false);
       setEditingFile(null);
       setActiveId("");
     }
@@ -359,13 +381,16 @@ export const useGithubEditor = () => {
       return true;
     } catch (error) {
       setRepos(sortItems(prevRepos));
-      if (wasSelected) setSelectedRepo(repoName);
+      if (wasSelected) {
+        setSelectedRepo(repoName);
+        void fetchContents("", repoName);
+      }
       setStatus("error");
       return false;
     } finally {
       setIsDeleting(false);
     }
-  }, [isConfigured, selectedRepo, repos]);
+  }, [isConfigured, selectedRepo, repos, fetchContents]);
 
   const handleRenameItem = useCallback(async (target: ItemTarget, newName: string, repo: string): Promise<boolean> => {
     if (!isConfigured || !target || !newName.trim() || newName === target.name) return false;
@@ -586,16 +611,12 @@ export const useGithubEditor = () => {
   }, [isConfigured, selectedRepo, currentPath, fetchContents]);
 
   useEffect(() => { if (isConfigured) fetchReposData(); }, [isConfigured, fetchReposData]);
-  useEffect(() => {
-    if (isConfigured && selectedRepo) fetchContents(currentPath, selectedRepo);
-    else if (isConfigured) { setFiles([]); setIsLoading(false); }
-  }, [isConfigured, selectedRepo, currentPath, fetchContents]);
 
   return {
     isAuthLoading, isConfigured, showAuthModal, isFirebaseReady,
     saveCredentials, clearCredentials, closeAuthModal, openAuthModal,
     repos, selectedRepo, currentPath, files, editingFile, status, activeId, isLoading, isClearing,
-    setSelectedRepo, setCurrentPath, setEditingFile, setStatus, setActiveId,
+    setSelectedRepo: handleSelectedRepoChange, setCurrentPath, openRepository, navigateToPath, setEditingFile, setStatus, setActiveId,
     fetchRepos: fetchReposData, fetchContents, handleFileClick, handleSave, handleClear,
     handleCreateRepo, handleCreateItem, handleDeleteItem, handleDeleteRepo, handleRenameItem, handleUploadFiles, refreshContents,
     isLoadingState: isLoading, isCreatingState: isCreating, isDeletingState: isDeleting, isRenamingState: isRenaming, isUploadingState: isUploading,

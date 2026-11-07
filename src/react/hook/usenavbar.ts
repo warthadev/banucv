@@ -17,7 +17,8 @@ export const useNavbar = () => {
   
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
   
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [openMenuLocationKey, setOpenMenuLocationKey] = useState<string | null>(null);
+  const isMenuOpen = openMenuLocationKey === location.key;
 
   const isHomePage = location.pathname === "/";
   const showNavAndHamburger = !isHomePage;
@@ -36,12 +37,8 @@ export const useNavbar = () => {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    setIsMenuOpen(false);
-  }, [location]);
-
-  useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth > 640) setIsMenuOpen(false);
+      if (window.innerWidth > 640) setOpenMenuLocationKey(null);
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -59,13 +56,13 @@ export const useNavbar = () => {
     } finally {
       dispatch(resetCloud());
       dispatch(logout());
-      setIsMenuOpen(false);
+      setOpenMenuLocationKey(null);
       navigate("/", { replace: true });
     }
   };
 
-  const toggleMenu = () => setIsMenuOpen((prev) => !prev);
-  const closeMenu = () => setIsMenuOpen(false);
+  const toggleMenu = () => setOpenMenuLocationKey(isMenuOpen ? null : location.key);
+  const closeMenu = () => setOpenMenuLocationKey(null);
 
   return {
     isLoggedIn,

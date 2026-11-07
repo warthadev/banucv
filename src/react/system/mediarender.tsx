@@ -148,14 +148,16 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
     resumeTimeRef.current = 0;
     playingIntentRef.current = false;
     autoRefreshInFlightRef.current = false;
-    setCodecIssue(false);
-    setVideoErrorKind(null);
-    setExtOpen(false);
+    queueMicrotask(() => {
+      setCodecIssue(false);
+      setVideoErrorKind(null);
+      setExtOpen(false);
+    });
   }, [item.url]);
 
   useEffect(() => {
     if (!needsAuthFetch && !isHfSource) {
-      setMediaSrc(item.url);
+      queueMicrotask(() => setMediaSrc(item.url));
       return;
     }
 
@@ -163,10 +165,12 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
     let objectUrl = '';
     const controller = new AbortController();
 
-    setMediaSrc('');
-    setError(null);
-    setIsLoading(true);
-
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setMediaSrc('');
+      setError(null);
+      setIsLoading(true);
+    });
     (async () => {
       try {
         if (item.type === 'video' || item.type === 'gif') {
@@ -352,7 +356,11 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
         const { videoWidth, videoHeight } = videoRef.current;
         setVideoOrientation(videoWidth >= videoHeight ? 'landscape' : 'portrait');
         if (videoWidth === 0 && videoHeight === 0 && isFinite(videoRef.current.duration)) {
+          videoRef.current.pause();
           setCodecIssue(true);
+          setIsPlaying(false);
+          setIsLoading(false);
+          setVideoErrorKind('codec');
         }
       }
       if (isFinite(element.duration)) {
@@ -471,18 +479,16 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
       if (!v || v.paused || v.currentTime < 0.5) return;
       const quality = v.getVideoPlaybackQuality?.();
       const decoded = quality ? quality.totalVideoFrames : (v as any).webkitDecodedFrameCount;
-      if (typeof decoded === 'number' && decoded === 0) setCodecIssue(true);
+      if (typeof decoded === 'number' && decoded === 0) {
+        v.pause();
+        setCodecIssue(true);
+        setIsPlaying(false);
+        setIsLoading(false);
+        setVideoErrorKind('codec');
+      }
     }, 2500);
     return () => clearTimeout(timer);
   }, [isVideo, isPlaying, codecIssue, mediaSrc]);
-
-  useEffect(() => {
-    if (!codecIssue) return;
-    videoRef.current?.pause();
-    setIsPlaying(false);
-    setIsLoading(false);
-    setVideoErrorKind('codec');
-  }, [codecIssue]);
 
   const openExternalMenu = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -528,8 +534,10 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
         Date.now() - signedAtRef.current > HF_SIGNED_URL_MAX_AGE_MS;
 
       if (kind === 'codec' && !looksExpired) {
+        videoEl?.pause();
         setCodecIssue(true);
         setError(null);
+        setIsPlaying(false);
         setIsLoading(false);
         return;
       }

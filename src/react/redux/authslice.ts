@@ -5,7 +5,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 interface AuthState {
   token: string | null;
   isLoggedIn: boolean;
-  user: any | null;
+  user: unknown | null;
 }
 
 const loadAuthFromStorage = () => {

@@ -39,7 +39,7 @@ const AudioPlayer: React.FC = () => {
           reshuffle();
         }
       }
-    } catch (e) {
+    } catch {
       // Ignore non-JSON messages
     }
   };
@@ -56,7 +56,7 @@ const AudioPlayer: React.FC = () => {
   }
 
   const isDefaultGenre = selectedGenre === "Default";
-  let finalFirstTrack = currentShuffle.firstTrack;
+  const finalFirstTrack = currentShuffle.firstTrack;
   let finalPlaylist = currentShuffle.playlist;
 
   if (isDefaultGenre) {

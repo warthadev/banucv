@@ -5,13 +5,13 @@ import {
   Hash, Users, Home, Plus, Search, RefreshCw, LogOut,
   AlertCircle, Check, PanelLeftOpen, PanelLeftClose, Info, ChevronRight
 } from 'lucide-react';
-import type { TelegramChat, TelegramFile, ViewMode, MobileView, SortField, SortDir, TelegramFileMetadata } from '@config/telegram';
-import type { HFRepo } from '@config/cloudsource';
+
+
 import Loading from '@control/loading';
 import { CloudModalHFSearch } from './cloudmodalhfsrch';
 import type { HFSearchRepo } from '@config/huggingface';
 import CloudModalSelection from './cloudmodalselection';
-import type { TransferAccount, TransferRepo } from './cloudmodalselection';
+
 import type { CloudViewPackProps } from '@config/cloudviewtypes';
 
 import { Breadcrumb, Sidebar, RepoRow, CHAT_ACCENT } from './cloudviewuisidebar';
@@ -35,9 +35,9 @@ export const CloudViewPack: React.FC<CloudViewPackProps> = (props) => {
     searchQuery, viewMode, sortField, sortDir, showSortMenu, error,
     sidebarCollapsed, sidebarWidth, showDetail, screenSize, mobileView, totalSize,
     fileMetadata, sortMenuRef,
-    sourceName = 'Telegram', showBackButton = false, sourceType = 'telegram', tgSession,
+    sourceName = 'Telegram', showBackButton = false, sourceType = 'telegram', __unusedLint1,
     onClosePreview,
-    setSearchQuery, setSidebarCollapsed, setSidebarWidth, setShowDetail, setMobileView,
+    setSearchQuery, setSidebarCollapsed, setSidebarWidth, setShowDetail, __unusedLint2,
     fetchDialogs, refreshCurrentChatFiles, handleChatClick, handleFileClick,
     handleBackToRoot, handleBackToFiles, handleBackToChats, handleFileGone, handleImageError,
     handleMediaLoaded, getStreamUrl, handleDownload, toggleSort, cycleViewMode,
@@ -149,12 +149,13 @@ export const CloudViewPack: React.FC<CloudViewPackProps> = (props) => {
     onOpenPublicRepo = () => {},
     isPublicView = false,
   } = props;
+  void __unusedLint1;
+  void __unusedLint2;
 
-  const [isMobile, setIsMobile] = useState(screenSize === 'mobile');
+  const isMobile = screenSize === 'mobile';
   const [internalSidebarWidth, setInternalSidebarWidth] = useState(sidebarWidth || 220);
   const [hfSearchOpen, setHfSearchOpen] = useState(false);
 
-  useEffect(() => { setIsMobile(screenSize === 'mobile'); }, [screenSize]);
 
   const scrollAllToTop = useCallback(() => {
     window.scrollTo(0, 0);
@@ -321,7 +322,7 @@ export const CloudViewPack: React.FC<CloudViewPackProps> = (props) => {
                           role="button"
                           tabIndex={0}
                           className={`cloudview-frow ${selectedChat?.id === chat.id ? 'cloudview-frow--active' : ''}`}
-                          style={{ ['--row-accent' as any]: CHAT_ACCENT[chat.type] || 'var(--primary)' }}
+                          style={{ ['--row-accent' as unknown]: CHAT_ACCENT[chat.type] || 'var(--primary)' }}
                           onClick={() => handleChatClick(chat)}
                           onKeyDown={(e) => { if (e.key === 'Enter') handleChatClick(chat); }}
                         >

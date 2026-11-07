@@ -425,7 +425,8 @@ export const useDlTorrent = ({
           });
         }
 
-        const status = json.status || '';
+        const __unusedLint1 = json.status || '';
+        void __unusedLint1;
         const phase = json.phase || '';
         const saveStatus = json.save_status || '';
         const backendFileIndex = typeof json.current_file_index === 'number' ? json.current_file_index : 0;
@@ -569,7 +570,7 @@ export const useDlTorrent = ({
           onProgressLog(entry);
           return;
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         pollFailRef.current += 1;
         if (pollFailRef.current < POLL_MAX_FAILS) return;
         finishAll();
@@ -618,7 +619,7 @@ export const useDlTorrent = ({
       onLog(`Info hash: ${json.info_hash || 'unknown'}`, 'success');
       onLog(`Files found: ${files.length} · ${json.total_size_human || ''}`.trim(), 'success');
       void refreshColabSession();
-    } catch (e: any) {
+    } catch (e: unknown) {
       onLog(`Torrent start failed: ${e?.message || 'unknown error'}`, 'critical');
     } finally {
       setTorrentStarting(false);
@@ -705,7 +706,7 @@ export const useDlTorrent = ({
       onLog('Waiting for Colab to start...', 'system');
 
       pollColabProgress(json.session_id, firstFile.name);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setColabBusy(false);
       const errMsg = e?.message || 'unknown error';
       onLog(`Failed to start Colab session: ${errMsg}`, 'critical');

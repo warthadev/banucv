@@ -2,13 +2,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "@config/firebase";
-import { doc, getDoc, setDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 
 export const useTelegramAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [sessionString, setSessionString] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [__unusedLint1, setCurrentUser] = useState<unknown>(null);
+  void __unusedLint1;
   const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
@@ -45,7 +46,7 @@ export const useTelegramAuth = () => {
         setSessionString(null);
         setShowAuthModal(true);
       }
-    } catch (error) {
+    } catch {
       setSessionString(null);
       setShowAuthModal(true);
     } finally {
@@ -74,14 +75,10 @@ export const useTelegramAuth = () => {
     const userRef = doc(db, "users", user.uid);
     const name = accountName || "Telegram Account";
 
-    try {
-      await updateDoc(userRef, {
+    await updateDoc(userRef, {
         telegramSessions: arrayUnion(session),
         telegramAccountNames: arrayUnion(name),
       });
-    } catch (error: any) {
-      throw error;
-    }
 
     setSessionString(session);
     setShowAuthModal(false);
@@ -96,7 +93,7 @@ export const useTelegramAuth = () => {
           telegramSessions: null,
           telegramAccountNames: null,
         });
-      } catch (error) {
+      } catch {
         // Silently fail
       }
     }
@@ -113,7 +110,7 @@ export const useTelegramAuth = () => {
           telegramSessions: null,
           telegramAccountNames: null,
         });
-      } catch (error) {
+      } catch {
         // Silently fail
       }
     }

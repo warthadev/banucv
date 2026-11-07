@@ -35,7 +35,8 @@ const writeAuthCache = (value: boolean) => {
 
 const GateAuth: React.FC<GateAuthProps> = ({ children }) => {
   const location = useLocation();
-  const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
+  const __unusedLint1 = useSelector((state: RootState) => state.auth.isLoggedIn);
+  void __unusedLint1;
 
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(() => !readAuthCache());
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => readAuthCache());

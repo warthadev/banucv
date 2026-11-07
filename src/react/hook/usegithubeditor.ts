@@ -29,7 +29,7 @@ import {
   type ItemTarget
 } from "@config/githubeditorhelper";
 
-const updateChildrenPaths = (items: any[], oldPrefix: string, newPrefix: string): any[] => {
+const updateChildrenPaths = (items: unknown[], oldPrefix: string, newPrefix: string): unknown[] => {
   return items.map(item => {
     if (item.path.startsWith(oldPrefix + "/")) {
       return { ...item, path: item.path.replace(oldPrefix, newPrefix) };
@@ -44,11 +44,11 @@ export const useGithubEditor = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isFirebaseReady, setIsFirebaseReady] = useState(false);
   
-  const [repos, setRepos] = useState<any[]>([]);
+  const [repos, setRepos] = useState<unknown[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [currentPath, setCurrentPath] = useState("");
-  const [files, setFiles] = useState<any[]>([]);
-  const [editingFile, setEditingFile] = useState<any>(null);
+  const [files, setFiles] = useState<unknown[]>([]);
+  const [editingFile, setEditingFile] = useState<unknown>(null);
   const [status, setStatus] = useState("ready");
   const [activeId, setActiveId] = useState<string | number>("");
   const [isLoading, setIsLoading] = useState(false);
@@ -76,7 +76,7 @@ export const useGithubEditor = () => {
             setIsConfigured(false);
             setShowAuthModal(true);
           }
-        } catch (error) {
+        } catch {
           setShowAuthModal(true);
         } finally {
           setIsAuthLoading(false);
@@ -169,7 +169,7 @@ export const useGithubEditor = () => {
       const data = await fetchContentsAPI(repo, path);
       setFiles(data);
       setStatus("ready");
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err.status === 404) {
         setFiles([]);
         setStatus("empty");
@@ -185,7 +185,7 @@ export const useGithubEditor = () => {
     }
   }, [isConfigured]);
 
-  const handleFileClick = useCallback(async (file: any, repo: string) => {
+  const handleFileClick = useCallback(async (file: unknown, repo: string) => {
     if (!isConfigured) return;
     setActiveId(file.sha);
     if (file.type === "dir") {
@@ -218,7 +218,7 @@ export const useGithubEditor = () => {
       await saveFileAPI(repo, path, content, sha);
       const { sha: newSha } = await fetchFileContentAPI(repo, path);
       setFiles(prev => prev.map(f => f.path === path ? { ...f, sha: newSha } : f));
-      if (editingFile) setEditingFile((prev: any) => ({ ...prev, sha: newSha }));
+      if (editingFile) setEditingFile((prev: unknown) => ({ ...prev, sha: newSha }));
       setStatus("saved");
       setTimeout(() => setStatus("ready"), 1500);
       return { success: true, newContent: content, newSha };
@@ -257,7 +257,7 @@ export const useGithubEditor = () => {
       setStatus("created");
       setTimeout(() => setStatus("ready"), 2000);
       return true;
-    } catch (error) {
+    } catch {
       setRepos(prev => prev.filter(r => !(r._isTemp && r.name === repoName)));
       setStatus("error");
       return false;
@@ -298,7 +298,7 @@ export const useGithubEditor = () => {
       setStatus("created");
       setTimeout(() => setStatus("ready"), 2000);
       return true;
-    } catch (error) {
+    } catch {
       setFiles(prev => prev.filter(f => f.sha !== tempSha));
       setStatus("error");
       return false;
@@ -307,7 +307,8 @@ export const useGithubEditor = () => {
     }
   }, [isConfigured]);
 
-  const handleDeleteItem = useCallback(async (target: ItemTarget, repo: string, _currentPath: string) => {
+  const handleDeleteItem = useCallback(async (target: ItemTarget, repo: string, __unusedLint1: string) => {
+    void __unusedLint1;
     if (!isConfigured || !target) return false;
     const deletedPath = target.path || "";
     const prevFiles = [...files];
@@ -329,7 +330,7 @@ export const useGithubEditor = () => {
       setStatus("deleted");
       setTimeout(() => setStatus("ready"), 2000);
       return true;
-    } catch (error) {
+    } catch {
       setFiles(sortItems(prevFiles));
       if (prevEditingFile) setEditingFile(prevEditingFile);
       setStatus("error");
@@ -357,7 +358,7 @@ export const useGithubEditor = () => {
       setStatus("deleted");
       setTimeout(() => setStatus("ready"), 2000);
       return true;
-    } catch (error) {
+    } catch {
       setRepos(sortItems(prevRepos));
       if (wasSelected) setSelectedRepo(repoName);
       setStatus("error");
@@ -367,7 +368,8 @@ export const useGithubEditor = () => {
     }
   }, [isConfigured, selectedRepo, repos]);
 
-  const handleRenameItem = useCallback(async (target: ItemTarget, newName: string, repo: string): Promise<boolean> => {
+  const handleRenameItem = useCallback(async (target: ItemTarget, newName: string, __unusedLint2: string): Promise<boolean> => {
+    void __unusedLint2;
     if (!isConfigured || !target || !newName.trim() || newName === target.name) return false;
 
     if (target.type === "repo") {
@@ -382,7 +384,7 @@ export const useGithubEditor = () => {
         setStatus("renamed");
         setTimeout(() => setStatus("ready"), 2000);
         return true;
-      } catch (error) {
+      } catch {
         setRepos(prevRepos);
         if (selectedRepo === newName) setSelectedRepo(target.name);
         setStatus("error");
@@ -415,7 +417,7 @@ export const useGithubEditor = () => {
     });
 
     if (editingFile?.path === oldPath) {
-      setEditingFile((prev: any) => prev ? { ...prev, path: newPath } : null);
+      setEditingFile((prev: unknown) => prev ? { ...prev, path: newPath } : null);
     }
 
     setIsRenaming(true);
@@ -435,14 +437,14 @@ export const useGithubEditor = () => {
             prev.map(f => f.path === newPath ? { ...f, sha: newSha } : f)
           );
           if (editingFile?.path === newPath) {
-            setEditingFile((prev: any) => prev ? { ...prev, sha: newSha } : null);
+            setEditingFile((prev: unknown) => prev ? { ...prev, sha: newSha } : null);
           }
-        } catch (err) {}
+        } catch { void 0;}
       }
       setStatus("renamed");
       setTimeout(() => setStatus("ready"), 2000);
       return true;
-    } catch (error) {
+    } catch {
       setFiles(sortItems(prevFiles));
       if (prevEditingFile) setEditingFile(prevEditingFile);
       setStatus("error");
@@ -462,7 +464,7 @@ export const useGithubEditor = () => {
     const targetPaths: string[] = [];
 
     for (const file of filesArray) {
-      const relative = (file as any).webkitRelativePath || file.name;
+      const relative = (file as unknown).webkitRelativePath || file.name;
       const filePath = path ? `${path}/${relative}` : relative;
       targetPaths.push(filePath);
       const content = await new Promise<string>((resolve, reject) => {
@@ -505,7 +507,7 @@ export const useGithubEditor = () => {
           try {
             const existing = await fetchFileContentAPI(repo, filePath);
             existingSha = existing.sha;
-          } catch (err: any) {
+          } catch (err: unknown) {
             if (err.status !== 404) throw err;
           }
           if (existingSha) {
@@ -514,7 +516,7 @@ export const useGithubEditor = () => {
             await uploadFileAPI(repo, filePath, content);
           }
           successCount++;
-        } catch (error) {}
+        } catch { void 0;}
       }
 
       if (successCount === 0) {
@@ -529,7 +531,7 @@ export const useGithubEditor = () => {
       setFiles(prev => prev.filter(f => !targetPaths.includes(f.path)));
 
       const tempItems = filesArray.map((file, idx) => {
-        const relative = (file as any).webkitRelativePath || file.name;
+        const relative = (file as unknown).webkitRelativePath || file.name;
         const filePath = path ? `${path}/${relative}` : relative;
         return {
           name: file.name,
@@ -549,7 +551,7 @@ export const useGithubEditor = () => {
           try {
             const existing = await fetchFileContentAPI(repo, tempItem.path);
             existingSha = existing.sha;
-          } catch (err: any) {
+          } catch (err: unknown) {
             if (err.status !== 404) throw err;
           }
           if (existingSha) {
@@ -564,7 +566,7 @@ export const useGithubEditor = () => {
             )
           );
           successCount++;
-        } catch (error) {
+        } catch {
           setFiles(prev => prev.filter(f => f.path !== tempItem.path));
         }
       }

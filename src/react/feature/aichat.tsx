@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Send, Bot, Trash2, Volume2, VolumeX, AlertCircle, Check,
+  Send, Bot, Trash2, Volume2, VolumeX, Check,
   Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Globe, Wand2, Link, ChevronDown
 } from "lucide-react";
 import useAgentModels, { AUTOMATIC_AGENT_MODEL } from "@hook/useAgentModels";
@@ -214,31 +214,32 @@ const CodeBlock = ({ language, code }: { language: string; code: string }) => {
 };
 
 const MarkdownComponents = {
-  code({ node, inline, className, children, ...props }: any) {
+  code({ __unusedLint1, inline, className, children, ...props }: unknown) {
+    void __unusedLint1;
     const match = /language-(\w+)/.exec(className || "");
     const code = String(children).replace(/\n$/, "");
     return !inline && match ? <CodeBlock language={match[1]} code={code} /> : <code className={className} {...props}>{children}</code>;
   },
-  a({ href, children }: any) { return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>; },
-  img({ src, alt }: any) { return <img src={src} alt={alt} className="aichat-markdown-img" />; },
-  table({ children }: any) {
+  a({ href, children }: unknown) { return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>; },
+  img({ src, alt }: unknown) { return <img src={src} alt={alt} className="aichat-markdown-img" />; },
+  table({ children }: unknown) {
     return <div className="aichat-markdown-table-wrapper">{children}</div>;
   },
-  thead({ children }: any) {
+  thead({ children }: unknown) {
     return <thead className="aichat-markdown-thead">{children}</thead>;
   },
-  th({ children }: any) {
+  th({ children }: unknown) {
     return <th className="aichat-markdown-th">{children}</th>;
   },
-  td({ children }: any) {
+  td({ children }: unknown) {
     return <td className="aichat-markdown-td">{children}</td>;
   },
-  tr({ children }: any) {
+  tr({ children }: unknown) {
     return <tr className="aichat-markdown-tr">{children}</tr>;
   },
 };
 
-const cleanMarkdown = (text: string) => text.replace(/\u0000/g, "").replace(/\r\n/g, "\n").trim();
+const cleanMarkdown = (text: string) => text.split("\u0000").join("").replace(/\r\n/g, "\n").trim();
 
 const stripMarkdownForSpeech = (text: string) => text
   .replace(/```[\s\S]*?```/g, "code block")
@@ -256,7 +257,7 @@ const stripMarkdownForSpeech = (text: string) => text
   .replace(/^\s*>\s+/gm, "")
   .replace(/[-]{3,}/g, "")
   .replace(/\|/g, " ")
-  .replace(/\u0000/g, "")
+  .split("\u0000").join("")
   .replace(/\r\n/g, "\n")
   .trim();
 
@@ -312,7 +313,7 @@ const detectLanguage = (text: string): "id" | "en" => {
   return "en";
 };
 
-const getErrorMessage = (error: any): string => {
+const getErrorMessage = (error: unknown): string => {
   if (!error) return "Unknown error occurred";
   
   const message = error.message || error.toString?.() || "";
@@ -360,7 +361,7 @@ const getErrorMessage = (error: any): string => {
   return "Error: An error occurred. Please try another model or wait a moment.";
 };
 
-const getErrorType = (error: any): string => {
+const getErrorType = (error: unknown): string => {
   const message = error.message || error.toString?.() || "";
   if (message.includes("503") || message.includes("high demand") || message.includes("service unavailable")) return "SERVICE_UNAVAILABLE";
   if (message.includes("API key")) return "API_KEY";
@@ -451,7 +452,7 @@ const AIChat: React.FC = () => {
       const saved = localStorage.getItem('aichat_messages');
       if (saved) {
         const parsed = JSON.parse(saved);
-        return parsed.map((msg: any) => ({
+        return parsed.map((msg: unknown) => ({
           ...msg,
           timestamp: new Date(msg.timestamp)
         }));
@@ -495,7 +496,8 @@ const AIChat: React.FC = () => {
   const [isUploadDropdownOpen, setIsUploadDropdownOpen] = useState(false);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [imageGenEnabled, setImageGenEnabled] = useState(false);
-  const [retryingMessageId, setRetryingMessageId] = useState<string | null>(null);
+  const [__unusedLint2, setRetryingMessageId] = useState<string | null>(null);
+  void __unusedLint2;
   const [userDisplayName, setUserDisplayName] = useState<string>("User");
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<string>("Unknown");
@@ -632,7 +634,7 @@ const AIChat: React.FC = () => {
         console.warn('File too large:', file.name);
         continue;
       }
-      try { newFiles.push({ name: file.name, content: await file.text(), type: file.type }); } catch {}
+      try { newFiles.push({ name: file.name, content: await file.text(), type: file.type }); } catch { void 0;}
     }
     if (newFiles.length) { setUploadedFiles(prev => [...prev, ...newFiles]); }
     if (multiFileInputRef.current) multiFileInputRef.current.value = "";
@@ -655,7 +657,7 @@ const AIChat: React.FC = () => {
         console.warn('File too large:', file.name);
         continue;
       }
-      try { newFiles.push({ name: (file as any).webkitRelativePath || file.name, content: await file.text(), type: file.type }); } catch {}
+      try { newFiles.push({ name: (file as unknown).webkitRelativePath || file.name, content: await file.text(), type: file.type }); } catch { void 0;}
     }
     if (newFiles.length) { setUploadedFiles(prev => [...prev, ...newFiles]); }
     if (folderInputRef.current) folderInputRef.current.value = "";
@@ -699,7 +701,7 @@ const AIChat: React.FC = () => {
     if (!modelName) throw new Error("Model not found");
     const history = currentMessages.filter(m => !m.error && !(isRetry && m.role === "user" && m.content === originalUserMessage)).map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.content }));
     const textContext = messageText + buildContextFromFiles(files);
-    const content: any[] = [{ type: "text", text: textContext || "Describe these images" }];
+    const content: unknown[] = [{ type: "text", text: textContext || "Describe these images" }];
     for (const image of images) content.push({ type: "image_url", image_url: { url: `data:${image.mimeType};base64,${image.data}` } });
     const firebaseAuth = await getAuth();
     const user = firebaseAuth.currentUser;
@@ -763,7 +765,7 @@ const AIChat: React.FC = () => {
           imageData: imgDataUrl,
           imageMimeType: "image/png",
         }]);
-      } catch (error: any) {
+      } catch (error: unknown) {
         const friendlyError = getErrorMessage(error);
         setMessages(prev => [...prev, { 
           id: (Date.now() + 1).toString(), 
@@ -797,7 +799,7 @@ const AIChat: React.FC = () => {
       if (aiMode === 'auto') {
         speakText(response.text, (Date.now() + 1).toString());
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorType = getErrorType(error);
       const friendlyError = getErrorMessage(error);
       

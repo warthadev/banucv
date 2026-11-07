@@ -101,9 +101,9 @@ const CloudView: React.FC = () => {
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
-  const [renameTarget, setRenameTarget] = useState<any>(null);
+  const [renameTarget, setRenameTarget] = useState<unknown>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [deleteTargets, setDeleteTargets] = useState<any[]>([]);
+  const [deleteTargets, setDeleteTargets] = useState<unknown[]>([]);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const [bulkSuccess, setBulkSuccess] = useState<string | null>(null);
 
@@ -116,7 +116,7 @@ const CloudView: React.FC = () => {
 
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [transferMode, setTransferMode] = useState<'move' | 'copy'>('move');
-  const [transferTargets, setTransferTargets] = useState<any[]>([]);
+  const [transferTargets, setTransferTargets] = useState<unknown[]>([]);
   const [transferAccounts, setTransferAccounts] = useState<TransferAccount[]>([]);
   const [transferReposByAccount, setTransferReposByAccount] = useState<
     Record<string, TransferRepo[]>
@@ -159,7 +159,7 @@ const CloudView: React.FC = () => {
   const hfDatesFetchingRef = useRef<Set<string>>(new Set());
   const hfDatesVersionRef = useRef<Record<string, number>>({});
   const hfFileRestoreDoneRef = useRef<boolean>(!reduxSelectedFileId);
-  const hfAdaptedItemsRef = useRef<any[]>([]);
+  const hfAdaptedItemsRef = useRef<unknown[]>([]);
   const transferReposCacheRef = useRef<Record<string, TransferRepo[]>>({});
   const transferDestFoldersCacheRef = useRef<Record<string, { label: string; path: string }[]>>({});
 
@@ -168,7 +168,7 @@ const CloudView: React.FC = () => {
   const lastHistorySnapshotRef = useRef<NavSnapshot | null>(null);
   const historyInitializedRef = useRef<boolean>(false);
   const historyDepthRef = useRef<number>(0);
-  const telegramHookRef = useRef<any>(null);
+  const telegramHookRef = useRef<unknown>(null);
   const overlayOpenRef = useRef<boolean>(false);
 
   const activeSourceId = activeSource?.id || null;
@@ -177,7 +177,7 @@ const CloudView: React.FC = () => {
   const activeSourceDatasetId = activeSource?.datasetId || null;
   const activeSourceHfToken = activeSource?.hfToken || null;
 
-  const openImageSlideshow = useCallback((file: any, url: string, token?: string) => {
+  const openImageSlideshow = useCallback((file: unknown, url: string, token?: string) => {
     setSlideshowItems([{
       id: String(file.id),
       name: file.name,
@@ -438,7 +438,7 @@ const CloudView: React.FC = () => {
         if (curChatId && snapshot.chatId !== curChatId && !snapshot.chatId) {
           tg?.handleBackToChats?.();
         } else if (!curChatId && snapshot.chatId) {
-          const dialog = tg?.dialogs?.find((d: any) => String(d.id) === snapshot.chatId);
+          const dialog = tg?.dialogs?.find((d: unknown) => String(d.id) === snapshot.chatId);
           if (dialog) tg?.handleChatClick?.(dialog);
         }
 
@@ -667,7 +667,7 @@ const CloudView: React.FC = () => {
         return hfTokens.length > 0 ? hfTokens[0] : null;
       }
       return null;
-    } catch (error) {
+    } catch {
       return null;
     }
   }, []);
@@ -701,7 +701,7 @@ const CloudView: React.FC = () => {
         }
       }
       return accounts;
-    } catch (error) {
+    } catch {
       return [];
     }
   }, []);
@@ -746,7 +746,7 @@ const CloudView: React.FC = () => {
       setHfSelectedFile(null);
       if (hfScreenSize === 'mobile') setHfMobileView('files');
       folderLoadedRef.current = key;
-    } catch (err: any) {
+    } catch (err: unknown) {
       setHfError(err.message || 'Failed to load folder structure');
     } finally {
       setHfLoading(false);
@@ -786,7 +786,7 @@ const CloudView: React.FC = () => {
         );
         if ((hfDatesVersionRef.current[key] || 0) !== version) stale = true;
         else setHfFolderDates((prev) => ({ ...prev, [key]: dates }));
-      } catch {
+      } catch { void 0;
       } finally {
         hfDatesFetchingRef.current.delete(key);
         if (stale) setHfFolderDates((prev) => ({ ...prev }));
@@ -856,7 +856,7 @@ const CloudView: React.FC = () => {
           setHfSelectedFile(null);
           setHfMobileView('chats');
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         setHfError(err.message || 'Failed to load repositories');
       } finally {
         setHfLoading(false);
@@ -1024,7 +1024,7 @@ const CloudView: React.FC = () => {
           platform
         );
         await syncSourcesFromFirestore();
-      } catch (error) {}
+      } catch { void 0;}
     },
     [addSource, saveSession, syncSourcesFromFirestore, sources]
   );
@@ -1117,7 +1117,7 @@ const CloudView: React.FC = () => {
             }
           }
         }
-      } catch (error) {}
+      } catch { void 0;}
     }
 
     removeSource(sourceId);
@@ -1240,7 +1240,7 @@ const CloudView: React.FC = () => {
     }
   };
 
-  const handleHfFileClick = (file: any) => {
+  const handleHfFileClick = (file: unknown) => {
     if (file._isFolder) {
       handleHfNavigateToFolder(file._folderName);
       return;
@@ -1310,7 +1310,7 @@ const CloudView: React.FC = () => {
   }, []);
 
   const hfAdaptedItems = useMemo(() => {
-    const items: any[] = [];
+    const items: unknown[] = [];
     const repoType = selectedRepoType || 'dataset';
     let repoTypePrefix = '';
     if (repoType === 'dataset') repoTypePrefix = 'datasets';
@@ -1502,7 +1502,7 @@ const CloudView: React.FC = () => {
     [activeSourceHfToken, isPublicView]
   );
 
-  const enterSelectionMode = useCallback((item: any) => {
+  const enterSelectionMode = useCallback((item: unknown) => {
     setSelectionMode(true);
     setSelectedIds(new Set([item.id]));
   }, []);
@@ -1512,7 +1512,7 @@ const CloudView: React.FC = () => {
     setSelectedIds(new Set());
   }, []);
 
-  const toggleSelection = useCallback((item: any) => {
+  const toggleSelection = useCallback((item: unknown) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(item.id)) {
@@ -1888,7 +1888,7 @@ const CloudView: React.FC = () => {
       } else {
         setBulkError(result.error || 'Failed to create folder');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setBulkError(err.message || 'Failed to create folder');
     } finally {
       setBulkActionLoading(false);
@@ -1955,7 +1955,7 @@ const CloudView: React.FC = () => {
           }
         );
 
-        const datasets: any[] = res.ok ? await res.json() : [];
+        const datasets: unknown[] = res.ok ? await res.json() : [];
 
         const modelsRes = await fetch(
           `https://huggingface.co/api/models?author=${encodeURIComponent(accountUsername)}&limit=100`,
@@ -1963,7 +1963,7 @@ const CloudView: React.FC = () => {
             headers: { Authorization: `Bearer ${accountToken}` },
           }
         );
-        const models: any[] = modelsRes.ok ? await modelsRes.json() : [];
+        const models: unknown[] = modelsRes.ok ? await modelsRes.json() : [];
 
         const spacesRes = await fetch(
           `https://huggingface.co/api/spaces?author=${encodeURIComponent(accountUsername)}&limit=100`,
@@ -1971,7 +1971,7 @@ const CloudView: React.FC = () => {
             headers: { Authorization: `Bearer ${accountToken}` },
           }
         );
-        const spaces: any[] = spacesRes.ok ? await spacesRes.json() : [];
+        const spaces: unknown[] = spacesRes.ok ? await spacesRes.json() : [];
 
         const repos: TransferRepo[] = [];
 
@@ -2005,7 +2005,7 @@ const CloudView: React.FC = () => {
 
         transferReposCacheRef.current[accountId] = repos;
         setTransferReposByAccount((prev) => ({ ...prev, [accountId]: repos }));
-      } catch (err: any) {
+      } catch (err: unknown) {
         setTransferReposError(err?.message || 'Failed to load repositories');
       } finally {
         setTransferReposLoading(false);
@@ -2073,7 +2073,7 @@ const CloudView: React.FC = () => {
           transferDestFoldersCacheRef.current[cacheKey] = fallback;
           setTransferDestFoldersByRepo((prev) => ({ ...prev, [cacheKey]: fallback }));
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         setTransferDestFoldersError(err?.message || 'Failed to load folders');
         const fallback = [{ label: 'Root (/)', path: '' }];
         transferDestFoldersCacheRef.current[cacheKey] = fallback;
@@ -2170,7 +2170,7 @@ const CloudView: React.FC = () => {
           setBulkError(result.error || `Failed to rename "${renameTarget.name}"`);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setBulkError(err.message || 'Rename failed');
     } finally {
       setBulkActionLoading(false);
@@ -2260,7 +2260,7 @@ const CloudView: React.FC = () => {
       } else {
         setBulkError(lastError || 'Delete failed');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setBulkError(err.message || 'Delete failed');
     } finally {
       setBulkActionLoading(false);
@@ -2440,7 +2440,7 @@ const CloudView: React.FC = () => {
         } else {
           setBulkError(result.error || (isCopyMode ? 'Copy failed' : 'Move failed'));
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         setBulkError(err.message || (transferMode === 'copy' ? 'Copy failed' : 'Move failed'));
       } finally {
         setBulkActionLoading(false);
@@ -2493,7 +2493,7 @@ const CloudView: React.FC = () => {
       } else {
         setBulkError(result.error || `Failed to rename "${renameRepoTarget.name}"`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setBulkError(err.message || 'Rename failed');
     } finally {
       setBulkActionLoading(false);
@@ -2546,7 +2546,7 @@ const CloudView: React.FC = () => {
       } else {
         setBulkError(lastError || 'Delete failed');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setBulkError(err.message || 'Delete failed');
     } finally {
       setBulkActionLoading(false);
@@ -2578,7 +2578,7 @@ const CloudView: React.FC = () => {
         } else {
           setBulkError(result.error || 'Failed to create repository');
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         setBulkError(err.message || 'Failed to create repository');
       } finally {
         setBulkActionLoading(false);
@@ -2629,7 +2629,7 @@ const CloudView: React.FC = () => {
       } else {
         setBulkError(lastError || 'Squash failed');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setBulkError(err.message || 'Squash failed');
     } finally {
       setBulkActionLoading(false);
@@ -2673,7 +2673,7 @@ const CloudView: React.FC = () => {
         } else {
           setBulkError(result.error || 'Failed to update visibility');
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         setBulkError(err.message || 'Visibility update failed');
       } finally {
         setBulkActionLoading(false);

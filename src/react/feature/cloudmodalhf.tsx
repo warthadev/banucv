@@ -22,14 +22,10 @@ const saveHFToFirestore = async (username: string, token: string): Promise<void>
 
   const userRef = doc(db, "users", user.uid);
 
-  try {
-    await updateDoc(userRef, {
+  await updateDoc(userRef, {
       hfUsernames: arrayUnion(username),
       hfTokens: arrayUnion(token),
     });
-  } catch (error: any) {
-    throw error;
-  }
 };
 
 export const CloudModalHF: React.FC<CloudModalHFProps> = ({
@@ -68,7 +64,7 @@ export const CloudModalHF: React.FC<CloudModalHFProps> = ({
     try {
       try {
         await saveHFToFirestore(username.trim(), token.trim());
-      } catch (saveError: any) {
+      } catch (saveError: unknown) {
         setError("Failed to save credentials: " + (saveError.message || "Unknown error"));
         setIsSaving(false);
         return;
@@ -76,14 +72,14 @@ export const CloudModalHF: React.FC<CloudModalHFProps> = ({
 
       try {
         await onSave(username.trim(), token.trim());
-      } catch (onSaveErr) {}
+      } catch { void 0;}
 
       setSaveSuccess(true);
       resetForm();
       setTimeout(() => {
         onClose();
       }, 500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.message || "Failed to save credentials");
     } finally {
       setIsSaving(false);

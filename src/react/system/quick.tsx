@@ -150,7 +150,7 @@ const Quick: React.FC = () => {
         const clamped = clampPosition(pos);
         setPosition(clamped);
         setHasMoved(clamped.x !== 0 || clamped.y !== 0);
-      } catch (e) {
+      } catch {
         console.warn('Failed to load quick position');
       }
     }

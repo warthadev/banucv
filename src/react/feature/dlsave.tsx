@@ -1,10 +1,10 @@
 // src/react/feature/dlsave.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, ChevronRight, Folder, Check, Loader2, ArrowLeft, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Folder, Check, Loader2, Search, X } from 'lucide-react';
 import { auth, db } from '@config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { HuggingFaceIcon } from '@control/icon';
+import '@control/icon';
 import { getActiveBase } from '@config/api';
 import { HF_API_BASE } from '@config/huggingface';
 
@@ -283,7 +283,7 @@ const DlSave: React.FC<DlSaveProps> = ({ selection, onChange }) => {
         return;
       }
       setHfAccounts(accounts);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setHfAccountsError(err?.message || 'Failed to load accounts');
     } finally {
       setHfAccountsLoading(false);
@@ -306,7 +306,7 @@ const DlSave: React.FC<DlSaveProps> = ({ selection, onChange }) => {
         `${HF_API_BASE}/datasets?author=${encodeURIComponent(account.username)}&limit=100`,
         { headers }
       );
-      const datasets: any[] = datasetsRes.ok ? await datasetsRes.json() : [];
+      const datasets: unknown[] = datasetsRes.ok ? await datasetsRes.json() : [];
       const repos: HFRepoOption[] = [];
       if (Array.isArray(datasets)) {
         for (const ds of datasets) {
@@ -318,7 +318,7 @@ const DlSave: React.FC<DlSaveProps> = ({ selection, onChange }) => {
         return;
       }
       setHfRepos(repos);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setHfReposError(err?.message || 'Failed to load repositories');
     } finally {
       setHfReposLoading(false);
@@ -353,7 +353,7 @@ const DlSave: React.FC<DlSaveProps> = ({ selection, onChange }) => {
       }
       const folders: string[] = json.folders || [];
       setHfFolderPaths(folders);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setHfFoldersError(err?.message || 'Failed to load folders');
     } finally {
       setHfFoldersLoading(false);

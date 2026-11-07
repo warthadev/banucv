@@ -35,7 +35,7 @@ export interface UniversalResolved {
   meta: UniversalMeta | null;
 }
 
-const normalizeMeta = (raw: any): UniversalMeta | null => {
+const normalizeMeta = (raw: unknown): UniversalMeta | null => {
   if (!raw || typeof raw !== 'object') return null;
   const title = typeof raw.title === 'string' ? raw.title : '';
   const thumbnail = typeof raw.thumbnail === 'string' && raw.thumbnail.startsWith('https://') ? raw.thumbnail : null;
@@ -380,7 +380,7 @@ export const useDlUniversal = ({
           if (!firstProgressSeenRef.current) firstProgressSeenRef.current = true;
           onProgressLog(buildProgressEntry(fileName, percent, currentHuman, totalHuman, speedHuman, eta, 'download'));
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         pollFailRef.current += 1;
         if (pollFailRef.current < POLL_MAX_FAILS) return;
         finishAll();
@@ -415,7 +415,7 @@ export const useDlUniversal = ({
       const res = await fetch(`${API_BASE}/universal/colab-start`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
       });
-      const json: any = await res.json().catch(() => ({}));
+      const json: unknown = await res.json().catch(() => ({}));
       if (!res.ok || !json.ok || !json.session_id) throw new Error(json.detail || `HTTP ${res.status}`);
 
       colabSessionIdRef.current = json.session_id;
@@ -436,7 +436,7 @@ export const useDlUniversal = ({
 
       resolvingRef.current = true;
       pollProgress(json.session_id, url.slice(0, 60), true);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setColabBusy(false);
       setStarting(false);
       onLog(`[universal]\nFailed to start resolve: ${e?.message || 'unknown error'}`, 'critical');
@@ -460,7 +460,7 @@ export const useDlUniversal = ({
       const res = await fetch(`${API_BASE}/universal/resolve`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: clean }),
       });
-      const json: any = await res.json().catch(() => ({}));
+      const json: unknown = await res.json().catch(() => ({}));
       if (res.ok && json.ok && Array.isArray(json.formats) && json.formats.length > 0) {
         applyResolved({
           source: 'server',
@@ -503,7 +503,7 @@ export const useDlUniversal = ({
           formats, preselected: true,
         }),
       });
-      const json: any = await res.json().catch(() => ({}));
+      const json: unknown = await res.json().catch(() => ({}));
       if (!res.ok || !json.ok || !json.session_id) throw new Error(json.detail || `HTTP ${res.status}`);
 
       colabSessionIdRef.current = json.session_id;
@@ -524,7 +524,7 @@ export const useDlUniversal = ({
 
       resolvingRef.current = false;
       pollProgress(json.session_id, url.slice(0, 60), false);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setColabBusy(false);
       setStarting(false);
       onLog(`[universal]\nFailed to start: ${e?.message || 'unknown error'}`, 'critical');
@@ -561,7 +561,7 @@ export const useDlUniversal = ({
       onLog('[universal]\nColab resumed. Downloading...', 'success');
       pollProgress(colabSessionIdRef.current!, url.slice(0, 60), false);
 
-    } catch (e: any) {
+    } catch (e: unknown) {
       setColabBusy(false);
       setStarting(false);
       onLog(`[universal]\nFailed to resume download: ${e?.message || 'unknown error'}`, 'critical');

@@ -10,7 +10,7 @@ const getBreakpoint = (width: number): ScreenSize => {
 };
 
 const isCurrentlyFullscreen = () =>
-  !!document.fullscreenElement || !!(document as any).webkitFullscreenElement;
+  !!document.fullscreenElement || !!(document as unknown).webkitFullscreenElement;
 
 /**
  * Hook breakpoint layar tunggal, dipakai bareng oleh source Telegram & HF

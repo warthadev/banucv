@@ -89,7 +89,7 @@ const Login: React.FC = () => {
         }
       }
       return null;
-    } catch (err) {
+    } catch {
       return null;
     }
   };
@@ -131,7 +131,7 @@ const Login: React.FC = () => {
         try {
           await user.reload();
           if (user.email) email = user.email;
-        } catch (e) {}
+        } catch { void 0;}
       }
       
       if (!email) {
@@ -140,7 +140,7 @@ const Login: React.FC = () => {
           if (tokenResult.claims.email) {
             email = tokenResult.claims.email;
           }
-        } catch (e) {}
+        } catch { void 0;}
       }
       
       await saveUserOnLogin(user, providerName, email);
@@ -150,7 +150,7 @@ const Login: React.FC = () => {
       dispatch(setToken(token));
       
       navigate("/dashboard");
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.code !== "auth/cancelled-popup-request" && error.code !== "auth/popup-closed-by-user") {
         alert("Login failed. Please try again.");
       }

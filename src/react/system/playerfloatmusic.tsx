@@ -38,7 +38,10 @@ const formatTime = (seconds: number): string => {
 const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
   const location = useLocation();
   const { isPlaying, setIsPlaying, selectedGenre, volume, isStopped } = useAudio();
-  const [mediaOverlays, setMediaOverlays] = useState({ mediarender: false, slideshow: false });
+  const [mediaOverlays, setMediaOverlays] = useState(() => ({
+    mediarender: typeof document !== 'undefined' && !!document.querySelector('.mediarender-container'),
+    slideshow: typeof document !== 'undefined' && !!document.querySelector('.cloudslideshow-overlay'),
+  }));
   const [isMinimized, setIsMinimized] = useState(() => !playlist && localStorage.getItem('floating_player_minimized') === 'true');
   const playlistMode = !!playlist;
   const playing = playlist?.playing ?? isPlaying;
@@ -86,10 +89,6 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
       setMediaOverlays((current) => ({ ...current, [detail.source]: detail.active === true }));
     };
     window.addEventListener('media-overlay:state', handleOverlayState);
-    setMediaOverlays({
-      mediarender: !!document.querySelector('.mediarender-container'),
-      slideshow: !!document.querySelector('.cloudslideshow-overlay'),
-    });
     return () => window.removeEventListener('media-overlay:state', handleOverlayState);
   }, []);
 

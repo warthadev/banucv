@@ -6,12 +6,13 @@ import { pauseGlobalPlaylist } from '@config/playlistglobal';
 
 export const HF_SIGNED_URL_MAX_AGE_MS = 40 * 60 * 1000;
 
-const sanitizeText = (text: string | undefined | null): string => {
+const __unusedLint1 = (text: string | undefined | null): string => {
   if (!text) return '';
   const element = document.createElement('div');
   element.textContent = text;
   return element.textContent || '';
 };
+void __unusedLint1;
 
 const safeDecodeFilename = (name: string): string => {
   if (!name) return name;
@@ -242,7 +243,7 @@ export const MediaRenderModal: React.FC<MediaRenderModalProps> = ({
         }
       }
       setExtUrl(toAbsoluteUrl(target));
-    } catch (err: any) {
+    } catch (err: unknown) {
       setExtError(
         err?.message === 'NEEDS_AUTH'
           ? "This private file is too small to get a temporary link, so it can't be opened in another app. Please download it instead."

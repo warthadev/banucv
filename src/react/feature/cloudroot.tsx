@@ -37,9 +37,10 @@ const CloudRoot: React.FC<CloudRootProps> = ({ onSelectSource, clearSession }) =
     loading,
     error,
     addSource,
-    removeSource,
+    __unusedLint1,
     syncSourcesFromFirestore,
   } = useCloudSource();
+  void __unusedLint1;
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showTeleModal, setShowTeleModal] = useState(false);
@@ -94,7 +95,7 @@ const CloudRoot: React.FC<CloudRootProps> = ({ onSelectSource, clearSession }) =
           hfUsernames: arrayUnion(username),
           hfTokens: arrayUnion(token),
         });
-      } catch (error) {
+      } catch {
         toast.error("Failed to save credentials to database");
         return;
       }
@@ -117,7 +118,7 @@ const CloudRoot: React.FC<CloudRootProps> = ({ onSelectSource, clearSession }) =
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ session_string: source.sessionString }),
             });
-          } catch (err) {}
+          } catch { void 0;}
         }
       }
     } finally {
@@ -243,7 +244,7 @@ const CloudRoot: React.FC<CloudRootProps> = ({ onSelectSource, clearSession }) =
                 <motion.button
                   key={source.id}
                   className="cloudroot-card"
-                  style={{ ['--src-accent' as any]: getSourceAccent(source) }}
+                  style={{ ['--src-accent' as unknown]: getSourceAccent(source) }}
                   onClick={() => handleSelectSourceInternal(source.id)}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}

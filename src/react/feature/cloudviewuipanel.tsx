@@ -1,11 +1,10 @@
 // src/react/feature/cloudviewuipanel.tsx
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Folder, FolderPlus, Hash, Users, Search, LayoutGrid, List, AlertCircle, Play, RefreshCw,
-  HardDrive, ArrowUpDown, ArrowUp, ArrowDown, ImageIcon, Info, Pencil, Trash2, FolderInput,
-  Check, CheckCircle2, Circle, Copy, ChevronRight, X, Camera, Video, Music, File, Download,
-  Mic, Sticker, Gift, MonitorPlay, ExternalLink, Loader2, RectangleVertical
+  Folder, FolderPlus, Search, LayoutGrid, List, AlertCircle, Play, RefreshCw,
+  HardDrive, ArrowUpDown, ArrowUp, ArrowDown, ImageIcon, Info,
+  Check, ChevronRight, Download, RectangleVertical
 } from 'lucide-react';
 import type { TelegramChat, TelegramFile, ViewMode, SortField, SortDir, TelegramFileMetadata } from '@config/telegram';
 import { getColor, getLabel, formatBytes } from '@config/telegram';
@@ -13,11 +12,9 @@ import { MediaRender, type VideoMediaItem, type VideoMediaType } from '@system/m
 import Loading from '@control/loading';
 import { ThumbnailImage, VideoResBadge, FileIcon } from './cloudviewuithumb';
 import {
-  SelectionActionBar, RepoSelectionActionBar
+  SelectionActionBar
 } from './cloudviewuitoolbar';
-import {
-  RenameRepoModal, DeleteRepoModal, AddRepoModal, SquashRepoModal, VisibilityRepoModal
-} from './cloudviewuimodal';
+import './cloudviewuimodal';
 import { sanitizeText, formatDuration, formatRelativeDate, LONG_PRESS_DURATION } from '@config/cloudviewuiconfig';
 
 const ViewIcon: React.FC<{ mode: ViewMode; size?: number }> = ({ mode, size = 15 }) => {
@@ -37,7 +34,7 @@ const SortIcon: React.FC<{ field: SortField; dir: SortDir; size?: number }> = ({
 export const DetailPanel: React.FC<{ file: TelegramFile | null; metadata?: TelegramFileMetadata | null }> = ({ file, metadata }) => {
   if (!file) return <div className="cloudview-detail-empty"><Info size={32} /><p>Select a file</p></div>;
   const sanitizedName = sanitizeText(file.name);
-  const isFolder = (file as any)._isFolder === true;
+  const isFolder = (file as unknown)._isFolder === true;
   if (isFolder) {
     return (
       <div className="cloudview-detail-panel">
@@ -117,8 +114,8 @@ export const FilesPanel: React.FC<{
   hfToken?: string;
   selectionMode: boolean;
   selectedIds: Set<string>;
-  onEnterSelection: (file: any) => void;
-  onToggleSelection: (file: any) => void;
+  onEnterSelection: (file: unknown) => void;
+  onToggleSelection: (file: unknown) => void;
   onExitSelection: () => void;
   onSelectAll: () => void;
   onDeselectAll: () => void;
@@ -156,15 +153,15 @@ export const FilesPanel: React.FC<{
   const isTelegram = sourceType === 'telegram';
   const selectionEnabled = !isTelegram;
 
-  const isFolder = useCallback((file: any) => file._isFolder === true, []);
-  const getFileColor = useCallback((file: any) => isFolder(file) ? '#f59e0b' : getColor(file.media_type), [isFolder]);
-  const getFileLabel = useCallback((file: any) => isFolder(file) ? 'Folder' : getLabel(file.media_type), [isFolder]);
-  const renderResBadge = (file: any, style?: React.CSSProperties) => {
+  const isFolder = useCallback((file: unknown) => file._isFolder === true, []);
+  const getFileColor = useCallback((file: unknown) => isFolder(file) ? '#f59e0b' : getColor(file.media_type), [isFolder]);
+  const getFileLabel = useCallback((file: unknown) => isFolder(file) ? 'Folder' : getLabel(file.media_type), [isFolder]);
+  const renderResBadge = (file: unknown, style?: React.CSSProperties) => {
     if (sourceType !== 'hf_dataset' || file.media_type !== 'video' || isFolder(file)) return null;
     const url = getStreamUrl(selectedChat?.id ?? 0, file.id);
     return <VideoResBadge url={url} token={hfToken} fileSize={file.size || 0} enabled={!!url} style={style} />;
   };
-  const getFileSize = useCallback((file: any) => isFolder(file) ? ((file as any)._folderSize ? formatBytes((file as any)._folderSize) : '—') : formatBytes(file.size), [isFolder]);
+  const getFileSize = useCallback((file: unknown) => isFolder(file) ? ((file as unknown)._folderSize ? formatBytes((file as unknown)._folderSize) : '—') : formatBytes(file.size), [isFolder]);
 
   useEffect(() => {
     if (!showSortMenu) return;
@@ -184,7 +181,7 @@ export const FilesPanel: React.FC<{
     };
   }, [showSortMenu, onToggleSortMenu, sortMenuRef]);
 
-  const handleItemPointerDown = useCallback((e: React.PointerEvent, file: any) => {
+  const handleItemPointerDown = useCallback((e: React.PointerEvent, file: unknown) => {
     if (!selectionEnabled) return;
     if (selectionMode) return;
     const target = e.currentTarget as HTMLElement;
@@ -217,18 +214,18 @@ export const FilesPanel: React.FC<{
     target.addEventListener('pointerleave', handleUp);
   }, [selectionMode, onEnterSelection, selectionEnabled]);
 
-  const handleItemClick = useCallback((file: any) => {
+  const handleItemClick = useCallback((file: unknown) => {
     if (selectionEnabled && selectionMode) { onToggleSelection(file); return; }
     onFileClick(file);
   }, [selectionMode, onToggleSelection, onFileClick, selectionEnabled]);
 
-  const handleItemContextMenu = useCallback((e: React.MouseEvent, file: any) => {
+  const handleItemContextMenu = useCallback((e: React.MouseEvent, file: unknown) => {
     if (!selectionEnabled) return;
     e.preventDefault();
     if (selectionMode) { onToggleSelection(file); } else { onEnterSelection(file); }
   }, [selectionMode, onToggleSelection, onEnterSelection, selectionEnabled]);
 
-  const renderSelectionCheckbox = useCallback((file: any, size: number = 20) => (
+  const renderSelectionCheckbox = useCallback((file: unknown, size: number = 20) => (
     <div
       className={`cloudview-selection-checkbox ${selectedIds.has(file.id) ? 'cloudview-selection-checkbox--checked' : ''}`}
       style={{ width: size, height: size, minWidth: size }}
@@ -339,7 +336,7 @@ export const FilesPanel: React.FC<{
               key={file.id}
               role="button"
               tabIndex={0}
-              style={{ ['--row-accent' as any]: fileColor }}
+              style={{ ['--row-accent' as unknown]: fileColor }}
               className={`cloudview-frow ${colClass} ${isSelected ? 'cloudview-item--selected' : ''} ${!isSelected && selectedFile?.id === file.id ? 'cloudview-frow--active' : ''}`}
               onClick={() => handleItemClick(file)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleItemClick(file); }}
@@ -392,13 +389,13 @@ export const FilesPanel: React.FC<{
         const isImage = file.media_type === 'image' && !isFolderItem;
         const isVideo = file.media_type === 'video' && !isFolderItem && sourceType === 'hf_dataset';
         const canShowThumb = isImage || isVideo;
-        const thumbUrl = canShowThumb && (selectedChat || sourceType === 'hf_dataset') ? (sourceType === 'hf_dataset' && (file as any)._thumbUrl ? (file as any)._thumbUrl : getStreamUrl(selectedChat?.id ?? 0, file.id)) : null;
+        const thumbUrl = canShowThumb && (selectedChat || sourceType === 'hf_dataset') ? (sourceType === 'hf_dataset' && (file as unknown)._thumbUrl ? (file as unknown)._thumbUrl : getStreamUrl(selectedChat?.id ?? 0, file.id)) : null;
         const sanitizedName = sanitizeText(file.name);
         const isSelected = selectedIds.has(file.id);
         return (
           <motion.div
             key={file.id}
-            style={{ ['--card-accent' as any]: fileColor }}
+            style={{ ['--card-accent' as unknown]: fileColor }}
             className={`cloudview-file-poster-card ${isSelected ? 'cloudview-item--selected' : ''} ${!isSelected && selectedFile?.id === file.id ? 'cloudview-file-poster-card--active' : ''}`}
             onClick={() => handleItemClick(file)}
             onPointerDown={(e) => handleItemPointerDown(e, file)}
@@ -407,16 +404,16 @@ export const FilesPanel: React.FC<{
           >
             <div className="cloudview-poster-media">
                     {isFolderItem ? (
-                      sourceType === 'hf_dataset' && (file as any)._coverThumbUrl ? (
+                      sourceType === 'hf_dataset' && (file as unknown)._coverThumbUrl ? (
                         <>
-                          <ThumbnailImage url={(file as any)._coverThumbUrl} alt={sanitizedName} type={(file as any)._coverType === 'video' ? 'video' : 'image'} iconType="folder" token={hfToken} fileSize={(file as any)._coverSize || 0} fileName={(file as any)._coverName || ''} fallbackUrl={(file as any)._coverStreamUrl} />
+                          <ThumbnailImage url={(file as unknown)._coverThumbUrl} alt={sanitizedName} type={(file as unknown)._coverType === 'video' ? 'video' : 'image'} iconType="folder" token={hfToken} fileSize={(file as unknown)._coverSize || 0} fileName={(file as unknown)._coverName || ''} fallbackUrl={(file as unknown)._coverStreamUrl} />
                           <span className="cloudview-thumb-folder-mark"><Folder size={12} /></span>
                         </>
                       ) : (
                         <div className="cloudview-thumb-fallback" style={{ background: '#f59e0b18', color: '#f59e0b' }}><Folder size={isMobile ? 24 : 32} /></div>
                       )
                     ) : thumbUrl && thumbUrl.length > 0 && canShowThumb ? (
-                      <ThumbnailImage url={thumbUrl} alt={sanitizedName} type={file.media_type} token={sourceType === 'hf_dataset' ? hfToken : undefined} fileSize={file.size || 0} fileName={file.name || ''} fallbackUrl={sourceType === 'hf_dataset' ? (file as any)._streamUrl : undefined} />
+                      <ThumbnailImage url={thumbUrl} alt={sanitizedName} type={file.media_type} token={sourceType === 'hf_dataset' ? hfToken : undefined} fileSize={file.size || 0} fileName={file.name || ''} fallbackUrl={sourceType === 'hf_dataset' ? (file as unknown)._streamUrl : undefined} />
                     ) : (
                       <div className="cloudview-thumb-fallback" style={{ background: fileColor + '18', color: fileColor }}><FileIcon type={file.media_type} size={isMobile ? 24 : 32} /></div>
                     )}
@@ -460,7 +457,7 @@ export const FilesPanel: React.FC<{
               return (
                 <motion.div
                   key={file.id}
-                  style={{ ['--card-accent' as any]: fileColor }}
+                  style={{ ['--card-accent' as unknown]: fileColor }}
                   className={`cloudview-file-grid-card ${isSelected ? 'cloudview-item--selected' : ''} ${!isSelected && selectedFile?.id === file.id ? 'cloudview-file-grid-card--active' : ''}`}
                   onClick={() => handleItemClick(file)}
                   onPointerDown={(e) => handleItemPointerDown(e, file)}
@@ -495,7 +492,7 @@ export const FilesPanel: React.FC<{
               const isImage = file.media_type === 'image' && !isFolderItem;
               const isVideo = file.media_type === 'video' && !isFolderItem && sourceType === 'hf_dataset';
               const canShowThumb = isImage || isVideo;
-              const thumbUrl = canShowThumb && (selectedChat || sourceType === 'hf_dataset') ? (sourceType === 'hf_dataset' && (file as any)._thumbUrl ? (file as any)._thumbUrl : getStreamUrl(selectedChat?.id ?? 0, file.id)) : null;
+              const thumbUrl = canShowThumb && (selectedChat || sourceType === 'hf_dataset') ? (sourceType === 'hf_dataset' && (file as unknown)._thumbUrl ? (file as unknown)._thumbUrl : getStreamUrl(selectedChat?.id ?? 0, file.id)) : null;
               const sanitizedName = sanitizeText(file.name);
               const isSelected = selectedIds.has(file.id);
               return (
@@ -510,16 +507,16 @@ export const FilesPanel: React.FC<{
                   <div className="cloudview-thumb-preview">
                     {selectionEnabled && selectionMode && <div className="cloudview-thumb-checkbox">{renderSelectionCheckbox(file, 20)}</div>}
                     {isFolderItem ? (
-                      sourceType === 'hf_dataset' && (file as any)._coverThumbUrl ? (
+                      sourceType === 'hf_dataset' && (file as unknown)._coverThumbUrl ? (
                         <>
-                          <ThumbnailImage url={(file as any)._coverThumbUrl} alt={sanitizedName} type={(file as any)._coverType === 'video' ? 'video' : 'image'} iconType="folder" token={hfToken} fileSize={(file as any)._coverSize || 0} fileName={(file as any)._coverName || ''} fallbackUrl={(file as any)._coverStreamUrl} />
+                          <ThumbnailImage url={(file as unknown)._coverThumbUrl} alt={sanitizedName} type={(file as unknown)._coverType === 'video' ? 'video' : 'image'} iconType="folder" token={hfToken} fileSize={(file as unknown)._coverSize || 0} fileName={(file as unknown)._coverName || ''} fallbackUrl={(file as unknown)._coverStreamUrl} />
                           <span className="cloudview-thumb-folder-mark"><Folder size={12} /></span>
                         </>
                       ) : (
                         <div className="cloudview-thumb-fallback" style={{ background: '#f59e0b18', color: '#f59e0b' }}><Folder size={isMobile ? 24 : 32} /></div>
                       )
                     ) : thumbUrl && thumbUrl.length > 0 && canShowThumb ? (
-                      <ThumbnailImage url={thumbUrl} alt={sanitizedName} type={file.media_type} token={sourceType === 'hf_dataset' ? hfToken : undefined} fileSize={file.size || 0} fileName={file.name || ''} fallbackUrl={sourceType === 'hf_dataset' ? (file as any)._streamUrl : undefined} />
+                      <ThumbnailImage url={thumbUrl} alt={sanitizedName} type={file.media_type} token={sourceType === 'hf_dataset' ? hfToken : undefined} fileSize={file.size || 0} fileName={file.name || ''} fallbackUrl={sourceType === 'hf_dataset' ? (file as unknown)._streamUrl : undefined} />
                     ) : (
                       <div className="cloudview-thumb-fallback" style={{ background: fileColor + '18', color: fileColor }}><FileIcon type={file.media_type} size={isMobile ? 24 : 32} /></div>
                     )}
@@ -574,7 +571,7 @@ export const FilesPanel: React.FC<{
               return (
                 <motion.div
                   key={file.id}
-                  style={{ ['--card-accent' as any]: fileColor }}
+                  style={{ ['--card-accent' as unknown]: fileColor }}
                   className={`cloudview-file-grid-card ${isSelected ? 'cloudview-item--selected' : ''} ${!isSelected && selectedFile?.id === file.id ? 'cloudview-file-grid-card--active' : ''}`}
                   onClick={() => handleItemClick(file)}
                   onPointerDown={(e) => handleItemPointerDown(e, file)}
@@ -609,7 +606,7 @@ export const FilesPanel: React.FC<{
               const isImage = file.media_type === 'image' && !isFolderItem;
               const isVideo = file.media_type === 'video' && !isFolderItem && sourceType === 'hf_dataset';
               const canShowThumb = isImage || isVideo;
-              const thumbUrl = canShowThumb && (selectedChat || sourceType === 'hf_dataset') ? (sourceType === 'hf_dataset' && (file as any)._thumbUrl ? (file as any)._thumbUrl : getStreamUrl(selectedChat?.id ?? 0, file.id)) : null;
+              const thumbUrl = canShowThumb && (selectedChat || sourceType === 'hf_dataset') ? (sourceType === 'hf_dataset' && (file as unknown)._thumbUrl ? (file as unknown)._thumbUrl : getStreamUrl(selectedChat?.id ?? 0, file.id)) : null;
               const sanitizedName = sanitizeText(file.name);
               const isSelected = selectedIds.has(file.id);
               return (
@@ -624,16 +621,16 @@ export const FilesPanel: React.FC<{
                   <div className="cloudview-thumb-preview">
                     {selectionEnabled && selectionMode && <div className="cloudview-thumb-checkbox">{renderSelectionCheckbox(file, 20)}</div>}
                     {isFolderItem ? (
-                      sourceType === 'hf_dataset' && (file as any)._coverThumbUrl ? (
+                      sourceType === 'hf_dataset' && (file as unknown)._coverThumbUrl ? (
                         <>
-                          <ThumbnailImage url={(file as any)._coverThumbUrl} alt={sanitizedName} type={(file as any)._coverType === 'video' ? 'video' : 'image'} iconType="folder" token={hfToken} fileSize={(file as any)._coverSize || 0} fileName={(file as any)._coverName || ''} fallbackUrl={(file as any)._coverStreamUrl} />
+                          <ThumbnailImage url={(file as unknown)._coverThumbUrl} alt={sanitizedName} type={(file as unknown)._coverType === 'video' ? 'video' : 'image'} iconType="folder" token={hfToken} fileSize={(file as unknown)._coverSize || 0} fileName={(file as unknown)._coverName || ''} fallbackUrl={(file as unknown)._coverStreamUrl} />
                           <span className="cloudview-thumb-folder-mark"><Folder size={12} /></span>
                         </>
                       ) : (
                         <div className="cloudview-thumb-fallback" style={{ background: '#f59e0b18', color: '#f59e0b' }}><Folder size={isMobile ? 24 : 32} /></div>
                       )
                     ) : thumbUrl && thumbUrl.length > 0 && canShowThumb ? (
-                      <ThumbnailImage url={thumbUrl} alt={sanitizedName} type={file.media_type} token={sourceType === 'hf_dataset' ? hfToken : undefined} fileSize={file.size || 0} fileName={file.name || ''} fallbackUrl={sourceType === 'hf_dataset' ? (file as any)._streamUrl : undefined} />
+                      <ThumbnailImage url={thumbUrl} alt={sanitizedName} type={file.media_type} token={sourceType === 'hf_dataset' ? hfToken : undefined} fileSize={file.size || 0} fileName={file.name || ''} fallbackUrl={sourceType === 'hf_dataset' ? (file as unknown)._streamUrl : undefined} />
                     ) : (
                       <div className="cloudview-thumb-fallback" style={{ background: fileColor + '18', color: fileColor }}><FileIcon type={file.media_type} size={isMobile ? 24 : 32} /></div>
                     )}
@@ -683,7 +680,7 @@ export const PlayerPanel: React.FC<{
   onMediaLoaded,
   getStreamUrl
 }) => {
-  const isFolder = (selectedFile as any)?._isFolder === true;
+  const isFolder = (selectedFile as unknown)?._isFolder === true;
   const isMedia = !!selectedFile && !isFolder && ['video', 'gif'].includes(selectedFile.media_type);
   const rawStreamUrl = selectedFile && !isFolder ? getStreamUrl(selectedChat?.id ?? 0, selectedFile.id) : '';
 

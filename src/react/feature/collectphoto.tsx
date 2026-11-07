@@ -4,7 +4,7 @@ import { db, auth } from "@config/firebase";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  User, Calendar, MapPin, Smartphone, Shield,
+  User, Calendar, Smartphone, Shield,
   Download, Search, AlertCircle, Loader2, Camera, RefreshCw, ArrowLeft, Maximize2, X
 } from "lucide-react";
 import { Carousel } from 'react-responsive-carousel';
@@ -13,7 +13,7 @@ import { formatTimestamp, formatDateOnly } from "@config/utils";
 
 interface SelfieData {
   image: string;
-  timestamp: any;
+  timestamp: unknown;
 }
 
 interface UserData {
@@ -21,7 +21,7 @@ interface UserData {
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
-  lastLoginAt?: any;
+  lastLoginAt?: unknown;
   lastLocation?: {
     city: string;
     country: string;
@@ -85,7 +85,7 @@ const CollectPhoto: React.FC = () => {
               setError("Access denied. Admin only.");
               setLoading(false);
             }
-          } catch (error) {
+          } catch {
             setIsAdmin(false);
             setError("Failed to verify admin status.");
             setLoading(false);
@@ -144,7 +144,7 @@ const CollectPhoto: React.FC = () => {
       });
       setUsers(usersData);
       setFilteredUsers(usersData);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.message || "Failed to load users");
     } finally {
       setLoading(false);
@@ -176,7 +176,7 @@ const CollectPhoto: React.FC = () => {
     return viewMode === "first" ? user.firstSelfie : user.latestSelfie;
   };
 
-  const getCardDate = (timestamp: any): string => {
+  const getCardDate = (timestamp: unknown): string => {
     if (!timestamp) return "Never";
     const fullDate = formatTimestamp(timestamp);
     return fullDate.split(",")[0] || fullDate;

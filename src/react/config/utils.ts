@@ -21,7 +21,7 @@ export const formatDuration = (seconds?: number): string => {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
-export const formatTimestamp = (timestamp: any): string => {
+export const formatTimestamp = (timestamp: unknown): string => {
   if (!timestamp) return 'Never';
   try {
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -39,7 +39,7 @@ export const formatTimestamp = (timestamp: any): string => {
   }
 };
 
-export const formatDateOnly = (timestamp: any): string => {
+export const formatDateOnly = (timestamp: unknown): string => {
   if (!timestamp) return 'Unknown';
   try {
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -53,7 +53,7 @@ export const formatDateOnly = (timestamp: any): string => {
   }
 };
 
-export const formatTimeOnly = (timestamp: any): string => {
+export const formatTimeOnly = (timestamp: unknown): string => {
   if (!timestamp) return '';
   try {
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);

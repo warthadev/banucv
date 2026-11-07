@@ -1,6 +1,7 @@
 // src/react/config/cloudviewtypes.ts
 import type React from 'react';
-import type { HFSearchRepo } from '@config/huggingface';
+import type { HFRepo, HFSearchRepo } from '@config/huggingface';
+import type { TelegramChat, TelegramFile, TelegramFileMetadata, ViewMode, SortField, SortDir } from '@config/telegram';
 import type { TransferAccount, TransferRepo } from '@feature/cloudmodalselection';
 
 export interface HFBulkContext {
@@ -12,7 +13,7 @@ export interface HFBulkContext {
 export interface HFApiResult {
   ok: boolean;
   error?: string;
-  data?: any;
+  data?: unknown;
 }
 
 export interface NavSnapshot {
@@ -29,17 +30,17 @@ export interface NavSnapshot {
 }
 
 export interface CloudViewPackProps {
-  dialogs: any[];
-  selectedChat: any | null;
-  files: any[];
-  sortedFiles: any[];
-  selectedFile: any | null;
+  dialogs: TelegramChat[];
+  selectedChat: TelegramChat | null;
+  files: TelegramFile[];
+  sortedFiles: TelegramFile[];
+  selectedFile: TelegramFile | null;
   loading: boolean;
   loadingFiles: boolean;
   searchQuery: string;
-  viewMode: any;
-  sortField: any;
-  sortDir: any;
+  viewMode: ViewMode;
+  sortField: SortField;
+  sortDir: SortDir;
   showSortMenu: boolean;
   error: string | null;
   sidebarCollapsed: boolean;
@@ -49,7 +50,7 @@ export interface CloudViewPackProps {
   screenSize: 'mobile' | 'tablet' | 'desktop';
   mobileView: 'chats' | 'files' | 'player';
   totalSize: number;
-  fileMetadata: any | null;
+  fileMetadata: TelegramFileMetadata | null;
   sortMenuRef: React.RefObject<HTMLDivElement>;
   sourceName?: string;
   showBackButton?: boolean;
@@ -63,8 +64,8 @@ export interface CloudViewPackProps {
   setMobileView: (v: 'chats' | 'files' | 'player') => void;
   fetchDialogs: () => void;
   refreshCurrentChatFiles: () => void;
-  handleChatClick: (chat: any) => void;
-  handleFileClick: (file: any) => void;
+  handleChatClick: (chat: TelegramChat) => void;
+  handleFileClick: (file: TelegramFile) => void;
   handleBackToRoot: () => void;
   handleBackToFiles: () => void;
   handleBackToChats: () => void;
@@ -74,13 +75,13 @@ export interface CloudViewPackProps {
   getStreamUrl: (chatId: number, msgId: number) => string;
   handleDownload: (chatId: number, msgId: number, filename: string) => void;
   hfToken?: string;
-  toggleSort: (field: any) => void;
+  toggleSort: (field: SortField) => void;
   cycleViewMode: () => void;
   setShowSortMenu: (s: boolean) => void;
   clearSession?: () => void;
-  hfRepos?: any[];
+  hfRepos?: HFRepo[];
   hfSelectedRepo?: string;
-  onRepoClick?: (repo: any) => void;
+  onRepoClick?: (repo: HFRepo) => void;
   onBackToRepos?: () => void;
   onBackToRepoRoot?: () => void;
   hfRepoName?: string;
@@ -89,8 +90,8 @@ export interface CloudViewPackProps {
   onGoBack?: () => void;
   selectionMode?: boolean;
   selectedIds?: Set<string>;
-  onEnterSelection?: (file: any) => void;
-  onToggleSelection?: (file: any) => void;
+  onEnterSelection?: (file: TelegramFile) => void;
+  onToggleSelection?: (file: TelegramFile) => void;
   onExitSelection?: () => void;
   onSelectAll?: () => void;
   onDeselectAll?: () => void;
@@ -113,12 +114,12 @@ export interface CloudViewPackProps {
   onCreateFolder?: () => void;
   renameModalOpen?: boolean;
   renameValue?: string;
-  renameTarget?: any;
+  renameTarget?: TelegramFile | null;
   setRenameValue?: (v: string) => void;
   onRenameConfirm?: () => void;
   onRenameClose?: () => void;
   deleteModalOpen?: boolean;
-  deleteTargets?: any[];
+  deleteTargets?: TelegramFile[];
   onDeleteConfirm?: () => void;
   onDeleteClose?: () => void;
   bulkActionLoading?: boolean;
@@ -130,7 +131,7 @@ export interface CloudViewPackProps {
   onCreateFolderConfirm?: () => void;
   onCreateFolderClose?: () => void;
   transferModalOpen?: boolean;
-  transferTargets?: any[];
+  transferTargets?: TelegramFile[];
   transferSourceAccountId?: string | null;
   transferSourceAccountLabel?: string;
   transferSourceRepoId?: string;
@@ -156,8 +157,8 @@ export interface CloudViewPackProps {
   transferIsPublicSource?: boolean;
   repoSelectionMode?: boolean;
   selectedRepoIds?: Set<string>;
-  onEnterRepoSelection?: (repo: any) => void;
-  onToggleRepoSelection?: (repo: any) => void;
+  onEnterRepoSelection?: (repo: HFRepo) => void;
+  onToggleRepoSelection?: (repo: HFRepo) => void;
   onExitRepoSelection?: () => void;
   onSelectAllRepos?: () => void;
   onDeselectAllRepos?: () => void;
@@ -173,7 +174,7 @@ export interface CloudViewPackProps {
   onAddRepoClose?: () => void;
   canSquashRepo?: boolean;
   squashRepoModalOpen?: boolean;
-  squashRepoTargets?: any[];
+  squashRepoTargets?: HFRepo[];
   onSquashRepoConfirm?: () => void;
   onSquashRepoClose?: () => void;
   canRenameRepo?: boolean;
@@ -182,16 +183,16 @@ export interface CloudViewPackProps {
   selectedRepoPrivate?: boolean | null;
   renameRepoModalOpen?: boolean;
   renameRepoValue?: string;
-  renameRepoTarget?: any | null;
+  renameRepoTarget?: HFRepo | null;
   setRenameRepoValue?: (v: string) => void;
   onRenameRepoConfirm?: () => void;
   onRenameRepoClose?: () => void;
   deleteRepoModalOpen?: boolean;
-  deleteRepoTargets?: any[];
+  deleteRepoTargets?: HFRepo[];
   onDeleteRepoConfirm?: () => void;
   onDeleteRepoClose?: () => void;
   visibilityRepoModalOpen?: boolean;
-  visibilityRepoTarget?: any | null;
+  visibilityRepoTarget?: HFRepo | null;
   onVisibilityRepoConfirm?: (isPrivate: boolean) => void;
   onVisibilityRepoClose?: () => void;
   onOpenPublicRepo?: (repo: HFSearchRepo) => void;

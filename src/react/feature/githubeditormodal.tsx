@@ -223,7 +223,7 @@ export const GithubAuthModal: React.FC<GithubAuthModalProps> = ({ isOpen, onSave
       await onSave(username.trim(), token.trim());
       setUsername("");
       setToken("");
-    } catch (err) {
+    } catch {
       setError("Failed to save credentials. Please try again.");
     } finally {
       setIsSaving(false);

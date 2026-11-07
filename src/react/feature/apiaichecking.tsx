@@ -23,8 +23,8 @@ const listItemVariants = {
 };
 
 const AICheck: React.FC = () => {
-  const [systemModels, setSystemModels] = useState<any[]>([]);
-  const [customModels, setCustomModels] = useState<any[]>([]);
+  const [systemModels, setSystemModels] = useState<unknown[]>([]);
+  const [customModels, setCustomModels] = useState<unknown[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [copied, setCopied] = useState(false);
@@ -42,7 +42,7 @@ const AICheck: React.FC = () => {
     setIsFetching(true);
 
     try {
-      let models: any[] = [];
+      let models: unknown[] = [];
 
       const token = authMode === "system" ? getCachedRouterKey() : customKey.trim();
       if (!token) throw new Error("9router credential is not configured for this account.");
@@ -53,7 +53,7 @@ const AICheck: React.FC = () => {
       if (authMode === "system") setSystemModels(models); else setCustomModels(models);
 
       setStatus("idle");
-    } catch (err: any) {
+    } catch (err: unknown) {
       setErrorMessage(err.message);
       setStatus("error");
     } finally {

@@ -31,7 +31,7 @@ interface AudioState {
   shuffleKey: number;
 }
 
-const loadFromStorage = (key: string, defaultValue: any) => {
+const loadFromStorage = (key: string, defaultValue: unknown) => {
   const stored = localStorage.getItem(key);
   if (stored !== null) {
     if (key === "userVolume") return Number(stored);

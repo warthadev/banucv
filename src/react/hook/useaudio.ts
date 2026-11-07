@@ -29,7 +29,7 @@ export const useAudio = () => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isMediaOverride, setIsMediaOverride] = useState(false);
 
-  const sendCommand = useCallback((func: string, args: any[] = []) => {
+  const sendCommand = useCallback((func: string, args: unknown[] = []) => {
     if (iframeRef.current?.contentWindow) {
       iframeRef.current.contentWindow.postMessage(JSON.stringify({ event: "command", func, args }), "*");
     }

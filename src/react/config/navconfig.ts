@@ -1,4 +1,4 @@
-import { FiHome, FiHeart, FiSettings, FiCodesandbox, FiCpu } from "react-icons/fi";
+import { FiHome, FiHeart, FiSettings } from "react-icons/fi";
 
 // Data Link Navigasi
 export const navLinks = [

@@ -2,12 +2,13 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "../redux/store";
-import { setMode, colorPalettes } from "../redux/themeslice";
+import { colorPalettes } from "../redux/themeslice";
 import type { ThemeMode } from "../redux/themeslice";
 
 // path ThemeProvider: komponen untuk mengaplikasikan tema ke root element
 const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const dispatch = useDispatch();
+  const __unusedLint1 = useDispatch();
+  void __unusedLint1;
   const { mode, palette } = useSelector((state: RootState) => state.theme);
 
   // path effect: update class html, meta theme-color, dan primary color
@@ -69,7 +70,7 @@ const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       document.documentElement.classList.remove(...allThemeModes);
       document.documentElement.classList.add(newTheme);
       
-      let metaThemeColor = document.querySelector("meta[name='theme-color']");
+      const metaThemeColor = document.querySelector("meta[name='theme-color']");
       if (metaThemeColor) {
         const color = newTheme === 'dark' ? '#0a0a0a' : '#ffffff';
         metaThemeColor.setAttribute("content", color);

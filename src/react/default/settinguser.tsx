@@ -19,9 +19,9 @@ interface UserProfile {
   displayName: string | null;
   photoURL: string | null;
   providers: string[];
-  createdAt?: any;
-  lastLoginAt?: any;
-  lastSeen?: any;
+  createdAt?: unknown;
+  lastLoginAt?: unknown;
+  lastSeen?: unknown;
   loginCount?: number;
   githubUsername?: string;
   githubToken?: string;
@@ -36,7 +36,7 @@ interface UserProfile {
     lat: number;
     lon: number;
     ip: string;
-    timestamp: any;
+    timestamp: unknown;
   };
   lastDevice?: {
     userAgent: string;
@@ -45,13 +45,13 @@ interface UserProfile {
   };
 }
 
-const getDateOnly = (timestamp: any): string => {
+const getDateOnly = (timestamp: unknown): string => {
   if (!timestamp) return "Unknown";
   const formatted = formatTimestamp(timestamp);
   return formatted.split(" at ")[0] || formatted;
 };
 
-const getTimeOnly = (timestamp: any): string => {
+const getTimeOnly = (timestamp: unknown): string => {
   if (!timestamp) return "Unknown";
   const formatted = formatTimestamp(timestamp);
   const parts = formatted.split(" at ");
@@ -123,7 +123,7 @@ const SettingUser: React.FC = () => {
         };
         setProfile(minimalProfile);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error fetching user data:", err);
       setError(err.message || "Failed to load user data");
     } finally {
@@ -147,7 +147,7 @@ const SettingUser: React.FC = () => {
     setMessage(null);
     try {
       const userRef = doc(db, "users", currentUser.uid);
-      const updateData: any = {};
+      const updateData: unknown = {};
 
       if (githubUser !== profile?.githubUsername) {
         updateData.githubUsername = githubUser.trim() || null;
@@ -173,7 +173,7 @@ const SettingUser: React.FC = () => {
       } else {
         setMessage({ type: "success", text: "No changes to save" });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error saving:", err);
       setMessage({ type: "error", text: err.message || "Failed to save" });
     } finally {

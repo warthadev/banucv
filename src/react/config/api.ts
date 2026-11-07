@@ -255,7 +255,7 @@ export const fetchAppConfig = async (): Promise<AppConfig> => {
           cachedConfig = data;
           return data;
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         lastError = err instanceof Error ? err : new Error(String(err));
       }
     }

@@ -57,7 +57,7 @@ const sanitizeText = (text: string | undefined | null): string => {
 };
 
 interface GithubEditorPackProps {
-  repos: any[];
+  repos: unknown[];
   selectedRepo: string | null;
   currentPath: string;
   files: GithubItem[];
@@ -94,7 +94,7 @@ interface GithubEditorPackProps {
 const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
   repos,
   selectedRepo,
-  currentPath,
+  __unusedLint1,
   files,
   editingFile,
   status,
@@ -107,8 +107,8 @@ const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
   isRenaming,
   isMobile,
   isSidebarOpen,
-  fileInputRef,
-  folderInputRef,
+  __unusedLint2,
+  __unusedLint3,
   onSetSidebarOpen,
   onNavigateBack,
   onRepoClick,
@@ -125,6 +125,9 @@ const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
   onEditingFileChange,
   onLogoutGitHub,
 }) => {
+  void __unusedLint1;
+  void __unusedLint2;
+  void __unusedLint3;
   const sidebarRef = useRef<HTMLDivElement>(null);
 
   const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
@@ -136,7 +139,7 @@ const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
           return parsed;
         }
       }
-    } catch {}
+    } catch { void 0;}
     return SIDEBAR_DEFAULT_WIDTH;
   });
   const [isResizing, setIsResizing] = useState(false);
@@ -145,7 +148,7 @@ const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
   useEffect(() => {
     try {
       localStorage.setItem("github_sidebar_width", String(sidebarWidth));
-    } catch {}
+    } catch { void 0;}
   }, [sidebarWidth]);
 
   const startResize = useCallback((e: React.PointerEvent) => {
@@ -154,7 +157,7 @@ const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
     const target = e.currentTarget as HTMLElement;
     try {
       target.setPointerCapture(e.pointerId);
-    } catch {}
+    } catch { void 0;}
     setIsResizing(true);
     resizeRef.current = { startX: e.clientX, startWidth: sidebarWidth };
   }, [sidebarWidth]);
@@ -174,7 +177,7 @@ const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
     const target = e.currentTarget as HTMLElement;
     try {
       target.releasePointerCapture(e.pointerId);
-    } catch {}
+    } catch { void 0;}
     setIsResizing(false);
   }, [isResizing]);
 

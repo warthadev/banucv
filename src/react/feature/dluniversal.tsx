@@ -307,7 +307,7 @@ export const useDlUniversal = ({
           if (!firstProgressSeenRef.current) firstProgressSeenRef.current = true;
           onProgressLog(buildProgressEntry(fileName, percent, currentHuman, totalHuman, speedHuman, eta, 'download'));
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         finishAll();
         onLog(`${fallbackFileName} progress error: ${e?.message || 'unknown'}`, 'critical');
       }
@@ -352,7 +352,7 @@ export const useDlUniversal = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      const json: any = await res.json().catch(() => ({}));
+      const json: unknown = await res.json().catch(() => ({}));
       if (!res.ok || !json.ok || !json.session_id) {
         throw new Error(json.detail || `HTTP ${res.status}`);
       }
@@ -370,7 +370,7 @@ export const useDlUniversal = ({
       onLog('[universal]\nWaiting for Colab to start...', 'system');
 
       pollProgress(json.session_id, url.slice(0, 60));
-    } catch (e: any) {
+    } catch (e: unknown) {
       setColabBusy(false);
       setStarting(false);
       onLog(`[universal]\nFailed to start: ${e?.message || 'unknown error'}`, 'critical');

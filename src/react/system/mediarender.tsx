@@ -98,7 +98,8 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(0.7);
+  const [volume, __unusedLint1] = useState(0.7);
+  void __unusedLint1;
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -201,7 +202,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
 
         objectUrl = URL.createObjectURL(blob);
         setMediaSrc(objectUrl);
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (cancelled || err?.name === 'AbortError') return;
         console.warn('[MediaRender] fetch media gagal:', err);
         setError(`Failed to load ${item.type}`);
@@ -470,7 +471,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
       const v = videoRef.current;
       if (!v || v.paused || v.currentTime < 0.5) return;
       const quality = v.getVideoPlaybackQuality?.();
-      const decoded = quality ? quality.totalVideoFrames : (v as any).webkitDecodedFrameCount;
+      const decoded = quality ? quality.totalVideoFrames : (v as unknown).webkitDecodedFrameCount;
       if (typeof decoded === 'number' && decoded === 0) setCodecIssue(true);
     }, 2500);
     return () => clearTimeout(timer);

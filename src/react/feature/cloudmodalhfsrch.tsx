@@ -82,7 +82,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
   }, [isOpen, resetState]);
 
   const searchUsers = useCallback(async (q: string, signal: AbortSignal) => {
-    const safeFetch = async (url: string): Promise<any[]> => {
+    const safeFetch = async (url: string): Promise<unknown[]> => {
       try {
         const res = await fetch(url, { signal, headers: buildHeaders(token), cache: "no-store" });
         if (!res.ok) return [];
@@ -121,7 +121,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
   }, [token]);
 
   const searchRepos = useCallback(async (q: string, signal: AbortSignal) => {
-    const safeFetch = async (url: string): Promise<any[]> => {
+    const safeFetch = async (url: string): Promise<unknown[]> => {
       try {
         const res = await fetch(url, { signal, headers: buildHeaders(token), cache: "no-store" });
         if (!res.ok) return [];
@@ -139,7 +139,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
     ]);
 
     const merged: HFSearchRepo[] = [];
-    const push = (arr: any[], type: "dataset" | "model" | "space") => {
+    const push = (arr: unknown[], type: "dataset" | "model" | "space") => {
       for (const item of arr) {
         const id = item.id || item.modelId || "";
         if (!id) continue;
@@ -168,7 +168,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
   }, [token]);
 
   const listUserRepos = useCallback(async (username: string, signal: AbortSignal) => {
-    const safeFetch = async (url: string): Promise<any[]> => {
+    const safeFetch = async (url: string): Promise<unknown[]> => {
       try {
         const res = await fetch(url, { signal, headers: buildHeaders(token), cache: "no-store" });
         if (!res.ok) return [];
@@ -186,7 +186,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
     ]);
 
     const merged: HFSearchRepo[] = [];
-    const push = (arr: any[], type: "dataset" | "model" | "space") => {
+    const push = (arr: unknown[], type: "dataset" | "model" | "space") => {
       for (const item of arr) {
         const id = item.id || item.modelId || "";
         if (!id) continue;
@@ -237,7 +237,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
         const r = await searchRepos(q.trim(), controller.signal);
         if (!controller.signal.aborted) setRepos(r);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err?.name === "AbortError") return;
       setError(err?.message || "Search failed");
     } finally {
@@ -267,7 +267,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
     try {
       const r = await listUserRepos(user.username, controller.signal);
       if (!controller.signal.aborted) setUserRepos(r);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err?.name === "AbortError") return;
       setError(err?.message || "Failed to load repositories");
     } finally {

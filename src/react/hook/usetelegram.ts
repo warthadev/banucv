@@ -111,7 +111,7 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
         return data.metadata;
       }
       return null;
-    } catch (err) {
+    } catch {
       return null;
     } finally {
       setIsLoadingMetadata(false);
@@ -149,7 +149,7 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
       const res = await apiFetch(`${API_BASE}/telegram/dialogs`);
       const data = await res.json();
       
-      const dialogs = (data.dialogs || []).map((d: any) => ({
+      const dialogs = (data.dialogs || []).map((d: unknown) => ({
         ...d,
         unread_count: d.unread_count ?? 0,
       }));
@@ -169,7 +169,7 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
           }
         }
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       setError(e.message || 'Failed to load dialogs');
     } finally {
       setLoading(false);
@@ -186,7 +186,7 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
       const list = data.files || [];
       setFiles(list);
       setTotalSize(list.reduce((acc: number, f: TelegramFile) => acc + (f.size || 0), 0));
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (!silent) setError(e.message);
     } finally {
       if (!silent) setLoadingFiles(false);
@@ -214,7 +214,7 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
     try {
       await apiFetch(`${API_BASE}/telegram/chat/${selectedChat.id}/refresh`, { method: 'POST' });
       await fetchChatFiles(selectedChat.id, false);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setError(e.message);
     } finally {
       setLoadingFiles(false);

@@ -4,7 +4,7 @@ import {
   Folder, FolderOpen, Hash, Users, ChevronLeft, ChevronRight, Home, Plus, RefreshCw, Check, Lock
 } from 'lucide-react';
 import type { TelegramChat, TelegramFile } from '@config/telegram';
-import { formatBytes, getLabel } from '@config/telegram';
+import { formatBytes } from '@config/telegram';
 import type { HFRepo } from '@config/cloudsource';
 import { getRepoTypeColor, getRepoTypeLabel } from '@config/cloudsource';
 import { FileIcon } from './cloudviewuithumb';
@@ -212,7 +212,7 @@ export const Sidebar: React.FC<{
     e.preventDefault();
     e.stopPropagation();
     const target = e.currentTarget as HTMLElement;
-    try { target.setPointerCapture(e.pointerId); } catch {}
+    try { target.setPointerCapture(e.pointerId); } catch { void 0;}
     setIsResizing(true);
     resizeRef.current = { startX: e.clientX, startWidth: width };
   }, [width]);
@@ -227,7 +227,7 @@ export const Sidebar: React.FC<{
   const endResize = useCallback((e: React.PointerEvent) => {
     if (!isResizing) return;
     const target = e.currentTarget as HTMLElement;
-    try { target.releasePointerCapture(e.pointerId); } catch {}
+    try { target.releasePointerCapture(e.pointerId); } catch { void 0;}
     setIsResizing(false);
   }, [isResizing]);
 
@@ -332,7 +332,7 @@ export const Sidebar: React.FC<{
             {sourceType === 'telegram' ? (
               dialogs.map((chat) => (
                 <li key={chat.id}>
-                  <button className={`cloudview-tree-item ${selectedChat?.id === chat.id ? 'cloudview-tree-item--active' : ''}`} style={{ ['--row-accent' as any]: CHAT_ACCENT[chat.type] || 'var(--primary)' }} onClick={() => onChatClick(chat)} title={sanitizeText(chat.name)}>
+                  <button className={`cloudview-tree-item ${selectedChat?.id === chat.id ? 'cloudview-tree-item--active' : ''}`} style={{ ['--row-accent' as unknown]: CHAT_ACCENT[chat.type] || 'var(--primary)' }} onClick={() => onChatClick(chat)} title={sanitizeText(chat.name)}>
                     <span className="cloudview-tree-icon">{chat.type === 'channel' ? <Hash size={15} /> : <Users size={15} />}</span>
                     {!collapsed && (
                       <>
@@ -352,7 +352,7 @@ export const Sidebar: React.FC<{
                   <li key={repo.full_name}>
                     <button
                       className={`cloudview-tree-item ${selectedRepo === repo.full_name && !repoSelectionMode ? 'cloudview-tree-item--active' : ''} ${isSelected ? 'cloudview-item--selected' : ''}`}
-                      style={{ ['--row-accent' as any]: getRepoTypeColor(repo.type) }}
+                      style={{ ['--row-accent' as unknown]: getRepoTypeColor(repo.type) }}
                       onClick={() => handleRepoItemClick(repo)}
                       onPointerDown={(e) => handleRepoPointerDown(e, repo)}
                       onContextMenu={(e) => handleRepoContextMenu(e, repo)}
@@ -457,7 +457,7 @@ export const RepoRow: React.FC<{
       role="button"
       tabIndex={0}
       className={`cloudview-frow ${isSelected ? 'cloudview-item--selected' : ''} ${!isSelected && isActive ? 'cloudview-frow--active' : ''}`}
-      style={{ ['--row-accent' as any]: getRepoTypeColor(repo.type) }}
+      style={{ ['--row-accent' as unknown]: getRepoTypeColor(repo.type) }}
       onClick={handleClick}
       onKeyDown={(e) => { if (e.key === 'Enter') handleClick(); }}
       onPointerDown={handlePointerDown}

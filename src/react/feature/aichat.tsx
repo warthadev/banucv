@@ -2,13 +2,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Send, Bot, Trash2, Volume2, VolumeX, AlertCircle,
+  Send, Bot, Trash2, Volume2, VolumeX, AlertCircle, Check,
   Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Globe, Wand2, Link, ChevronDown
 } from "lucide-react";
 import useAgentModels, { AUTOMATIC_AGENT_MODEL } from "@hook/useAgentModels";
 import { AGENT_API_BASE } from "@config/api";
 import { useAudio } from "@hook/useaudio";
 import { RouterAuthModal } from "./routerauthmodal";
+import { modalVariants, overlayVariants } from "@animation/githubeditor";
 import Loading from "@control/loading";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -442,7 +443,7 @@ const splitMarkdown = (content: string) => {
 };
 
 const AIChat: React.FC = () => {
-  const { isConfigured, showAuthModal, saveApiKey, closeModal, isLoading: authLoading } = useAgentModels();
+  const { isConfigured, showAuthModal, saveApiKey, closeModal, isLoading: authLoading, routerModels } = useAgentModels();
   const { aiMode } = useAudio();
 
   const loadMessages = (): Message[] => {
@@ -472,7 +473,21 @@ const AIChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>(() => loadMessages());
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedModel] = useState(AUTOMATIC_AGENT_MODEL);
+  const [selectedModel, setSelectedModel] = useState(AUTOMATIC_AGENT_MODEL);
+  const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
+  const modelOptions = Array.from(new Set([
+    AUTOMATIC_AGENT_MODEL,
+    ...routerModels.filter((model) => Boolean(model)),
+    ...AVAILABLE_MODELS.slice(1),
+  ]));
+  useEffect(() => {
+    if (!isModelPickerOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsModelPickerOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isModelPickerOpen]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentSpeakingId, setCurrentSpeakingId] = useState<string | null>(null);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
@@ -680,7 +695,7 @@ const AIChat: React.FC = () => {
     isRetry: boolean,
     originalUserMessage?: string
   ): Promise<{ text: string; model: string; sources?: { title: string; url: string }[]; searchImages?: string[] }> => {
-    const modelName = AVAILABLE_MODELS[modelIndex];
+    const modelName = modelOptions[modelIndex];
     if (!modelName) throw new Error("Model not found");
     const history = currentMessages.filter(m => !m.error && !(isRetry && m.role === "user" && m.content === originalUserMessage)).map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.content }));
     const textContext = messageText + buildContextFromFiles(files);
@@ -720,7 +735,7 @@ const AIChat: React.FC = () => {
     }
   };
 
-  const sendMessage = async (messageText: string, images: UploadedImage[], files: UploadedFile[], retryModelIndex: number = 0, isRetry: boolean = false) => {
+  const sendMessage = async (messageText: string, images: UploadedImage[], files: UploadedFile[], retryModelIndex: number = Math.max(0, modelOptions.indexOf(selectedModel)), isRetry: boolean = false) => {
     setIsLoading(true);
 
     if (!isRetry) {
@@ -789,7 +804,7 @@ const AIChat: React.FC = () => {
       const isServiceUnavailable = errorType === "SERVICE_UNAVAILABLE" || error.message?.includes("503");
       const isRateLimit = errorType === "RATE_LIMIT" || error.message?.includes("429");
       
-      if ((isServiceUnavailable || isRateLimit) && retryModelIndex < AVAILABLE_MODELS.length - 1) {
+      if ((isServiceUnavailable || isRateLimit) && retryModelIndex < modelOptions.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 1000));
         await sendMessage(messageText, images, files, retryModelIndex + 1, true);
         return;
@@ -835,7 +850,7 @@ const AIChat: React.FC = () => {
     setMessages(prev => prev.filter(m => m.id !== messageId));
     const recoveredImages: UploadedImage[] = userMsg.images?.map(img => ({ data: img.data, mimeType: img.mimeType, preview: `data:${img.mimeType};base64,${img.data}` })) || [];
     const recoveredFiles: UploadedFile[] = userMsg.files?.map(f => ({ name: f.name, content: f.content, type: "" })) || [];
-    await sendMessage(userMsg.content, recoveredImages, recoveredFiles, 0, true);
+    await sendMessage(userMsg.content, recoveredImages, recoveredFiles, Math.max(0, modelOptions.indexOf(selectedModel)), true);
   };
 
   const copyMessage = (content: string) => navigator.clipboard.writeText(content);
@@ -878,6 +893,72 @@ const AIChat: React.FC = () => {
   return (
     <>
       <RouterAuthModal isOpen={showAuthModal} onSave={saveApiKey} onClose={closeModal} />
+      <AnimatePresence>
+        {isConfigured && isModelPickerOpen && (
+          <motion.div
+            className="github-modal-overlay aichat-model-picker-overlay"
+            variants={overlayVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setIsModelPickerOpen(false);
+            }}
+          >
+            <motion.div
+              className="github-modal aichat-model-picker-modal"
+              variants={modalVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="aichat-model-picker-title"
+            >
+              <div className="aichat-model-picker-header">
+                <div className="aichat-model-picker-icon"><Bot size={20} /></div>
+                <div className="aichat-model-picker-heading">
+                  <h3 id="aichat-model-picker-title">Pilih model AI</h3>
+                  <p>Pilih model untuk percakapan ini.</p>
+                </div>
+                <button
+                  type="button"
+                  className="aichat-model-picker-close"
+                  onClick={() => setIsModelPickerOpen(false)}
+                  aria-label="Tutup pemilih model"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="aichat-model-option-list" role="radiogroup" aria-label="Model AI">
+                {modelOptions.map((model) => {
+                  const isAutomatic = model === AUTOMATIC_AGENT_MODEL;
+                  const isSelected = model === selectedModel;
+                  return (
+                    <button
+                      type="button"
+                      key={model}
+                      className={`aichat-model-option${isSelected ? " selected" : ""}`}
+                      role="radio"
+                      aria-checked={isSelected}
+                      onClick={() => {
+                        setSelectedModel(model);
+                        setIsModelPickerOpen(false);
+                      }}
+                    >
+                      <span className="aichat-model-option-copy">
+                        <strong>{isAutomatic ? "Auto (disarankan)" : model}</strong>
+                        <small>{isAutomatic ? `Model default AI Agent · ${model}` : "Model tersedia melalui AI Agent"}</small>
+                      </span>
+                      {isSelected && <Check size={18} aria-hidden="true" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {isConfigured && (
         <div className="aichat-container">
           <div className="aichat-messages" ref={scrollRef}>
@@ -1109,9 +1190,19 @@ const AIChat: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <div className="aichat-model-wrapper" title="Model dipilih otomatis oleh AI Agent">
-                  <span className="aichat-icon-btn" aria-label={`Model otomatis: ${selectedModel}`}><Bot size={24} /></span>
-                  <span className="aichat-automatic-model">Auto: {selectedModel}</span>
+                <div className="aichat-model-wrapper">
+                  <button
+                    type="button"
+                    className="aichat-model-picker-trigger"
+                    onClick={() => setIsModelPickerOpen(true)}
+                    title="Pilih model AI"
+                    aria-haspopup="dialog"
+                    aria-expanded={isModelPickerOpen}
+                  >
+                    <span className="aichat-icon-btn" aria-hidden="true"><Bot size={24} /></span>
+                    <span className="aichat-automatic-model">{selectedModel === AUTOMATIC_AGENT_MODEL ? `Auto: ${selectedModel}` : selectedModel}</span>
+                    <ChevronDown size={14} aria-hidden="true" />
+                  </button>
                 </div>
                 <button 
                   className={`aichat-icon-btn globe-btn${webSearchEnabled ? " web-search-active" : ""}`} 

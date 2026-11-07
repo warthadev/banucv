@@ -13,6 +13,14 @@ interface CloudModalHFSearchProps {
   token?: string;
 }
 
+interface HFApiRecord {
+  id?: string;
+  modelId?: string;
+  private?: boolean;
+  likes?: number;
+  downloads?: number;
+}
+
 const REPO_TYPE_ORDER: Record<string, number> = {
   dataset: 0,
   model: 1,
@@ -80,7 +88,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
   }, [isOpen]);
 
   const searchUsers = useCallback(async (q: string, signal: AbortSignal) => {
-    const safeFetch = async (url: string): Promise<any[]> => {
+    const safeFetch = async (url: string): Promise<HFApiRecord[]> => {
       try {
         const res = await fetch(url, { signal, headers: buildHeaders(token), cache: "no-store" });
         if (!res.ok) return [];
@@ -119,7 +127,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
   }, [token]);
 
   const searchRepos = useCallback(async (q: string, signal: AbortSignal) => {
-    const safeFetch = async (url: string): Promise<any[]> => {
+    const safeFetch = async (url: string): Promise<HFApiRecord[]> => {
       try {
         const res = await fetch(url, { signal, headers: buildHeaders(token), cache: "no-store" });
         if (!res.ok) return [];
@@ -137,7 +145,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
     ]);
 
     const merged: HFSearchRepo[] = [];
-    const push = (arr: any[], type: "dataset" | "model" | "space") => {
+    const push = (arr: HFApiRecord[], type: "dataset" | "model" | "space") => {
       for (const item of arr) {
         const id = item.id || item.modelId || "";
         if (!id) continue;
@@ -166,7 +174,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
   }, [token]);
 
   const listUserRepos = useCallback(async (username: string, signal: AbortSignal) => {
-    const safeFetch = async (url: string): Promise<any[]> => {
+    const safeFetch = async (url: string): Promise<HFApiRecord[]> => {
       try {
         const res = await fetch(url, { signal, headers: buildHeaders(token), cache: "no-store" });
         if (!res.ok) return [];
@@ -184,7 +192,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
     ]);
 
     const merged: HFSearchRepo[] = [];
-    const push = (arr: any[], type: "dataset" | "model" | "space") => {
+    const push = (arr: HFApiRecord[], type: "dataset" | "model" | "space") => {
       for (const item of arr) {
         const id = item.id || item.modelId || "";
         if (!id) continue;
@@ -235,9 +243,9 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
         const r = await searchRepos(q.trim(), controller.signal);
         if (!controller.signal.aborted) setRepos(r);
       }
-    } catch (err: any) {
-      if (err?.name === "AbortError") return;
-      setError(err?.message || "Search failed");
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      setError(err instanceof Error ? err.message : "Search failed");
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
@@ -265,9 +273,9 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
     try {
       const r = await listUserRepos(user.username, controller.signal);
       if (!controller.signal.aborted) setUserRepos(r);
-    } catch (err: any) {
-      if (err?.name === "AbortError") return;
-      setError(err?.message || "Failed to load repositories");
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      setError(err instanceof Error ? err.message : "Failed to load repositories");
     } finally {
       if (!controller.signal.aborted) setLoadingUserRepos(false);
     }

@@ -2,7 +2,7 @@
 import { getActiveBase } from '@config/api';
 import type { HFApiResult } from '@config/cloudviewtypes';
 
-export const hfPost = async (endpoint: string, body: any): Promise<HFApiResult> => {
+export const hfPost = async (endpoint: string, body: unknown): Promise<HFApiResult> => {
   try {
     const API_BASE = getActiveBase();
     const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -15,8 +15,11 @@ export const hfPost = async (endpoint: string, body: any): Promise<HFApiResult> 
       return { ok: false, error: data?.detail || `HTTP ${res.status}` };
     }
     return { ok: true, data };
-  } catch (err: any) {
-    return { ok: false, error: err?.message || 'Network error' };
+  } catch (err: unknown) {
+    const message = typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string'
+      ? err.message
+      : 'Network error';
+    return { ok: false, error: message };
   }
 };
 

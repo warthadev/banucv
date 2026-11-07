@@ -81,7 +81,7 @@ const loadSourcesFromFirestore = async (): Promise<CloudSource[]> => {
 
       return sources;
     }
-  } catch (error) {
+  } catch {
     void 0;
   }
   return [];
@@ -99,7 +99,7 @@ export const clearAllHFSessions = async (): Promise<void> => {
       hfUsernames: null,
       hfTokens: null,
     });
-  } catch (error) {
+  } catch {
     void 0;
   }
 };
@@ -283,7 +283,7 @@ export const useCloudSource = () => {
           }));
           return { ...newSource, status: 'offline' as const };
         }
-      } catch (err) {
+      } catch {
         dispatch(updateSourceLocal({
           id: newSource.id,
           updates: { status: 'offline' }
@@ -307,14 +307,14 @@ export const useCloudSource = () => {
             id: newSource.id,
             updates: {
               status: 'online',
-              fileCount: data.siblings?.filter((s: any) => s.rfilename).length || 0,
+              fileCount: data.siblings?.filter((s: { rfilename?: string }) => s.rfilename).length || 0,
               totalSize: data.size || 0,
             }
           }));
           return {
             ...newSource,
             status: 'online' as const,
-            fileCount: data.siblings?.filter((s: any) => s.rfilename).length || 0,
+            fileCount: data.siblings?.filter((s: { rfilename?: string }) => s.rfilename).length || 0,
             totalSize: data.size || 0,
           };
         } else {
@@ -324,7 +324,7 @@ export const useCloudSource = () => {
           }));
           return { ...newSource, status: 'offline' as const };
         }
-      } catch (err) {
+      } catch {
         dispatch(updateSourceLocal({
           id: newSource.id,
           updates: { status: 'offline' }
@@ -412,7 +412,7 @@ export const useCloudSource = () => {
           } else {
             dispatch(updateSourceLocal({ id: source.id, updates: { status: 'offline' } }));
           }
-        } catch (err) {
+        } catch {
           dispatch(updateSourceLocal({ id: source.id, updates: { status: 'offline' } }));
         }
       }

@@ -40,10 +40,11 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
+    const video = videoRef.current;
     return () => {
       document.body.style.overflow = "auto";
-      if (videoRef.current?.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
+      if (video?.srcObject) {
+        const stream = video.srcObject as MediaStream;
         stream?.getTracks().forEach(track => track.stop());
       }
     };
@@ -89,7 +90,7 @@ const Login: React.FC = () => {
         }
       }
       return null;
-    } catch (err) {
+    } catch {
       return null;
     }
   };
@@ -131,7 +132,9 @@ const Login: React.FC = () => {
         try {
           await user.reload();
           if (user.email) email = user.email;
-        } catch (e) {}
+        } catch {
+          void 0;
+        }
       }
       
       if (!email) {
@@ -140,7 +143,9 @@ const Login: React.FC = () => {
           if (tokenResult.claims.email) {
             email = tokenResult.claims.email;
           }
-        } catch (e) {}
+        } catch {
+          void 0;
+        }
       }
       
       await saveUserOnLogin(user, providerName, email);
@@ -150,8 +155,11 @@ const Login: React.FC = () => {
       dispatch(setToken(token));
       
       navigate("/dashboard");
-    } catch (error: any) {
-      if (error.code !== "auth/cancelled-popup-request" && error.code !== "auth/popup-closed-by-user") {
+    } catch (error: unknown) {
+      const errorCode = typeof error === "object" && error !== null && "code" in error && typeof error.code === "string"
+        ? error.code
+        : "";
+      if (errorCode !== "auth/cancelled-popup-request" && errorCode !== "auth/popup-closed-by-user") {
         alert("Login failed. Please try again.");
       }
     } finally {

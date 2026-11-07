@@ -2,7 +2,7 @@
 import { Octokit } from "octokit";
 import { db, auth } from "./firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { formatBytes, getFileExtension } from "./utils";
+import { getFileExtension } from "./utils";
 
 export interface GithubCredentials {
   githubUsername: string;
@@ -159,7 +159,7 @@ export const fetchReposAPI = async () => {
     per_page: 100,
     direction: "desc",
     timestamp: Date.now(),
-  } as any);
+  } as Parameters<typeof octokit.request>[1]);
   return res.data;
 };
 
@@ -183,13 +183,14 @@ export const fetchContentsAPI = async (repo: string, path: string) => {
 
 export const fetchFileContentAPI = async (repo: string, path: string) => {
   const octokit = getOctokit();
-  const res: any = await octokit.request(
+  const res = await octokit.request(
     "GET /repos/{owner}/{repo}/contents/{path}",
     { owner: currentUsername, repo, path }
   );
+  const fileData = res.data as { content: string; sha: string };
   return {
-    content: decodeContent(res.data.content),
-    sha: res.data.sha,
+    content: decodeContent(fileData.content),
+    sha: fileData.sha,
   };
 };
 
@@ -329,7 +330,7 @@ export const deleteFolderRecursiveAPIFallback = async (repo: string, folderPath:
 export const deleteFolderRecursiveAPI = async (repo: string, folderPath: string): Promise<void> => {
   try {
     await deleteFolderTreeAPI(repo, folderPath);
-  } catch (error) {
+  } catch {
     await deleteFolderRecursiveAPIFallback(repo, folderPath);
   }
 };
@@ -409,10 +410,10 @@ export const uploadFolderToGitHub = async (
   basePath: string = ""
 ): Promise<void> => {
   const octokit = getOctokit();
-  const promises: Promise<any>[] = [];
+  const promises: Promise<unknown>[] = [];
 
   for (const file of files) {
-    let relativePath = file.webkitRelativePath || file.name;
+    const relativePath = file.webkitRelativePath || file.name;
     const fullPath = basePath ? `${basePath}/${relativePath}` : relativePath;
     const content = await file.text();
     const encodedContent = btoa(unescape(encodeURIComponent(content)));

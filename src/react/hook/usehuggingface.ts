@@ -1,6 +1,7 @@
 // src/react/hook/usehuggingface.ts
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getActiveBase } from '@config/api';
+import type { CloudViewFile } from '@config/cloudviewtypes';
 import { useCloudScreenSize } from '@hook/usecloudscreensize';
 import {
   HF_SIDEBAR_WIDTH_KEY,
@@ -32,6 +33,19 @@ export type {
   HFSearchRepo,
 } from '@config/huggingface';
 
+type HFSiblingRecord = { size?: number };
+type HFTreeEntry = { path?: string; lastCommit?: { date?: string | number } };
+type HFUserApiRecord = { id?: string; user?: string; name?: string; fullname?: string; avatarUrl?: string; isOrg?: boolean };
+type HFRepoApiRecord = { id?: string; modelId?: string; private?: boolean; likes?: number; downloads?: number };
+type HFDatasetFileRecord = { path?: string; rfilename?: string; size?: number; created_at?: string };
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string' && error.message) {
+    return error.message;
+  }
+  return fallback;
+};
+
 export type HuggingFaceStateOptions = {
   initialHfView?: 'repos' | 'files';
   initialSelectedRepo?: string;
@@ -50,7 +64,7 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
   const [currentPath, setCurrentPathState] = useState(options.initialCurrentPath || '');
   const [folderStructure, setFolderStructure] = useState<HFFolderStructure>({ folders: [], files: [], totalSize: 0 });
   const [hfFolderDates, setHfFolderDates] = useState<Record<string, Record<string, number>>>({});
-  const [hfSelectedFile, setHfSelectedFile] = useState<any>(null);
+  const [hfSelectedFile, setHfSelectedFile] = useState<CloudViewFile | null>(null);
   const [hfMobileView, setHfMobileView] = useState<'chats' | 'files' | 'player'>('chats');
   const [hfSearchQuery, setHfSearchQuery] = useState('');
   const [hfViewMode, setHfViewMode] = useState<'list' | 'grid' | 'thumbnail' | 'poster'>(() => {
@@ -77,7 +91,7 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
         const parsed = parseInt(saved, 10);
         if (!isNaN(parsed) && parsed >= HF_SIDEBAR_MIN_WIDTH && parsed <= HF_SIDEBAR_MAX_WIDTH) return parsed;
       }
-    } catch {}
+    } catch { void 0; }
     return HF_SIDEBAR_DEFAULT_WIDTH;
   });
   const [hfShowDetail, setHfShowDetail] = useState(true);
@@ -86,9 +100,9 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
   const [hfHasLoadedOnce, setHfHasLoadedOnce] = useState(false);
   const hfScreenSize = useCloudScreenSize();
 
-  useEffect(() => { try { localStorage.setItem(HF_SIDEBAR_WIDTH_KEY, String(hfSidebarWidth)); } catch {} }, [hfSidebarWidth]);
-  useEffect(() => { try { localStorage.setItem(HF_VIEW_MODE_KEY, hfViewMode); } catch {} }, [hfViewMode]);
-  useEffect(() => { try { localStorage.setItem(HF_SORT_FIELD_KEY, hfSortField); localStorage.setItem(HF_SORT_DIR_KEY, hfSortDir); } catch {} }, [hfSortField, hfSortDir]);
+  useEffect(() => { try { localStorage.setItem(HF_SIDEBAR_WIDTH_KEY, String(hfSidebarWidth)); } catch { void 0; } }, [hfSidebarWidth]);
+  useEffect(() => { try { localStorage.setItem(HF_VIEW_MODE_KEY, hfViewMode); } catch { void 0; } }, [hfViewMode]);
+  useEffect(() => { try { localStorage.setItem(HF_SORT_FIELD_KEY, hfSortField); localStorage.setItem(HF_SORT_DIR_KEY, hfSortDir); } catch { void 0; } }, [hfSortField, hfSortDir]);
 
   const fetchWithAuth = useCallback(async (url: string, token?: string) => {
     const headers: HeadersInit = {};
@@ -115,7 +129,7 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
         return 0;
       }
       const siblings = info.siblings || [];
-      return siblings.reduce((acc: number, s: any) => acc + (s.size || 0), 0);
+      return (siblings as HFSiblingRecord[]).reduce((acc, sibling) => acc + (sibling.size || 0), 0);
     } catch {
       return 0;
     }
@@ -142,7 +156,7 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
           });
         }
       }
-    } catch (err) {}
+    } catch { void 0; }
 
     try {
       const models = await fetchWithAuth(`${HF_API_BASE}/models?author=${username}`, token);
@@ -160,7 +174,7 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
           });
         }
       }
-    } catch (err) {}
+    } catch { void 0; }
 
     try {
       const spaces = await fetchWithAuth(`${HF_API_BASE}/spaces?author=${username}`, token);
@@ -178,7 +192,7 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
           });
         }
       }
-    } catch (err) {}
+    } catch { void 0; }
 
     if (repos.length > 0) {
       const sizePromises = repos.map(async (repo) => {
@@ -217,7 +231,7 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
       const res: Response = await fetch(url, { headers });
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       const entries = await res.json();
-      for (const entry of entries as any[]) {
+      for (const entry of entries as HFTreeEntry[]) {
         const date = entry?.lastCommit?.date;
         const name = typeof entry?.path === 'string' ? entry.path.split('/').pop() : '';
         if (date && name) dates[name] = Math.floor(new Date(date).getTime() / 1000);
@@ -307,8 +321,8 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
         files: files.sort((a, b) => a.name.localeCompare(b.name)),
         totalSize,
       };
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch folder structure');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Failed to fetch folder structure'));
       setLoading(false);
       return { folders: [], files: [], totalSize: 0 };
     }
@@ -327,7 +341,7 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
       const data = await res.json();
       if (!Array.isArray(data)) return [];
 
-      return data.map((u: any): HFSearchUser => {
+      return data.map((u: HFUserApiRecord): HFSearchUser => {
         const username = u.user || u.name || u.id || '';
         return {
           id: u.id || username,
@@ -337,8 +351,8 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
           isOrg: !!u.isOrg,
         };
       });
-    } catch (err: any) {
-      throw new Error(err?.message || 'Search failed');
+    } catch (err: unknown) {
+      throw new Error(getErrorMessage(err, 'Search failed'));
     }
   }, []);
 
@@ -346,12 +360,12 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
     const q = query.trim();
     if (!q) return [];
 
-    const safeFetch = async (url: string): Promise<any[]> => {
+    const safeFetch = async (url: string): Promise<HFRepoApiRecord[]> => {
       try {
         const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) return [];
         const json = await res.json();
-        return Array.isArray(json) ? json : [];
+        return Array.isArray(json) ? json as HFRepoApiRecord[] : [];
       } catch {
         return [];
       }
@@ -364,7 +378,7 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
     ]);
 
     const merged: HFSearchRepo[] = [];
-    const push = (arr: any[], type: 'dataset' | 'model' | 'space') => {
+    const push = (arr: HFRepoApiRecord[], type: 'dataset' | 'model' | 'space') => {
       for (const item of arr) {
         const id = item.id || item.modelId || '';
         if (!id) continue;
@@ -398,12 +412,12 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
     const u = username.trim();
     if (!u) return [];
 
-    const safeFetch = async (url: string): Promise<any[]> => {
+    const safeFetch = async (url: string): Promise<HFRepoApiRecord[]> => {
       try {
         const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) return [];
         const json = await res.json();
-        return Array.isArray(json) ? json : [];
+        return Array.isArray(json) ? json as HFRepoApiRecord[] : [];
       } catch {
         return [];
       }
@@ -416,7 +430,7 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
     ]);
 
     const merged: HFSearchRepo[] = [];
-    const push = (arr: any[], type: 'dataset' | 'model' | 'space') => {
+    const push = (arr: HFRepoApiRecord[], type: 'dataset' | 'model' | 'space') => {
       for (const item of arr) {
         const id = item.id || item.modelId || '';
         if (!id) continue;
@@ -456,8 +470,8 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
       }
       const data = await res.json();
       return data;
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch dataset info');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Failed to fetch dataset info'));
       return null;
     } finally {
       setLoading(false);
@@ -481,14 +495,14 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
 
       if (Array.isArray(data)) {
         return data
-          .filter((item: any) => {
+          .filter((item: HFDatasetFileRecord) => {
             const p = item.path || item.rfilename || '';
             if (!p) return false;
             if (p.endsWith('.gitkeep')) return false;
             if (p.startsWith('thumbs/')) return false;
             return true;
           })
-          .map((item: any) => ({
+          .map((item: HFDatasetFileRecord) => ({
             id: item.path || item.rfilename || `${Math.random()}`,
             name: item.rfilename || item.path || 'Unknown',
             size: item.size || 0,
@@ -500,8 +514,8 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
       }
 
       return [];
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch dataset files');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Failed to fetch dataset files'));
       return [];
     } finally {
       setLoading(false);
@@ -519,8 +533,8 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
       }
       const content = await res.text();
       return content;
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch file content');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Failed to fetch file content'));
       return null;
     } finally {
       setLoading(false);
@@ -550,8 +564,8 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
         return { ok: false, error: data?.detail || `HTTP ${res.status}` };
       }
       return { ok: true };
-    } catch (err: any) {
-      return { ok: false, error: err?.message || 'Network error' };
+    } catch (err: unknown) {
+      return { ok: false, error: getErrorMessage(err, 'Network error') };
     }
   }, []);
 

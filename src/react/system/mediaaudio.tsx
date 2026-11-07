@@ -5,7 +5,8 @@ import { X, Minimize2, Maximize2, Play, Pause, SkipBack, SkipForward, Shuffle, R
 import { parseBlob } from 'music-metadata';
 import { fetchWithGlobalCache } from '@config/imagecache';
 import { getCover, setCover } from '@config/thumbnailstore';
-import { resolveHfSignedUrl, HF_SIGNED_URL_MAX_AGE_MS, downloadMediaWithName } from '@system/mediarendermodal';
+import { HF_SIGNED_URL_MAX_AGE_MS } from '@system/mediarendermodal';
+import { resolveHfSignedUrl, downloadMediaWithName } from '@system/mediarendermodalutils';
 import { usePlaylist } from '@hook/useplaylist';
 import PlayerFloatMusic from '@system/playerfloatmusic.tsx';
 
@@ -403,7 +404,7 @@ const MediaAudio: React.FC<MediaAudioProps> = ({ isOpen, showUI = true, tracks, 
         skipTimerRef.current = null;
       }
     };
-  }, [ready, track?.id]);
+  }, [ready, track, track?.id]);
 
   useEffect(() => {
     const a = audioRef.current;

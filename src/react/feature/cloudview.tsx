@@ -18,7 +18,7 @@ import { useHuggingFace } from '@hook/usehuggingface';
 import type { HFRepo } from '@config/huggingface';
 import { CloudViewPack } from './cloudviewuipack';
 import { MediaRenderModal } from '@system/mediarendermodal';
-import { downloadMediaWithName } from '@system/mediarendermodal';
+import { downloadMediaWithName } from '@system/mediarendermodalutils';
 import { CloudModalTele } from './cloudmodaltele';
 import CloudRoot from './cloudroot';
 import MediaImage, { type SlideItem } from '../system/mediaimage';
@@ -30,6 +30,9 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import Loading from '@control/loading';
 import { SAME_ACCOUNT_ID } from './cloudmodalselection';
 import type { TransferAccount, TransferRepo } from './cloudmodalselection';
+
+const getCloudViewErrorMessage = (error: unknown, fallback: string): string =>
+  error instanceof Error ? error.message : fallback;
 import type { HFSearchRepo } from '@config/huggingface';
 import type { HFBulkContext, NavSnapshot } from '@config/cloudviewtypes';
 import {
@@ -52,6 +55,31 @@ import {
   hfBackendSquashHistory,
   hfBackendUpdateRepoVisibility,
 } from '@config/cloudviewapi';
+
+interface CloudViewItem {
+  id: string | number;
+  name: string;
+  _isFolder?: boolean;
+  _folderName?: string;
+  _fullPath?: string;
+  _path?: string;
+  path?: string;
+  sha?: string;
+  media_type?: string;
+  mime_type?: string;
+  _streamUrl?: string;
+  _thumbUrl?: string;
+  size?: number;
+  width?: number;
+  height?: number;
+  date?: number;
+  caption?: string;
+  [key: string]: unknown;
+}
+
+interface CloudRepositoryResponse {
+  id: string | number;
+}
 
 const CloudView: React.FC = () => {
   const dispatch = useDispatch();
@@ -99,11 +127,12 @@ const CloudView: React.FC = () => {
   const [selectionModeState, setSelectionModeState] = useState(false);
   const [selectedIdsState, setSelectedIdsState] = useState<Set<string>>(new Set());
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [renderTime] = useState(() => Math.floor(Date.now() / 1000));
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
-  const [renameTarget, setRenameTarget] = useState<any>(null);
+  const [renameTarget, setRenameTarget] = useState<CloudViewItem | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [deleteTargets, setDeleteTargets] = useState<any[]>([]);
+  const [deleteTargets, setDeleteTargets] = useState<CloudViewItem[]>([]);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const [bulkSuccess, setBulkSuccess] = useState<string | null>(null);
 
@@ -116,7 +145,7 @@ const CloudView: React.FC = () => {
 
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [transferMode, setTransferMode] = useState<'move' | 'copy'>('move');
-  const [transferTargets, setTransferTargets] = useState<any[]>([]);
+  const [transferTargets, setTransferTargets] = useState<CloudViewItem[]>([]);
   const [transferAccounts, setTransferAccounts] = useState<TransferAccount[]>([]);
   const [transferReposByAccount, setTransferReposByAccount] = useState<
     Record<string, TransferRepo[]>
@@ -159,7 +188,7 @@ const CloudView: React.FC = () => {
   const hfDatesFetchingRef = useRef<Set<string>>(new Set());
   const hfDatesVersionRef = useRef<Record<string, number>>({});
   const hfFileRestoreDoneRef = useRef<boolean>(!reduxSelectedFileId);
-  const hfAdaptedItemsRef = useRef<any[]>([]);
+  const hfAdaptedItemsRef = useRef<CloudViewItem[]>([]);
   const transferReposCacheRef = useRef<Record<string, TransferRepo[]>>({});
   const transferDestFoldersCacheRef = useRef<Record<string, { label: string; path: string }[]>>({});
 
@@ -168,7 +197,7 @@ const CloudView: React.FC = () => {
   const lastHistorySnapshotRef = useRef<NavSnapshot | null>(null);
   const historyInitializedRef = useRef<boolean>(false);
   const historyDepthRef = useRef<number>(0);
-  const telegramHookRef = useRef<any>(null);
+  const telegramHookRef = useRef<ReturnType<typeof useTelegram> | null>(null);
   const overlayOpenRef = useRef<boolean>(false);
 
   const activeSourceId = activeSource?.id || null;
@@ -176,8 +205,8 @@ const CloudView: React.FC = () => {
   const activeSourceSession = activeSource?.sessionString || null;
   const activeSourceDatasetId = activeSource?.datasetId || null;
   const activeSourceHfToken = activeSource?.hfToken || null;
-  const selectionMode = activeSourceType === 'hf_dataset' ? false : selectionModeState;
-  const repoSelectionMode = activeSourceType === 'hf_dataset' ? false : repoSelectionModeState;
+  const selectionMode = activeSourceType === 'hf_dataset' ? selectionModeState : false;
+  const repoSelectionMode = activeSourceType === 'hf_dataset' ? repoSelectionModeState : false;
   const selectedIds = useMemo(
     () => (selectionMode ? selectedIdsState : new Set<string>()),
     [selectionMode, selectedIdsState]
@@ -198,7 +227,7 @@ const CloudView: React.FC = () => {
     if (!enabled) setSelectedRepoIdsState(new Set());
   }, []);
 
-  const openImageSlideshow = useCallback((file: any, url: string, token?: string) => {
+  const openImageSlideshow = useCallback((file: CloudViewItem, url: string, token?: string) => {
     setSlideshowItems([{
       id: String(file.id),
       name: file.name,
@@ -220,8 +249,9 @@ const CloudView: React.FC = () => {
     activeSourceType === 'telegram' ? activeSourceSession : null,
     (file, url) => openImageSlideshow(file, url),
   );
-  telegramHookRef.current = telegramHook;
-  overlayOpenRef.current =
+  useEffect(() => {
+    telegramHookRef.current = telegramHook;
+    overlayOpenRef.current =
     selectionMode ||
     deleteModalOpen ||
     renameModalOpen ||
@@ -234,6 +264,21 @@ const CloudView: React.FC = () => {
     addRepoModalOpen ||
     visibilityRepoModalOpen ||
     slideshowOpen;
+  }, [
+    telegramHook,
+    selectionMode,
+    deleteModalOpen,
+    renameModalOpen,
+    createFolderModalOpen,
+    transferModalOpen,
+    repoSelectionMode,
+    deleteRepoModalOpen,
+    renameRepoModalOpen,
+    squashRepoModalOpen,
+    addRepoModalOpen,
+    visibilityRepoModalOpen,
+    slideshowOpen,
+  ]);
 
   useEffect(() => {
     if (hfSelectedFile || telegramHook.selectedFile) {
@@ -270,30 +315,30 @@ const CloudView: React.FC = () => {
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [selectionMode, repoSelectionMode]);
+  }, [selectionMode, repoSelectionMode, setSelectionMode, setRepoSelectionMode]);
 
   useEffect(() => {
     setHfViewState(reduxHfView);
-  }, [reduxHfView]);
+  }, [reduxHfView, setHfViewState]);
 
   useEffect(() => {
     setSelectedRepoState(reduxSelectedRepo);
-  }, [reduxSelectedRepo]);
+  }, [reduxSelectedRepo, setSelectedRepoState]);
 
   useEffect(() => {
     setSelectedRepoTypeState(reduxSelectedRepoType);
-  }, [reduxSelectedRepoType]);
+  }, [reduxSelectedRepoType, setSelectedRepoTypeState]);
 
   useEffect(() => {
     setCurrentPathState(reduxCurrentPath);
-  }, [reduxCurrentPath]);
+  }, [reduxCurrentPath, setCurrentPathState]);
 
   const setHfView = useCallback(
     (view: 'repos' | 'files') => {
       setHfViewState(view);
       dispatch(setHfViewRedux(view));
     },
-    [dispatch]
+    [dispatch, setHfViewState]
   );
 
   const setSelectedRepo = useCallback(
@@ -301,7 +346,7 @@ const CloudView: React.FC = () => {
       setSelectedRepoState(repo);
       dispatch(setSelectedRepoRedux(repo));
     },
-    [dispatch]
+    [dispatch, setSelectedRepoState]
   );
 
   const setSelectedRepoType = useCallback(
@@ -309,7 +354,7 @@ const CloudView: React.FC = () => {
       setSelectedRepoTypeState(type);
       dispatch(setSelectedRepoTypeRedux(type));
     },
-    [dispatch]
+    [dispatch, setSelectedRepoTypeState]
   );
 
   const setCurrentPath = useCallback(
@@ -317,7 +362,7 @@ const CloudView: React.FC = () => {
       setCurrentPathState(path);
       dispatch(setCurrentPathRedux(path));
     },
-    [dispatch]
+    [dispatch, setCurrentPathState]
   );
 
   const buildSnapshot = useCallback(
@@ -416,7 +461,7 @@ const CloudView: React.FC = () => {
         if (curChatId && snapshot.chatId !== curChatId && !snapshot.chatId) {
           tg?.handleBackToChats?.();
         } else if (!curChatId && snapshot.chatId) {
-          const dialog = tg?.dialogs?.find((d: any) => String(d.id) === snapshot.chatId);
+          const dialog = tg?.dialogs?.find((d) => String(d.id) === snapshot.chatId);
           if (dialog) tg?.handleChatClick?.(dialog);
         }
 
@@ -442,17 +487,38 @@ const CloudView: React.FC = () => {
         dispatch(setSelectedChatId(null));
       }
     },
-    [
-      activeSourceId,
-      selectSource,
-      goToRoot,
-      setSelectedRepo,
-      setSelectedRepoType,
-      setCurrentPath,
-      setHfView,
-      dispatch,
-    ]
+    [activeSourceId, setIsHfInitialLoading, setHfHasLoadedOnce, setSelectionMode, setRepoSelectionMode, selectSource, goToRoot, setSelectedRepo, setSelectedRepoType, setCurrentPath, setHfView, setHfMobileView, setHfSelectedFile, dispatch]
   );
+
+  const handleBackToRootInternal = useCallback(() => {
+    sources.forEach((s) => {
+      if (s.id.startsWith('public_')) {
+        removeSource(s.id);
+      }
+    });
+    hasLoadedRef.current = '';
+    isFetchingReposRef.current = false;
+    folderLoadedRef.current = '';
+    isFetchingRef.current = false;
+    hfAdaptedItemsRef.current = [];
+    transferReposCacheRef.current = {};
+    transferDestFoldersCacheRef.current = {};
+    setIsHfInitialLoading(true);
+    setHfHasLoadedOnce(false);
+    setSelectionMode(false);
+    setRepoSelectionMode(false);
+    setSelectedRepo('');
+    setSelectedRepoType('');
+    setCurrentPath('');
+    setHfView('repos');
+    setHfSelectedFile(null);
+    setHfMobileView('chats');
+    setIsPublicView(false);
+    setPublicRepo(null);
+    dispatch(setSelectedFileId(null));
+    dispatch(setSelectedChatId(null));
+    goToRoot();
+  }, [sources, setIsHfInitialLoading, setHfHasLoadedOnce, setSelectionMode, setRepoSelectionMode, setSelectedRepo, setSelectedRepoType, setCurrentPath, setHfView, setHfSelectedFile, setHfMobileView, dispatch, goToRoot, removeSource]);
 
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
@@ -501,7 +567,7 @@ const CloudView: React.FC = () => {
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [restoreSnapshot, buildSnapshot]);
+  }, [restoreSnapshot, buildSnapshot, handleBackToRootInternal, setSelectionMode, setRepoSelectionMode]);
 
   useEffect(() => {
     if (historyInitializedRef.current) return;
@@ -591,45 +657,6 @@ const CloudView: React.FC = () => {
     isPublicView,
   ]);
 
-  const handleBackToRootInternal = useCallback(() => {
-    sources.forEach((s) => {
-      if (s.id.startsWith('public_')) {
-        removeSource(s.id);
-      }
-    });
-    hasLoadedRef.current = '';
-    isFetchingReposRef.current = false;
-    folderLoadedRef.current = '';
-    isFetchingRef.current = false;
-    hfAdaptedItemsRef.current = [];
-    transferReposCacheRef.current = {};
-    transferDestFoldersCacheRef.current = {};
-    setIsHfInitialLoading(true);
-    setHfHasLoadedOnce(false);
-    setSelectionMode(false);
-    setRepoSelectionMode(false);
-    setSelectedRepo('');
-    setSelectedRepoType('');
-    setCurrentPath('');
-    setHfView('repos');
-    setHfSelectedFile(null);
-    setHfMobileView('chats');
-    setIsPublicView(false);
-    setPublicRepo(null);
-    dispatch(setSelectedFileId(null));
-    dispatch(setSelectedChatId(null));
-    goToRoot();
-  }, [
-    sources,
-    removeSource,
-    dispatch,
-    goToRoot,
-    setSelectedRepo,
-    setSelectedRepoType,
-    setCurrentPath,
-    setHfView,
-  ]);
-
   const getHFTokenFromFirestore = useCallback(async (): Promise<string | null> => {
     try {
       const auth = await getAuth();
@@ -645,7 +672,7 @@ const CloudView: React.FC = () => {
         return hfTokens.length > 0 ? hfTokens[0] : null;
       }
       return null;
-    } catch (error) {
+    } catch {
       return null;
     }
   }, []);
@@ -679,7 +706,7 @@ const CloudView: React.FC = () => {
         }
       }
       return accounts;
-    } catch (error) {
+    } catch {
       return [];
     }
   }, []);
@@ -724,23 +751,13 @@ const CloudView: React.FC = () => {
       setHfSelectedFile(null);
       if (hfScreenSize === 'mobile') setHfMobileView('files');
       folderLoadedRef.current = key;
-    } catch (err: any) {
-      setHfError(err.message || 'Failed to load folder structure');
+    } catch (err: unknown) {
+      setHfError(getCloudViewErrorMessage(err, 'Failed to load folder structure'));
     } finally {
       setHfLoading(false);
       isFetchingRef.current = false;
     }
-  }, [
-    selectedRepo,
-    selectedRepoType,
-    currentPath,
-    activeSourceDatasetId,
-    activeSourceHfToken,
-    getFolderStructure,
-    hfScreenSize,
-    getHFTokenFromFirestore,
-    isPublicView,
-  ]);
+  }, [selectedRepo, selectedRepoType, isPublicView, activeSourceDatasetId, currentPath, activeSourceHfToken, getHFTokenFromFirestore, setHfLoading, setHfError, getFolderStructure, setFolderStructure, setHfFolderDates, setHfTotalSize, setHfSelectedFile, hfScreenSize, setHfMobileView]);
 
   useEffect(() => {
     if (activeSourceType !== 'hf_dataset' || !selectedRepo || !selectedRepoType) return;
@@ -765,25 +782,13 @@ const CloudView: React.FC = () => {
         if ((hfDatesVersionRef.current[key] || 0) !== version) stale = true;
         else setHfFolderDates((prev) => ({ ...prev, [key]: dates }));
       } catch {
+        void 0;
       } finally {
         hfDatesFetchingRef.current.delete(key);
         if (stale) setHfFolderDates((prev) => ({ ...prev }));
       }
     })();
-  }, [
-    activeSourceType,
-    selectedRepo,
-    selectedRepoType,
-    currentPath,
-    folderStructure,
-    hfSortField,
-    hfScreenSize,
-    hfFolderDates,
-    isPublicView,
-    activeSourceHfToken,
-    getHFTokenFromFirestore,
-    getFolderDates,
-  ]);
+  }, [activeSourceType, selectedRepo, selectedRepoType, currentPath, folderStructure, hfSortField, hfScreenSize, hfFolderDates, isPublicView, activeSourceHfToken, getHFTokenFromFirestore, getFolderDates, setHfFolderDates]);
 
   const loadHfRepositories = useCallback(
     async (forceRefresh: boolean = false) => {
@@ -834,30 +839,15 @@ const CloudView: React.FC = () => {
           setHfSelectedFile(null);
           setHfMobileView('chats');
         }
-      } catch (err: any) {
-        setHfError(err.message || 'Failed to load repositories');
+      } catch (err: unknown) {
+        setHfError(getCloudViewErrorMessage(err, 'Failed to load repositories'));
       } finally {
         setHfLoading(false);
         setIsHfInitialLoading(false);
         isFetchingReposRef.current = false;
       }
     },
-    [
-      activeSourceId,
-      activeSourceDatasetId,
-      activeSourceHfToken,
-      listRepositories,
-      getHFTokenFromFirestore,
-      reduxSelectedRepo,
-      reduxSelectedRepoType,
-      hfScreenSize,
-      setHfView,
-      setSelectedRepo,
-      setSelectedRepoType,
-      setCurrentPath,
-      isPublicView,
-      publicRepo,
-    ]
+    [isPublicView, activeSourceDatasetId, activeSourceId, activeSourceHfToken, getHFTokenFromFirestore, setIsHfInitialLoading, setHfLoading, setHfError, publicRepo, listRepositories, setHfRepos, setHfHasLoadedOnce, reduxSelectedRepo, reduxSelectedRepoType, setHfView, hfScreenSize, setHfMobileView, setSelectedRepo, setSelectedRepoType, setCurrentPath, setFolderStructure, setHfSelectedFile]
   );
 
   useEffect(() => {
@@ -972,16 +962,7 @@ const CloudView: React.FC = () => {
       setHfSearchQuery('');
       setHfMobileView('files');
     },
-    [
-      sources,
-      removeSource,
-      dispatch,
-      selectSource,
-      setSelectedRepo,
-      setSelectedRepoType,
-      setCurrentPath,
-      setHfView,
-    ]
+    [setIsHfInitialLoading, setHfHasLoadedOnce, setSelectionMode, setRepoSelectionMode, sources, dispatch, selectSource, setSelectedRepo, setSelectedRepoType, setCurrentPath, setHfView, setFolderStructure, setHfSelectedFile, setHfSearchQuery, setHfMobileView, removeSource]
   );
 
   const handleAuthSuccess = useCallback(
@@ -1002,7 +983,7 @@ const CloudView: React.FC = () => {
           platform
         );
         await syncSourcesFromFirestore();
-      } catch (error) {}
+      } catch { void 0; }
     },
     [addSource, saveSession, syncSourcesFromFirestore, sources]
   );
@@ -1027,17 +1008,7 @@ const CloudView: React.FC = () => {
     setIsPublicView(false);
     setPublicRepo(null);
     goToRoot();
-  }, [
-    sources,
-    removeSource,
-    clearAllTelegramSessions,
-    clearAllHFSessions,
-    goToRoot,
-    setSelectedRepo,
-    setSelectedRepoType,
-    setCurrentPath,
-    setHfView,
-  ]);
+  }, [clearAllTelegramSessions, sources, setSelectionMode, setRepoSelectionMode, setSelectedRepo, setSelectedRepoType, setCurrentPath, setHfView, goToRoot, removeSource]);
 
   const handleClearSingleSession = useCallback(async () => {
     if (!activeSource) {
@@ -1095,7 +1066,7 @@ const CloudView: React.FC = () => {
             }
           }
         }
-      } catch (error) {}
+      } catch { void 0; }
     }
 
     removeSource(sourceId);
@@ -1118,16 +1089,7 @@ const CloudView: React.FC = () => {
     setPublicRepo(null);
 
     goToRoot();
-  }, [
-    activeSource,
-    removeSource,
-    goToRoot,
-    setSelectedRepo,
-    setSelectedRepoType,
-    setCurrentPath,
-    setHfView,
-    isPublicView,
-  ]);
+  }, [activeSource, isPublicView, removeSource, setSelectionMode, setRepoSelectionMode, setSelectedRepo, setSelectedRepoType, setCurrentPath, setHfView, goToRoot]);
 
   const handleRepoClick = (repo: HFRepo) => {
     if (repoSelectionMode) {
@@ -1218,7 +1180,7 @@ const CloudView: React.FC = () => {
     }
   };
 
-  const handleHfFileClick = (file: any) => {
+  const handleHfFileClick = (file: CloudViewItem) => {
     if (file._isFolder) {
       handleHfNavigateToFolder(file._folderName);
       return;
@@ -1288,7 +1250,7 @@ const CloudView: React.FC = () => {
   }, []);
 
   const hfAdaptedItems = useMemo(() => {
-    const items: any[] = [];
+    const items: CloudViewItem[] = [];
     const repoType = selectedRepoType || 'dataset';
     let repoTypePrefix = '';
     if (repoType === 'dataset') repoTypePrefix = 'datasets';
@@ -1302,7 +1264,7 @@ const CloudView: React.FC = () => {
     const repoLastModified = repoInfo?.last_modified;
     const fallbackDate = repoLastModified
       ? Math.floor(new Date(repoLastModified).getTime() / 1000)
-      : Math.floor(Date.now() / 1000);
+      : renderTime;
     const commitDates = hfFolderDates[`${selectedRepo}:${currentPath}`] || {};
 
     folderStructure.folders.forEach((folder) => {
@@ -1358,7 +1320,7 @@ const CloudView: React.FC = () => {
       } else if (repoLastModified) {
         fileDate = Math.floor(new Date(repoLastModified).getTime() / 1000);
       } else {
-        fileDate = Math.floor(Date.now() / 1000);
+        fileDate = renderTime;
       }
 
       const fileFullPath = file.path || file.name;
@@ -1380,7 +1342,6 @@ const CloudView: React.FC = () => {
       });
     });
 
-    hfAdaptedItemsRef.current = items;
     return items;
   }, [
     folderStructure,
@@ -1390,8 +1351,12 @@ const CloudView: React.FC = () => {
     getHfMediaCategory,
     currentPath,
     hfFolderDates,
+    renderTime,
   ]);
 
+  useEffect(() => {
+    hfAdaptedItemsRef.current = hfAdaptedItems;
+  }, [hfAdaptedItems]);
   const filteredHfItems = useMemo(
     () =>
       hfAdaptedItems.filter((item) =>
@@ -1412,17 +1377,7 @@ const CloudView: React.FC = () => {
     } else {
       dispatch(setSelectedFileId(null));
     }
-  }, [
-    activeSourceType,
-    hfView,
-    selectedRepo,
-    currentPath,
-    hfLoading,
-    hfAdaptedItems,
-    reduxSelectedFileId,
-    hfScreenSize,
-    dispatch,
-  ]);
+  }, [activeSourceType, hfView, selectedRepo, currentPath, hfLoading, hfAdaptedItems, reduxSelectedFileId, hfScreenSize, dispatch, setHfSelectedFile, setHfMobileView]);
 
   useEffect(() => {
     if (activeSourceType !== 'hf_dataset' || !hfFileRestoreDoneRef.current) return;
@@ -1480,17 +1435,17 @@ const CloudView: React.FC = () => {
     [activeSourceHfToken, isPublicView]
   );
 
-  const enterSelectionMode = useCallback((item: any) => {
+  const enterSelectionMode = useCallback((item: CloudViewItem) => {
     setSelectionMode(true);
     setSelectedIds(new Set([item.id]));
-  }, []);
+  }, [setSelectedIds, setSelectionMode]);
 
   const exitSelectionMode = useCallback(() => {
     setSelectionMode(false);
     setSelectedIds(new Set());
-  }, []);
+  }, [setSelectedIds, setSelectionMode]);
 
-  const toggleSelection = useCallback((item: any) => {
+  const toggleSelection = useCallback((item: CloudViewItem) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(item.id)) {
@@ -1500,16 +1455,16 @@ const CloudView: React.FC = () => {
       }
       return next;
     });
-  }, []);
+  }, [setSelectedIds]);
 
   const selectAllHF = useCallback(() => {
     const allIds = sortedHfItems.map((i) => i.id);
     setSelectedIds(new Set(allIds));
-  }, [sortedHfItems]);
+  }, [setSelectedIds, sortedHfItems]);
 
   const deselectAllHF = useCallback(() => {
     setSelectedIds(new Set());
-  }, []);
+  }, [setSelectedIds]);
 
   const selectedItems = useMemo(() => {
     return hfAdaptedItems.filter((item) => selectedIds.has(item.id));
@@ -1638,12 +1593,12 @@ const CloudView: React.FC = () => {
   const enterRepoSelectionMode = useCallback((repo: HFRepo) => {
     setRepoSelectionMode(true);
     setSelectedRepoIds(new Set([repo.full_name]));
-  }, []);
+  }, [setRepoSelectionMode, setSelectedRepoIds]);
 
   const exitRepoSelectionMode = useCallback(() => {
     setRepoSelectionMode(false);
     setSelectedRepoIds(new Set());
-  }, []);
+  }, [setRepoSelectionMode, setSelectedRepoIds]);
 
   const toggleRepoSelection = useCallback((repo: HFRepo) => {
     setSelectedRepoIds((prev) => {
@@ -1655,16 +1610,16 @@ const CloudView: React.FC = () => {
       }
       return next;
     });
-  }, []);
+  }, [setSelectedRepoIds]);
 
   const selectAllRepos = useCallback(() => {
     const allIds = hfRepos.map((r) => r.full_name);
     setSelectedRepoIds(new Set(allIds));
-  }, [hfRepos]);
+  }, [hfRepos, setSelectedRepoIds]);
 
   const deselectAllRepos = useCallback(() => {
     setSelectedRepoIds(new Set());
-  }, []);
+  }, [setSelectedRepoIds]);
 
   const selectedRepos = useMemo(() => {
     return hfRepos.filter((r) => selectedRepoIds.has(r.full_name));
@@ -1866,8 +1821,8 @@ const CloudView: React.FC = () => {
       } else {
         setBulkError(result.error || 'Failed to create folder');
       }
-    } catch (err: any) {
-      setBulkError(err.message || 'Failed to create folder');
+    } catch (err: unknown) {
+      setBulkError(getCloudViewErrorMessage(err, 'Failed to create folder'));
     } finally {
       setBulkActionLoading(false);
     }
@@ -1933,7 +1888,7 @@ const CloudView: React.FC = () => {
           }
         );
 
-        const datasets: any[] = res.ok ? await res.json() : [];
+        const datasets: CloudRepositoryResponse[] = res.ok ? await res.json() : [];
 
         const modelsRes = await fetch(
           `https://huggingface.co/api/models?author=${encodeURIComponent(accountUsername)}&limit=100`,
@@ -1941,7 +1896,7 @@ const CloudView: React.FC = () => {
             headers: { Authorization: `Bearer ${accountToken}` },
           }
         );
-        const models: any[] = modelsRes.ok ? await modelsRes.json() : [];
+        const models: CloudRepositoryResponse[] = modelsRes.ok ? await modelsRes.json() : [];
 
         const spacesRes = await fetch(
           `https://huggingface.co/api/spaces?author=${encodeURIComponent(accountUsername)}&limit=100`,
@@ -1949,7 +1904,7 @@ const CloudView: React.FC = () => {
             headers: { Authorization: `Bearer ${accountToken}` },
           }
         );
-        const spaces: any[] = spacesRes.ok ? await spacesRes.json() : [];
+        const spaces: CloudRepositoryResponse[] = spacesRes.ok ? await spacesRes.json() : [];
 
         const repos: TransferRepo[] = [];
 
@@ -1983,7 +1938,7 @@ const CloudView: React.FC = () => {
 
         transferReposCacheRef.current[accountId] = repos;
         setTransferReposByAccount((prev) => ({ ...prev, [accountId]: repos }));
-      } catch (err: any) {
+      } catch (err: unknown) {
         setTransferReposError(err?.message || 'Failed to load repositories');
       } finally {
         setTransferReposLoading(false);
@@ -2051,7 +2006,7 @@ const CloudView: React.FC = () => {
           transferDestFoldersCacheRef.current[cacheKey] = fallback;
           setTransferDestFoldersByRepo((prev) => ({ ...prev, [cacheKey]: fallback }));
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         setTransferDestFoldersError(err?.message || 'Failed to load folders');
         const fallback = [{ label: 'Root (/)', path: '' }];
         transferDestFoldersCacheRef.current[cacheKey] = fallback;
@@ -2148,8 +2103,8 @@ const CloudView: React.FC = () => {
           setBulkError(result.error || `Failed to rename "${renameTarget.name}"`);
         }
       }
-    } catch (err: any) {
-      setBulkError(err.message || 'Rename failed');
+    } catch (err: unknown) {
+      setBulkError(getCloudViewErrorMessage(err, 'Rename failed'));
     } finally {
       setBulkActionLoading(false);
     }
@@ -2238,8 +2193,8 @@ const CloudView: React.FC = () => {
       } else {
         setBulkError(lastError || 'Delete failed');
       }
-    } catch (err: any) {
-      setBulkError(err.message || 'Delete failed');
+    } catch (err: unknown) {
+      setBulkError(getCloudViewErrorMessage(err, 'Delete failed'));
     } finally {
       setBulkActionLoading(false);
     }
@@ -2418,8 +2373,8 @@ const CloudView: React.FC = () => {
         } else {
           setBulkError(result.error || (isCopyMode ? 'Copy failed' : 'Move failed'));
         }
-      } catch (err: any) {
-        setBulkError(err.message || (transferMode === 'copy' ? 'Copy failed' : 'Move failed'));
+      } catch (err: unknown) {
+        setBulkError(getCloudViewErrorMessage(err, (transferMode === 'copy' ? 'Copy failed' : 'Move failed')));
       } finally {
         setBulkActionLoading(false);
       }
@@ -2471,8 +2426,8 @@ const CloudView: React.FC = () => {
       } else {
         setBulkError(result.error || `Failed to rename "${renameRepoTarget.name}"`);
       }
-    } catch (err: any) {
-      setBulkError(err.message || 'Rename failed');
+    } catch (err: unknown) {
+      setBulkError(getCloudViewErrorMessage(err, 'Rename failed'));
     } finally {
       setBulkActionLoading(false);
     }
@@ -2524,8 +2479,8 @@ const CloudView: React.FC = () => {
       } else {
         setBulkError(lastError || 'Delete failed');
       }
-    } catch (err: any) {
-      setBulkError(err.message || 'Delete failed');
+    } catch (err: unknown) {
+      setBulkError(getCloudViewErrorMessage(err, 'Delete failed'));
     } finally {
       setBulkActionLoading(false);
     }
@@ -2556,8 +2511,8 @@ const CloudView: React.FC = () => {
         } else {
           setBulkError(result.error || 'Failed to create repository');
         }
-      } catch (err: any) {
-        setBulkError(err.message || 'Failed to create repository');
+      } catch (err: unknown) {
+        setBulkError(getCloudViewErrorMessage(err, 'Failed to create repository'));
       } finally {
         setBulkActionLoading(false);
       }
@@ -2607,8 +2562,8 @@ const CloudView: React.FC = () => {
       } else {
         setBulkError(lastError || 'Squash failed');
       }
-    } catch (err: any) {
-      setBulkError(err.message || 'Squash failed');
+    } catch (err: unknown) {
+      setBulkError(getCloudViewErrorMessage(err, 'Squash failed'));
     } finally {
       setBulkActionLoading(false);
     }
@@ -2651,8 +2606,8 @@ const CloudView: React.FC = () => {
         } else {
           setBulkError(result.error || 'Failed to update visibility');
         }
-      } catch (err: any) {
-        setBulkError(err.message || 'Visibility update failed');
+      } catch (err: unknown) {
+        setBulkError(getCloudViewErrorMessage(err, 'Visibility update failed'));
       } finally {
         setBulkActionLoading(false);
       }

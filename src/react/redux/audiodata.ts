@@ -31,12 +31,12 @@ interface AudioState {
   shuffleKey: number;
 }
 
-const loadFromStorage = (key: string, defaultValue: any) => {
+const loadFromStorage = <T extends string | boolean | number>(key: string, defaultValue: T): T => {
   const stored = localStorage.getItem(key);
   if (stored !== null) {
-    if (key === "userVolume") return Number(stored);
-    if (key === "isMusicStopped") return stored === "true";
-    return stored;
+    if (key === "userVolume") return Number(stored) as T
+    if (key === "isMusicStopped") return (stored === "true") as T
+    return stored as T;
   }
   return defaultValue;
 };

@@ -2,9 +2,8 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Folder, X, Pencil, Trash2, FolderInput, Check, Loader2,
-  AlertCircle, Search, ArrowRightLeft, Key, Eye, EyeOff,
-  ChevronDown,
+  Folder, X, Check, Loader2,
+  AlertCircle, Search, ChevronDown,
 } from 'lucide-react';
 import { HuggingFaceIcon } from '@control/icon';
 
@@ -25,6 +24,13 @@ const formatBytes = (bytes?: number | null): string => {
   const fixed = i <= 1 ? value.toFixed(0) : value.toFixed(1);
   return `${fixed} ${sizes[i]}`;
 };
+
+interface SelectionTarget {
+  name?: string;
+  _isFolder?: boolean;
+  size?: number;
+  _folderSize?: number;
+}
 
 interface FolderTreeNode {
   name: string;
@@ -187,7 +193,7 @@ FolderTreeItem.displayName = 'FolderTreeItem';
 interface RenameModalProps {
   open: boolean;
   value: string;
-  target: any;
+  target: SelectionTarget;
   onChangeValue: (v: string) => void;
   onConfirm: () => void;
   onClose: () => void;
@@ -254,7 +260,7 @@ const RenameModal: React.FC<RenameModalProps> = ({
 
 interface DeleteModalProps {
   open: boolean;
-  targets: any[];
+  targets: SelectionTarget[];
   onConfirm: () => void;
   onClose: () => void;
   loading: boolean;
@@ -401,7 +407,7 @@ export interface TransferRepo {
 
 interface TransferModalProps {
   open: boolean;
-  targets: any[];
+  targets: SelectionTarget[];
   sourceAccountId: string | null;
   sourceAccountLabel: string;
   sourceRepoId: string;
@@ -553,9 +559,10 @@ const TransferModal: React.FC<TransferModalProps> = ({
   const currentDestFoldersKey = resolvedAccountId && selectedRepoId
     ? `${resolvedAccountId}:${selectedRepoId}`
     : '';
-  const currentDestFolders = currentDestFoldersKey
-    ? (destFoldersByRepo[currentDestFoldersKey] || [])
-    : [];
+  const currentDestFolders = useMemo(() => {
+    if (!currentDestFoldersKey) return [];
+    return destFoldersByRepo[currentDestFoldersKey] || [];
+  }, [currentDestFoldersKey, destFoldersByRepo]);
 
   const flatFolderPaths = useMemo(() => {
     return currentDestFolders
@@ -1025,13 +1032,13 @@ const TransferModal: React.FC<TransferModalProps> = ({
 export interface CloudModalSelectionProps {
   renameOpen: boolean;
   renameValue: string;
-  renameTarget: any;
+  renameTarget: SelectionTarget;
   setRenameValue: (v: string) => void;
   onRenameConfirm: () => void;
   onRenameClose: () => void;
 
   deleteOpen: boolean;
-  deleteTargets: any[];
+  deleteTargets: SelectionTarget[];
   onDeleteConfirm: () => void;
   onDeleteClose: () => void;
 
@@ -1043,7 +1050,7 @@ export interface CloudModalSelectionProps {
   onCreateFolderClose: () => void;
 
   transferOpen: boolean;
-  transferTargets: any[];
+  transferTargets: SelectionTarget[];
   transferSourceAccountId: string | null;
   transferSourceAccountLabel: string;
   transferSourceRepoId: string;

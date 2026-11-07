@@ -1,10 +1,8 @@
 // src/react/system/gateauth.tsx
 import React, { useState, useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useSelector } from "react-redux";
 import { onAuthStateChanged } from "firebase/auth";
 import { getAuth } from "@config/firebase";
-import type { RootState } from "../redux/store";
 import Loading from "@control/loading";
 
 interface GateAuthProps {
@@ -35,7 +33,6 @@ const writeAuthCache = (value: boolean) => {
 
 const GateAuth: React.FC<GateAuthProps> = ({ children }) => {
   const location = useLocation();
-  const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
 
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(() => !readAuthCache());
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => readAuthCache());

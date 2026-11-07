@@ -21,10 +21,22 @@ export const formatDuration = (seconds?: number): string => {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
-export const formatTimestamp = (timestamp: any): string => {
+type TimestampWithToDate = { toDate: () => Date };
+
+const isTimestampWithToDate = (value: unknown): value is TimestampWithToDate =>
+  typeof value === 'object' && value !== null && 'toDate' in value && typeof value.toDate === 'function';
+
+const toDate = (value: unknown): Date => {
+  if (value instanceof Date) return value;
+  if (isTimestampWithToDate(value)) return value.toDate();
+  if (typeof value === 'string' || typeof value === 'number') return new Date(value);
+  return new Date(Number.NaN);
+};
+
+export const formatTimestamp = (timestamp: unknown): string => {
   if (!timestamp) return 'Never';
   try {
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const date = toDate(timestamp);
     return date.toLocaleString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -39,10 +51,10 @@ export const formatTimestamp = (timestamp: any): string => {
   }
 };
 
-export const formatDateOnly = (timestamp: any): string => {
+export const formatDateOnly = (timestamp: unknown): string => {
   if (!timestamp) return 'Unknown';
   try {
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const date = toDate(timestamp);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -53,10 +65,10 @@ export const formatDateOnly = (timestamp: any): string => {
   }
 };
 
-export const formatTimeOnly = (timestamp: any): string => {
+export const formatTimeOnly = (timestamp: unknown): string => {
   if (!timestamp) return '';
   try {
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const date = toDate(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   } catch {
     return '';

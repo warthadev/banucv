@@ -1,5 +1,6 @@
 // src/react/config/userstorage.ts
-import { getDb, getAuth } from "./firebase";
+import { getDb } from "./firebase";
+import type { User } from "firebase/auth";
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp, increment } from "firebase/firestore";
 import { formatTimestamp } from "./utils";
 
@@ -9,9 +10,9 @@ export interface UserProfile {
   displayName: string | null;
   photoURL: string | null;
   providers: string[];
-  createdAt?: any;
-  lastLoginAt?: any;
-  lastSeen?: any;
+  createdAt?: unknown;
+  lastLoginAt?: unknown;
+  lastSeen?: unknown;
   loginCount?: number;
   githubUsername?: string;
   githubToken?: string;
@@ -24,7 +25,7 @@ const fetchPublicIP = async (): Promise<string> => {
     const response = await fetch('https://api.ipify.org?format=json');
     const data = await response.json();
     return data.ip || 'Unknown';
-  } catch (error) {
+  } catch {
     return 'Unknown';
   }
 };
@@ -47,7 +48,7 @@ const fetchGeoLocationFromIP = async () => {
       };
     }
     return null;
-  } catch (error) {
+  } catch {
     return null;
   }
 };
@@ -67,7 +68,7 @@ const fetchAccurateLocation = (): Promise<{ lat: number; lon: number; accuracy: 
           accuracy: position.coords.accuracy
         });
       },
-      (error) => {
+      () => {
         resolve(null);
       },
       { timeout: 10000, enableHighAccuracy: true }
@@ -86,7 +87,7 @@ const reverseGeocode = async (lat: number, lon: number): Promise<{ city: string;
       return { city, country };
     }
     return { city: 'Unknown', country: 'Unknown' };
-  } catch (error) {
+  } catch {
     return { city: 'Unknown', country: 'Unknown' };
   }
 };
@@ -123,7 +124,7 @@ const fetchGeoLocation = async () => {
     }
     
     return null;
-  } catch (error) {
+  } catch {
     return null;
   }
 };
@@ -135,7 +136,7 @@ const getDeviceInfo = () => {
   return { userAgent, platform, isMobile };
 };
 
-export const saveUserOnLogin = async (user: any, provider: string, emailOverride?: string | null) => {
+export const saveUserOnLogin = async (user: User, provider: string, emailOverride?: string | null) => {
   if (!user || !user.uid) return;
   
   const db = await getDb();
@@ -172,7 +173,9 @@ export const saveUserOnLogin = async (user: any, provider: string, emailOverride
       if (reloadedUser) {
         email = reloadedUser.email || email;
       }
-    } catch (e) {}
+    } catch {
+      void 0;
+    }
   }
   
   if (!email) {
@@ -184,7 +187,9 @@ export const saveUserOnLogin = async (user: any, provider: string, emailOverride
           email = existingData.email;
         }
       }
-    } catch (e) {}
+    } catch {
+      void 0;
+    }
   }
   
   if (!email) {
@@ -193,7 +198,9 @@ export const saveUserOnLogin = async (user: any, provider: string, emailOverride
       if (idTokenResult.claims && idTokenResult.claims.email) {
         email = idTokenResult.claims.email;
       }
-    } catch (e) {}
+    } catch {
+      void 0;
+    }
   }
   
   if (!email) {

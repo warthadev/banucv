@@ -29,7 +29,7 @@ export const useAudio = () => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isMediaOverride, setIsMediaOverride] = useState(false);
 
-  const sendCommand = useCallback((func: string, args: any[] = []) => {
+  const sendCommand = useCallback((func: string, args: unknown[] = []) => {
     if (iframeRef.current?.contentWindow) {
       iframeRef.current.contentWindow.postMessage(JSON.stringify({ event: "command", func, args }), "*");
     }
@@ -91,7 +91,14 @@ export const useAudio = () => {
       rawTracks = musicDatabase[selectedGenre] || ["lCKU-tI-upI"];
     }
 
-    const shuffled = [...rawTracks].sort(() => Math.random() - 0.5);
+    const scoreTrack = (track: string): number => {
+      let hash = shuffleKey;
+      for (let i = 0; i < track.length; i += 1) {
+        hash = (hash * 31 + track.charCodeAt(i)) | 0;
+      }
+      return Math.abs(hash);
+    };
+    const shuffled = [...rawTracks].sort((a, b) => scoreTrack(a) - scoreTrack(b));
     
     return {
       firstTrack: shuffled[0] || "lCKU-tI-upI",

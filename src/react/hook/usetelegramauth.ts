@@ -2,29 +2,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "@config/firebase";
-import { doc, getDoc, setDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 
 export const useTelegramAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [sessionString, setSessionString] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const [authReady, setAuthReady] = useState(false);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setAuthReady(true);
-      if (user) {
-        loadSession(user.uid);
-      } else {
-        setIsLoading(false);
-        setSessionString(null);
-        setShowAuthModal(false);
-      }
-    });
-    return () => unsubscribe();
-  }, []);
 
   const loadSession = useCallback(async (uid: string) => {
     try {
@@ -45,13 +29,27 @@ export const useTelegramAuth = () => {
         setSessionString(null);
         setShowAuthModal(true);
       }
-    } catch (error) {
+    } catch {
       setSessionString(null);
       setShowAuthModal(true);
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setAuthReady(true);
+      if (user) {
+        loadSession(user.uid);
+      } else {
+        setIsLoading(false);
+        setSessionString(null);
+        setShowAuthModal(false);
+      }
+    });
+    return () => unsubscribe();
+  }, [loadSession]);
 
   const saveSession = useCallback(async (session: string, accountName?: string) => {
     if (!authReady) {
@@ -74,14 +72,10 @@ export const useTelegramAuth = () => {
     const userRef = doc(db, "users", user.uid);
     const name = accountName || "Telegram Account";
 
-    try {
-      await updateDoc(userRef, {
-        telegramSessions: arrayUnion(session),
-        telegramAccountNames: arrayUnion(name),
-      });
-    } catch (error: any) {
-      throw error;
-    }
+    await updateDoc(userRef, {
+      telegramSessions: arrayUnion(session),
+      telegramAccountNames: arrayUnion(name),
+    });
 
     setSessionString(session);
     setShowAuthModal(false);
@@ -96,7 +90,7 @@ export const useTelegramAuth = () => {
           telegramSessions: null,
           telegramAccountNames: null,
         });
-      } catch (error) {
+      } catch {
         // Silently fail
       }
     }
@@ -113,7 +107,7 @@ export const useTelegramAuth = () => {
           telegramSessions: null,
           telegramAccountNames: null,
         });
-      } catch (error) {
+      } catch {
         // Silently fail
       }
     }

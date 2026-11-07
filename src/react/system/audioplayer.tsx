@@ -30,21 +30,20 @@ const AudioPlayer: React.FC = () => {
     }
   }, [isStopped, sendCommand]);
 
-  const handlePlayerStateChange = (event: MessageEvent) => {
-    try {
-      const data = JSON.parse(event.data);
-      if (data.event === "onStateChange" && playerReadyRef.current) {
-        const playerState = data.info;
-        if (playerState === 0) {
-          reshuffle();
-        }
-      }
-    } catch (e) {
-      // Ignore non-JSON messages
-    }
-  };
-
   useEffect(() => {
+    const handlePlayerStateChange = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.event === "onStateChange" && playerReadyRef.current) {
+          const playerState = data.info;
+          if (playerState === 0) {
+            reshuffle();
+          }
+        }
+      } catch {
+        void 0;
+      }
+    };
     window.addEventListener("message", handlePlayerStateChange);
     return () => {
       window.removeEventListener("message", handlePlayerStateChange);
@@ -56,7 +55,7 @@ const AudioPlayer: React.FC = () => {
   }
 
   const isDefaultGenre = selectedGenre === "Default";
-  let finalFirstTrack = currentShuffle.firstTrack;
+  const finalFirstTrack = currentShuffle.firstTrack;
   let finalPlaylist = currentShuffle.playlist;
 
   if (isDefaultGenre) {

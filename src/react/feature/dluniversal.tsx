@@ -136,7 +136,9 @@ export const useDlUniversal = ({
   const progressPollRef = useRef<number | null>(null);
   const sessionCountdownRef = useRef<number | null>(null);
   const saveTargetRef = useRef<UniversalSaveTarget | undefined>(saveTarget);
-  saveTargetRef.current = saveTarget;
+  useEffect(() => {
+    saveTargetRef.current = saveTarget;
+  }, [saveTarget]);
 
   const doneHandledRef = useRef<boolean>(false);
   const lastPhaseRef = useRef<string>('');
@@ -307,9 +309,10 @@ export const useDlUniversal = ({
           if (!firstProgressSeenRef.current) firstProgressSeenRef.current = true;
           onProgressLog(buildProgressEntry(fileName, percent, currentHuman, totalHuman, speedHuman, eta, 'download'));
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         finishAll();
-        onLog(`${fallbackFileName} progress error: ${e?.message || 'unknown'}`, 'critical');
+        const message = typeof e === 'object' && e !== null && 'message' in e && typeof e.message === 'string' ? e.message : 'unknown';
+        onLog(`${fallbackFileName} progress error: ${message}`, 'critical');
       }
     };
 
@@ -352,7 +355,7 @@ export const useDlUniversal = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      const json: any = await res.json().catch(() => ({}));
+      const json = await res.json().catch(() => ({})) as { ok?: boolean; session_id?: string; detail?: string };
       if (!res.ok || !json.ok || !json.session_id) {
         throw new Error(json.detail || `HTTP ${res.status}`);
       }
@@ -370,10 +373,11 @@ export const useDlUniversal = ({
       onLog('[universal]\nWaiting for Colab to start...', 'system');
 
       pollProgress(json.session_id, url.slice(0, 60));
-    } catch (e: any) {
+    } catch (e: unknown) {
       setColabBusy(false);
       setStarting(false);
-      onLog(`[universal]\nFailed to start: ${e?.message || 'unknown error'}`, 'critical');
+      const message = typeof e === 'object' && e !== null && 'message' in e && typeof e.message === 'string' ? e.message : 'unknown error';
+      onLog(`[universal]\nFailed to start: ${message}`, 'critical');
     }
   }, [onLog, onResetLogs, pollProgress, refreshColabSession]);
 

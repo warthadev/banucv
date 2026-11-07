@@ -221,11 +221,12 @@ const MediaImage: React.FC<MediaImageProps> = ({
   }, [isOpen, initialIndex, resetControlsTimeout]);
 
   useEffect(() => {
+    const urls = urlsRef.current;
     return () => {
-      urlsRef.current.forEach((u) => {
+      urls.forEach((u) => {
         try { URL.revokeObjectURL(u); } catch { void 0; }
       });
-      urlsRef.current.clear();
+      urls.clear();
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
       }

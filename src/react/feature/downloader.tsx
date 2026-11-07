@@ -11,6 +11,11 @@ import type { UniversalFormat } from '@hook/usedluniversal';
 import { formatBytes } from '@config/utils';
 
 type LogType = 'system' | 'critical' | 'success';
+const nowTime = (): string => new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const formatLogPrefix = (type: LogType): string => {
+  const prefix = type === 'critical' ? '[error]' : type === 'success' ? '[success]' : '[info]';
+  return `${prefix} ${nowTime()} `;
+};
 
 const SAVE_SELECTION_STORAGE_KEY = 'wartha_dl_save_selection';
 
@@ -78,13 +83,6 @@ const Downloader: React.FC = () => {
     setSaveSelectionState(next);
     try { localStorage.setItem(SAVE_SELECTION_STORAGE_KEY, JSON.stringify(next)); } catch { void 0; }
   }, []);
-
-  const nowTime = (): string => new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-  const formatLogPrefix = (type: LogType): string => {
-    const prefix = type === 'critical' ? '[error]' : type === 'success' ? '[success]' : '[info]';
-    return `${prefix} ${nowTime()} `;
-  };
 
   const addLog = useCallback((msg: string, type: LogType = 'system') => {
     const id = ++logIdCounterRef.current;

@@ -10,6 +10,9 @@ import { useCloudScreenSize } from '@hook/usecloudscreensize';
 import { getActiveBase } from '@config/api';
 import { openGlobalPlaylist, pauseGlobalPlaylist } from '@config/playlistglobal';
 
+const getTelegramErrorMessage = (error: unknown, fallback: string): string =>
+  error instanceof Error ? error.message : fallback;
+
 export const useTelegram = (sessionString: string | null, onImageClick?: (file: TelegramFile, url: string) => void) => {
   const dispatch = useDispatch();
   const reduxSelectedChatId = useSelector((state: RootState) => state.cloud.selectedChatId);
@@ -111,7 +114,7 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
         return data.metadata;
       }
       return null;
-    } catch (err) {
+    } catch {
       return null;
     } finally {
       setIsLoadingMetadata(false);
@@ -149,7 +152,7 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
       const res = await apiFetch(`${API_BASE}/telegram/dialogs`);
       const data = await res.json();
       
-      const dialogs = (data.dialogs || []).map((d: any) => ({
+      const dialogs = (data.dialogs || []).map((d: TelegramChat) => ({
         ...d,
         unread_count: d.unread_count ?? 0,
       }));
@@ -169,8 +172,8 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
           }
         }
       }
-    } catch (e: any) {
-      setError(e.message || 'Failed to load dialogs');
+    } catch (e: unknown) {
+      setError(getTelegramErrorMessage(e, 'Failed to load dialogs'));
     } finally {
       setLoading(false);
     }
@@ -197,8 +200,8 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
           dispatch(setSelectedFileId(null));
         }
       }
-    } catch (e: any) {
-      if (!silent) setError(e.message);
+    } catch (e: unknown) {
+      if (!silent) setError(getTelegramErrorMessage(e, 'Failed to load files'));
     } finally {
       if (!silent) setLoadingFiles(false);
     }
@@ -238,8 +241,8 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
     try {
       await apiFetch(`${API_BASE}/telegram/chat/${selectedChat.id}/refresh`, { method: 'POST' });
       await fetchChatFiles(selectedChat.id, false);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(getTelegramErrorMessage(e, 'Failed to refresh files'));
     } finally {
       setLoadingFiles(false);
     }

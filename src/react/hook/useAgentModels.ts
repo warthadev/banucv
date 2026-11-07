@@ -13,14 +13,14 @@ let cachedModels: string[] = FALLBACK_MODELS;
 export const getCachedRouterKey = (): string | null => cachedApiKey;
 export const getCachedRouterModels = (): string[] => cachedModels;
 export const getCachedRouterModel = (): string => cachedModels[0] || AUTOMATIC_AGENT_MODEL;
-export const setCachedRouterKey = (key: string | null, _uid: string | null) => { cachedApiKey = key; };
+export const setCachedRouterKey = (key: string | null, uid: string | null) => { cachedApiKey = key; void uid; };
 export const invalidateAgentCache = () => { cachedApiKey = null; cachedModels = FALLBACK_MODELS; };
 export const ROUTER_CREDENTIAL_UPDATED_EVENT = "routerCredentialUpdated";
 const fetchAgentModels = async (idToken: string): Promise<string[]> => {
   const response = await fetch(`${AGENT_API_BASE}/agent/models`, { headers: { Authorization: `Bearer ${idToken}` } });
   const data = await response.json();
   if (!response.ok) throw new Error(data?.detail || `Agent models request failed: ${response.status}`);
-  const models = Array.isArray(data.data) ? data.data.map((item: any) => item.id || item.name).filter(Boolean) : [];
+  const models = Array.isArray(data.data) ? data.data.map((item: { id?: string; name?: string }) => item.id || item.name).filter(Boolean) : [];
   return models.length ? models : FALLBACK_MODELS;
 };
 export const useAgentModels = () => {

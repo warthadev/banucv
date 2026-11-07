@@ -1,5 +1,5 @@
 // src/react/system/quick.tsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAudio } from '@hook/useaudio';
 import { useSelector } from 'react-redux';
@@ -76,7 +76,7 @@ const Quick: React.FC = () => {
   const isDashboard = location.pathname === "/dashboard";
   const isPlayerActive = (!!selectedGenre && !isStopped) || isCloudPlaylistActive;
 
-  const getFloatingBarrier = () => {
+  const getFloatingBarrier = useCallback(() => {
     if (floatingBounds) return floatingBounds;
     if (!isPlayerActive) return null;
     const barrierWidth = screenSize === 'mobile' ? 270 : 320;
@@ -87,8 +87,7 @@ const Quick: React.FC = () => {
       top: window.innerHeight - barrierHeight - 10,
       bottom: window.innerHeight - 10,
     };
-  };
-
+  }, [floatingBounds, isPlayerActive, screenSize]);
   useEffect(() => {
     const handlePlaylistState = (event: Event) => {
       const active = (event as CustomEvent<{ active?: boolean }>).detail?.active === true;
@@ -124,7 +123,7 @@ const Quick: React.FC = () => {
     return () => window.removeEventListener('resize', updateScreenSize);
   }, []);
 
-  const clampPosition = (pos: { x: number; y: number }) => {
+  const clampPosition = useCallback((pos: { x: number; y: number }) => {
     const btnSize = screenSize === 'mobile' ? 48 : 54;
     const padding = 10;
     const maxX = window.innerWidth - btnSize - padding;
@@ -158,8 +157,7 @@ const Quick: React.FC = () => {
     if (rightX <= maxX && !overlaps(rightX, safe.y)) return { x: rightX, y: safe.y };
 
     return { x: safe.x, y: Math.max(padding, aboveY) };
-  };
-
+  }, [getFloatingBarrier, screenSize]);
   useEffect(() => {
     if (!hasMoved) return;
     let cancelled = false;
@@ -173,7 +171,7 @@ const Quick: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [screenSize, floatingBounds, isPlayerActive]);
+  }, [screenSize, floatingBounds, isPlayerActive, hasMoved, clampPosition, position]);
 
   useEffect(() => {
     if (hasMoved) {
@@ -238,7 +236,7 @@ const Quick: React.FC = () => {
     });
   };
 
-  const handleDragMove = (e: MouseEvent | TouchEvent) => {
+  const handleDragMove = useCallback((e: MouseEvent | TouchEvent) => {
     if (!isDragging) return;
     e.preventDefault();
     
@@ -263,11 +261,10 @@ const Quick: React.FC = () => {
     
     setPosition(clampPosition({ x: newX, y: newY }));
     setHasMoved(true);
-  };
-
-  const handleDragEnd = () => {
+  }, [isDragging, dragStartPos, dragOffset, clampPosition]);
+  const handleDragEnd = useCallback(() => {
     setIsDragging(false);
-  };
+  }, []);
 
   useEffect(() => {
     if (isDragging) {
@@ -282,7 +279,7 @@ const Quick: React.FC = () => {
       window.removeEventListener('mouseup', handleDragEnd);
       window.removeEventListener('touchend', handleDragEnd);
     };
-  }, [isDragging]);
+  }, [isDragging, handleDragMove, handleDragEnd]);
 
   const resetPosition = () => {
     setPosition({ x: 0, y: 0 });

@@ -228,7 +228,9 @@ export const useDlTorrent = ({
   const sessionCountdownRef = useRef<number | null>(null);
   const inputUrlRef = useRef<string>('');
   const saveTargetRef = useRef<TorrentSaveTarget | undefined>(saveTarget);
-  saveTargetRef.current = saveTarget;
+  useEffect(() => {
+    saveTargetRef.current = saveTarget;
+  }, [saveTarget]);
 
   const doneHandledRef = useRef<boolean>(false);
   const lastStatusRef = useRef<string>('');
@@ -425,7 +427,6 @@ export const useDlTorrent = ({
           });
         }
 
-        const status = json.status || '';
         const phase = json.phase || '';
         const saveStatus = json.save_status || '';
         const backendFileIndex = typeof json.current_file_index === 'number' ? json.current_file_index : 0;
@@ -569,11 +570,11 @@ export const useDlTorrent = ({
           onProgressLog(entry);
           return;
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         pollFailRef.current += 1;
         if (pollFailRef.current < POLL_MAX_FAILS) return;
         finishAll();
-        const errMsg = e?.message || 'unknown';
+        const errMsg = e instanceof Error ? e.message : 'unknown';
         onLog(`${fallbackFileName} Colab progress error: ${errMsg}`, 'critical');
       }
     };
@@ -618,12 +619,12 @@ export const useDlTorrent = ({
       onLog(`Info hash: ${json.info_hash || 'unknown'}`, 'success');
       onLog(`Files found: ${files.length} · ${json.total_size_human || ''}`.trim(), 'success');
       void refreshColabSession();
-    } catch (e: any) {
+    } catch (e: unknown) {
       onLog(`Torrent start failed: ${e?.message || 'unknown error'}`, 'critical');
     } finally {
       setTorrentStarting(false);
     }
-  }, [onLog, onReplaceProgress, refreshColabSession, clearColabSession]);
+  }, [onLog, refreshColabSession, clearColabSession]);
 
   const handleTorrentColabStart = useCallback(async (files: TorrentFile[]) => {
     if (!torrentInfoHash) return;
@@ -705,12 +706,12 @@ export const useDlTorrent = ({
       onLog('Waiting for Colab to start...', 'system');
 
       pollColabProgress(json.session_id, firstFile.name);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setColabBusy(false);
-      const errMsg = e?.message || 'unknown error';
+      const errMsg = e instanceof Error ? e.message : 'unknown error';
       onLog(`Failed to start Colab session: ${errMsg}`, 'critical');
     }
-  }, [torrentInfoHash, colabBusy, onLog, onProgressLog, onReplaceProgress, pollColabProgress, refreshColabSession, onResetLogs, ensureLiveSession]);
+  }, [torrentInfoHash, colabBusy, onLog, pollColabProgress, refreshColabSession, onResetLogs, ensureLiveSession]);
 
   const copyColabSession = useCallback(async (): Promise<boolean> => {
     const sid = colabSessionIdRef.current;

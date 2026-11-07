@@ -4,16 +4,20 @@ import { db, auth } from "@config/firebase";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  User, Calendar, MapPin, Smartphone, Shield,
+  User, Calendar, Smartphone, Shield,
   Download, Search, AlertCircle, Loader2, Camera, RefreshCw, ArrowLeft, Maximize2, X
 } from "lucide-react";
 import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
 import { formatTimestamp, formatDateOnly } from "@config/utils";
 
+interface TimestampLike {
+  toDate?: () => Date;
+}
+
 interface SelfieData {
   image: string;
-  timestamp: any;
+  timestamp: unknown;
 }
 
 interface UserData {
@@ -21,7 +25,7 @@ interface UserData {
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
-  lastLoginAt?: any;
+  lastLoginAt?: TimestampLike;
   lastLocation?: {
     city: string;
     country: string;
@@ -68,6 +72,37 @@ const CollectPhoto: React.FC = () => {
   const firstBtnRef = useRef<HTMLButtonElement>(null);
   const latestBtnRef = useRef<HTMLButtonElement>(null);
 
+  const fetchAllUsers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const usersRef = collection(db, "users");
+      const usersSnapshot = await getDocs(usersRef);
+      const usersData: UserData[] = [];
+      for (const userDoc of usersSnapshot.docs) {
+        const user = userDoc.data() as UserData;
+        user.uid = userDoc.id;
+        const firstSelfieRef = doc(db, "users", userDoc.id, "selfie", "first");
+        const firstSelfieSnap = await getDoc(firstSelfieRef);
+        if (firstSelfieSnap.exists()) user.firstSelfie = firstSelfieSnap.data() as SelfieData;
+        const latestSelfieRef = doc(db, "users", userDoc.id, "selfie", "latest");
+        const latestSelfieSnap = await getDoc(latestSelfieRef);
+        if (latestSelfieSnap.exists()) user.latestSelfie = latestSelfieSnap.data() as SelfieData;
+        usersData.push(user);
+      }
+      usersData.sort((a, b) => {
+        const dateA = a.lastLoginAt?.toDate?.() || new Date(0);
+        const dateB = b.lastLoginAt?.toDate?.() || new Date(0);
+        return dateB.getTime() - dateA.getTime();
+      });
+      setUsers(usersData);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to load users");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const checkAdmin = async () => {
       setIsAuthorizing(true);
@@ -93,7 +128,7 @@ const CollectPhoto: React.FC = () => {
               setError("Access denied. Admin only.");
               setLoading(false);
             }
-          } catch (error) {
+          } catch {
             setIsAdmin(false);
             setError("Failed to verify admin status.");
             setLoading(false);
@@ -108,7 +143,7 @@ const CollectPhoto: React.FC = () => {
       return () => unsubscribe();
     };
     checkAdmin();
-  }, []);
+  }, [fetchAllUsers]);
 
   useEffect(() => {
     const updatePosition = () => {
@@ -127,36 +162,7 @@ const CollectPhoto: React.FC = () => {
     return () => window.removeEventListener('resize', updatePosition);
   }, [viewMode]);
 
-  const fetchAllUsers = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const usersRef = collection(db, "users");
-      const usersSnapshot = await getDocs(usersRef);
-      const usersData: UserData[] = [];
-      for (const userDoc of usersSnapshot.docs) {
-        const user = userDoc.data() as UserData;
-        user.uid = userDoc.id;
-        const firstSelfieRef = doc(db, "users", userDoc.id, "selfie", "first");
-        const firstSelfieSnap = await getDoc(firstSelfieRef);
-        if (firstSelfieSnap.exists()) user.firstSelfie = firstSelfieSnap.data() as SelfieData;
-        const latestSelfieRef = doc(db, "users", userDoc.id, "selfie", "latest");
-        const latestSelfieSnap = await getDoc(latestSelfieRef);
-        if (latestSelfieSnap.exists()) user.latestSelfie = latestSelfieSnap.data() as SelfieData;
-        usersData.push(user);
-      }
-      usersData.sort((a, b) => {
-        const dateA = a.lastLoginAt?.toDate?.() || new Date(0);
-        const dateB = b.lastLoginAt?.toDate?.() || new Date(0);
-        return dateB.getTime() - dateA.getTime();
-      });
-      setUsers(usersData);
-    } catch (err: any) {
-      setError(err.message || "Failed to load users");
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const downloadSelfie = (imageData: string, username: string, type: string) => {
     const link = document.createElement("a");
@@ -169,7 +175,7 @@ const CollectPhoto: React.FC = () => {
     return viewMode === "first" ? user.firstSelfie : user.latestSelfie;
   };
 
-  const getCardDate = (timestamp: any): string => {
+  const getCardDate = (timestamp: unknown): string => {
     if (!timestamp) return "Never";
     const fullDate = formatTimestamp(timestamp);
     return fullDate.split(",")[0] || fullDate;

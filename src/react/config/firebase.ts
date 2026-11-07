@@ -10,8 +10,8 @@ import { getFirestore as firebaseGetFirestore } from "firebase/firestore";
 import { getFirebaseConfig } from "./api";
 
 let appInitialized = false;
-let authInstance: any = null;
-let dbInstance: any = null;
+let authInstance: Auth = null as unknown as Auth;
+let dbInstance: Firestore = null as unknown as Firestore;
 
 export const initializeFirebase = async () => {
   if (appInitialized) {
@@ -72,7 +72,7 @@ export const waitForAuth = (): Promise<boolean> => {
           unsubscribe();
           resolve(!!user);
         });
-      } catch (error) {
+      } catch {
         resolve(false);
       }
     };

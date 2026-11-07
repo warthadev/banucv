@@ -41,7 +41,7 @@ export interface TelegramFileMetadata {
     codec: string;
   }[];
   format?: string;
-  videoTracks?: any[];
+  videoTracks?: unknown[];
 }
 
 export type ViewMode = 'list' | 'grid' | 'thumbnail';

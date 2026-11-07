@@ -188,3 +188,4 @@ export const setVideoRes = (key: string, w: number, h: number) => {
   const listeners = videoResListeners.get(key);
   if (listeners) listeners.forEach(fn => fn());
 };
+export const CHAT_ACCENT: Record<string, string> = { channel: '#a855f7', group: '#10b981', supergroup: '#10b981', private: '#3b82f6', user: '#3b82f6' };

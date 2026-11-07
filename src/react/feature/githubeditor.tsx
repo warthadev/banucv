@@ -47,10 +47,6 @@ const GithubEditor: React.FC = () => {
     isDeletingState,
     isRenamingState,
     isUploadingState,
-    setIsCreating,
-    setIsDeleting,
-    setIsRenaming,
-    setIsUploading,
   } = useGithubEditor();
 
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
@@ -99,12 +95,12 @@ const GithubEditor: React.FC = () => {
     if (!editingFile || !selectedRepo) return;
     const result = await handleSave(selectedRepo, editingFile.path, editingFile.content, editingFile.sha);
     if (result && result.success) {
-      setEditingFile((prev: any) => prev ? { ...prev, content: result.newContent, sha: result.newSha } : null);
+      setEditingFile((prev: unknown) => prev !== null && typeof prev === "object" ? { ...prev, content: result.newContent, sha: result.newSha } : null);
     }
   };
 
   const handleClearWrapper = () => {
-    handleClear(() => setEditingFile((prev: any) => prev ? { ...prev, content: "" } : null));
+    handleClear(() => setEditingFile((prev: unknown) => prev !== null && typeof prev === "object" ? { ...prev, content: "" } : null));
   };
 
   const handleCopy = () => {
@@ -254,7 +250,7 @@ const GithubEditor: React.FC = () => {
             onCreateClick={openCreateModal}
             onUploadClick={handleUploadClick}
             onRenameClick={openRenameModal}
-            onEditingFileChange={(content) => setEditingFile((prev: any) => prev ? { ...prev, content } : null)}
+            onEditingFileChange={(content) => setEditingFile((prev: unknown) => prev !== null && typeof prev === "object" ? { ...prev, content } : null)}
             onLogoutGitHub={handleLogoutGitHub}
           />
 

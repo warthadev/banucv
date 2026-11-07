@@ -46,7 +46,7 @@ const getPersistedCurrentView = (): CloudState['currentView'] => {
     if (saved === 'root' || saved === 'chats' || saved === 'repos' || saved === 'files' || saved === 'player') {
       return saved;
     }
-  } catch {}
+  } catch { return 'root'; }
   return 'root';
 };
 
@@ -70,7 +70,7 @@ const persistSelectedFileId = (id: string | null) => {
   try {
     if (id) sessionStorage.setItem(CLOUD_STORAGE_KEYS.SELECTED_FILE_ID, id);
     else sessionStorage.removeItem(CLOUD_STORAGE_KEYS.SELECTED_FILE_ID);
-  } catch {}
+  } catch { return; }
 };
 
 const getPersistedSelectedRepo = (): string => {
@@ -85,7 +85,7 @@ const getPersistedSelectedRepoType = (): RepoType => {
   try {
     const saved = sessionStorage.getItem(CLOUD_STORAGE_KEYS.SELECTED_REPO_TYPE);
     if (saved === 'dataset' || saved === 'model' || saved === 'space') return saved;
-  } catch {}
+  } catch { return ''; }
   return '';
 };
 
@@ -101,7 +101,7 @@ const getPersistedHfView = (): HfView => {
   try {
     const saved = sessionStorage.getItem(CLOUD_STORAGE_KEYS.HF_VIEW);
     if (saved === 'repos' || saved === 'files') return saved;
-  } catch {}
+  } catch { return 'repos'; }
   return 'repos';
 };
 
@@ -109,47 +109,47 @@ const persistActiveSourceId = (id: string | null) => {
   try {
     if (id) sessionStorage.setItem(CLOUD_STORAGE_KEYS.ACTIVE_SOURCE_ID, id);
     else sessionStorage.removeItem(CLOUD_STORAGE_KEYS.ACTIVE_SOURCE_ID);
-  } catch {}
+  } catch { return; }
 };
 
 const persistCurrentView = (view: CloudState['currentView']) => {
   try {
     sessionStorage.setItem(CLOUD_STORAGE_KEYS.CURRENT_VIEW, view);
-  } catch {}
+  } catch { return; }
 };
 
 const persistSelectedChatId = (id: string | null) => {
   try {
     if (id) sessionStorage.setItem(CLOUD_STORAGE_KEYS.SELECTED_CHAT_ID, id);
     else sessionStorage.removeItem(CLOUD_STORAGE_KEYS.SELECTED_CHAT_ID);
-  } catch {}
+  } catch { return; }
 };
 
 const persistSelectedRepo = (repo: string) => {
   try {
     if (repo) sessionStorage.setItem(CLOUD_STORAGE_KEYS.SELECTED_REPO, repo);
     else sessionStorage.removeItem(CLOUD_STORAGE_KEYS.SELECTED_REPO);
-  } catch {}
+  } catch { return; }
 };
 
 const persistSelectedRepoType = (type: RepoType) => {
   try {
     if (type) sessionStorage.setItem(CLOUD_STORAGE_KEYS.SELECTED_REPO_TYPE, type);
     else sessionStorage.removeItem(CLOUD_STORAGE_KEYS.SELECTED_REPO_TYPE);
-  } catch {}
+  } catch { return; }
 };
 
 const persistCurrentPath = (path: string) => {
   try {
     if (path) sessionStorage.setItem(CLOUD_STORAGE_KEYS.CURRENT_PATH, path);
     else sessionStorage.removeItem(CLOUD_STORAGE_KEYS.CURRENT_PATH);
-  } catch {}
+  } catch { return; }
 };
 
 const persistHfView = (view: HfView) => {
   try {
     sessionStorage.setItem(CLOUD_STORAGE_KEYS.HF_VIEW, view);
-  } catch {}
+  } catch { return; }
 };
 
 const initialState: CloudState = {

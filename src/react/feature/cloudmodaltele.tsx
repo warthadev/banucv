@@ -13,7 +13,6 @@ interface CloudModalTeleProps {
   onSave: (sessionString: string, phoneNumber: string, platform: string) => Promise<void>;
   onClose: () => void;
   onBack?: () => void;
-  isLoading?: boolean;
 }
 
 const countryCodes = [
@@ -172,14 +171,10 @@ const saveSessionToFirestore = async (session: string, accountName: string): Pro
     throw new Error("User not authenticated");
   }
   const userRef = doc(db, "users", user.uid);
-  try {
-    await updateDoc(userRef, {
-      telegramSessions: arrayUnion(session),
-      telegramAccountNames: arrayUnion(accountName),
-    });
-  } catch (error: any) {
-    throw error;
-  }
+  await updateDoc(userRef, {
+    telegramSessions: arrayUnion(session),
+    telegramAccountNames: arrayUnion(accountName),
+  });
 };
 
 export const CloudModalTele: React.FC<CloudModalTeleProps> = ({
@@ -187,7 +182,6 @@ export const CloudModalTele: React.FC<CloudModalTeleProps> = ({
   onSave,
   onClose,
   onBack,
-  isLoading = false,
 }) => {
   const [mode, setMode] = useState<"auto" | "manual">("auto");
   const [sessionString, setSessionString] = useState("");
@@ -266,7 +260,7 @@ export const CloudModalTele: React.FC<CloudModalTeleProps> = ({
 
   const isValidSessionString = useCallback((session: string) => {
     const isGramjs = session.length >= 10 && /^[0-9]+:/.test(session);
-    const isTelethon = session.length >= 20 && /^[A-Za-z0-9+\/=_-]+$/.test(session);
+    const isTelethon = session.length >= 20 && /^[A-Za-z0-9+/=_-]+$/.test(session);
     return isGramjs || isTelethon;
   }, []);
 
@@ -340,8 +334,8 @@ export const CloudModalTele: React.FC<CloudModalTeleProps> = ({
       } else {
         throw new Error("No phone_code_hash in response");
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to send verification code");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to send verification code");
     } finally {
       setIsSendingCode(false);
     }
@@ -393,16 +387,16 @@ export const CloudModalTele: React.FC<CloudModalTeleProps> = ({
           setTimeout(() => {
             onClose();
           }, 300);
-        } catch (saveError: any) {
-          setError("Failed to save session: " + (saveError.message || "Unknown error"));
+        } catch (saveError: unknown) {
+          setError("Failed to save session: " + (saveError instanceof Error ? saveError.message : "Unknown error"));
           setIsSaving(false);
         }
       } else {
         setError("No session received from server");
         setIsSaving(false);
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to verify code");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to verify code");
       setIsSaving(false);
     }
   }, [selectedCountry.code, phoneNumber, code, phoneCodeHash, isValidCode, onSave, onClose, resetForm]);
@@ -442,12 +436,12 @@ export const CloudModalTele: React.FC<CloudModalTeleProps> = ({
         setTimeout(() => {
           onClose();
         }, 300);
-      } catch (saveError: any) {
-        setError("Failed to save session: " + (saveError.message || "Unknown error"));
+      } catch (saveError: unknown) {
+        setError("Failed to save session: " + (saveError instanceof Error ? saveError.message : "Unknown error"));
         setIsSaving(false);
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to save session");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to save session");
       setIsSaving(false);
     } finally {
       setIsValidating(false);

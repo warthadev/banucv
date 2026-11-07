@@ -1,10 +1,9 @@
 // src/react/feature/dlsave.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, ChevronRight, Folder, Check, Loader2, ArrowLeft, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Folder, Check, Loader2, Search, X } from 'lucide-react';
 import { auth, db } from '@config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { HuggingFaceIcon } from '@control/icon';
 import { getActiveBase } from '@config/api';
 import { HF_API_BASE } from '@config/huggingface';
 
@@ -283,8 +282,8 @@ const DlSave: React.FC<DlSaveProps> = ({ selection, onChange }) => {
         return;
       }
       setHfAccounts(accounts);
-    } catch (err: any) {
-      setHfAccountsError(err?.message || 'Failed to load accounts');
+    } catch (err: unknown) {
+      setHfAccountsError(err instanceof Error ? err.message : 'Failed to load accounts');
     } finally {
       setHfAccountsLoading(false);
     }
@@ -306,7 +305,9 @@ const DlSave: React.FC<DlSaveProps> = ({ selection, onChange }) => {
         `${HF_API_BASE}/datasets?author=${encodeURIComponent(account.username)}&limit=100`,
         { headers }
       );
-      const datasets: any[] = datasetsRes.ok ? await datasetsRes.json() : [];
+      const datasets = datasetsRes.ok
+        ? (await datasetsRes.json()) as Array<{ id: string }>
+        : [];
       const repos: HFRepoOption[] = [];
       if (Array.isArray(datasets)) {
         for (const ds of datasets) {
@@ -318,8 +319,8 @@ const DlSave: React.FC<DlSaveProps> = ({ selection, onChange }) => {
         return;
       }
       setHfRepos(repos);
-    } catch (err: any) {
-      setHfReposError(err?.message || 'Failed to load repositories');
+    } catch (err: unknown) {
+      setHfReposError(err instanceof Error ? err.message : 'Failed to load repositories');
     } finally {
       setHfReposLoading(false);
     }
@@ -346,15 +347,15 @@ const DlSave: React.FC<DlSaveProps> = ({ selection, onChange }) => {
           token: account.token,
         }),
       });
-      const json = await res.json().catch(() => ({}));
+      const json = await res.json().catch(() => ({})) as { detail?: string; folders?: string[] };
       if (!res.ok) {
         setHfFoldersError(json?.detail || `HTTP ${res.status}`);
         return;
       }
       const folders: string[] = json.folders || [];
       setHfFolderPaths(folders);
-    } catch (err: any) {
-      setHfFoldersError(err?.message || 'Failed to load folders');
+    } catch (err: unknown) {
+      setHfFoldersError(err instanceof Error ? err.message : 'Failed to load folders');
     } finally {
       setHfFoldersLoading(false);
     }

@@ -1,19 +1,18 @@
 // src/react/feature/cloudviewuithumb.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Video, Music, Image, File, HardDrive, Mic, Sticker, Gift, Camera, Folder } from 'lucide-react';
+import { Video, Music, File, HardDrive, Mic, Sticker, Gift, Camera, Folder } from 'lucide-react';
 import { getColor } from '@config/telegram';
 import { getThumb, setThumb } from '@config/thumbnailstore';
 import { fetchWithGlobalCache } from '@config/imagecache';
 import { resolveHfSignedUrl } from '@system/mediarender';
 import {
   CACHE_TTL, VIDEO_THUMB_TIMEOUT, VIDEO_METADATA_TIMEOUT, VIDEO_THUMB_FORMAT, VIDEO_THUMB_QUALITY,
-  MIN_VALID_BLOB_BYTES, IMG_RENDER_TIMEOUT, FINGERPRINT_HEAD_BYTES, THUMB_CACHE_VERSION,
+  IMG_RENDER_TIMEOUT, FINGERPRINT_HEAD_BYTES, THUMB_CACHE_VERSION,
   VIDEO_THUMB_MAX_WIDTH, VIDEO_FRAME_SETTLE_TIMEOUT, VIDEO_BLANK_SAMPLE_SIZE, VIDEO_BLANK_MAX_LUMA,
   VIDEO_TRUNCATED_SAFETY, THUMB_MAX_AUTO_RETRIES, THUMB_RETRY_BASE_DELAY, VIDEO_CANDIDATE_PERCENTS,
   thumbnailCache, sanitizeText, getBaseName, isValidBlob, getResolutionTier, RES_TIER_COLORS,
   videoResKey, setVideoRes, subscribeVideoRes, getCachedVideoRes, acquireThumbSlot, releaseThumbSlot
 } from '@config/cloudviewuiconfig';
-import type { ResTier } from '@config/cloudviewuiconfig';
 
 export const FileIcon: React.FC<{ type: string; size?: number; style?: React.CSSProperties }> = ({ type, size = 20, style }) => {
   const p = { size, style };
@@ -66,8 +65,8 @@ const computeFingerprint = async (
     const h1s = h1.toString(16).padStart(8, '0');
     const h2s = h2.toString(16).padStart(8, '0');
     return `${head}:${h1s}${h2s}`;
-  } catch (err: any) {
-    if (err && err.name === 'AbortError') throw err;
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === 'AbortError') throw err;
     return `${head}:err`;
   }
 };
@@ -367,7 +366,7 @@ export const VideoResBadge: React.FC<{
   if (!res) return <span ref={ref} className="cloudview-res-badge cloudview-res-badge--pending" aria-hidden="true" />;
   const tier = getResolutionTier(res.w, res.h);
   return (
-    <span className="cloudview-res-badge" style={{ ['--res-color' as any]: RES_TIER_COLORS[tier], ...style }} title={`${res.w}×${res.h}`}>
+    <span className="cloudview-res-badge" style={{ '--res-color': RES_TIER_COLORS[tier], ...style } as React.CSSProperties} title={`${res.w}×${res.h}`}>
       {tier}
     </span>
   );
@@ -395,7 +394,7 @@ export const ThumbnailImage: React.FC<ThumbnailImageProps> = ({ url, alt, type, 
   const [error, setError] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [renderKey, setRenderKey] = useState(0);
-  const [retryCount, setRetryCount] = useState(0);
+  const retryCountRef = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const blobUrlRef = useRef<string | null>(null);
@@ -422,10 +421,12 @@ export const ThumbnailImage: React.FC<ThumbnailImageProps> = ({ url, alt, type, 
   }, []);
 
   const handleRetryOnce = useCallback(() => {
-    setRetryCount(prev => {
-      if (prev >= 1) { setError(true); setLoading(false); return prev; }
-      return prev + 1;
-    });
+    if (retryCountRef.current >= 1) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
+    retryCountRef.current += 1;
     setRenderKey(prev => prev + 1);
   }, []);
 
@@ -477,8 +478,8 @@ export const ThumbnailImage: React.FC<ThumbnailImageProps> = ({ url, alt, type, 
 
         let fingerprint = '';
         try { fingerprint = await computeFingerprint(activeUrl, fileSize, fileName, token, controller.signal); }
-        catch (err: any) {
-          if (err && err.name === 'AbortError') return;
+        catch (err: unknown) {
+          if (err instanceof Error && err.name === 'AbortError') return;
           fingerprint = `${fileSize}:${getBaseName(fileName)}:err`;
         }
         fingerprint = `${THUMB_CACHE_VERSION}:${fingerprint}`;
@@ -520,7 +521,7 @@ export const ThumbnailImage: React.FC<ThumbnailImageProps> = ({ url, alt, type, 
             }
             try {
               blob = await captureVideoFrame(frameSrc, headBytes > 0 ? { availableBytes: headBytes, totalBytes: fileSize, onDimensions: reportDimensions } : { onDimensions: reportDimensions });
-            } catch (err) {
+            } catch {
               if (tempUrl) URL.revokeObjectURL(tempUrl);
               failOrRetry(); return;
             }
@@ -545,7 +546,7 @@ export const ThumbnailImage: React.FC<ThumbnailImageProps> = ({ url, alt, type, 
           setImgSrc(blobUrl); setLoading(false);
           setThumb(fingerprint, blob).catch(() => { void 0; });
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (err.name === 'AbortError') return;
         failOrRetry();
       } finally { releaseThumbSlot(); }
@@ -558,7 +559,7 @@ export const ThumbnailImage: React.FC<ThumbnailImageProps> = ({ url, alt, type, 
       controller.abort();
       if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; }
     };
-  }, [activeUrl, type, token, isVisible, fileSize, fileName, renderKey]);
+  }, [activeUrl, type, token, isVisible, fileSize, fileName, renderKey, invalidSource, useFallback, fallbackUrl, url]);
 
   useEffect(() => { fetchAttemptsRef.current = 0; }, [activeUrl, fileSize, fileName]);
 

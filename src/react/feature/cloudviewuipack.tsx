@@ -5,22 +5,19 @@ import {
   Hash, Users, Home, Plus, Search, RefreshCw, LogOut,
   AlertCircle, Check, PanelLeftOpen, PanelLeftClose, Info, ChevronRight
 } from 'lucide-react';
-import type { TelegramChat, TelegramFile, ViewMode, MobileView, SortField, SortDir, TelegramFileMetadata } from '@config/telegram';
-import type { HFRepo } from '@config/cloudsource';
 import Loading from '@control/loading';
 import { CloudModalHFSearch } from './cloudmodalhfsrch';
 import type { HFSearchRepo } from '@config/huggingface';
 import CloudModalSelection from './cloudmodalselection';
-import type { TransferAccount, TransferRepo } from './cloudmodalselection';
 import type { CloudViewPackProps } from '@config/cloudviewtypes';
 
-import { Breadcrumb, Sidebar, RepoRow, CHAT_ACCENT } from './cloudviewuisidebar';
+import { Breadcrumb, Sidebar, RepoRow } from './cloudviewuisidebar';
 import { FilesPanel, PlayerPanel, DetailPanel } from './cloudviewuipanel';
 import { RepoSelectionActionBar } from './cloudviewuitoolbar';
 import {
   RenameRepoModal, DeleteRepoModal, AddRepoModal, SquashRepoModal, VisibilityRepoModal
 } from './cloudviewuimodal';
-import { sanitizeText } from '@config/cloudviewuiconfig';
+import { CHAT_ACCENT, sanitizeText } from '@config/cloudviewuiconfig';
 
 const MOBILE_FADE = {
   initial: { opacity: 0, scale: 0.985 },
@@ -35,9 +32,9 @@ export const CloudViewPack: React.FC<CloudViewPackProps> = (props) => {
     searchQuery, viewMode, sortField, sortDir, showSortMenu, error,
     sidebarCollapsed, sidebarWidth, showDetail, screenSize, mobileView, totalSize,
     fileMetadata, sortMenuRef,
-    sourceName = 'Telegram', showBackButton = false, sourceType = 'telegram', tgSession,
+    sourceName = 'Telegram', showBackButton = false, sourceType = 'telegram',
     onClosePreview,
-    setSearchQuery, setSidebarCollapsed, setSidebarWidth, setShowDetail, setMobileView,
+    setSearchQuery, setSidebarCollapsed, setSidebarWidth, setShowDetail,
     fetchDialogs, refreshCurrentChatFiles, handleChatClick, handleFileClick,
     handleBackToRoot, handleBackToFiles, handleBackToChats, handleFileGone, handleImageError,
     handleMediaLoaded, getStreamUrl, handleDownload, toggleSort, cycleViewMode,
@@ -316,7 +313,7 @@ export const CloudViewPack: React.FC<CloudViewPackProps> = (props) => {
                           role="button"
                           tabIndex={0}
                           className={`cloudview-frow ${selectedChat?.id === chat.id ? 'cloudview-frow--active' : ''}`}
-                          style={{ ['--row-accent' as any]: CHAT_ACCENT[chat.type] || 'var(--primary)' }}
+                          style={{ '--row-accent': CHAT_ACCENT[chat.type] || 'var(--primary)' } as React.CSSProperties}
                           onClick={() => handleChatClick(chat)}
                           onKeyDown={(e) => { if (e.key === 'Enter') handleChatClick(chat); }}
                         >

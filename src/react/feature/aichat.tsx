@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Send, Bot, Trash2, Volume2, VolumeX, AlertCircle, Check,
+  Send, Bot, Trash2, Volume2, VolumeX, Check,
   Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Globe, Wand2, Link, ChevronDown
 } from "lucide-react";
 import useAgentModels, { AUTOMATIC_AGENT_MODEL } from "@hook/useAgentModels";
@@ -11,7 +11,7 @@ import { useAudio } from "@hook/useaudio";
 import { RouterAuthModal } from "./routerauthmodal";
 import { modalVariants, overlayVariants } from "@animation/githubeditor";
 import Loading from "@control/loading";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { getAuth, getDb } from "@config/firebase";
@@ -213,32 +213,33 @@ const CodeBlock = ({ language, code }: { language: string; code: string }) => {
   );
 };
 
-const MarkdownComponents = {
-  code({ node, inline, className, children, ...props }: any) {
+const MarkdownComponents: Components = {
+  code({ node, className, children, ...props }) {
+    void node;
     const match = /language-(\w+)/.exec(className || "");
     const code = String(children).replace(/\n$/, "");
-    return !inline && match ? <CodeBlock language={match[1]} code={code} /> : <code className={className} {...props}>{children}</code>;
+    return className && match ? <CodeBlock language={match[1]} code={code} /> : <code className={className} {...props}>{children}</code>;
   },
-  a({ href, children }: any) { return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>; },
-  img({ src, alt }: any) { return <img src={src} alt={alt} className="aichat-markdown-img" />; },
-  table({ children }: any) {
+  a({ href, children }) { return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>; },
+  img({ src, alt }) { return <img src={src} alt={alt} className="aichat-markdown-img" />; },
+  table({ children }) {
     return <div className="aichat-markdown-table-wrapper">{children}</div>;
   },
-  thead({ children }: any) {
+  thead({ children }) {
     return <thead className="aichat-markdown-thead">{children}</thead>;
   },
-  th({ children }: any) {
+  th({ children }) {
     return <th className="aichat-markdown-th">{children}</th>;
   },
-  td({ children }: any) {
+  td({ children }) {
     return <td className="aichat-markdown-td">{children}</td>;
   },
-  tr({ children }: any) {
+  tr({ children }) {
     return <tr className="aichat-markdown-tr">{children}</tr>;
   },
 };
 
-const cleanMarkdown = (text: string) => text.replace(/\u0000/g, "").replace(/\r\n/g, "\n").trim();
+const cleanMarkdown = (text: string) => text.split("\u0000").join("").replace(/\r\n/g, "\n").trim();
 
 const stripMarkdownForSpeech = (text: string) => text
   .replace(/```[\s\S]*?```/g, "code block")
@@ -256,7 +257,7 @@ const stripMarkdownForSpeech = (text: string) => text
   .replace(/^\s*>\s+/gm, "")
   .replace(/[-]{3,}/g, "")
   .replace(/\|/g, " ")
-  .replace(/\u0000/g, "")
+  .split("\u0000").join("")
   .replace(/\r\n/g, "\n")
   .trim();
 
@@ -312,10 +313,16 @@ const detectLanguage = (text: string): "id" | "en" => {
   return "en";
 };
 
-const getErrorMessage = (error: any): string => {
+const getErrorText = (error: unknown): string => {
+  if (typeof error === "string") return error;
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error !== null && "message" in error && typeof error.message === "string") return error.message;
+  return error == null ? "" : String(error);
+};
+const getErrorMessage = (error: unknown): string => {
   if (!error) return "Unknown error occurred";
   
-  const message = error.message || error.toString?.() || "";
+  const message = getErrorText(error);
   
   if (message.includes("503") || message.includes("high demand") || message.includes("service unavailable")) {
     return "Error: This model is currently experiencing high demand. Please try again later or switch to another model.";
@@ -360,8 +367,8 @@ const getErrorMessage = (error: any): string => {
   return "Error: An error occurred. Please try another model or wait a moment.";
 };
 
-const getErrorType = (error: any): string => {
-  const message = error.message || error.toString?.() || "";
+const getErrorType = (error: unknown): string => {
+  const message = getErrorText(error);
   if (message.includes("503") || message.includes("high demand") || message.includes("service unavailable")) return "SERVICE_UNAVAILABLE";
   if (message.includes("API key")) return "API_KEY";
   if (message.includes("429") || message.includes("rate limit")) return "RATE_LIMIT";
@@ -450,8 +457,8 @@ const AIChat: React.FC = () => {
     try {
       const saved = localStorage.getItem('aichat_messages');
       if (saved) {
-        const parsed = JSON.parse(saved);
-        return parsed.map((msg: any) => ({
+        const parsed = JSON.parse(saved) as Array<Omit<Message, "timestamp"> & { timestamp: string | number }>;
+        return parsed.map((msg) => ({
           ...msg,
           timestamp: new Date(msg.timestamp)
         }));
@@ -495,7 +502,7 @@ const AIChat: React.FC = () => {
   const [isUploadDropdownOpen, setIsUploadDropdownOpen] = useState(false);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [imageGenEnabled, setImageGenEnabled] = useState(false);
-  const [retryingMessageId, setRetryingMessageId] = useState<string | null>(null);
+  const [, setRetryingMessageId] = useState<string | null>(null);
   const [userDisplayName, setUserDisplayName] = useState<string>("User");
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<string>("Unknown");
@@ -632,7 +639,7 @@ const AIChat: React.FC = () => {
         console.warn('File too large:', file.name);
         continue;
       }
-      try { newFiles.push({ name: file.name, content: await file.text(), type: file.type }); } catch {}
+      try { newFiles.push({ name: file.name, content: await file.text(), type: file.type }); } catch { void 0; }
     }
     if (newFiles.length) { setUploadedFiles(prev => [...prev, ...newFiles]); }
     if (multiFileInputRef.current) multiFileInputRef.current.value = "";
@@ -655,7 +662,7 @@ const AIChat: React.FC = () => {
         console.warn('File too large:', file.name);
         continue;
       }
-      try { newFiles.push({ name: (file as any).webkitRelativePath || file.name, content: await file.text(), type: file.type }); } catch {}
+      try { newFiles.push({ name: file.webkitRelativePath || file.name, content: await file.text(), type: file.type }); } catch { void 0; }
     }
     if (newFiles.length) { setUploadedFiles(prev => [...prev, ...newFiles]); }
     if (folderInputRef.current) folderInputRef.current.value = "";
@@ -699,7 +706,7 @@ const AIChat: React.FC = () => {
     if (!modelName) throw new Error("Model not found");
     const history = currentMessages.filter(m => !m.error && !(isRetry && m.role === "user" && m.content === originalUserMessage)).map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.content }));
     const textContext = messageText + buildContextFromFiles(files);
-    const content: any[] = [{ type: "text", text: textContext || "Describe these images" }];
+    const content: Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }> = [{ type: "text", text: textContext || "Describe these images" }];
     for (const image of images) content.push({ type: "image_url", image_url: { url: `data:${image.mimeType};base64,${image.data}` } });
     const firebaseAuth = await getAuth();
     const user = firebaseAuth.currentUser;
@@ -763,7 +770,7 @@ const AIChat: React.FC = () => {
           imageData: imgDataUrl,
           imageMimeType: "image/png",
         }]);
-      } catch (error: any) {
+      } catch (error: unknown) {
         const friendlyError = getErrorMessage(error);
         setMessages(prev => [...prev, { 
           id: (Date.now() + 1).toString(), 
@@ -772,7 +779,7 @@ const AIChat: React.FC = () => {
           model: "pollinations", 
           timestamp: new Date(), 
           error: true,
-          errorDetails: error.message 
+          errorDetails: getErrorText(error)
         }]);
       } finally {
         setIsLoading(false);
@@ -797,12 +804,13 @@ const AIChat: React.FC = () => {
       if (aiMode === 'auto') {
         speakText(response.text, (Date.now() + 1).toString());
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorType = getErrorType(error);
       const friendlyError = getErrorMessage(error);
       
-      const isServiceUnavailable = errorType === "SERVICE_UNAVAILABLE" || error.message?.includes("503");
-      const isRateLimit = errorType === "RATE_LIMIT" || error.message?.includes("429");
+      const errorMessage = getErrorText(error);
+      const isServiceUnavailable = errorType === "SERVICE_UNAVAILABLE" || errorMessage.includes("503");
+      const isRateLimit = errorType === "RATE_LIMIT" || errorMessage.includes("429");
       
       if ((isServiceUnavailable || isRateLimit) && retryModelIndex < modelOptions.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -1196,12 +1204,11 @@ const AIChat: React.FC = () => {
                     className="aichat-model-picker-trigger"
                     onClick={() => setIsModelPickerOpen(true)}
                     title="Pilih model AI"
+                    aria-label="Pilih model AI"
                     aria-haspopup="dialog"
                     aria-expanded={isModelPickerOpen}
                   >
                     <span className="aichat-icon-btn" aria-hidden="true"><Bot size={24} /></span>
-                    <span className="aichat-automatic-model">{selectedModel === AUTOMATIC_AGENT_MODEL ? `Auto: ${selectedModel}` : selectedModel}</span>
-                    <ChevronDown size={14} aria-hidden="true" />
                   </button>
                 </div>
                 <button 

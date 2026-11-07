@@ -22,9 +22,15 @@ const listItemVariants = {
   }
 };
 
+interface ModelInfo {
+  name?: string;
+  description?: string;
+  supported_generation_methods?: string[];
+}
+
 const AICheck: React.FC = () => {
-  const [systemModels, setSystemModels] = useState<any[]>([]);
-  const [customModels, setCustomModels] = useState<any[]>([]);
+  const [systemModels, setSystemModels] = useState<ModelInfo[]>([]);
+  const [customModels, setCustomModels] = useState<ModelInfo[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [copied, setCopied] = useState(false);
@@ -42,7 +48,7 @@ const AICheck: React.FC = () => {
     setIsFetching(true);
 
     try {
-      let models: any[] = [];
+      let models: ModelInfo[] = [];
 
       const token = authMode === "system" ? getCachedRouterKey() : customKey.trim();
       if (!token) throw new Error("9router credential is not configured for this account.");
@@ -53,8 +59,11 @@ const AICheck: React.FC = () => {
       if (authMode === "system") setSystemModels(models); else setCustomModels(models);
 
       setStatus("idle");
-    } catch (err: any) {
-      setErrorMessage(err.message);
+    } catch (err: unknown) {
+      const message = typeof err === "object" && err !== null && "message" in err && typeof err.message === "string"
+        ? err.message
+        : String(err);
+      setErrorMessage(message);
       setStatus("error");
     } finally {
       setIsFetching(false);

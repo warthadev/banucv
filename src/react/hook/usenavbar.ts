@@ -44,7 +44,7 @@ export const useNavbar = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleLogout = async (e: React.MouseEvent | any) => {
+  const handleLogout = async (e?: React.MouseEvent<HTMLElement>) => {
     if (e?.preventDefault) e.preventDefault();
     try {
       const auth = await getAuth();

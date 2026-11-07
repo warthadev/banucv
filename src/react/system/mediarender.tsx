@@ -1,15 +1,10 @@
-// src/react/system/mediarender.tsx
+/* eslint-disable react-refresh/only-export-components */
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize2, Download, ExternalLink, AlertTriangle } from 'lucide-react';
 import { formatDuration, formatBytes } from '@config/utils';
 import Loading from '@control/loading';
-import {
-  MediaRenderModal,
-  resolveHfSignedUrl,
-  HF_SIGNED_URL_MAX_AGE_MS,
-  tryDirectHfDownload,
-  downloadMediaWithName,
-} from './mediarendermodal';
+import { MediaRenderModal, HF_SIGNED_URL_MAX_AGE_MS } from './mediarendermodal';
+import { resolveHfSignedUrl, tryDirectHfDownload, downloadMediaWithName } from './mediarendermodalutils';
 
 const HF_SIGNED_URL_REFRESH_MS = 5 * 60 * 1000;
 
@@ -98,7 +93,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(0.7);
+  const [volume] = useState(0.7);
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -205,8 +200,8 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
 
         objectUrl = URL.createObjectURL(blob);
         setMediaSrc(objectUrl);
-      } catch (err: any) {
-        if (cancelled || err?.name === 'AbortError') return;
+      } catch (err: unknown) {
+        if (cancelled || (err instanceof Error && err.name === 'AbortError')) return;
         console.warn('[MediaRender] fetch media gagal:', err);
         setError(`Failed to load ${item.type}`);
         setIsLoading(false);
@@ -221,11 +216,12 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
   }, [item.url, item.name, item.type, token, needsAuthFetch, isHfSource, srcTick]);
 
   useEffect(() => {
+    const element = videoRef.current;
     return () => {
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.removeAttribute('src');
-        videoRef.current.load();
+      if (element) {
+        element.pause();
+        element.removeAttribute('src');
+        element.load();
       }
     };
   }, []);
@@ -390,7 +386,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
     if (element && isFinite(element.duration)) {
       setDuration(element.duration);
     }
-  }, [isVideo]);
+  }, []);
 
   const handlePlayPause = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -405,7 +401,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
     }
     setIsPlaying(!isPlaying);
     showControlsTemporarily();
-  }, [isPlaying, isVideo, showControlsTemporarily]);
+  }, [isPlaying, showControlsTemporarily]);
 
   const handleSeek = useCallback((value: number) => {
     const element = videoRef.current;
@@ -414,7 +410,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
     element.currentTime = newTime;
     setCurrentTime(newTime);
     setDragValue(value);
-  }, [duration, isVideo]);
+  }, [duration]);
 
   const handleProgressChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     e.stopPropagation();
@@ -470,7 +466,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
       setCurrentTime(time);
       if (duration > 0) setDragValue((time / duration) * 100);
     }
-  }, [isVideo, isDragging, duration]);
+  }, [isDragging, duration]);
 
   useEffect(() => {
     if (!isVideo || !isPlaying || codecIssue) return;
@@ -478,7 +474,7 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
       const v = videoRef.current;
       if (!v || v.paused || v.currentTime < 0.5) return;
       const quality = v.getVideoPlaybackQuality?.();
-      const decoded = quality ? quality.totalVideoFrames : (v as any).webkitDecodedFrameCount;
+      const decoded = quality ? quality.totalVideoFrames : (v as HTMLVideoElement & { webkitDecodedFrameCount?: number }).webkitDecodedFrameCount;
       if (typeof decoded === 'number' && decoded === 0) {
         v.pause();
         setCodecIssue(true);

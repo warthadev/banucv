@@ -56,8 +56,13 @@ const sanitizeText = (text: string | undefined | null): string => {
   return element.textContent || '';
 };
 
+interface GithubRepo {
+  id: number;
+  name: string;
+}
+
 interface GithubEditorPackProps {
-  repos: any[];
+  repos: GithubRepo[];
   selectedRepo: string | null;
   currentPath: string;
   files: GithubItem[];
@@ -94,7 +99,6 @@ interface GithubEditorPackProps {
 const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
   repos,
   selectedRepo,
-  currentPath,
   files,
   editingFile,
   status,
@@ -107,8 +111,6 @@ const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
   isRenaming,
   isMobile,
   isSidebarOpen,
-  fileInputRef,
-  folderInputRef,
   onSetSidebarOpen,
   onNavigateBack,
   onRepoClick,
@@ -136,7 +138,7 @@ const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
           return parsed;
         }
       }
-    } catch {}
+    } catch { void 0; }
     return SIDEBAR_DEFAULT_WIDTH;
   });
   const [isResizing, setIsResizing] = useState(false);
@@ -145,7 +147,7 @@ const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
   useEffect(() => {
     try {
       localStorage.setItem("github_sidebar_width", String(sidebarWidth));
-    } catch {}
+    } catch { void 0; }
   }, [sidebarWidth]);
 
   const startResize = useCallback((e: React.PointerEvent) => {
@@ -154,7 +156,7 @@ const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
     const target = e.currentTarget as HTMLElement;
     try {
       target.setPointerCapture(e.pointerId);
-    } catch {}
+    } catch { void 0; }
     setIsResizing(true);
     resizeRef.current = { startX: e.clientX, startWidth: sidebarWidth };
   }, [sidebarWidth]);
@@ -174,7 +176,7 @@ const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
     const target = e.currentTarget as HTMLElement;
     try {
       target.releasePointerCapture(e.pointerId);
-    } catch {}
+    } catch { void 0; }
     setIsResizing(false);
   }, [isResizing]);
 

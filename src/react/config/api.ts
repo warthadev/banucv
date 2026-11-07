@@ -181,7 +181,6 @@ export interface FirebaseConfig {
 
 export interface FeaturesConfig {
   telegram: boolean;
-  gemini: boolean;
 }
 
 export interface AppConfig {
@@ -286,10 +285,6 @@ export const isTelegramEnabled = async (): Promise<boolean> => {
   return features.telegram;
 };
 
-export const isGeminiEnabled = async (): Promise<boolean> => {
-  const features = await getFeaturesConfig();
-  return features.gemini;
-};
 
 export const resetConfigCache = () => {
   cachedConfig = null;

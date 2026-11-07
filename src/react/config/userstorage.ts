@@ -13,7 +13,6 @@ export interface UserProfile {
   lastLoginAt?: any;
   lastSeen?: any;
   loginCount?: number;
-  geminiApiKey?: string;
   githubUsername?: string;
   githubToken?: string;
 }

@@ -5,10 +5,10 @@ import {
   Send, Bot, Trash2, Volume2, VolumeX, AlertCircle,
   Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Globe, Wand2, Link, ChevronDown
 } from "lucide-react";
-import useGemini, { AUTOMATIC_AGENT_MODEL } from "@hook/usegemini";
+import useAgentModels, { AUTOMATIC_AGENT_MODEL } from "@hook/useAgentModels";
 import { AGENT_API_BASE } from "@config/api";
 import { useAudio } from "@hook/useaudio";
-import { GeminiAuthModal } from "./geminiauthmodal";
+import { RouterAuthModal } from "./routerauthmodal";
 import Loading from "@control/loading";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -442,7 +442,7 @@ const splitMarkdown = (content: string) => {
 };
 
 const AIChat: React.FC = () => {
-  const { isConfigured, showAuthModal, saveApiKey, closeModal, isLoading: authLoading } = useGemini();
+  const { isConfigured, showAuthModal, saveApiKey, closeModal, isLoading: authLoading } = useAgentModels();
   const { aiMode } = useAudio();
 
   const loadMessages = (): Message[] => {
@@ -877,7 +877,7 @@ const AIChat: React.FC = () => {
 
   return (
     <>
-      <GeminiAuthModal isOpen={showAuthModal} onSave={saveApiKey} onClose={closeModal} />
+      <RouterAuthModal isOpen={showAuthModal} onSave={saveApiKey} onClose={closeModal} />
       {isConfigured && (
         <div className="aichat-container">
           <div className="aichat-messages" ref={scrollRef}>

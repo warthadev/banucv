@@ -1,4 +1,4 @@
-// src/react/feature/geminiauthmodal.tsx
+// src/react/feature/routerauthmodal.tsx
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Key, Eye, EyeOff, AlertCircle, Sparkles } from "lucide-react";
@@ -11,7 +11,7 @@ interface RouterAuthModalProps {
   isLoading?: boolean;
 }
 
-export const GeminiAuthModal: React.FC<RouterAuthModalProps> = ({ isOpen, onSave, onClose, isLoading = false }) => {
+export const RouterAuthModal: React.FC<RouterAuthModalProps> = ({ isOpen, onSave, onClose, isLoading = false }) => {
   const [apiKey, setApiKey] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [error, setError] = useState("");

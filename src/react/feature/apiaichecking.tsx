@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { heroVariants } from "@/react/animation/home";
 import { Play, AlertCircle, Loader2, Cpu, Copy, Check, Key, Globe, Eye, EyeOff, Terminal } from "lucide-react";
-import { getCachedGeminiKey } from "@hook/usegemini";
+import { getCachedRouterKey } from "@hook/useAgentModels";
 import { AGENT_API_BASE } from "@config/api";
 
 const listContainerVariants = {
@@ -44,7 +44,7 @@ const AICheck: React.FC = () => {
     try {
       let models: any[] = [];
 
-      const token = authMode === "system" ? getCachedGeminiKey() : customKey.trim();
+      const token = authMode === "system" ? getCachedRouterKey() : customKey.trim();
       if (!token) throw new Error("9router credential is not configured for this account.");
       const response = await fetch(`${AGENT_API_BASE}/router/models`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await response.json();

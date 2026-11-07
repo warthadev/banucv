@@ -22,7 +22,7 @@ Bukan sekadar landing page atau template dashboard. Wartha Sensei dirancang seba
 │  Explore  •  Create  •  Manage  •  Automate  •  Learn      │
 ├───────────────┬───────────────┬───────────────┬─────────────┤
 │ AI Workspace  │ Cloud Library │ Dev Utilities │ Media Hub   │
-│ Gemini Chat   │ Telegram      │ GitHub Editor │ Playlist    │
+│ AI Agent Chat   │ Telegram      │ GitHub Editor │ Playlist    │
 │ API Checker   │ Hugging Face  │ QR / Barcode  │ Downloader  │
 └───────────────┴───────────────┴───────────────┴─────────────┘
 ```
@@ -75,7 +75,7 @@ Bukan sekadar landing page atau template dashboard. Wartha Sensei dirancang seba
 | State | Redux Toolkit, React Redux |
 | Motion & UI | Framer Motion, Lucide React, React Icons, Sonner |
 | Authentication & data | Firebase Authentication, Firestore |
-| AI | Google Generative AI / Gemini |
+| AI | AI Agent via 9Router (termasuk model Gemini) |
 | Integrations | GitHub Octokit, Telegram, Hugging Face |
 | Content | React Markdown, Prism syntax highlighting |
 | Deployment | Firebase Hosting |
@@ -128,7 +128,7 @@ src/
 | `/login` | Publik | Login/authentication |
 | `/dashboard` | Authenticated | Dashboard personal |
 | `/ai-check` | Authenticated | Pemeriksaan AI/API |
-| `/ai-chat` | Authenticated | Gemini AI chat |
+| `/ai-chat` | Authenticated | 9Router AI Agent chat |
 | `/downloader` | Authenticated | Video/audio downloader |
 | `/github-editor` | Authenticated | GitHub repository editor |
 | `/barcode` | Authenticated | QR/barcode generator |

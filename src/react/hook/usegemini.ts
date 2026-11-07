@@ -1,60 +1,35 @@
-// src/react/hook/usegemini.ts
 import { useState, useCallback, useEffect, useRef } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@config/firebase";
+import { getAuth } from "@config/firebase";
+import { clearRouterCredentials, loadRouterCredentials, saveRouterCredentials } from "@config/routerhelper";
+import { AGENT_API_BASE } from "@config/api";
 
 export const ROUTER_ENDPOINT = "https://20128-agq2firibhstlf6sr7k3ydjoim.instabox.tech/v1";
-const TOKEN_KEY = "9router_api_token";
-const MODEL_KEY = "9router_model";
-export const AUTOMATIC_AGENT_MODEL = "gemini/gemini-3.6-flash";
+export const LOCAL_AGENT_MODEL = "mimo-v2.6:latest";
+export const AUTOMATIC_AGENT_MODEL = LOCAL_AGENT_MODEL;
+const FALLBACK_MODELS = [LOCAL_AGENT_MODEL, "openrouter/openrouter/free"];
 let cachedApiKey: string | null = null;
-let cachedModel = AUTOMATIC_AGENT_MODEL;
-
-export const getCachedGeminiKey = (): string | null => cachedApiKey || localStorage.getItem(TOKEN_KEY);
-export const getCachedRouterModel = (): string => cachedModel || "openrouter/openrouter/free";
+let cachedModels: string[] = FALLBACK_MODELS;
+export const getCachedGeminiKey = (): string | null => cachedApiKey;
+export const getCachedRouterModels = (): string[] => cachedModels;
+export const getCachedRouterModel = (): string => cachedModels[0] || AUTOMATIC_AGENT_MODEL;
 export const setCachedGeminiKey = (key: string | null, _uid: string | null) => { cachedApiKey = key; };
-export const invalidateGeminiCache = () => { cachedApiKey = null; };
+export const invalidateGeminiCache = () => { cachedApiKey = null; cachedModels = FALLBACK_MODELS; };
 export const GEMINI_KEY_UPDATED_EVENT = "routerCredentialUpdated";
-
+const fetchAgentModels = async (idToken: string): Promise<string[]> => {
+  const response = await fetch(`${AGENT_API_BASE}/agent/models`, { headers: { Authorization: `Bearer ${idToken}` } });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data?.detail || `Agent models request failed: ${response.status}`);
+  const models = Array.isArray(data.data) ? data.data.map((item: any) => item.id || item.name).filter(Boolean) : [];
+  return models.length ? models : FALLBACK_MODELS;
+};
 export const useGemini = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isConfigured, setIsConfigured] = useState(Boolean(localStorage.getItem(TOKEN_KEY)));
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const mountedRef = useRef(true);
-
+  const [isLoading, setIsLoading] = useState(true); const [isConfigured, setIsConfigured] = useState(false); const [showAuthModal, setShowAuthModal] = useState(false); const [routerModels, setRouterModels] = useState<string[]>(cachedModels); const mountedRef = useRef(true);
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!mountedRef.current) return;
-      setIsConfigured(Boolean(user));
-      setIsLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-  useEffect(() => {
-    const update = () => { if (mountedRef.current) setIsConfigured(Boolean(localStorage.getItem(TOKEN_KEY))); };
-    window.addEventListener(GEMINI_KEY_UPDATED_EVENT, update);
-    return () => window.removeEventListener(GEMINI_KEY_UPDATED_EVENT, update);
-  }, []);
-
-  const saveApiKey = useCallback(async (apiKey: string, model = AUTOMATIC_AGENT_MODEL) => {
-    localStorage.setItem(TOKEN_KEY, apiKey.trim());
-    localStorage.setItem(MODEL_KEY, model.trim() || AUTOMATIC_AGENT_MODEL);
-    cachedApiKey = apiKey.trim();
-    cachedModel = model.trim() || AUTOMATIC_AGENT_MODEL;
-    setIsConfigured(true);
-    setShowAuthModal(false);
-    window.dispatchEvent(new Event(GEMINI_KEY_UPDATED_EVENT));
-  }, []);
-  const clearApiKey = useCallback(async () => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(MODEL_KEY);
-    invalidateGeminiCache();
-    setIsConfigured(false);
-    setShowAuthModal(true);
-    window.dispatchEvent(new Event(GEMINI_KEY_UPDATED_EVENT));
-  }, []);
+  useEffect(() => { let unsubscribe = () => {}; getAuth().then((firebaseAuth) => { unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => { if (!mountedRef.current) return; if (!user) { invalidateGeminiCache(); setIsConfigured(false); setShowAuthModal(false); setIsLoading(false); return; } try { const idToken = await user.getIdToken(true); const credentials = await loadRouterCredentials(); cachedApiKey = credentials?.apiKey || null; let models = FALLBACK_MODELS; try { models = await fetchAgentModels(idToken); } catch (error) { console.warn("Agent model list unavailable; local model remains available", error); } cachedModels = models; if (mountedRef.current) setRouterModels(models); const localAvailable = models.some((model) => model.trim().toLowerCase() === LOCAL_AGENT_MODEL); if (mountedRef.current) { setIsConfigured(Boolean(credentials) || localAvailable); setShowAuthModal(!credentials && !localAvailable); } } catch (error) { console.error("Failed to initialize AI Agent:", error); if (mountedRef.current) { cachedModels = FALLBACK_MODELS; setRouterModels(FALLBACK_MODELS); setIsConfigured(true); setShowAuthModal(false); } } finally { if (mountedRef.current) setIsLoading(false); } }); }).catch((error) => { console.error("Failed to initialize auth:", error); if (mountedRef.current) setIsLoading(false); }); return () => unsubscribe(); }, []);
+  const saveApiKey = useCallback(async (apiKey: string) => { const normalizedKey = apiKey.trim(); await saveRouterCredentials(normalizedKey); cachedApiKey = normalizedKey; const firebaseAuth = await getAuth(); const firebaseUser = firebaseAuth.currentUser; if (!firebaseUser) throw new Error("Please sign in before saving 9router credentials"); const idToken = await firebaseUser.getIdToken(true); const models = await fetchAgentModels(idToken); cachedModels = models; setRouterModels(models); setIsConfigured(true); setShowAuthModal(false); window.dispatchEvent(new Event(GEMINI_KEY_UPDATED_EVENT)); }, []);
+  const clearApiKey = useCallback(async () => { await clearRouterCredentials(); invalidateGeminiCache(); setRouterModels(FALLBACK_MODELS); setIsConfigured(true); setShowAuthModal(false); window.dispatchEvent(new Event(GEMINI_KEY_UPDATED_EVENT)); }, []);
   const closeModal = useCallback(() => setShowAuthModal(false), []);
-  return { isLoading, isConfigured, showAuthModal, saveApiKey, clearApiKey, closeModal };
+  return { isLoading, isConfigured, showAuthModal, saveApiKey, clearApiKey, closeModal, routerModels };
 };
 export default useGemini;

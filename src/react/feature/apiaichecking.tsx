@@ -3,8 +3,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { heroVariants } from "@/react/animation/home";
 import { Play, AlertCircle, Loader2, Cpu, Copy, Check, Key, Globe, Eye, EyeOff, Terminal } from "lucide-react";
-import { ROUTER_ENDPOINT } from "@hook/usegemini";
-import { getAuth } from "@config/firebase";
+import { getCachedGeminiKey } from "@hook/usegemini";
 import { AGENT_API_BASE } from "@config/api";
 
 const listContainerVariants = {
@@ -45,18 +44,9 @@ const AICheck: React.FC = () => {
     try {
       let models: any[] = [];
 
-      let response: Response;
-      if (authMode === "system") {
-        const firebaseAuth = await getAuth();
-        const user = firebaseAuth.currentUser;
-        if (!user) throw new Error("Please sign in before checking system models.");
-        const idToken = await user.getIdToken(true);
-        response = await fetch(`${AGENT_API_BASE}/agent/models`, { headers: { Authorization: `Bearer ${idToken}` } });
-      } else {
-        const token = customKey.trim();
-        if (!token) throw new Error("Enter a 9router token.");
-        response = await fetch(`${ROUTER_ENDPOINT}/models`, { headers: { Authorization: `Bearer ${token}` } });
-      }
+      const token = authMode === "system" ? getCachedGeminiKey() : customKey.trim();
+      if (!token) throw new Error("9router credential is not configured for this account.");
+      const response = await fetch(`${AGENT_API_BASE}/router/models`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error?.message || `Error ${response.status}`);
       models = data.data || data.models || [];

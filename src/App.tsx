@@ -18,7 +18,7 @@ const Home = lazy(() => import("./react/default/home"));
 const Login = lazy(() => import("./react/default/login"));
 const Setting = lazy(() => import("./react/default/setting"));
 const AICheck = lazy(() => import("./react/feature/apiaichecking"));
-const AIChat = lazy(() => import("./react/feature/aichat"));
+const AIAgent = lazy(() => import("./react/feature/aiagent"));
 const Download = lazy(() => import("./react/feature/downloader"));
 const GithubEditor = lazy(() => import("./react/feature/githubeditor"));
 const Barcode = lazy(() => import("./react/feature/barcode"));
@@ -119,7 +119,7 @@ const AppContent: React.FC = () => {
           <Route path="/login" element={<Login />} />
           
           <Route path="/ai-check" element={<GateAuth><AICheck /></GateAuth>} />
-          <Route path="/ai-chat" element={<GateAuth><AIChat /></GateAuth>} />
+          <Route path="/ai-agent" element={<GateAuth><AIAgent /></GateAuth>} />
           <Route path="/downloader" element={<GateAuth><Download /></GateAuth>} />
           <Route path="/setting" element={<GateAuth><Setting /></GateAuth>} />
           <Route path="/github-editor" element={<GateAuth><GithubEditor /></GateAuth>} />

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { heroVariants } from "@/react/animation/home";
 import { Play, AlertCircle, Loader2, Cpu, Copy, Check, Key, Globe, Eye, EyeOff, Terminal } from "lucide-react";
-import { getCachedRouterKey } from "@hook/useAgentModels";
+import { getAuth } from "@config/firebase";
 import { AGENT_API_BASE } from "@config/api";
 
 const listContainerVariants = {
@@ -23,6 +23,7 @@ const listItemVariants = {
 };
 
 interface ModelInfo {
+  id?: string;
   name?: string;
   description?: string;
   supported_generation_methods?: string[];
@@ -50,12 +51,22 @@ const AICheck: React.FC = () => {
     try {
       let models: ModelInfo[] = [];
 
-      const token = authMode === "system" ? getCachedRouterKey() : customKey.trim();
-      if (!token) throw new Error("9router credential is not configured for this account.");
-      const response = await fetch(`${AGENT_API_BASE}/router/models`, { headers: { Authorization: `Bearer ${token}` } });
+      let response: Response;
+      if (authMode === "system") {
+        const firebaseAuth = await getAuth();
+        const user = firebaseAuth.currentUser;
+        if (!user) throw new Error("Silakan masuk untuk memeriksa model sistem.");
+        const idToken = await user.getIdToken(true);
+        response = await fetch(`${AGENT_API_BASE}/agent/models`, { headers: { Authorization: `Bearer ${idToken}` }, cache: "no-store" });
+      } else {
+        const token = customKey.trim();
+        if (!token) throw new Error("Masukkan API key pribadi terlebih dahulu.");
+        response = await fetch(`${AGENT_API_BASE}/router/models`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+      }
       const data = await response.json();
-      if (!response.ok) throw new Error(data?.error?.message || `Error ${response.status}`);
-      models = data.data || data.models || [];
+      if (!response.ok) throw new Error(data?.detail || data?.error?.message || `Error ${response.status}`);
+      const entries = (data.data || data.models || []) as ModelInfo[];
+      models = entries.map((model) => ({ ...model, name: model.name || model.id || "Unknown model" }));
       if (authMode === "system") setSystemModels(models); else setCustomModels(models);
 
       setStatus("idle");

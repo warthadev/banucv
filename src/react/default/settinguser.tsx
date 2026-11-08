@@ -25,7 +25,6 @@ interface UserProfile {
   loginCount?: number;
   githubUsername?: string;
   githubToken?: string;
-  nineRouterApiKey?: string;
   telegramSessions?: string[];
   telegramAccountNames?: string[];
   hfUsernames?: string[];
@@ -68,8 +67,6 @@ const SettingUser: React.FC = () => {
   const [githubUser, setGithubUser] = useState("");
   const [githubToken, setGithubToken] = useState("");
   const [showGithubToken, setShowGithubToken] = useState(false);
-  const [nineRouterApiKey, setNineRouterApiKey] = useState("");
-  const [showNineRouterApiKey, setShowNineRouterApiKey] = useState(false);
   const [telegramSessions, setTelegramSessions] = useState<string[]>([]);
   const [telegramAccountNames, setTelegramAccountNames] = useState<string[]>([]);
   const [hfUsernames, setHfUsernames] = useState<string[]>([]);
@@ -106,7 +103,6 @@ const SettingUser: React.FC = () => {
         setProfile(data);
         setGithubUser(data.githubUsername || "");
         setGithubToken(data.githubToken || "");
-        setNineRouterApiKey(data.nineRouterApiKey || "");
         
         setTelegramSessions(data.telegramSessions || []);
         setTelegramAccountNames(data.telegramAccountNames || []);
@@ -164,9 +160,6 @@ const SettingUser: React.FC = () => {
         updateData.githubToken = githubToken.trim() || null;
       }
 
-      if (nineRouterApiKey !== (profile?.nineRouterApiKey || "")) {
-        updateData.nineRouterApiKey = nineRouterApiKey.trim() || null;
-      }
 
       
       if (Object.keys(updateData).length > 0) {
@@ -333,24 +326,11 @@ const SettingUser: React.FC = () => {
           <Key size={14} color="var(--primary)" />
           9ROUTER API KEY
         </label>
-        <div className="su-input-wrapper">
-          <input
-            type={showNineRouterApiKey ? "text" : "password"}
-            value={nineRouterApiKey}
-            onChange={(e) => setNineRouterApiKey(e.target.value)}
-            placeholder="Paste 9router API key"
-            className="setting-sensitive-input"
-          />
-          <button
-            type="button"
-            className="setting-eye-btn"
-            onClick={() => setShowNineRouterApiKey(!showNineRouterApiKey)}
-          >
-            {showNineRouterApiKey ? <EyeOff size={16} color="var(--primary)" /> : <Eye size={16} color="var(--primary)" />}
-          </button>
-        </div>
+        <p className="setting-help-text">Key AI Agent dikelola terpisah dan disimpan terenkripsi per akun.</p>
+        <a href="/ai-agent" className="github-modal-cancel" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
+          Buka pengaturan AI Agent
+        </a>
       </div>
-
       <div className="su-input-group">
         <label className="su-input-label">
           <GithubIcon />

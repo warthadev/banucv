@@ -311,7 +311,7 @@ const projectItems: ProjectItem[] = [
   },
   {
     name: "AI Agent",
-    path: "/ai-chat",
+    path: "/ai-agent",
     category: "AI Tools",
     icon: MessageSquareText,
     description:

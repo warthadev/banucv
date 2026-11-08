@@ -1,4 +1,4 @@
-// src/react/feature/aichat.tsx
+// src/react/feature/aiagent.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -138,22 +138,22 @@ const TableBlock = ({ content }: { content: string }) => {
   if (!tableContent) return null;
   
   return (
-    <div className="aichat-table-block-wrapper">
-      <div className="aichat-table-header">
-        <span className="aichat-table-label">Table</span>
-        <div className="aichat-table-actions">
-          <button onClick={handleCopy} className="aichat-table-btn">
+    <div className="aiagent-table-block-wrapper">
+      <div className="aiagent-table-header">
+        <span className="aiagent-table-label">Table</span>
+        <div className="aiagent-table-actions">
+          <button onClick={handleCopy} className="aiagent-table-btn">
             {copied ? 'Copied!' : <Copy size={14} />}
             <span>Copy</span>
           </button>
-          <button onClick={handleDownload} className="aichat-table-btn">
+          <button onClick={handleDownload} className="aiagent-table-btn">
             <Download size={14} />
             <span>CSV</span>
           </button>
         </div>
       </div>
-      <div className="aichat-table-scroll">
-        <table className="aichat-table-content">
+      <div className="aiagent-table-scroll">
+        <table className="aiagent-table-content">
           {tableContent}
         </table>
       </div>
@@ -174,8 +174,8 @@ const CodeBlock = ({ language, code }: { language: string; code: string }) => {
     URL.revokeObjectURL(url);
   };
   return (
-    <div className="aichat-code-block-wrapper">
-      <div className="aichat-code-block-actions">
+    <div className="aiagent-code-block-wrapper">
+      <div className="aiagent-code-block-actions">
         <button onClick={handleCopy} className="code-copy-btn">{copied ? "Copied!" : <Copy size={14} />}</button>
         <button onClick={handleDownload} className="code-download-btn"><Download size={14} /></button>
       </div>
@@ -221,21 +221,21 @@ const MarkdownComponents: Components = {
     return className && match ? <CodeBlock language={match[1]} code={code} /> : <code className={className} {...props}>{children}</code>;
   },
   a({ href, children }) { return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>; },
-  img({ src, alt }) { return <img src={src} alt={alt} className="aichat-markdown-img" />; },
+  img({ src, alt }) { return <img src={src} alt={alt} className="aiagent-markdown-img" />; },
   table({ children }) {
-    return <div className="aichat-markdown-table-wrapper">{children}</div>;
+    return <div className="aiagent-markdown-table-wrapper">{children}</div>;
   },
   thead({ children }) {
-    return <thead className="aichat-markdown-thead">{children}</thead>;
+    return <thead className="aiagent-markdown-thead">{children}</thead>;
   },
   th({ children }) {
-    return <th className="aichat-markdown-th">{children}</th>;
+    return <th className="aiagent-markdown-th">{children}</th>;
   },
   td({ children }) {
-    return <td className="aichat-markdown-td">{children}</td>;
+    return <td className="aiagent-markdown-td">{children}</td>;
   },
   tr({ children }) {
-    return <tr className="aichat-markdown-tr">{children}</tr>;
+    return <tr className="aiagent-markdown-tr">{children}</tr>;
   },
 };
 
@@ -449,13 +449,20 @@ const splitMarkdown = (content: string) => {
   return parts;
 };
 
-const AIChat: React.FC = () => {
-  const { isConfigured, showAuthModal, saveApiKey, closeModal, isLoading: authLoading, routerModels } = useAgentModels();
+const AIAgent: React.FC = () => {
+  const { isConfigured, showAuthModal, saveApiKey, closeModal, openModal, isLoading: authLoading, routerModels } = useAgentModels();
   const { aiMode } = useAudio();
 
   const loadMessages = (): Message[] => {
     try {
-      const saved = localStorage.getItem('aichat_messages');
+      let saved = localStorage.getItem('aiagent_messages');
+      if (!saved) {
+        const legacyMessages = localStorage.getItem('aichat_messages');
+        if (legacyMessages) {
+          saved = legacyMessages;
+          localStorage.setItem('aiagent_messages', legacyMessages);
+        }
+      }
       if (saved) {
         const parsed = JSON.parse(saved) as Array<Omit<Message, "timestamp"> & { timestamp: string | number }>;
         return parsed.map((msg) => ({
@@ -471,7 +478,7 @@ const AIChat: React.FC = () => {
 
   const saveMessages = (msgs: Message[]) => {
     try {
-      localStorage.setItem('aichat_messages', JSON.stringify(msgs));
+      localStorage.setItem('aiagent_messages', JSON.stringify(msgs));
     } catch (e) {
       console.warn('Failed to save messages:', e);
     }
@@ -547,7 +554,7 @@ const AIChat: React.FC = () => {
         });
         return () => unsubscribe();
       } catch (error) {
-        console.error("Failed to initialize auth in AIChat:", error);
+        console.error("Failed to initialize auth in AIAgent:", error);
       }
     };
     
@@ -865,6 +872,7 @@ const AIChat: React.FC = () => {
   
   const clearChat = () => { 
     setMessages([]); 
+    localStorage.removeItem('aiagent_messages');
     localStorage.removeItem('aichat_messages');
   };
 
@@ -901,10 +909,19 @@ const AIChat: React.FC = () => {
   return (
     <>
       <RouterAuthModal isOpen={showAuthModal} onSave={saveApiKey} onClose={closeModal} />
+      {!isConfigured && !showAuthModal && (
+        <div style={{ minHeight: "55vh", display: "grid", placeItems: "center", padding: "24px" }}>
+          <div style={{ textAlign: "center", maxWidth: "460px" }}>
+            <h2>AI Agent memerlukan API key 9Router</h2>
+            <p>Key akan disimpan terenkripsi untuk akun Anda.</p>
+            <button type="button" className="github-modal-confirm" onClick={openModal}>Atur API key</button>
+          </div>
+        </div>
+      )}
       <AnimatePresence>
         {isConfigured && isModelPickerOpen && (
           <motion.div
-            className="github-modal-overlay aichat-model-picker-overlay"
+            className="github-modal-overlay aiagent-model-picker-overlay"
             variants={overlayVariants}
             initial="initial"
             animate="animate"
@@ -914,31 +931,31 @@ const AIChat: React.FC = () => {
             }}
           >
             <motion.div
-              className="github-modal aichat-model-picker-modal"
+              className="github-modal aiagent-model-picker-modal"
               variants={modalVariants}
               initial="hidden"
               animate="visible"
               exit="exit"
               role="dialog"
               aria-modal="true"
-              aria-labelledby="aichat-model-picker-title"
+              aria-labelledby="aiagent-model-picker-title"
             >
-              <div className="aichat-model-picker-header">
-                <div className="aichat-model-picker-icon"><Bot size={20} /></div>
-                <div className="aichat-model-picker-heading">
-                  <h3 id="aichat-model-picker-title">Pilih model AI</h3>
+              <div className="aiagent-model-picker-header">
+                <div className="aiagent-model-picker-icon"><Bot size={20} /></div>
+                <div className="aiagent-model-picker-heading">
+                  <h3 id="aiagent-model-picker-title">Pilih model AI</h3>
                   <p>Pilih model untuk percakapan ini.</p>
                 </div>
                 <button
                   type="button"
-                  className="aichat-model-picker-close"
+                  className="aiagent-model-picker-close"
                   onClick={() => setIsModelPickerOpen(false)}
                   aria-label="Tutup pemilih model"
                 >
                   <X size={20} />
                 </button>
               </div>
-              <div className="aichat-model-option-list" role="radiogroup" aria-label="Model AI">
+              <div className="aiagent-model-option-list" role="radiogroup" aria-label="Model AI">
                 {modelOptions.map((model) => {
                   const isAutomatic = model === AUTOMATIC_AGENT_MODEL;
                   const isSelected = model === selectedModel;
@@ -946,7 +963,7 @@ const AIChat: React.FC = () => {
                     <button
                       type="button"
                       key={model}
-                      className={`aichat-model-option${isSelected ? " selected" : ""}`}
+                      className={`aiagent-model-option${isSelected ? " selected" : ""}`}
                       role="radio"
                       aria-checked={isSelected}
                       onClick={() => {
@@ -954,7 +971,7 @@ const AIChat: React.FC = () => {
                         setIsModelPickerOpen(false);
                       }}
                     >
-                      <span className="aichat-model-option-copy">
+                      <span className="aiagent-model-option-copy">
                         <strong>{isAutomatic ? "Auto (disarankan)" : model}</strong>
                         <small>{isAutomatic ? `Model default AI Agent · ${model}` : "Model tersedia melalui AI Agent"}</small>
                       </span>
@@ -968,31 +985,31 @@ const AIChat: React.FC = () => {
         )}
       </AnimatePresence>
       {isConfigured && (
-        <div className="aichat-container">
-          <div className="aichat-messages" ref={scrollRef}>
+        <div className="aiagent-container">
+          <div className="aiagent-messages" ref={scrollRef}>
             {!messages.length && (
-              <div className="aichat-welcome">
-                <div className="aichat-welcome-icon"><Sparkles size={56} /></div>
+              <div className="aiagent-welcome">
+                <div className="aiagent-welcome-icon"><Sparkles size={56} /></div>
                 <h3>Hello, {userDisplayName}!</h3>
                 <p>Ask me anything or upload files</p>
               </div>
             )}
             <AnimatePresence>
               {messages.map((msg) => (
-                <motion.div key={msg.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={`aichat-message ${msg.role === "user" ? "user" : "bot"}`}>
-                  {msg.role === "user" && <div className="aichat-user-avatar">{userAvatar ? <img src={userAvatar} alt="Avatar" /> : <User size={24} />}</div>}
-                  <div className="aichat-message-content">
-                    {msg.role === "user" && <div className="aichat-username">{userDisplayName}</div>}
+                <motion.div key={msg.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={`aiagent-message ${msg.role === "user" ? "user" : "bot"}`}>
+                  {msg.role === "user" && <div className="aiagent-user-avatar">{userAvatar ? <img src={userAvatar} alt="Avatar" /> : <User size={24} />}</div>}
+                  <div className="aiagent-message-content">
+                    {msg.role === "user" && <div className="aiagent-username">{userDisplayName}</div>}
                     {msg.role === "bot" && (
-                      <div className="aichat-bot-header">
-                        <div className="aichat-bot-header-left">
-                          <span className="aichat-model-name">
+                      <div className="aiagent-bot-header">
+                        <div className="aiagent-bot-header-left">
+                          <span className="aiagent-model-name">
                             {msg.model === 'pollinations' ? 'Pollinations' : (msg.model || selectedModel)}
                           </span>
                           {msg.error && (
                             <button 
                               onClick={() => retryMessage(msg.id)} 
-                              className="aichat-retry-btn-header"
+                              className="aiagent-retry-btn-header"
                               title="Retry with same model"
                             >
                               <RefreshCw size={12} /> Retry
@@ -1000,13 +1017,13 @@ const AIChat: React.FC = () => {
                           )}
                         </div>
                         {!msg.imageData && (
-                          <div className="aichat-bot-actions">
+                          <div className="aiagent-bot-actions">
                             <button 
                               onClick={() => {
                                 const textToSpeak = msg.error ? getFullErrorText(msg) : msg.content;
                                 speakText(textToSpeak, msg.id);
                               }} 
-                              className="aichat-speak-btn"
+                              className="aiagent-speak-btn"
                               title={msg.error ? "Audio error message" : "Audio"}
                             >
                               {isSpeaking && currentSpeakingId === msg.id ? <VolumeX size={14} /> : <Volume2 size={14} />}
@@ -1017,7 +1034,7 @@ const AIChat: React.FC = () => {
                                 const textToCopy = msg.error ? getFullErrorText(msg) : msg.content;
                                 copyMessage(textToCopy);
                               }} 
-                              className="aichat-copy-btn"
+                              className="aiagent-copy-btn"
                               title={msg.error ? "Copy error message" : "Copy"}
                             >
                               <Copy size={14} /> Copy
@@ -1027,9 +1044,9 @@ const AIChat: React.FC = () => {
                       </div>
                     )}
                     {msg.role === "user" && msg.images && msg.images.length > 0 && (
-                      <div className="aichat-message-images">
+                      <div className="aiagent-message-images">
                         {msg.images.map((img, idx) => (
-                          <div key={idx} className="aichat-message-image">
+                          <div key={idx} className="aiagent-message-image">
                             <img src={`data:${img.mimeType};base64,${img.data}`} alt={`Uploaded ${idx + 1}`} />
                           </div>
                         ))}
@@ -1039,12 +1056,12 @@ const AIChat: React.FC = () => {
                       <img
                         src={msg.imageData}
                         alt="Generated"
-                        className="aichat-generated-image"
+                        className="aiagent-generated-image"
                         onClick={() => window.open(msg.imageData, "_blank")}
                       />
                     )}
                     {msg.files && msg.files.length > 0 && (
-                      <div className="aichat-message-files">
+                      <div className="aiagent-message-files">
                         {msg.files.map((f, idx) => (
                           <div key={idx} className="file-chip"><FileText size={14} /> {f.name}</div>
                         ))}
@@ -1054,11 +1071,11 @@ const AIChat: React.FC = () => {
                       <>
                         {msg.role === "bot" ? (
                           msg.error ? (
-                            <div className="aichat-message-bubble error-bubble">
-                              <div className="aichat-error-content">
+                            <div className="aiagent-message-bubble error-bubble">
+                              <div className="aiagent-error-content">
                                 {msg.content}
                                 {msg.errorDetails && (
-                                  <div className="aichat-error-details">
+                                  <div className="aiagent-error-details">
                                     Detail: {msg.errorDetails}
                                   </div>
                                 )}
@@ -1071,7 +1088,7 @@ const AIChat: React.FC = () => {
                                 return parts.map((part, index) => {
                                   if (part.type === 'code') {
                                     return (
-                                      <div key={index} className="aichat-code-block-wrapper">
+                                      <div key={index} className="aiagent-code-block-wrapper">
                                         <CodeBlock language={part.language || ''} code={part.content} />
                                       </div>
                                     );
@@ -1079,7 +1096,7 @@ const AIChat: React.FC = () => {
                                     return <TableBlock key={index} content={part.content} />;
                                   } else {
                                     return (
-                                      <div key={index} className="aichat-message-bubble">
+                                      <div key={index} className="aiagent-message-bubble">
                                         <ReactMarkdown components={MarkdownComponents}>
                                           {part.content}
                                         </ReactMarkdown>
@@ -1091,23 +1108,23 @@ const AIChat: React.FC = () => {
                             </>
                           )
                         ) : (
-                          <div className="aichat-message-bubble aichat-user-bubble">
-                            <p className="aichat-user-text">{msg.content}</p>
+                          <div className="aiagent-message-bubble aiagent-user-bubble">
+                            <p className="aiagent-user-text">{msg.content}</p>
                           </div>
                         )}
                       </>
                     )}
                     {msg.role === "bot" && msg.searchImages && msg.searchImages.length > 0 && (
-                      <div className="aichat-search-images">
+                      <div className="aiagent-search-images">
                         {msg.searchImages.map((url, idx) => (
-                          <img key={idx} src={url} alt={`Search result ${idx+1}`} className="aichat-search-image" />
+                          <img key={idx} src={url} alt={`Search result ${idx+1}`} className="aiagent-search-image" />
                         ))}
                       </div>
                     )}
                     {msg.role === "bot" && msg.sources && msg.sources.length > 0 && (
-                      <div className="aichat-sources">
+                      <div className="aiagent-sources">
                         <button 
-                          className="aichat-sources-toggle"
+                          className="aiagent-sources-toggle"
                           style={{ color: 'var(--text)' }}
                           onClick={() => {
                             const key = `sources_${msg.id}`;
@@ -1124,7 +1141,7 @@ const AIChat: React.FC = () => {
                             className={sourcesVisibility[`sources_${msg.id}`] ? 'rotate-180' : ''} 
                           />
                         </button>
-                        <ul className={`aichat-sources-list ${sourcesVisibility[`sources_${msg.id}`] ? 'open' : ''}`}>
+                        <ul className={`aiagent-sources-list ${sourcesVisibility[`sources_${msg.id}`] ? 'open' : ''}`}>
                           {msg.sources.map((src, idx) => (
                             <li key={idx}>
                               <a href={src.url} target="_blank" rel="noopener noreferrer">{src.title}</a>
@@ -1133,33 +1150,33 @@ const AIChat: React.FC = () => {
                         </ul>
                       </div>
                     )}
-                    <div className="aichat-message-footer">
-                      {msg.role === "user" && <><span className="aichat-location"><MapPin size={12} /> {userLocation}</span><span className="aichat-time">{formatTime(msg.timestamp)}{!isToday(msg.timestamp) && ` • ${formatDate(msg.timestamp)}`}</span></>}
-                      {msg.role === "bot" && <span className="aichat-time">{formatTime(msg.timestamp)}{!isToday(msg.timestamp) && ` • ${formatDate(msg.timestamp)}`}</span>}
+                    <div className="aiagent-message-footer">
+                      {msg.role === "user" && <><span className="aiagent-location"><MapPin size={12} /> {userLocation}</span><span className="aiagent-time">{formatTime(msg.timestamp)}{!isToday(msg.timestamp) && ` • ${formatDate(msg.timestamp)}`}</span></>}
+                      {msg.role === "bot" && <span className="aiagent-time">{formatTime(msg.timestamp)}{!isToday(msg.timestamp) && ` • ${formatDate(msg.timestamp)}`}</span>}
                     </div>
                   </div>
                 </motion.div>
               ))}
             </AnimatePresence>
             {isLoading && (
-              <div className="aichat-typing">
-                <div className="aichat-typing-content">
-                  <div className="aichat-typing-header"><span>{selectedModel}</span><div className="aichat-typing-dots"><span></span><span></span><span></span></div></div>
+              <div className="aiagent-typing">
+                <div className="aiagent-typing-content">
+                  <div className="aiagent-typing-header"><span>{selectedModel}</span><div className="aiagent-typing-dots"><span></span><span></span><span></span></div></div>
                 </div>
               </div>
             )}
           </div>
 
           {(uploadedImages.length > 0 || uploadedFiles.length > 0) && (
-            <div className="aichat-previews">
+            <div className="aiagent-previews">
               {uploadedImages.map((img, idx) => (
-                <div key={`img-${idx}`} className="aichat-image-preview">
+                <div key={`img-${idx}`} className="aiagent-image-preview">
                   <img src={img.preview} alt={`Preview ${idx + 1}`} />
-                  <button onClick={() => removeImage(idx)} className="aichat-image-remove"><X size={16} /></button>
+                  <button onClick={() => removeImage(idx)} className="aiagent-image-remove"><X size={16} /></button>
                 </div>
               ))}
               {uploadedFiles.map((file, idx) => (
-                <div key={`file-${idx}`} className="aichat-file-preview">
+                <div key={`file-${idx}`} className="aiagent-file-preview">
                   <FileText size={14} />
                   <span>{file.name.length > 30 ? file.name.substring(0,27)+"..." : file.name}</span>
                   <button onClick={() => removeFile(idx)}><X size={14} /></button>
@@ -1168,20 +1185,20 @@ const AIChat: React.FC = () => {
             </div>
           )}
 
-          <div className="aichat-input-container">
+          <div className="aiagent-input-container">
             <textarea
               ref={textareaRef}
-              className="aichat-input-textarea"
+              className="aiagent-input-textarea"
               placeholder={totalUploads > 0 ? `Message with ${totalUploads} attachment(s)...` : "Type a message..."}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               rows={1}
               style={{ overflowY: textareaOverflow }}
             />
-            <div className="aichat-input-buttons">
-              <div className="aichat-input-buttons-left">
-                <div className="aichat-upload-wrapper" ref={uploadDropdownRef}>
-                  <button className="aichat-icon-btn" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setUploadDropdownPos(calcDropdownPos(r, 160, 150)); setIsUploadDropdownOpen(!isUploadDropdownOpen); }}><Plus size={24} /></button>
+            <div className="aiagent-input-buttons">
+              <div className="aiagent-input-buttons-left">
+                <div className="aiagent-upload-wrapper" ref={uploadDropdownRef}>
+                  <button className="aiagent-icon-btn" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setUploadDropdownPos(calcDropdownPos(r, 160, 150)); setIsUploadDropdownOpen(!isUploadDropdownOpen); }}><Plus size={24} /></button>
                   {isUploadDropdownOpen && (
                     <div
                       className="upload-dropdown-menu"
@@ -1198,36 +1215,36 @@ const AIChat: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <div className="aichat-model-wrapper">
+                <div className="aiagent-model-wrapper">
                   <button
                     type="button"
-                    className="aichat-model-picker-trigger"
+                    className="aiagent-model-picker-trigger"
                     onClick={() => setIsModelPickerOpen(true)}
                     title="Pilih model AI"
                     aria-label="Pilih model AI"
                     aria-haspopup="dialog"
                     aria-expanded={isModelPickerOpen}
                   >
-                    <span className="aichat-icon-btn" aria-hidden="true"><Bot size={24} /></span>
+                    <span className="aiagent-icon-btn" aria-hidden="true"><Bot size={24} /></span>
                   </button>
                 </div>
                 <button 
-                  className={`aichat-icon-btn globe-btn${webSearchEnabled ? " web-search-active" : ""}`} 
+                  className={`aiagent-icon-btn globe-btn${webSearchEnabled ? " web-search-active" : ""}`} 
                   onClick={() => setWebSearchEnabled(v => !v)} 
                   title={webSearchEnabled ? "Web Search ON" : "Web Search OFF"}
                 >
                   <Globe size={22} />
                 </button>
                 <button 
-                  className={`aichat-icon-btn wand2-btn${imageGenEnabled ? " image-gen-active" : ""}`} 
+                  className={`aiagent-icon-btn wand2-btn${imageGenEnabled ? " image-gen-active" : ""}`} 
                   onClick={() => setImageGenEnabled(v => !v)} 
                   title={imageGenEnabled ? "Image Gen ON" : "Image Gen OFF"}
                 >
                   <Wand2 size={22} />
                 </button>
-                <button onClick={clearChat} className="aichat-clear-btn"><Trash2 size={22} /></button>
+                <button onClick={clearChat} className="aiagent-clear-btn"><Trash2 size={22} /></button>
               </div>
-              <button onClick={handleSendMessage} disabled={isLoading || (!input.trim() && !uploadedImages.length && !uploadedFiles.length)} className="aichat-send-btn">
+              <button onClick={handleSendMessage} disabled={isLoading || (!input.trim() && !uploadedImages.length && !uploadedFiles.length)} className="aiagent-send-btn">
                 {isLoading ? <Loader2 size={24} className="spin" /> : <Send size={24} />}
               </button>
             </div>
@@ -1242,4 +1259,4 @@ const AIChat: React.FC = () => {
   );
 };
 
-export default AIChat;
+export default AIAgent;

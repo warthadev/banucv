@@ -26,7 +26,7 @@ import { GithubIcon } from '@control/icon';
 
 const quickMenuItems = [
   { name: 'AI Check', path: '/ai-check', icon: Bot, description: 'Analyze system status' },
-  { name: 'AI Agent', path: '/ai-chat', icon: MessageSquareText, description: 'Connect to the Instabox agent' },
+  { name: 'AI Agent', path: '/ai-agent', icon: MessageSquareText, description: 'Connect to the Instabox agent' },
   { name: 'Downloader', path: '/downloader', icon: Download, description: 'Extract video content' },
   { name: 'GitHub Repo', path: '/github-editor', icon: GithubIcon, description: 'Manage & edit GitHub repositories' },
   { name: 'Loading Test', path: '/loading', icon: Loader2, description: 'Test UI loading states' },

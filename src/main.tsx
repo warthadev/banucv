@@ -20,7 +20,7 @@ import "./css/githubeditor.css";
 import "./css/downloader.css";
 import "./css/universal.css";
 import "./css/collectphoto.css";
-import "./css/aichat.css";
+import "./css/aiagent.css";
 import "./css/cloudview.css";
 import "./css/mediarender.css";
 import "./css/apiaichecking.css";

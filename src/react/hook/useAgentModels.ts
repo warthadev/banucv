@@ -58,10 +58,11 @@ export const useAgentModels = () => {
             console.warn("Agent model list unavailable; local model remains available", error);
           }
           cachedModels = models;
+          const localModelAvailable = models.some((model) => model.trim().toLowerCase() === LOCAL_AGENT_MODEL.toLowerCase());
           if (mountedRef.current) {
             setRouterModels(models);
-            setIsConfigured(Boolean(credentials));
-            setShowAuthModal(!credentials);
+            setIsConfigured(Boolean(credentials) || localModelAvailable);
+            setShowAuthModal(!credentials && !localModelAvailable);
           }
         } catch (error) {
           console.error("Failed to initialize AI Agent credentials:", error);

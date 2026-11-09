@@ -122,54 +122,50 @@ export const useFrameScroll = ({
         setTotalFrames(0);
         return;
       }
-      setFirstFrameLoaded(true);
-
+      const firstImage = new Image();
+      firstImage.decoding = "async";
+      imagesRef.current = [firstImage];
+      firstImage.onload = () => {
+        if (cancelled || !mountedRef.current) return;
+        imagesRef.current[0] = firstImage;
+        setFirstFrameLoaded(true);
+      };
+      firstImage.onerror = () => {
+        if (cancelled || !mountedRef.current) return;
+        setFirstFrameLoaded(true);
+      };
+      firstImage.src = buildUrl(startNum);
       const endNum = await findLastFrame(startNum);
       if (cancelled || !mountedRef.current) return;
-
       const count = endNum - startNum + 1;
       setTotalFrames(count);
-
       if (count === 0) return;
-
       const images: HTMLImageElement[] = new Array(count);
+      images[0] = firstImage;
       imagesRef.current = images;
-
-      let loadedSoFar = 0;
-
-      for (let i = 0; i < count; i++) {
+      let loadedSoFar = firstImage.complete ? 1 : 0;
+      setLoadedCount(loadedSoFar);
+      if (loadedSoFar === count) setLoaded(true);
+      for (let i = 1; i < count; i++) {
         const num = startNum + i;
         const url = buildUrl(num);
         const img = new Image();
         img.decoding = "async";
         img.src = url;
-
         img.onload = () => {
           if (cancelled || !mountedRef.current) return;
           images[i] = img;
           loadedSoFar++;
           setLoadedCount(loadedSoFar);
-          if (i === 0) {
-            setFirstFrameLoaded(true);
-          }
-          if (loadedSoFar === count) {
-            setLoaded(true);
-          }
+          if (loadedSoFar === count) setLoaded(true);
         };
-
         img.onerror = () => {
           if (cancelled || !mountedRef.current) return;
           images[i] = img;
           loadedSoFar++;
           setLoadedCount(loadedSoFar);
-          if (i === 0) {
-            setFirstFrameLoaded(true);
-          }
-          if (loadedSoFar === count) {
-            setLoaded(true);
-          }
+          if (loadedSoFar === count) setLoaded(true);
         };
-
         images[i] = img;
       }
     };

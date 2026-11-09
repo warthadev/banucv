@@ -23,7 +23,6 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
   
   const [step, setStep] = useState(0);
   const [isArchenaPlaying, setIsArchenaPlaying] = useState(false);
-  const [isAutoplayBlocked, setIsAutoplayBlocked] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const genres = [
@@ -76,7 +75,6 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
     if (audio) {
       audio.volume = 1.0;
       setIsArchenaPlaying(false);
-      setIsAutoplayBlocked(false);
       let isCurrentStep = true;
       const playAudio = async () => {
         if (aiMode === "auto") {
@@ -84,14 +82,15 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
             await audio.play(); 
             if (isCurrentStep) setIsArchenaPlaying(true);
           } catch {
-            if (isCurrentStep) setIsAutoplayBlocked(true);
+            if (isCurrentStep) setIsArchenaPlaying(false);
           }
         }
       };
-      const timer = setTimeout(playAudio, 600);
+      if (aiMode === "auto") audio.load();
+      const timer = aiMode === "auto" ? setTimeout(playAudio, 600) : undefined;
       return () => { 
         isCurrentStep = false;
-        clearTimeout(timer); 
+        if (timer) clearTimeout(timer);
         audio.pause(); 
         audio.currentTime = 0; 
       };
@@ -127,12 +126,10 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
         await audio.play();
         if (audioRef.current === audio) {
           setIsArchenaPlaying(true);
-          setIsAutoplayBlocked(false);
         }
       } catch {
         if (audioRef.current === audio) {
           setIsArchenaPlaying(false);
-          setIsAutoplayBlocked(true);
         }
       }
     } else { 
@@ -197,7 +194,7 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
             </div>
           )}
 
-          {((aiMode === "manual" && step !== 1) || (aiMode === "auto" && isAutoplayBlocked)) && (
+          {aiMode === "manual" && step !== 1 && (
             <div
               onClick={toggleManualAudio}
               className="audio-manual-trigger"

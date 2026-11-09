@@ -93,6 +93,7 @@ const AppContent: React.FC = () => {
   }, [isSettingPage, playlistOpen, isPlaying, closePlaylist]);
   
   const hideGlobalUI = isLoginPage || (isDashboard && !hasVisited);
+  const hideFloatingMusic = isSettingPage || location.pathname === "/";
 
   return (
     <ThemeProvider>
@@ -101,7 +102,7 @@ const AppContent: React.FC = () => {
       {!hideGlobalUI && <Navbar />}
       {!hideGlobalUI && <Quick />}
       
-      {!hideGlobalUI && !isSettingPage && !playlistOpen && <PlayerFloatMusic />}
+      {!hideGlobalUI && !hideFloatingMusic && !playlistOpen && <PlayerFloatMusic />}
 
       <MediaAudio
         isOpen={playlistOpen}

@@ -19,13 +19,30 @@ interface UseFrameScrollReturn {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
 }
 
-const checkFrameExists = (url: string): Promise<boolean> => {
-  return new Promise((resolve) => {
+const MAX_CONCURRENT_LOADS = 4;
+const FRAME_CACHE_RADIUS = 5;
+const FRAME_ASSET_VERSION = "18137a57086fc283";
+
+const loadImage = (url: string): Promise<HTMLImageElement | null> =>
+  new Promise((resolve) => {
     const img = new Image();
-    img.onload = () => resolve(true);
-    img.onerror = () => resolve(false);
+    img.decoding = "async";
+    img.onload = () => {
+      img.onload = null;
+      img.onerror = null;
+      resolve(img);
+    };
+    img.onerror = () => {
+      img.onload = null;
+      img.onerror = null;
+      resolve(null);
+    };
     img.src = url;
   });
+
+const checkFrameExists = async (url: string): Promise<boolean> => {
+  const img = await loadImage(url);
+  return img !== null;
 };
 
 export const useFrameScroll = ({
@@ -41,24 +58,31 @@ export const useFrameScroll = ({
   const [totalFrames, setTotalFrames] = useState(0);
   const [progress, setProgress] = useState(0);
 
-  const imagesRef = useRef<HTMLImageElement[]>([]);
+  const imagesRef = useRef<Map<number, HTMLImageElement>>(new Map());
+  const loadingRef = useRef<Map<number, HTMLImageElement>>(new Map());
+  const pendingRef = useRef<Set<number>>(new Set());
+  const activeLoadsRef = useRef(0);
+  const totalFramesRef = useRef(0);
+  const targetFrameIndexRef = useRef(0);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const lastFrameIndexRef = useRef<number>(-1);
   const rafRef = useRef<number | null>(null);
+  const updateScrollRef = useRef<(() => void) | null>(null);
+  const requestFrameRef = useRef<((index: number) => void) | null>(null);
   const mountedRef = useRef<boolean>(true);
 
   const buildUrl = useCallback(
     (num: number) => {
       const padded = String(num).padStart(padLength, "0");
-      return `${basePath}/${prefix}${padded}${extension}`;
+      return `${basePath}/${prefix}${padded}${extension}?v=${FRAME_ASSET_VERSION}`;
     },
     [basePath, prefix, extension, padLength]
   );
 
   const renderFrame = useCallback((index: number) => {
     const canvas = canvasRef.current;
-    const img = imagesRef.current[index];
+    const img = imagesRef.current.get(index);
     if (!canvas || !img || !img.complete || img.naturalWidth === 0) return false;
 
     let ctx: CanvasRenderingContext2D | null = null;
@@ -92,139 +116,224 @@ export const useFrameScroll = ({
 
   useEffect(() => {
     let cancelled = false;
+    const images = new Map<number, HTMLImageElement>();
+    const loading = new Map<number, HTMLImageElement>();
+    const pending = new Set<number>();
+    imagesRef.current = images;
+    loadingRef.current = loading;
+    pendingRef.current = pending;
+    activeLoadsRef.current = 0;
+    totalFramesRef.current = 0;
+    targetFrameIndexRef.current = 0;
+    lastFrameIndexRef.current = -1;
 
-    const findFirstFrame = async (): Promise<number> => {
+    const releaseImage = (img: HTMLImageElement) => {
+      img.onload = null;
+      img.onerror = null;
+      img.removeAttribute("src");
+    };
+
+    const findFirstFrame = async (): Promise<{ number: number; image: HTMLImageElement } | null> => {
       for (let n = 1; n <= scanLimit; n++) {
-        const url = buildUrl(n);
-        const exists = await checkFrameExists(url);
-        if (cancelled || !mountedRef.current) return -1;
-        if (exists) return n;
+        const image = await loadImage(buildUrl(n));
+        if (cancelled || !mountedRef.current) return null;
+        if (image) return { number: n, image };
       }
-      return -1;
+      return null;
     };
 
     const findLastFrame = async (startNum: number): Promise<number> => {
-      let endNum = startNum;
-      for (let n = startNum + 1; n <= startNum + scanLimit; n++) {
-        const url = buildUrl(n);
-        const exists = await checkFrameExists(url);
-        if (cancelled || !mountedRef.current) return endNum;
-        if (!exists) return endNum;
-        endNum = n;
+      const maxNum = startNum + scanLimit;
+      let lastExisting = startNum;
+      let probe = Math.min(startNum + 1, maxNum);
+      let firstMissing: number | null = null;
+
+      while (probe <= maxNum) {
+        const exists = await checkFrameExists(buildUrl(probe));
+        if (cancelled || !mountedRef.current) return lastExisting;
+        if (!exists) {
+          firstMissing = probe;
+          break;
+        }
+        lastExisting = probe;
+        const distance = probe - startNum;
+        if (distance >= scanLimit) return lastExisting;
+        probe = Math.min(startNum + distance * 2, maxNum);
       }
-      return endNum;
+
+      if (firstMissing === null) return lastExisting;
+
+      let low = lastExisting + 1;
+      let high = firstMissing - 1;
+      while (low <= high) {
+        const middle = Math.floor((low + high) / 2);
+        const exists = await checkFrameExists(buildUrl(middle));
+        if (cancelled || !mountedRef.current) return lastExisting;
+        if (exists) {
+          lastExisting = middle;
+          low = middle + 1;
+        } else {
+          high = middle - 1;
+        }
+      }
+      return lastExisting;
     };
 
-    const run = async () => {
-      const startNum = await findFirstFrame();
+    let pumpQueue = () => {};
+
+    const loadFrame = (index: number, startNum: number) => {
+      if (images.has(index) || loading.has(index)) return;
+      const img = new Image();
+      img.decoding = "async";
+      loading.set(index, img);
+      activeLoadsRef.current += 1;
+
+      const finish = (success: boolean) => {
+        if (loading.get(index) !== img) return;
+        loading.delete(index);
+        activeLoadsRef.current = Math.max(0, activeLoadsRef.current - 1);
+        if (cancelled || !mountedRef.current) {
+          releaseImage(img);
+          return;
+        }
+
+        const center = targetFrameIndexRef.current;
+        const minKeep = Math.max(0, center - FRAME_CACHE_RADIUS);
+        const maxKeep = Math.min(totalFramesRef.current - 1, center + FRAME_CACHE_RADIUS);
+        if (success && index >= minKeep && index <= maxKeep) {
+          images.set(index, img);
+          const isCloser = lastFrameIndexRef.current === -1 ||
+            Math.abs(index - center) < Math.abs(lastFrameIndexRef.current - center);
+          const rendered = (index === center || isCloser) && renderFrame(index);
+          if (rendered) {
+            setFirstFrameLoaded(true);
+            setLoaded(true);
+          }
+        } else {
+          releaseImage(img);
+        }
+        setLoadedCount(images.size);
+        pumpQueue();
+      };
+
+      img.onload = () => finish(true);
+      img.onerror = () => finish(false);
+      img.src = buildUrl(startNum + index);
+    };
+
+    pumpQueue = () => {
       if (cancelled || !mountedRef.current) return;
-      if (startNum === -1) {
+      while (activeLoadsRef.current < MAX_CONCURRENT_LOADS && pending.size > 0) {
+        let nextIndex: number | null = null;
+        let nearestDistance = Number.POSITIVE_INFINITY;
+        for (const index of pending) {
+          const distance = Math.abs(index - targetFrameIndexRef.current);
+          if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nextIndex = index;
+          }
+        }
+        if (nextIndex === null) return;
+        pending.delete(nextIndex);
+        loadFrame(nextIndex, startFrameNumber);
+      }
+    };
+
+    let startFrameNumber = 1;
+
+    const requestFrames = (requestedIndex: number) => {
+      const count = totalFramesRef.current;
+      if (count === 0) return;
+      const center = Math.max(0, Math.min(count - 1, requestedIndex));
+      targetFrameIndexRef.current = center;
+      const minKeep = Math.max(0, center - FRAME_CACHE_RADIUS);
+      const maxKeep = Math.min(count - 1, center + FRAME_CACHE_RADIUS);
+
+      for (const [index, img] of images) {
+        if (index < minKeep || index > maxKeep) {
+          images.delete(index);
+          releaseImage(img);
+        }
+      }
+      for (const index of pending) {
+        if (index < minKeep || index > maxKeep) pending.delete(index);
+      }
+      for (const [index, img] of loading) {
+        if (index < minKeep || index > maxKeep) {
+          loading.delete(index);
+          activeLoadsRef.current = Math.max(0, activeLoadsRef.current - 1);
+          releaseImage(img);
+        }
+      }
+
+      for (let index = minKeep; index <= maxKeep; index++) {
+        if (!images.has(index) && !loading.has(index)) pending.add(index);
+      }
+
+      if (!images.has(center)) {
+        let nearestIndex: number | null = null;
+        let nearestDistance = Number.POSITIVE_INFINITY;
+        for (const index of images.keys()) {
+          const distance = Math.abs(index - center);
+          if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestIndex = index;
+          }
+        }
+        if (nearestIndex !== null && nearestIndex !== lastFrameIndexRef.current) {
+          renderFrame(nearestIndex);
+        }
+      } else if (center !== lastFrameIndexRef.current) {
+        renderFrame(center);
+      }
+
+      setLoadedCount(images.size);
+      pumpQueue();
+    };
+
+    requestFrameRef.current = requestFrames;
+
+    const run = async () => {
+      const firstFrame = await findFirstFrame();
+      if (cancelled || !mountedRef.current) return;
+      if (!firstFrame) {
+        totalFramesRef.current = 0;
         setTotalFrames(0);
         return;
       }
-      const firstImage = new Image();
-      firstImage.decoding = "async";
-      imagesRef.current = [firstImage];
-      firstImage.onload = () => {
-        if (cancelled || !mountedRef.current) return;
-        imagesRef.current[0] = firstImage;
+
+      startFrameNumber = firstFrame.number;
+      images.set(0, firstFrame.image);
+      setLoadedCount(images.size);
+      if (renderFrame(0)) {
         setFirstFrameLoaded(true);
-      };
-      firstImage.onerror = () => {
-        if (cancelled || !mountedRef.current) return;
-        setFirstFrameLoaded(true);
-      };
-      firstImage.src = buildUrl(startNum);
-      const endNum = await findLastFrame(startNum);
-      if (cancelled || !mountedRef.current) return;
-      const count = endNum - startNum + 1;
-      setTotalFrames(count);
-      if (count === 0) return;
-      const images: HTMLImageElement[] = new Array(count);
-      images[0] = firstImage;
-      imagesRef.current = images;
-      let loadedSoFar = firstImage.complete ? 1 : 0;
-      setLoadedCount(loadedSoFar);
-      if (loadedSoFar === count) setLoaded(true);
-      for (let i = 1; i < count; i++) {
-        const num = startNum + i;
-        const url = buildUrl(num);
-        const img = new Image();
-        img.decoding = "async";
-        img.src = url;
-        img.onload = () => {
-          if (cancelled || !mountedRef.current) return;
-          images[i] = img;
-          loadedSoFar++;
-          setLoadedCount(loadedSoFar);
-          if (loadedSoFar === count) setLoaded(true);
-        };
-        img.onerror = () => {
-          if (cancelled || !mountedRef.current) return;
-          images[i] = img;
-          loadedSoFar++;
-          setLoadedCount(loadedSoFar);
-          if (loadedSoFar === count) setLoaded(true);
-        };
-        images[i] = img;
+        setLoaded(true);
       }
+
+      const lastFrameNumber = await findLastFrame(startFrameNumber);
+      if (cancelled || !mountedRef.current) return;
+      const count = lastFrameNumber - startFrameNumber + 1;
+      totalFramesRef.current = count;
+      setTotalFrames(count);
+      requestFrames(0);
+      updateScrollRef.current?.();
     };
 
-    run();
+    void run();
 
     return () => {
       cancelled = true;
-      imagesRef.current = [];
+      requestFrameRef.current = null;
+      for (const img of images.values()) releaseImage(img);
+      for (const img of loading.values()) releaseImage(img);
+      images.clear();
+      loading.clear();
+      pending.clear();
+      activeLoadsRef.current = 0;
+      totalFramesRef.current = 0;
       lastFrameIndexRef.current = -1;
     };
-  }, [buildUrl, scanLimit]);
-
-  useEffect(() => {
-    if (!firstFrameLoaded) return;
-
-    let attempts = 0;
-    const maxAttempts = 50;
-
-    const poll = () => {
-      if (!mountedRef.current) return;
-      if (attempts >= maxAttempts) return;
-
-      const success = renderFrame(0);
-      if (success) return;
-
-      attempts++;
-      setTimeout(poll, 50);
-    };
-
-    poll();
-  }, [firstFrameLoaded, renderFrame]);
-
-  useEffect(() => {
-    let frameRafId: number | null = null;
-
-    const loop = () => {
-      if (!mountedRef.current) {
-        frameRafId = null;
-        return;
-      }
-
-      const canvas = canvasRef.current;
-      if (canvas && lastFrameIndexRef.current === -1) {
-        renderFrame(0);
-      }
-
-      frameRafId = requestAnimationFrame(loop);
-    };
-
-    frameRafId = requestAnimationFrame(loop);
-
-    return () => {
-      if (frameRafId !== null) {
-        cancelAnimationFrame(frameRafId);
-        frameRafId = null;
-      }
-    };
-  }, [renderFrame]);
+  }, [buildUrl, renderFrame, scanLimit]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -233,7 +342,7 @@ export const useFrameScroll = ({
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = null;
 
-        const count = imagesRef.current.length;
+        const count = totalFramesRef.current;
         if (count === 0) return;
 
         const container = containerRef.current;
@@ -242,32 +351,29 @@ export const useFrameScroll = ({
         const rect = container.getBoundingClientRect();
         const containerHeight = rect.height;
         const viewportHeight = window.innerHeight;
-
         if (containerHeight <= viewportHeight) return;
 
-        let p = -rect.top / (containerHeight - viewportHeight);
-        if (p < 0) p = 0;
-        if (p > 1) p = 1;
-
-        setProgress(p);
+        const progressValue = Math.max(
+          0,
+          Math.min(1, -rect.top / (containerHeight - viewportHeight))
+        );
+        setProgress(progressValue);
 
         const frameIndex = Math.min(
           count - 1,
-          Math.max(0, Math.floor(p * (count - 1)))
+          Math.max(0, Math.floor(progressValue * (count - 1)))
         );
-
-        if (frameIndex !== lastFrameIndexRef.current) {
-          renderFrame(frameIndex);
-        }
+        requestFrameRef.current?.(frameIndex);
       });
     };
 
+    updateScrollRef.current = handleScroll;
     handleScroll();
-
     window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("resize", handleScroll);
 
     return () => {
+      updateScrollRef.current = null;
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleScroll);
       if (rafRef.current !== null) {
@@ -275,7 +381,7 @@ export const useFrameScroll = ({
         rafRef.current = null;
       }
     };
-  }, [renderFrame]);
+  }, []);
 
   return {
     loaded,

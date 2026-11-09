@@ -4,6 +4,7 @@
   min-height: auto;
   display: block;
   position: relative;
+  background: transparent;
 }
 
 .home-container--dash::before {

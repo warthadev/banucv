@@ -23,6 +23,7 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
   
   const [step, setStep] = useState(0);
   const [isArchenaPlaying, setIsArchenaPlaying] = useState(false);
+  const [isAutoplayBlocked, setIsAutoplayBlocked] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const genres = [
@@ -75,18 +76,21 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
     if (audio) {
       audio.volume = 1.0;
       setIsArchenaPlaying(false);
+      setIsAutoplayBlocked(false);
+      let isCurrentStep = true;
       const playAudio = async () => {
         if (aiMode === "auto") {
           try { 
             await audio.play(); 
-            setIsArchenaPlaying(true); 
-          } catch (err) { 
-            console.warn("Autoplay blocked:", err); 
+            if (isCurrentStep) setIsArchenaPlaying(true);
+          } catch {
+            if (isCurrentStep) setIsAutoplayBlocked(true);
           }
         }
       };
       const timer = setTimeout(playAudio, 600);
       return () => { 
+        isCurrentStep = false;
         clearTimeout(timer); 
         audio.pause(); 
         audio.currentTime = 0; 
@@ -115,12 +119,22 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
     }
   };
 
-  const toggleManualAudio = () => {
+  const toggleManualAudio = async () => {
     const audio = audioRef.current;
     if (!audio) return;
     if (audio.paused) { 
-      audio.play().catch(() => {}); 
-      setIsArchenaPlaying(true); 
+      try {
+        await audio.play();
+        if (audioRef.current === audio) {
+          setIsArchenaPlaying(true);
+          setIsAutoplayBlocked(false);
+        }
+      } catch {
+        if (audioRef.current === audio) {
+          setIsArchenaPlaying(false);
+          setIsAutoplayBlocked(true);
+        }
+      }
     } else { 
       audio.pause(); 
       setIsArchenaPlaying(false); 
@@ -183,7 +197,7 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
             </div>
           )}
 
-          {aiMode === "manual" && step !== 1 && (
+          {((aiMode === "manual" && step !== 1) || (aiMode === "auto" && isAutoplayBlocked)) && (
             <div
               onClick={toggleManualAudio}
               className="audio-manual-trigger"

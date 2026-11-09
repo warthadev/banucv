@@ -38,31 +38,31 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
       title: "Welcome Setup", 
       desc: "Hi, welcome! I'm Archena, your AI assistant here to guide you through every detail of this CV. Developed by Herbanu Warthakusuma, I'm currently a static assistant to keep production costs efficient, meaning I can't engage in live conversations just yet. Please note that I currently only support Indonesian. If you understand, click the button below to proceed.",
       icon: "🛠️",
-      audio: "/audio/instruction/1.wav"
+      audio: "/audio/instruction/1.wav?v=audio-fix-20261109"
     },
     { 
       title: "AI Instruction Mode", 
       desc: "Choose how you want the AI voice instructions to guide you.",
       icon: "🎙️", 
-      audio: "/audio/instruction/2.wav" 
+      audio: "/audio/instruction/2.wav?v=audio-fix-20261109"
     },
     { 
       title: "Background Music", 
       desc: "Pick a music genre to accompany you while exploring this CV dashboard.", 
       icon: "🎵", 
-      audio: "/audio/instruction/3.wav" 
+      audio: "/audio/instruction/3.wav?v=audio-fix-20261109"
     },
     { 
       title: "Setup Almost Complete", 
       desc: "Don't worry, you can change your AI mode and music preferences anytime via the Settings menu located inside the Open CV Dashboard at the top right corner.", 
       icon: "⚙️", 
-      audio: "/audio/instruction/4.wav" 
+      audio: "/audio/instruction/4.wav?v=audio-fix-20261109"
     },
     { 
       title: "Setup Complete", 
       desc: "Everything is ready. Click the button below to enter the main Dashboard.", 
       icon: "🚀", 
-      audio: "/audio/instruction/5.wav" 
+      audio: "/audio/instruction/5.wav?v=audio-fix-20261109"
     }
   ];
 

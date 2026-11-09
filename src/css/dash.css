@@ -18,6 +18,16 @@
   z-index: 1;
 }
 
+.dash-framescroll-fallback {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  object-fit: cover;
+  display: block;
+  z-index: 0;
+  pointer-events: none;
+}
 .dash-framescroll-canvas {
   position: fixed;
   top: 0;

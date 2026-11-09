@@ -122,6 +122,7 @@ export const useFrameScroll = ({
         setTotalFrames(0);
         return;
       }
+      setFirstFrameLoaded(true);
 
       const endNum = await findLastFrame(startNum);
       if (cancelled || !mountedRef.current) return;

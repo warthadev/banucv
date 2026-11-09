@@ -26,16 +26,37 @@ const FrameScroll: React.FC<FrameScrollProps> = ({
     extension,
     padLength,
   });
+  const [loadingFallback, setLoadingFallback] = React.useState(false);
+  const onLoadedRef = React.useRef(onLoaded);
+  const loadNotifiedRef = React.useRef(false);
 
   useEffect(() => {
-    if (firstFrameLoaded && onLoaded) {
-      onLoaded();
+    onLoadedRef.current = onLoaded;
+  }, [onLoaded]);
+
+  useEffect(() => {
+    if (firstFrameLoaded) {
+      if (!loadNotifiedRef.current) {
+        loadNotifiedRef.current = true;
+        onLoadedRef.current?.();
+      }
+      return;
     }
-  }, [firstFrameLoaded, onLoaded]);
+
+    const timeout = window.setTimeout(() => {
+      setLoadingFallback(true);
+      if (!loadNotifiedRef.current) {
+        loadNotifiedRef.current = true;
+        onLoadedRef.current?.();
+      }
+    }, 3000);
+
+    return () => window.clearTimeout(timeout);
+  }, [firstFrameLoaded]);
 
   return (
     <>
-      {!firstFrameLoaded && <Loading />}
+      {!firstFrameLoaded && !loadingFallback && <Loading />}
       <canvas
         ref={canvasRef}
         className={`dash-framescroll-canvas${firstFrameLoaded ? " is-loaded" : ""}`}

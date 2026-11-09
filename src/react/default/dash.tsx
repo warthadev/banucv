@@ -61,6 +61,12 @@ const Dash: React.FC = () => {
 
   return (
     <div className="home-container home-container--dash">
+      <img
+        className="dash-framescroll-fallback"
+        src="/image/motion/frame_0001.webp"
+        alt=""
+        aria-hidden="true"
+      />
       <FrameScroll
         basePath="/image/motion"
         onLoaded={() => setReady(true)}

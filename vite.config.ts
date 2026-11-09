@@ -33,7 +33,9 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), cacheImageMotionPlugin()],
-    define: {},
+    define: {
+      'import.meta.env.VITE_API_URL': JSON.stringify(API_URL),
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),

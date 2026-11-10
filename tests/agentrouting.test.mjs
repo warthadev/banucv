@@ -5,6 +5,7 @@ import {
   LOCAL_AGENT_MODEL_ALIAS,
   isLocalAgentModel,
   resolveAgentModelRoute,
+  shouldRetryWithNextAgentModel,
 } from "../src/react/config/agentrouting.ts";
 
 const cloudApiBase = "https://warthadev-backend.onrender.com";
@@ -74,4 +75,22 @@ test("an explicit cloud base is preserved", () => {
     apiBase: override,
     model: cloudModels[0],
   });
+});
+
+for (const model of [LOCAL_AGENT_MODEL, LOCAL_AGENT_MODEL_ALIAS]) {
+  for (const status of ["429", "503"]) {
+    test(`local model ${model} does not fall back after ${status}`, () => {
+      assert.equal(shouldRetryWithNextAgentModel(model, true, 0, 3), false);
+    });
+  }
+}
+
+for (const status of ["429", "503"]) {
+  test(`cloud model still falls back to the next cloud model after ${status}`, () => {
+    assert.equal(shouldRetryWithNextAgentModel(cloudModels[0], true, 0, 3), true);
+  });
+}
+
+test("retryable failure at the final model does not request another model", () => {
+  assert.equal(shouldRetryWithNextAgentModel(cloudModels[1], true, 2, 3), false);
 });

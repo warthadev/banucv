@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import useAgentModels, { AUTOMATIC_AGENT_MODEL } from "@hook/useagentmodels";
 import { AGENT_API_BASE, LOCAL_AGENT_API_BASE } from "@config/api";
-import { resolveAgentModelRoute } from "@config/agentrouting";
+import { resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
 import { useAudio } from "@hook/useaudio";
 import { RouterAuthModal } from "./routerauthmodal";
 import { modalVariants, overlayVariants } from "@animation/githubeditor";
@@ -821,7 +821,8 @@ const AIAgent: React.FC = () => {
       const isServiceUnavailable = errorType === "SERVICE_UNAVAILABLE" || errorMessage.includes("503");
       const isRateLimit = errorType === "RATE_LIMIT" || errorMessage.includes("429");
       
-      if ((isServiceUnavailable || isRateLimit) && retryModelIndex < modelOptions.length - 1) {
+      const attemptedModel = modelOptions[retryModelIndex] || selectedModel;
+      if (shouldRetryWithNextAgentModel(attemptedModel, isServiceUnavailable || isRateLimit, retryModelIndex, modelOptions.length)) {
         await new Promise(resolve => setTimeout(resolve, 1000));
         await sendMessage(messageText, images, files, retryModelIndex + 1, true);
         return;

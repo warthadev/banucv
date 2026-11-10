@@ -6,6 +6,13 @@ export const isLocalAgentModel = (model: string): boolean => {
   return normalized === LOCAL_AGENT_MODEL || normalized === LOCAL_AGENT_MODEL_ALIAS;
 };
 
+export const shouldRetryWithNextAgentModel = (
+  model: string,
+  isRetryableFailure: boolean,
+  modelIndex: number,
+  modelCount: number,
+): boolean => !isLocalAgentModel(model) && isRetryableFailure && modelIndex < modelCount - 1;
+
 export const resolveAgentModelRoute = (
   model: string,
   cloudApiBase: string,

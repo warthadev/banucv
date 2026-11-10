@@ -327,7 +327,7 @@ const SettingUser: React.FC = () => {
           9ROUTER API KEY
         </label>
         <p className="setting-help-text">Key AI Agent dikelola terpisah dan disimpan terenkripsi per akun.</p>
-        <a href="/ai-agent" className="github-modal-cancel" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
+        <a href="/ai-agent" className="setting-agent-settings-link">
           Buka pengaturan AI Agent
         </a>
       </div>

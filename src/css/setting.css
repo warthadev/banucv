@@ -872,6 +872,24 @@
   margin: -4px 0 14px;
 }
 
+.setting-agent-settings-link {
+  display: inline-block;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.setting-agent-settings-link:hover {
+  opacity: 0.75;
+}
+
+.setting-agent-settings-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
 .setting-agent-account {
   margin: 0 0 12px;
   overflow-wrap: anywhere;

@@ -5,9 +5,9 @@ import {
   Send, Bot, Trash2, Volume2, VolumeX, Check,
   Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Globe, Wand2, Link, ChevronDown
 } from "lucide-react";
-import useAgentModels, { AUTOMATIC_AGENT_MODEL } from "@hook/useAgentModels";
+import useAgentModels, { AUTOMATIC_AGENT_MODEL } from "@hook/useagentmodels";
 import { AGENT_API_BASE, LOCAL_AGENT_API_BASE } from "@config/api";
-import { resolveAgentModelRoute } from "@config/agentRouting";
+import { resolveAgentModelRoute } from "@config/agentrouting";
 import { useAudio } from "@hook/useaudio";
 import { RouterAuthModal } from "./routerauthmodal";
 import { modalVariants, overlayVariants } from "@animation/githubeditor";

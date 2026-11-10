@@ -3,7 +3,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { getAuth } from "@config/firebase";
 import { clearRouterCredentials, loadRouterCredentials, saveRouterCredentials } from "@config/routerhelper";
 import { AGENT_API_BASE } from "@config/api";
-import { LOCAL_AGENT_MODEL, isLocalAgentModel } from "@config/agentRouting";
+import { LOCAL_AGENT_MODEL, isLocalAgentModel } from "@config/agentrouting";
 
 export const ROUTER_ENDPOINT = "https://20128-agq2firibhstlf6sr7k3ydjoim.instabox.tech/v1";
 export { LOCAL_AGENT_MODEL };

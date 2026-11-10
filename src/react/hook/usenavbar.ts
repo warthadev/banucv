@@ -8,7 +8,7 @@ import { resetCloud } from "../redux/cloudslice";
 import { signOut } from "firebase/auth";
 import { getAuth } from "@config/firebase";
 import { clearGithubCredentials } from "@config/githubeditorhelper";
-import { invalidateAgentCache } from "@hook/useAgentModels";
+import { invalidateAgentCache } from "@hook/useagentmodels";
 
 export const useNavbar = () => {
   const navigate = useNavigate();

@@ -5,7 +5,7 @@ import {
   LOCAL_AGENT_MODEL_ALIAS,
   isLocalAgentModel,
   resolveAgentModelRoute,
-} from "../src/react/config/agentRouting.ts";
+} from "../src/react/config/agentrouting.ts";
 
 const cloudApiBase = "https://warthadev-backend.onrender.com";
 const localApiBase = "https://7680-agq2firibhstlf6sr7k3ydjoim.instabox.tech";

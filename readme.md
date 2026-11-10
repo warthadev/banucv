@@ -116,7 +116,7 @@ src/
 │   ├── hook/            # Custom hooks untuk state dan integrasi
 │   ├── redux/           # Store serta slices aplikasi
 │   └── system/          # Auth gate, audio player, quick actions, media system
-├── App.tsx              # Root router dan global UI orchestration
+├── app.tsx              # Root router dan global UI orchestration
 └── main.tsx             # Application entry point
 ```
 

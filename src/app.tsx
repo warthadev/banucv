@@ -1,4 +1,4 @@
-// src/App.tsx
+// src/app.tsx
 import React, { Suspense, lazy, useState, useEffect, useCallback } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import ThemeProvider from "./react/control/themeprovider";

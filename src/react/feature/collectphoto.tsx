@@ -1,5 +1,5 @@
 // src/react/feature/collectphoto.tsx
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { db, auth } from "@config/firebase";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";

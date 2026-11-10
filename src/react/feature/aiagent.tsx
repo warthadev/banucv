@@ -6,7 +6,8 @@ import {
   Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Globe, Wand2, Link, ChevronDown
 } from "lucide-react";
 import useAgentModels, { AUTOMATIC_AGENT_MODEL } from "@hook/useAgentModels";
-import { AGENT_API_BASE } from "@config/api";
+import { AGENT_API_BASE, LOCAL_AGENT_API_BASE } from "@config/api";
+import { resolveAgentModelRoute } from "@config/agentRouting";
 import { useAudio } from "@hook/useaudio";
 import { RouterAuthModal } from "./routerauthmodal";
 import { modalVariants, overlayVariants } from "@animation/githubeditor";
@@ -720,7 +721,8 @@ const AIAgent: React.FC = () => {
     if (!user) throw new Error("Please sign in before using AI Agent");
     const idToken = await user.getIdToken(true);
     const prompt = `${textContext}${images.length ? `\n\n[${images.length} image(s) attached]` : ""}`;
-    const response = await fetch(`${AGENT_API_BASE}/agent/chat`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` }, body: JSON.stringify({ provider: "9router", model: modelName, prompt, history }) });
+    const route = resolveAgentModelRoute(modelName, AGENT_API_BASE, LOCAL_AGENT_API_BASE);
+    const response = await fetch(`${route.apiBase}/agent/chat`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` }, body: JSON.stringify({ provider: "9router", model: route.model, prompt, history }) });
     const data = await response.json();
     if (!response.ok) throw new Error(data?.detail || `AI Agent request failed: ${response.status}`);
     const result = data?.data?.result || {};

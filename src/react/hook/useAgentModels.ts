@@ -3,9 +3,10 @@ import { onAuthStateChanged } from "firebase/auth";
 import { getAuth } from "@config/firebase";
 import { clearRouterCredentials, loadRouterCredentials, saveRouterCredentials } from "@config/routerhelper";
 import { AGENT_API_BASE } from "@config/api";
+import { LOCAL_AGENT_MODEL, isLocalAgentModel } from "@config/agentRouting";
 
 export const ROUTER_ENDPOINT = "https://20128-agq2firibhstlf6sr7k3ydjoim.instabox.tech/v1";
-export const LOCAL_AGENT_MODEL = "mimo-v2.6:latest";
+export { LOCAL_AGENT_MODEL };
 export const AUTOMATIC_AGENT_MODEL = LOCAL_AGENT_MODEL;
 const DEFAULT_ROUTER_MODEL = "openrouter/openrouter/free";
 const FALLBACK_MODELS = [LOCAL_AGENT_MODEL, DEFAULT_ROUTER_MODEL];
@@ -58,7 +59,7 @@ export const useAgentModels = () => {
             console.warn("Agent model list unavailable; local model remains available", error);
           }
           cachedModels = models;
-          const localModelAvailable = models.some((model) => model.trim().toLowerCase() === LOCAL_AGENT_MODEL.toLowerCase());
+          const localModelAvailable = models.some(isLocalAgentModel);
           if (mountedRef.current) {
             setRouterModels(models);
             setIsConfigured(Boolean(credentials) || localModelAvailable);

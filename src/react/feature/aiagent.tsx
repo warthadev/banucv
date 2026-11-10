@@ -5,7 +5,7 @@ import {
   Send, Bot, Trash2, Volume2, VolumeX, Check,
   Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Globe, Wand2, Link, ChevronDown
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import useAgentModels from "@hook/useagentmodels";
 import { AI_AGENT_API_BASE } from "@config/api";
 import { resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
@@ -312,6 +312,22 @@ const getErrorText = (error: unknown): string => {
   if (typeof error === "object" && error !== null && "message" in error && typeof error.message === "string") return error.message;
   return error == null ? "" : String(error);
 };
+
+const getCatalogStatusMessage = (error: string | null): string => {
+  if (!error) return "Katalog model untuk akun ini kosong. Periksa kunci 9Router dan model yang tersedia di Settings.";
+  const normalizedError = error.toLowerCase();
+  if (normalizedError.includes("cooldown") || normalizedError.includes("machine_cooldown")) {
+    return "Server 9Router sedang cooldown, jadi katalog model belum bisa dimuat. Coba muat ulang halaman saat server aktif kembali.";
+  }
+  if (normalizedError.includes("rejected the saved api key")) {
+    return "Kunci 9Router akun ini ditolak. Perbarui kuncinya di Settings.";
+  }
+  if (normalizedError.includes("9router model catalog")) {
+    return "Server 9Router belum bisa menyediakan katalog model. Coba muat ulang halaman saat server aktif kembali.";
+  }
+  return `Katalog 9Router tidak dapat dimuat: ${error}`;
+};
+
 const getErrorMessage = (error: unknown): string => {
   if (!error) return "Unknown error occurred";
   
@@ -444,7 +460,6 @@ const splitMarkdown = (content: string) => {
 
 const AIAgent: React.FC = () => {
   const { isConfigured, isLoading: authLoading, routerModels, catalogError, configurationError } = useAgentModels();
-  const navigate = useNavigate();
   const { aiMode } = useAudio();
 
   const loadMessages = (): Message[] => {
@@ -906,8 +921,8 @@ const AIAgent: React.FC = () => {
         <div style={{ minHeight: "55vh", display: "grid", placeItems: "center", padding: "24px" }}>
           <div style={{ textAlign: "center", maxWidth: "460px" }}>
             <h2>AI Agent memerlukan kunci 9Router</h2>
-            <p>{configurationError || "Tambahkan kunci untuk akun yang sedang masuk melalui Settings. Kunci tidak dikelola di layar chat."}</p>
-            <button type="button" className="github-modal-confirm" onClick={() => navigate("/setting")}>Buka Settings</button>
+            <p>{configurationError || "Kunci API 9Router belum tersedia untuk akun ini. Tambahkan atau ganti kunci melalui Settings."}</p>
+            <RouterLink className="aiagent-settings-link" to="/setting">Kelola kunci 9Router di Settings</RouterLink>
           </div>
         </div>
       )}
@@ -980,8 +995,8 @@ const AIAgent: React.FC = () => {
         <div className="aiagent-container">
           {!modelOptions.length && (
             <div className="aiagent-catalog-status" role={catalogError ? "alert" : "status"}>
-              <p>{catalogError ? `Katalog 9Router tidak dapat dimuat: ${catalogError}` : "Katalog model untuk kunci akun ini kosong. Model global tidak akan digunakan."}</p>
-              <button type="button" className="github-modal-confirm" onClick={() => navigate("/setting")}>Periksa kunci di Settings</button>
+              <p>{getCatalogStatusMessage(catalogError)}</p>
+              <RouterLink className="aiagent-settings-link" to="/setting">Kelola kunci 9Router di Settings</RouterLink>
             </div>
           )}
           <div className="aiagent-messages" ref={scrollRef}>

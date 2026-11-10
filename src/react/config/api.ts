@@ -104,7 +104,9 @@ export let API_BASE: string = initialBase;
 
 export const getActiveBase = (): string => API_BASE;
 
-export const AGENT_API_BASE = (import.meta.env.VITE_AGENT_API_URL as string | undefined)?.trim().replace(/\/+$/, "") || API_BASE;
+const configuredAgentApiBase = (import.meta.env.VITE_AGENT_API_URL as string | undefined)?.trim().replace(/\/+$/, "");
+export const AGENT_API_BASE = configuredAgentApiBase || API_BASE;
+export const AI_AGENT_API_BASE = configuredAgentApiBase || "https://warthadev-backend.onrender.com";
 export const LOCAL_AGENT_API_BASE = (import.meta.env.VITE_LOCAL_AGENT_API_URL as string | undefined)?.trim().replace(/\/+$/, "") || "https://7680-agq2firibhstlf6sr7k3ydjoim.instabox.tech";
 
 const buildCandidates = (): string[] => {

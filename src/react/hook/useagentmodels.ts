@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { getAuth } from "@config/firebase";
 import { clearRouterCredentials, loadRouterCredentials, saveRouterCredentials } from "@config/routerhelper";
-import { AGENT_API_BASE } from "@config/api";
+import { AI_AGENT_API_BASE } from "@config/api";
 import { LOCAL_AGENT_MODEL, isLocalAgentModel } from "@config/agentrouting";
 
 export const ROUTER_ENDPOINT = "https://20128-agq2firibhstlf6sr7k3ydjoim.instabox.tech/v1";
@@ -17,7 +17,7 @@ export const invalidateAgentCache = () => { cachedModels = FALLBACK_MODELS; };
 export const ROUTER_CREDENTIAL_UPDATED_EVENT = "routerCredentialUpdated";
 
 const fetchAgentModels = async (idToken: string): Promise<string[]> => {
-  const response = await fetch(`${AGENT_API_BASE}/agent/models`, { headers: { Authorization: `Bearer ${idToken}` }, cache: "no-store" });
+  const response = await fetch(`${AI_AGENT_API_BASE}/agent/models`, { headers: { Authorization: `Bearer ${idToken}` }, cache: "no-store" });
   const data = await response.json();
   if (!response.ok) throw new Error(data?.detail || `Agent models request failed: ${response.status}`);
   const models = Array.isArray(data.data) ? data.data.map((item: { id?: string; name?: string }) => item.id || item.name).filter(Boolean) : [];

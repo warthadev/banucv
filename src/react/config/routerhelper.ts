@@ -1,6 +1,6 @@
 import { getAuth, getDb } from "./firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { AGENT_API_BASE } from "./api";
+import { AI_AGENT_API_BASE } from "./api";
 
 export interface RouterCredentials {
   model: string;
@@ -25,7 +25,7 @@ const getAuthenticatedUser = async () => {
 };
 
 const requestAgentKeys = async (idToken: string, method: "GET" | "PUT" | "DELETE", body?: Record<string, string>) => {
-  const response = await fetch(`${AGENT_API_BASE}/agent/keys${method === "DELETE" ? "/9router" : ""}`, {
+  const response = await fetch(`${AI_AGENT_API_BASE}/agent/keys${method === "DELETE" ? "/9router" : ""}`, {
     method,
     headers: {
       Authorization: `Bearer ${idToken}`,

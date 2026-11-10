@@ -309,7 +309,7 @@ const Downloader: React.FC = () => {
                   style={{ width: '100%', textDecoration: 'none', display: 'flex', padding: '12px', boxSizing: 'border-box' }}
                 >
                   <ExternalLink size={18} />
-                  <span>Buka Colab</span>
+                  <span>Open Colab</span>
                 </a>
               </div>
             )}

@@ -26,7 +26,7 @@ const DEFAULT_KEY_MODEL = "openrouter/openrouter/free";
 const getAuthenticatedUser = async () => {
   const firebaseAuth = await getAuth();
   const user = firebaseAuth.currentUser;
-  if (!user) throw new Error("Masuk terlebih dahulu untuk mengatur kunci 9Router");
+  if (!user) throw new Error("Sign in to manage the 9Router key.");
   return { user, idToken: await user.getIdToken(true) };
 };
 
@@ -46,13 +46,13 @@ const requestAgentKeys = async (
     cache: "no-store",
   });
   const data = await response.json().catch(() => ({})) as AgentKeysResponse;
-  if (!response.ok) throw new Error(data.detail || `Permintaan kunci agent gagal (${response.status})`);
+  if (!response.ok) throw new Error(data.detail || `Agent key request failed (${response.status})`);
   return data;
 };
 
 export const saveRouterCredentials = async (apiKey: string, model = DEFAULT_KEY_MODEL): Promise<void> => {
   const normalizedKey = apiKey.trim();
-  if (!normalizedKey) throw new Error("Kunci API 9Router wajib diisi");
+  if (!normalizedKey) throw new Error("A 9Router API key is required.");
   const { idToken } = await getAuthenticatedUser();
   await requestAgentKeys(idToken, "PUT", {
     provider: "9router",
@@ -84,7 +84,7 @@ export const loadRouterModelCatalog = async (): Promise<string[]> => {
     const detail = data && typeof data === "object" && "detail" in data
       ? (data as { detail?: unknown }).detail
       : undefined;
-    throw new Error(typeof detail === "string" ? detail : `Katalog model gagal dimuat (${response.status})`);
+    throw new Error(typeof detail === "string" ? detail : `Failed to load the model catalog (${response.status})`);
   }
   return extractAgentModelIds(data);
 };

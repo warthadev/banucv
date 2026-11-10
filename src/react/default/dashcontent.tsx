@@ -81,12 +81,12 @@ const educationRows: ProfileRow[] = [
   { label: "Degree", value: "Bachelor of Computer Science (S.Kom.)" },
   { label: "University", value: "Universitas Indraprasta PGRI (UNINDRA)" },
   { label: "Faculty", value: "Engineering and Computer Sciences" },
-  { label: "Study Program", value: "Informatics (S1)" },
+  { label: "Study Program", value: "Informatics (Bachelor's degree)" },
   { label: "Student Number", value: "201543501858" },
   { label: "Graduation Date", value: "August 7, 2019" },
   { label: "GPA", value: "3.05 / 4.00" },
-  { label: "Predicate", value: "Very Good (Sangat Memuaskan)" },
-  { label: "Total Credits", value: "146 SKS / 59 Courses" },
+  { label: "Predicate", value: "Very Good (Highly Satisfactory)" },
+  { label: "Total Credits", value: "146 credits / 59 courses" },
 ];
 
 const skillGroups: SkillGroup[] = [

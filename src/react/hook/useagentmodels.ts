@@ -50,11 +50,11 @@ export const useAgentModels = () => {
         setRouterModels(models);
       } catch (error) {
         if (!mountedRef.current || requestId !== requestIdRef.current) return;
-        setCatalogError(error instanceof Error ? error.message : "Katalog model tidak dapat dimuat.");
+        setCatalogError(error instanceof Error ? error.message : "Unable to load the model catalog.");
       }
     } catch (error) {
       if (!mountedRef.current || requestId !== requestIdRef.current) return;
-      setConfigurationError(error instanceof Error ? error.message : "Status kunci 9Router tidak dapat dimuat.");
+      setConfigurationError(error instanceof Error ? error.message : "Unable to load 9Router key status.");
       setIsConfigured(false);
       setRouterModels([]);
     } finally {
@@ -79,7 +79,7 @@ export const useAgentModels = () => {
       if (!mountedRef.current) return;
       setRouterModels([]);
       setIsConfigured(false);
-      setConfigurationError(error instanceof Error ? error.message : "Autentikasi Firebase tidak tersedia.");
+      setConfigurationError(error instanceof Error ? error.message : "Firebase authentication is unavailable.");
       setIsLoading(false);
     });
 

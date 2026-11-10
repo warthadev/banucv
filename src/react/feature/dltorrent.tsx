@@ -35,7 +35,7 @@ const DlTorrent: React.FC<DlTorrentProps> = ({
   const hasActiveSession = !!colabSessionId;
   const colabTitle = hasActiveSession
     ? 'Append to existing Colab session'
-    : 'Run download in Google Colab (server bebas beban)';
+    : 'Run download in Google Colab (offloads processing from your server)';
 
   const allSelected = sortedFiles.length > 0 && selectedIndexes.size === sortedFiles.length;
 

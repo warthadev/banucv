@@ -314,18 +314,18 @@ const getErrorText = (error: unknown): string => {
 };
 
 const getCatalogStatusMessage = (error: string | null): string => {
-  if (!error) return "Katalog model untuk akun ini kosong. Periksa kunci 9Router dan model yang tersedia di Settings.";
+  if (!error) return "This account's model catalog is empty. Check the 9Router key and available models in Settings.";
   const normalizedError = error.toLowerCase();
   if (normalizedError.includes("cooldown") || normalizedError.includes("machine_cooldown")) {
-    return "Server 9Router sedang cooldown, jadi katalog model belum bisa dimuat. Coba muat ulang halaman saat server aktif kembali.";
+    return "The 9Router server is cooling down, so the model catalog cannot be loaded yet. Reload the page when the server is available again.";
   }
   if (normalizedError.includes("rejected the saved api key")) {
-    return "Kunci 9Router akun ini ditolak. Perbarui kuncinya di Settings.";
+    return "This account's 9Router key was rejected. Update it in Settings.";
   }
   if (normalizedError.includes("9router model catalog")) {
-    return "Server 9Router belum bisa menyediakan katalog model. Coba muat ulang halaman saat server aktif kembali.";
+    return "The 9Router server cannot provide the model catalog yet. Reload the page when the server is available again.";
   }
-  return `Katalog 9Router tidak dapat dimuat: ${error}`;
+  return `Unable to load the 9Router catalog: ${error}`;
 };
 
 const getErrorMessage = (error: unknown): string => {
@@ -920,9 +920,9 @@ const AIAgent: React.FC = () => {
       {!isConfigured && (
         <div style={{ minHeight: "55vh", display: "grid", placeItems: "center", padding: "24px" }}>
           <div style={{ textAlign: "center", maxWidth: "460px" }}>
-            <h2>AI Agent memerlukan kunci 9Router</h2>
-            <p>{configurationError || "Kunci API 9Router belum tersedia untuk akun ini. Tambahkan atau ganti kunci melalui Settings."}</p>
-            <RouterLink className="aiagent-settings-link" to="/setting">Kelola kunci 9Router di Settings</RouterLink>
+            <h2>The AI Agent requires a 9Router key</h2>
+            <p>{configurationError || "No 9Router API key is available for this account. Add or replace the key in Settings."}</p>
+            <RouterLink className="aiagent-settings-link" to="/setting">Manage the 9Router key in Settings</RouterLink>
           </div>
         </div>
       )}
@@ -951,19 +951,19 @@ const AIAgent: React.FC = () => {
               <div className="aiagent-model-picker-header">
                 <div className="aiagent-model-picker-icon"><Bot size={20} /></div>
                 <div className="aiagent-model-picker-heading">
-                  <h3 id="aiagent-model-picker-title">Pilih model AI</h3>
-                  <p>Pilih model untuk percakapan ini.</p>
+                  <h3 id="aiagent-model-picker-title">Choose an AI model</h3>
+                  <p>Choose a model for this conversation.</p>
                 </div>
                 <button
                   type="button"
                   className="aiagent-model-picker-close"
                   onClick={() => setIsModelPickerOpen(false)}
-                  aria-label="Tutup pemilih model"
+                  aria-label="Close model picker"
                 >
                   <X size={20} />
                 </button>
               </div>
-              <div className="aiagent-model-option-list" role="radiogroup" aria-label="Model AI">
+              <div className="aiagent-model-option-list" role="radiogroup" aria-label="AI models">
                 {modelOptions.length ? modelOptions.map((model) => {
                   const isSelected = model === selectedModel;
                   return (
@@ -980,12 +980,12 @@ const AIAgent: React.FC = () => {
                     >
                       <span className="aiagent-model-option-copy">
                         <strong>{model}</strong>
-                        <small>Model tersedia untuk akun ini</small>
+                        <small>Available for this account</small>
                       </span>
                       {isSelected && <Check size={18} aria-hidden="true" />}
                     </button>
                   );
-                }) : <p role="status">Katalog model tidak tersedia untuk akun ini.</p>}
+                }) : <p role="status">No model catalog is available for this account.</p>}
               </div>
             </motion.div>
           </motion.div>
@@ -996,7 +996,7 @@ const AIAgent: React.FC = () => {
           {!modelOptions.length && (
             <div className="aiagent-catalog-status" role={catalogError ? "alert" : "status"}>
               <p>{getCatalogStatusMessage(catalogError)}</p>
-              <RouterLink className="aiagent-settings-link" to="/setting">Kelola kunci 9Router di Settings</RouterLink>
+              <RouterLink className="aiagent-settings-link" to="/setting">Manage the 9Router key in Settings</RouterLink>
             </div>
           )}
           <div className="aiagent-messages" ref={scrollRef}>
@@ -1233,8 +1233,8 @@ const AIAgent: React.FC = () => {
                     type="button"
                     className="aiagent-model-picker-trigger"
                     onClick={() => setIsModelPickerOpen(true)}
-                    title="Pilih model AI"
-                    aria-label="Pilih model AI"
+                    title="Choose an AI model"
+                    aria-label="Choose an AI model"
                     aria-haspopup="dialog"
                     aria-expanded={isModelPickerOpen}
                     disabled={!modelOptions.length}

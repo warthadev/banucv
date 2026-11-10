@@ -323,16 +323,6 @@ const SettingUser: React.FC = () => {
 
       <div className="su-input-group">
         <label className="su-input-label">
-          <Key size={14} color="var(--primary)" />
-          9ROUTER API KEY
-        </label>
-        <p className="setting-help-text">Key AI Agent dikelola terpisah dan disimpan terenkripsi per akun.</p>
-        <a href="/ai-agent" className="setting-agent-settings-link">
-          Buka pengaturan AI Agent
-        </a>
-      </div>
-      <div className="su-input-group">
-        <label className="su-input-label">
           <GithubIcon />
           GITHUB USERNAME
         </label>

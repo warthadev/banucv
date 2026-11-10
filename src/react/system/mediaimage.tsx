@@ -414,7 +414,7 @@ const MediaImage: React.FC<MediaImageProps> = ({
             )}
             {currentError && !currentSrc && (
               <div className="cloudslideshow-status cloudslideshow-status--error">
-                <span>Gagal memuat gambar</span>
+                <span>Failed to load image</span>
               </div>
             )}
             

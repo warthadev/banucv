@@ -55,12 +55,12 @@ const AICheck: React.FC = () => {
       if (authMode === "system") {
         const firebaseAuth = await getAuth();
         const user = firebaseAuth.currentUser;
-        if (!user) throw new Error("Silakan masuk untuk memeriksa model sistem.");
+        if (!user) throw new Error("Sign in to check system models.");
         const idToken = await user.getIdToken(true);
         response = await fetch(`${AI_AGENT_API_BASE}/agent/models`, { headers: { Authorization: `Bearer ${idToken}` }, cache: "no-store" });
       } else {
         const token = customKey.trim();
-        if (!token) throw new Error("Masukkan API key pribadi terlebih dahulu.");
+        if (!token) throw new Error("Enter a personal API key first.");
         response = await fetch(`${AGENT_API_BASE}/router/models`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
       }
       const data = await response.json();

@@ -42,14 +42,14 @@ const SettingAgent: React.FC = () => {
       } catch (error) {
         if (requestId === requestIdRef.current) {
           setModels([]);
-          setCatalogError(error instanceof Error ? error.message : "Katalog model tidak dapat dimuat.");
+          setCatalogError(error instanceof Error ? error.message : "Unable to load the model catalog.");
         }
       }
     } catch (error) {
       if (requestId === requestIdRef.current) {
         setCredentials(null);
         setModels([]);
-        setCatalogError(error instanceof Error ? error.message : "Status kunci tidak dapat dimuat.");
+        setCatalogError(error instanceof Error ? error.message : "Unable to load key status.");
       }
     } finally {
       if (requestId === requestIdRef.current) setLoading(false);
@@ -69,7 +69,7 @@ const SettingAgent: React.FC = () => {
     }).catch((error: unknown) => {
       setAuthReady(true);
       setLoading(false);
-      setCatalogError(error instanceof Error ? error.message : "Autentikasi Firebase tidak tersedia.");
+      setCatalogError(error instanceof Error ? error.message : "Firebase authentication is unavailable.");
     });
     return () => {
       disposed = true;
@@ -88,9 +88,9 @@ const SettingAgent: React.FC = () => {
       setApiKey("");
       await refresh(currentUser);
       window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
-      setMessage({ type: "success", text: "Kunci 9Router tersimpan aman untuk akun ini." });
+      setMessage({ type: "success", text: "The 9Router key was saved securely for this account." });
     } catch (error) {
-      setMessage({ type: "error", text: error instanceof Error ? error.message : "Kunci 9Router gagal disimpan." });
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "Failed to save the 9Router key." });
     } finally {
       setSaving(false);
     }
@@ -98,7 +98,7 @@ const SettingAgent: React.FC = () => {
 
   const handleDelete = async () => {
     if (!currentUser || deleting) return;
-    if (!window.confirm("Hapus kunci 9Router dari akun ini? Anda perlu memasukkannya lagi untuk memakai AI Agent.")) return;
+    if (!window.confirm("Remove the 9Router key from this account? You will need to enter it again to use the AI Agent.")) return;
     setDeleting(true);
     setMessage(null);
     try {
@@ -106,9 +106,9 @@ const SettingAgent: React.FC = () => {
       setApiKey("");
       await refresh(currentUser);
       window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
-      setMessage({ type: "success", text: "Kunci 9Router telah dihapus dari akun ini." });
+      setMessage({ type: "success", text: "The 9Router key was removed from this account." });
     } catch (error) {
-      setMessage({ type: "error", text: error instanceof Error ? error.message : "Kunci 9Router gagal dihapus." });
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "Failed to remove the 9Router key." });
     } finally {
       setDeleting(false);
     }
@@ -117,7 +117,7 @@ const SettingAgent: React.FC = () => {
   if (!authReady || loading) {
     return (
       <section className="stack-item setting-agent-card" aria-busy="true">
-        <div className="setting-agent-loading"><LoaderCircle size={18} className="setting-agent-spinner" /> Memuat pengaturan 9Router…</div>
+        <div className="setting-agent-loading"><LoaderCircle size={18} className="setting-agent-spinner" /> Loading 9Router settings…</div>
       </section>
     );
   }
@@ -127,33 +127,33 @@ const SettingAgent: React.FC = () => {
       <div className="section-header">
         <KeyRound size={19} aria-hidden="true" />
         <span className="section-label" id="setting-agent-title">AI Agent · 9Router</span>
-        {credentials && <span className="setting-agent-status"><CheckCircle size={14} /> Terhubung</span>}
+        {credentials && <span className="setting-agent-status"><CheckCircle size={14} /> Connected</span>}
       </div>
       <p className="setting-agent-description">
-        Setiap akun Firebase memakai kunci dan katalog modelnya sendiri. Kunci disimpan terenkripsi di server; halaman ini hanya menampilkan status aman, bukan nilai kuncinya.
+        Each Firebase account has its own key and model catalog. The key is encrypted on the server; this page shows only its secure status, never its value.
       </p>
 
       {!currentUser ? (
-        <p className="setting-agent-note" role="status">Masuk ke akun Firebase untuk mengatur kunci 9Router.</p>
+        <p className="setting-agent-note" role="status">Sign in to your Firebase account to manage the 9Router key.</p>
       ) : (
         <>
-          <p className="setting-agent-account">Akun aktif: <strong>{currentUser.email || currentUser.uid}</strong></p>
+          <p className="setting-agent-account">Active account: <strong>{currentUser.email || currentUser.uid}</strong></p>
           {catalogError && !credentials && (
-            <p className="setting-agent-error" role="alert"><AlertCircle size={15} /> Status kunci tidak dapat dimuat: {catalogError}</p>
+            <p className="setting-agent-error" role="alert"><AlertCircle size={15} /> Unable to load key status: {catalogError}</p>
           )}
           {credentials && (
             <div className="setting-agent-safe-status">
               <ShieldCheck size={17} aria-hidden="true" />
               <span>
-                Kunci tersimpan untuk akun ini
-                {credentials.fingerprint ? <small>Sidik jari aman: {credentials.fingerprint}</small> : null}
+                Key saved for this account
+                {credentials.fingerprint ? <small>Secure fingerprint: {credentials.fingerprint}</small> : null}
               </span>
             </div>
           )}
 
           <form className="setting-agent-form" onSubmit={handleSave}>
             <label className="setting-agent-label" htmlFor="setting-9router-key">
-              {credentials ? "Ganti kunci API 9Router" : "Kunci API 9Router"}
+              {credentials ? "Replace 9Router API key" : "9Router API key"}
             </label>
             <input
               id="setting-9router-key"
@@ -162,7 +162,7 @@ const SettingAgent: React.FC = () => {
               name="nine-router-api-key"
               value={apiKey}
               onChange={(event) => setApiKey(event.target.value)}
-              placeholder={credentials ? "Tempel kunci baru untuk mengganti" : "Tempel kunci API 9Router"}
+              placeholder={credentials ? "Paste a new key to replace the current one" : "Paste your 9Router API key"}
               autoComplete="off"
               spellCheck={false}
               autoCapitalize="none"
@@ -171,15 +171,15 @@ const SettingAgent: React.FC = () => {
             <div className="setting-agent-actions">
               <button className="setting-agent-primary" type="submit" disabled={saving || !apiKey.trim()}>
                 {saving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <ShieldCheck size={16} />}
-                {saving ? "Menyimpan…" : credentials ? "Simpan kunci baru" : "Simpan kunci"}
+                {saving ? "Saving…" : credentials ? "Save new key" : "Save key"}
               </button>
               <button className="setting-agent-secondary" type="button" onClick={() => void refresh(currentUser)} disabled={loading}>
-                <RefreshCw size={15} className={loading ? "setting-agent-spinner" : ""} /> Segarkan status
+                <RefreshCw size={15} className={loading ? "setting-agent-spinner" : ""} /> Refresh status
               </button>
               {credentials && (
                 <button className="setting-agent-danger" type="button" onClick={() => void handleDelete()} disabled={deleting}>
                   {deleting ? <LoaderCircle size={15} className="setting-agent-spinner" /> : <Trash2 size={15} />}
-                  Hapus kunci
+                  Delete key
                 </button>
               )}
             </div>
@@ -187,9 +187,9 @@ const SettingAgent: React.FC = () => {
 
           {credentials && (
             <div className="setting-agent-catalog" role="status">
-              <strong>{models.length} model tersedia</strong>
-              {models.length === 0 && !catalogError && <span>Katalog akun ini kosong; model global tidak ditampilkan.</span>}
-              {catalogError && <span className="setting-agent-error-text">Katalog model gagal dimuat: {catalogError}</span>}
+              <strong>{models.length} {models.length === 1 ? "model" : "models"} available</strong>
+              {models.length === 0 && !catalogError && <span>This account's model catalog is empty; global models are not shown.</span>}
+              {catalogError && <span className="setting-agent-error-text">Failed to load the model catalog: {catalogError}</span>}
             </div>
           )}
           {message && (
@@ -198,7 +198,7 @@ const SettingAgent: React.FC = () => {
               {message.text}
             </p>
           )}
-          <p className="setting-agent-footnote">Kunci tidak disimpan di localStorage atau ditampilkan kembali. Jika kunci ditolak 9Router, masukkan kunci yang valid di sini.</p>
+          <p className="setting-agent-footnote">The key is not stored in localStorage or shown again. If 9Router rejects it, enter a valid key here.</p>
         </>
       )}
     </section>

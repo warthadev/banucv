@@ -1466,3 +1466,40 @@
     padding: 4px 8px;
   }
 }
+
+
+.aiagent-catalog-status {
+  margin: 10px 16px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-medium);
+  background: var(--primary-alpha);
+  color: var(--text-sub);
+  font-size: 13px;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.aiagent-catalog-status p {
+  margin: 0;
+}
+
+.aiagent-catalog-status button {
+  flex: 0 0 auto;
+}
+
+.aiagent-model-picker-trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .aiagent-catalog-status {
+    align-items: flex-start;
+    flex-direction: column;
+    margin: 8px 12px 0;
+  }
+}

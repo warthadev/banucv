@@ -8,27 +8,26 @@ import {
   shouldRetryWithNextAgentModel,
 } from "../src/react/config/agentrouting.ts";
 
-const cloudApiBase = "https://warthadev-backend.onrender.com";
-const localApiBase = "https://7680-agq2firibhstlf6sr7k3ydjoim.instabox.tech";
+const agentApiBase = "https://warthadev-backend.onrender.com";
 
 for (const model of [LOCAL_AGENT_MODEL, LOCAL_AGENT_MODEL_ALIAS]) {
-  test(`local identifier ${model} uses the VM and canonical model`, () => {
+  test(`local identifier ${model} stays behind the authenticated backend`, () => {
     assert.equal(isLocalAgentModel(model), true);
-    assert.deepEqual(resolveAgentModelRoute(model, cloudApiBase, localApiBase), {
-      apiBase: localApiBase,
-      model: LOCAL_AGENT_MODEL,
+    assert.deepEqual(resolveAgentModelRoute(model, agentApiBase), {
+      apiBase: agentApiBase,
+      model,
     });
   });
 }
 
-test("local identifiers are normalized without changing their meaning", () => {
-  assert.deepEqual(resolveAgentModelRoute("  MIMO-V2.6:LATEST  ", cloudApiBase, localApiBase), {
-    apiBase: localApiBase,
-    model: LOCAL_AGENT_MODEL,
+test("local identifiers are preserved for backend-side catalog authorization", () => {
+  assert.deepEqual(resolveAgentModelRoute("  MIMO-V2.6:LATEST  ", agentApiBase), {
+    apiBase: agentApiBase,
+    model: "  MIMO-V2.6:LATEST  ",
   });
 });
 
-const cloudModels = [
+const catalogModels = [
   "openrouter/openrouter/free",
   "openrouter/nvidia/nemotron-3.5-super-vl:free",
   "openrouter/dots-studio/dots-3-note-preview:free",
@@ -42,38 +41,22 @@ const cloudModels = [
   "mmg/MiniMax-M2.7-highspeed",
 ];
 
-for (const model of cloudModels) {
-  test(`cloud route and identifier remain unchanged: ${model}`, () => {
+for (const model of catalogModels) {
+  test(`catalog model is routed unchanged through the backend: ${model}`, () => {
     assert.equal(isLocalAgentModel(model), false);
-    assert.deepEqual(resolveAgentModelRoute(model, cloudApiBase, localApiBase), {
-      apiBase: cloudApiBase,
+    assert.deepEqual(resolveAgentModelRoute(model, agentApiBase), {
+      apiBase: agentApiBase,
       model,
     });
   });
 }
 
-test("unverified provider prefixes are not stripped or redirected", () => {
+test("unverified provider IDs are not stripped or redirected", () => {
   const model = "another-provider/mimo-v2.6:latest";
   assert.equal(isLocalAgentModel(model), false);
-  assert.deepEqual(resolveAgentModelRoute(model, cloudApiBase, localApiBase), {
-    apiBase: cloudApiBase,
+  assert.deepEqual(resolveAgentModelRoute(model, agentApiBase), {
+    apiBase: agentApiBase,
     model,
-  });
-});
-
-test("an explicit local base is used without falling back to the cloud", () => {
-  const override = "https://local-agent.example.test";
-  assert.deepEqual(resolveAgentModelRoute(LOCAL_AGENT_MODEL, cloudApiBase, override), {
-    apiBase: override,
-    model: LOCAL_AGENT_MODEL,
-  });
-});
-
-test("an explicit cloud base is preserved", () => {
-  const override = "https://cloud-agent.example.test";
-  assert.deepEqual(resolveAgentModelRoute(cloudModels[0], override, localApiBase), {
-    apiBase: override,
-    model: cloudModels[0],
   });
 });
 
@@ -86,11 +69,11 @@ for (const model of [LOCAL_AGENT_MODEL, LOCAL_AGENT_MODEL_ALIAS]) {
 }
 
 for (const status of ["429", "503"]) {
-  test(`cloud model still falls back to the next cloud model after ${status}`, () => {
-    assert.equal(shouldRetryWithNextAgentModel(cloudModels[0], true, 0, 3), true);
+  test(`cloud model still falls back to the next account-catalog model after ${status}`, () => {
+    assert.equal(shouldRetryWithNextAgentModel(catalogModels[0], true, 0, 3), true);
   });
 }
 
 test("retryable failure at the final model does not request another model", () => {
-  assert.equal(shouldRetryWithNextAgentModel(cloudModels[1], true, 2, 3), false);
+  assert.equal(shouldRetryWithNextAgentModel(catalogModels[1], true, 2, 3), false);
 });

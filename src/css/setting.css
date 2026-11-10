@@ -834,3 +834,201 @@
     padding: 6px;
   }
 }
+
+
+/* Per-account 9Router settings */
+.setting-agent-card {
+  margin-bottom: 20px;
+}
+
+.setting-agent-status,
+.setting-agent-safe-status,
+.setting-agent-actions,
+.setting-agent-loading,
+.setting-agent-success,
+.setting-agent-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.setting-agent-status {
+  margin-left: auto;
+  color: #16a34a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.setting-agent-description,
+.setting-agent-note,
+.setting-agent-account,
+.setting-agent-footnote {
+  color: var(--text-sub);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.setting-agent-description {
+  margin: -4px 0 14px;
+}
+
+.setting-agent-account {
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+}
+
+.setting-agent-account strong {
+  color: var(--text);
+}
+
+.setting-agent-safe-status {
+  padding: 11px 12px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-small);
+  color: var(--primary);
+  font-size: 12px;
+}
+
+.setting-agent-safe-status span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.setting-agent-safe-status small {
+  color: var(--text-sub);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.setting-agent-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-agent-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.setting-agent-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-small);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.setting-agent-input:focus {
+  outline: 2px solid var(--primary-alpha);
+  border-color: var(--primary);
+}
+
+.setting-agent-actions {
+  flex-wrap: wrap;
+  margin-top: 3px;
+}
+
+.setting-agent-primary,
+.setting-agent-secondary,
+.setting-agent-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-small);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.setting-agent-primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.setting-agent-secondary {
+  background: var(--bg);
+  color: var(--text);
+  border-color: var(--border-color);
+}
+
+.setting-agent-danger {
+  background: transparent;
+  color: #dc2626;
+  border-color: var(--border-color);
+}
+
+.setting-agent-primary:disabled,
+.setting-agent-secondary:disabled,
+.setting-agent-danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.setting-agent-catalog {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 14px;
+  padding: 11px 12px;
+  border-radius: var(--radius-small);
+  background: var(--primary-alpha);
+  color: var(--text-sub);
+  font-size: 12px;
+}
+
+.setting-agent-catalog strong {
+  color: var(--text);
+}
+
+.setting-agent-error-text,
+.setting-agent-error {
+  color: #dc2626;
+}
+
+.setting-agent-success {
+  color: #16a34a;
+}
+
+.setting-agent-success,
+.setting-agent-error {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.setting-agent-footnote {
+  margin: 12px 0 0;
+  font-size: 11px;
+}
+
+.setting-agent-loading {
+  justify-content: center;
+  color: var(--text-sub);
+  font-size: 12px;
+}
+
+.setting-agent-spinner {
+  animation: setting-agent-spin 1s linear infinite;
+}
+
+@keyframes setting-agent-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 480px) {
+  .setting-agent-actions > button {
+    flex: 1 1 calc(50% - 8px);
+  }
+}

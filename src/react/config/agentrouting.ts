@@ -13,14 +13,8 @@ export const shouldRetryWithNextAgentModel = (
   modelCount: number,
 ): boolean => !isLocalAgentModel(model) && isRetryableFailure && modelIndex < modelCount - 1;
 
+/** All chat traffic goes through the authenticated backend, including local models. */
 export const resolveAgentModelRoute = (
   model: string,
   cloudApiBase: string,
-  localApiBase: string,
-): { apiBase: string; model: string } => {
-  // Only the verified local identifiers use the VM; all other providers stay unchanged.
-  if (isLocalAgentModel(model)) {
-    return { apiBase: localApiBase, model: LOCAL_AGENT_MODEL };
-  }
-  return { apiBase: cloudApiBase, model };
-};
+): { apiBase: string; model: string } => ({ apiBase: cloudApiBase, model });

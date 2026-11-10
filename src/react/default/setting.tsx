@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import SettingAudio from './settingaudio';
 import SettingVisual from './settingvisual';
 import SettingUser from './settinguser';
+import SettingAgent from './settingagent';
 
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ const SettingsPage: React.FC = () => {
 
         {/* User Profile & Credentials */}
         <SettingUser />
+        <SettingAgent />
         
         {/* Pengaturan Visual */}
         <SettingVisual />

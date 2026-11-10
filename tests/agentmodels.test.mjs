@@ -32,6 +32,9 @@ test("uses a nonempty name only when an ID is missing, trims, and deduplicates",
 
 test("returns no models for empty, malformed, or unrelated payloads", () => {
   assert.deepEqual(extractAgentModelIds({ data: [] }), []);
+  assert.deepEqual(extractAgentModelIds({ configured: false, models: [] }), []);
+  assert.deepEqual(extractAgentModelIds({ configured: true, models: [] }), []);
+  assert.deepEqual(extractAgentModelIds({ configured: true, models: ["account/model-a"] }), ["account/model-a"]);
   assert.deepEqual(extractAgentModelIds({ data: "not a model list" }), []);
   assert.deepEqual(extractAgentModelIds({ detail: "catalog unavailable" }), []);
   assert.deepEqual(extractAgentModelIds(null), []);

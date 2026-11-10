@@ -5,11 +5,11 @@ import {
   Send, Bot, Trash2, Volume2, VolumeX, Check,
   Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Globe, Wand2, Link, ChevronDown
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import useAgentModels from "@hook/useagentmodels";
-import { AI_AGENT_API_BASE, LOCAL_AGENT_API_BASE } from "@config/api";
+import { AI_AGENT_API_BASE } from "@config/api";
 import { resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
 import { useAudio } from "@hook/useaudio";
-import { RouterAuthModal } from "./routerauthmodal";
 import { modalVariants, overlayVariants } from "@animation/githubeditor";
 import Loading from "@control/loading";
 import ReactMarkdown, { type Components } from "react-markdown";
@@ -443,7 +443,8 @@ const splitMarkdown = (content: string) => {
 };
 
 const AIAgent: React.FC = () => {
-  const { isConfigured, showAuthModal, saveApiKey, closeModal, openModal, isLoading: authLoading, routerModels } = useAgentModels();
+  const { isConfigured, isLoading: authLoading, routerModels, catalogError, configurationError } = useAgentModels();
+  const navigate = useNavigate();
   const { aiMode } = useAudio();
 
   const loadMessages = (): Message[] => {
@@ -710,7 +711,7 @@ const AIAgent: React.FC = () => {
     if (!user) throw new Error("Please sign in before using AI Agent");
     const idToken = await user.getIdToken(true);
     const prompt = `${textContext}${images.length ? `\n\n[${images.length} image(s) attached]` : ""}`;
-    const route = resolveAgentModelRoute(modelName, AI_AGENT_API_BASE, LOCAL_AGENT_API_BASE);
+    const route = resolveAgentModelRoute(modelName, AI_AGENT_API_BASE);
     const response = await fetch(`${route.apiBase}/agent/chat`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` }, body: JSON.stringify({ provider: "9router", model: route.model, prompt, history }) });
     const data = await response.json();
     if (!response.ok) throw new Error(data?.detail || `AI Agent request failed: ${response.status}`);
@@ -901,13 +902,12 @@ const AIAgent: React.FC = () => {
 
   return (
     <>
-      <RouterAuthModal isOpen={showAuthModal} onSave={saveApiKey} onClose={closeModal} />
-      {!isConfigured && !showAuthModal && (
+      {!isConfigured && (
         <div style={{ minHeight: "55vh", display: "grid", placeItems: "center", padding: "24px" }}>
           <div style={{ textAlign: "center", maxWidth: "460px" }}>
-            <h2>AI Agent memerlukan API key 9Router</h2>
-            <p>Key akan disimpan terenkripsi untuk akun Anda.</p>
-            <button type="button" className="github-modal-confirm" onClick={openModal}>Atur API key</button>
+            <h2>AI Agent memerlukan kunci 9Router</h2>
+            <p>{configurationError || "Tambahkan kunci untuk akun yang sedang masuk melalui Settings. Kunci tidak dikelola di layar chat."}</p>
+            <button type="button" className="github-modal-confirm" onClick={() => navigate("/setting")}>Buka Settings</button>
           </div>
         </div>
       )}
@@ -978,6 +978,12 @@ const AIAgent: React.FC = () => {
       </AnimatePresence>
       {isConfigured && (
         <div className="aiagent-container">
+          {!modelOptions.length && (
+            <div className="aiagent-catalog-status" role={catalogError ? "alert" : "status"}>
+              <p>{catalogError ? `Katalog 9Router tidak dapat dimuat: ${catalogError}` : "Katalog model untuk kunci akun ini kosong. Model global tidak akan digunakan."}</p>
+              <button type="button" className="github-modal-confirm" onClick={() => navigate("/setting")}>Periksa kunci di Settings</button>
+            </div>
+          )}
           <div className="aiagent-messages" ref={scrollRef}>
             {!messages.length && (
               <div className="aiagent-welcome">
@@ -1216,6 +1222,7 @@ const AIAgent: React.FC = () => {
                     aria-label="Pilih model AI"
                     aria-haspopup="dialog"
                     aria-expanded={isModelPickerOpen}
+                    disabled={!modelOptions.length}
                   >
                     <span className="aiagent-icon-btn" aria-hidden="true"><Bot size={24} /></span>
                   </button>

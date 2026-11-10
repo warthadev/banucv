@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { heroVariants } from "@/react/animation/home";
 import { Play, AlertCircle, Loader2, Cpu, Copy, Check, Key, Globe, Eye, EyeOff, Terminal } from "lucide-react";
 import { getAuth } from "@config/firebase";
-import { AGENT_API_BASE } from "@config/api";
+import { AGENT_API_BASE, AI_AGENT_API_BASE } from "@config/api";
 
 const listContainerVariants = {
   hidden: { opacity: 0 },
@@ -57,7 +57,7 @@ const AICheck: React.FC = () => {
         const user = firebaseAuth.currentUser;
         if (!user) throw new Error("Silakan masuk untuk memeriksa model sistem.");
         const idToken = await user.getIdToken(true);
-        response = await fetch(`${AGENT_API_BASE}/agent/models`, { headers: { Authorization: `Bearer ${idToken}` }, cache: "no-store" });
+        response = await fetch(`${AI_AGENT_API_BASE}/agent/models`, { headers: { Authorization: `Bearer ${idToken}` }, cache: "no-store" });
       } else {
         const token = customKey.trim();
         if (!token) throw new Error("Masukkan API key pribadi terlebih dahulu.");

@@ -8,7 +8,6 @@ import { resetCloud } from "../redux/cloudslice";
 import { signOut } from "firebase/auth";
 import { getAuth } from "@config/firebase";
 import { clearGithubCredentials } from "@config/githubeditorhelper";
-import { invalidateAgentCache } from "@hook/useagentmodels";
 
 export const useNavbar = () => {
   const navigate = useNavigate();
@@ -50,7 +49,6 @@ export const useNavbar = () => {
       const auth = await getAuth();
       await signOut(auth);
       clearGithubCredentials();
-      invalidateAgentCache();
     } catch (error) {
       console.error("Logout Error:", error);
     } finally {

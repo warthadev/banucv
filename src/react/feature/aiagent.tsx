@@ -5,7 +5,7 @@ import {
   Send, Bot, Trash2, Volume2, VolumeX, Check,
   Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Globe, Wand2, Link, ChevronDown
 } from "lucide-react";
-import useAgentModels, { AUTOMATIC_AGENT_MODEL } from "@hook/useagentmodels";
+import useAgentModels from "@hook/useagentmodels";
 import { AI_AGENT_API_BASE, LOCAL_AGENT_API_BASE } from "@config/api";
 import { resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
 import { useAudio } from "@hook/useaudio";
@@ -18,14 +18,6 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { getAuth, getDb } from "@config/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-
-const AVAILABLE_MODELS = [
-  AUTOMATIC_AGENT_MODEL,
-  "openrouter/openrouter/free",
-  "openrouter/nvidia/nemotron-3.5-super-vl:free",
-  "gemini/gemini-3.6-flash",
-  "gemini/gemini-3.5-flash-lite",
-];
 
 interface Message {
   id: string;
@@ -488,13 +480,10 @@ const AIAgent: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>(() => loadMessages());
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState(AUTOMATIC_AGENT_MODEL);
+  const [preferredModel, setPreferredModel] = useState("");
   const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
-  const modelOptions = Array.from(new Set([
-    AUTOMATIC_AGENT_MODEL,
-    ...routerModels.filter((model) => Boolean(model)),
-    ...AVAILABLE_MODELS.slice(1),
-  ]));
+  const modelOptions = routerModels;
+  const selectedModel = modelOptions.includes(preferredModel) ? preferredModel : modelOptions[0] || "";
   useEffect(() => {
     if (!isModelPickerOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -852,7 +841,7 @@ const AIAgent: React.FC = () => {
   };
 
   const handleSendMessage = async () => {
-    if ((!input.trim() && !uploadedImages.length && !uploadedFiles.length) || isLoading || !isConfigured) return;
+    if ((!input.trim() && !uploadedImages.length && !uploadedFiles.length) || isLoading || !isConfigured || !selectedModel || !modelOptions.includes(selectedModel)) return;
     const currentInput = input, currentImages = [...uploadedImages], currentFiles = [...uploadedFiles];
     setInput("");
     clearAllUploads();
@@ -860,6 +849,7 @@ const AIAgent: React.FC = () => {
   };
 
   const retryMessage = async (messageId: string) => {
+    if (!selectedModel || !modelOptions.includes(selectedModel)) return;
     const errorIndex = messages.findIndex(m => m.id === messageId);
     if (errorIndex <= 0) return;
     const userMsg = messages[errorIndex - 1];
@@ -959,8 +949,7 @@ const AIAgent: React.FC = () => {
                 </button>
               </div>
               <div className="aiagent-model-option-list" role="radiogroup" aria-label="Model AI">
-                {modelOptions.map((model) => {
-                  const isAutomatic = model === AUTOMATIC_AGENT_MODEL;
+                {modelOptions.length ? modelOptions.map((model) => {
                   const isSelected = model === selectedModel;
                   return (
                     <button
@@ -970,18 +959,18 @@ const AIAgent: React.FC = () => {
                       role="radio"
                       aria-checked={isSelected}
                       onClick={() => {
-                        setSelectedModel(model);
+                        setPreferredModel(model);
                         setIsModelPickerOpen(false);
                       }}
                     >
                       <span className="aiagent-model-option-copy">
-                        <strong>{isAutomatic ? "Auto (disarankan)" : model}</strong>
-                        <small>{isAutomatic ? `Model default AI Agent · ${model}` : "Model tersedia melalui AI Agent"}</small>
+                        <strong>{model}</strong>
+                        <small>Model tersedia untuk akun ini</small>
                       </span>
                       {isSelected && <Check size={18} aria-hidden="true" />}
                     </button>
                   );
-                })}
+                }) : <p role="status">Katalog model tidak tersedia untuk akun ini.</p>}
               </div>
             </motion.div>
           </motion.div>
@@ -1247,7 +1236,7 @@ const AIAgent: React.FC = () => {
                 </button>
                 <button onClick={clearChat} className="aiagent-clear-btn"><Trash2 size={22} /></button>
               </div>
-              <button onClick={handleSendMessage} disabled={isLoading || (!input.trim() && !uploadedImages.length && !uploadedFiles.length)} className="aiagent-send-btn">
+              <button onClick={handleSendMessage} disabled={isLoading || !selectedModel || !modelOptions.includes(selectedModel) || (!input.trim() && !uploadedImages.length && !uploadedFiles.length)} className="aiagent-send-btn">
                 {isLoading ? <Loader2 size={24} className="spin" /> : <Send size={24} />}
               </button>
             </div>

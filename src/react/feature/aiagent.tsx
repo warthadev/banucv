@@ -6,8 +6,9 @@ import {
   Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Globe, Wand2, Link, ChevronDown
 } from "lucide-react";
 import { Link as RouterLink } from "react-router-dom";
-import useAgentModels from "@hook/useagentmodels";
+import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
 import { AI_AGENT_API_BASE } from "@config/api";
+import { saveRouterCredentials } from "@config/routerhelper";
 import { LOCAL_AGENT_MODEL, isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
 import { buildModelScopedHistory, getAgentModeForModelSelection, getAgentModelClassification, getAgentModelsForMode, getAgentRequestModels, getAgentMessagesStorageKey, getAgentPreferencesStorageKey, parseAgentModeSettings, type AgentMode } from "@config/agentmodes";
 import { useAudio } from "@hook/useaudio";
@@ -18,6 +19,7 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { getAuth, getDb } from "@config/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import { RouterAuthModal } from "./routerauthmodal";
 
 interface Message {
   id: string;
@@ -552,6 +554,14 @@ const AIAgent: React.FC = () => {
   };
 
   const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
+  const [dismissedRouterAuthUid, setDismissedRouterAuthUid] = useState<string | null>(null);
+  const [isRouterAuthModalManuallyOpen, setIsRouterAuthModalManuallyOpen] = useState(false);
+  const isRouterAuthModalOpen = Boolean(
+    currentUserUid &&
+    !authLoading &&
+    !isConfigured &&
+    (isRouterAuthModalManuallyOpen || (!configurationError && dismissedRouterAuthUid !== currentUserUid))
+  );
   const [messages, setMessages] = useState<Message[]>([]);
   const [messagesOwnerUid, setMessagesOwnerUid] = useState<string | null>(null);
   const [preferencesOwnerUid, setPreferencesOwnerUid] = useState<string | null>(null);
@@ -570,6 +580,19 @@ const AIAgent: React.FC = () => {
     setAgentMode(mode);
     setPreferredModel(mode === "auto" ? "" : candidates[0] || "");
   };
+  const handleRouterAuthSave = async (apiKey: string) => {
+    await saveRouterCredentials(apiKey);
+    window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
+  };
+  const handleRouterAuthClose = () => {
+    setIsRouterAuthModalManuallyOpen(false);
+    if (currentUserUid) setDismissedRouterAuthUid(currentUserUid);
+  };
+  useEffect(() => {
+    if (!isConfigured) return;
+    setDismissedRouterAuthUid(null);
+    setIsRouterAuthModalManuallyOpen(false);
+  }, [isConfigured]);
   useEffect(() => {
     if (!isModelPickerOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -1096,12 +1119,32 @@ const AIAgent: React.FC = () => {
 
   return (
     <>
-      {!isConfigured && (
+      <RouterAuthModal
+        isOpen={isRouterAuthModalOpen}
+        onSave={handleRouterAuthSave}
+        onClose={handleRouterAuthClose}
+      />
+      {!isConfigured && !isRouterAuthModalOpen && (
         <div style={{ minHeight: "55vh", display: "grid", placeItems: "center", padding: "24px" }}>
           <div style={{ textAlign: "center", maxWidth: "460px" }}>
             <h2>The AI Agent requires a 9Router key</h2>
-            <p>{configurationError || "No 9Router API key is available for this account. Add or replace the key in Settings."}</p>
-            <RouterLink className="aiagent-settings-link" to="/setting">Manage the 9Router key in Settings</RouterLink>
+            <p>
+              {!currentUserUid
+                ? "Sign in to your account and add a 9Router API key in Settings."
+                : configurationError || "No 9Router API key is available for this account. Add or replace the key in Settings."}
+            </p>
+            {currentUserUid && (
+              <button
+                type="button"
+                className="github-modal-confirm aiagent-key-settings-action"
+                onClick={() => setIsRouterAuthModalManuallyOpen(true)}
+              >
+                Use API Key
+              </button>
+            )}
+            <div style={{ marginTop: "16px" }}>
+              <RouterLink className="aiagent-settings-link" to="/setting">Manage the 9Router key in Settings</RouterLink>
+            </div>
           </div>
         </div>
       )}

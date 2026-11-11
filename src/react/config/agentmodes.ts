@@ -1,4 +1,4 @@
-import { LOCAL_AGENT_MODEL } from "./agentrouting.ts";
+import { isLocalAgentModel } from "./agentrouting.ts";
 
 export type AgentMode = "auto" | "thinking" | "fast" | "local";
 export type AgentModeSettings = { mode: AgentMode; model: string };
@@ -11,13 +11,12 @@ type StoredConversationMessage = {
   error?: boolean;
 };
 
-const normalizedId = (model: string): string => {
-  const parts = model.trim().toLowerCase().split("/");
-  if (parts[0] === "openrouter") return (parts.at(-1) || "").replace(/:free$/, "");
-  return parts.length > 1 ? parts.slice(1).join("/") : parts[0];
-};
+// Provider namespaces (including user-configured providers) are not capabilities.
+// Normalize only for classification; catalog IDs are always returned/routed unchanged.
+const normalizedId = (model: string): string =>
+  (model.trim().toLowerCase().split("/").at(-1) || "").replace(/:free$/, "");
 
-const isTrueLocalModel = (model: string): boolean => model.trim().toLowerCase() === LOCAL_AGENT_MODEL;
+const isTrueLocalModel = isLocalAgentModel;
 
 export const isVerifiedFreeAgentModel = (model: string): boolean => {
   const normalized = model.trim().toLowerCase();
@@ -25,28 +24,33 @@ export const isVerifiedFreeAgentModel = (model: string): boolean => {
     (normalized.startsWith("openrouter/") && normalized.endsWith(":free"));
 };
 
+// /agent/models currently exposes IDs, not the upstream capabilities object.
+// These reasoning families were verified against 9Router catalog metadata. Match
+// families/explicit capability markers, not a vendor-only list of exact versions
+// or user-specific provider IDs. Unknown families remain unclassified.
+const thinkingFamilies = [
+  /^gemini-3(?:\.\d+)?-(?:pro|flash)(?:-|$)/,
+  /^nemotron-3(?:[.-]|$)/,
+  /^mimo-v2(?:[.:-]|$)/,
+  /^minimax-m(?:2|3)(?:[.-]|$)/,
+];
+
 export const isDocumentedThinkingAgentModel = (model: string): boolean => {
+  if (isTrueLocalModel(model)) return false;
   const id = normalizedId(model);
-  // Exact Gemini 3 model IDs documented as reasoning-capable, with dynamic
-  // thinking enabled by default. Unknown model IDs remain unclassified.
-  return [
-    "gemini-3.1-pro-preview",
-    "gemini-3.6-flash",
-    "gemini-3-flash-preview",
-    "gemini-3.8-flash",
-  ].includes(id);
+  return thinkingFamilies.some((family) => family.test(id)) ||
+    /(?:^|[-_.])(?:thinking|reasoning|reasoner)(?:[-_.:]|$)/.test(id);
 };
 
 export const isDocumentedFastAgentModel = (model: string): boolean => {
+  if (isTrueLocalModel(model)) return false;
   const id = normalizedId(model);
-  // Exact Flash-family Gemini IDs documented as fast, low-latency or high-throughput.
-  return [
-    "gemini-3.8-flash",
-    "gemini-3.6-flash",
-    "gemini-3.5-flash-lite",
-    "gemini-3.1-flash-lite",
-    "gemini-3-flash-preview",
-  ].includes(id);
+  // Fast means direct-response or explicitly speed-optimized, not a latency
+  // guarantee. The free router and Dots Note advertise reasoning:false; Flash
+  // and highspeed variants can also be reasoning-capable and belong in both modes.
+  return model.trim().toLowerCase() === "openrouter/openrouter/free" ||
+    /^dots-3-note(?:-|$)/.test(id) ||
+    /(?:^|[-_.])(?:flash|fast|highspeed|turbo|instant)(?:[-_.:]|$)/.test(id);
 };
 
 export const getAgentModelClassification = (model: string): string => {
@@ -57,6 +61,9 @@ export const getAgentModelClassification = (model: string): string => {
   ];
   return tags.length ? tags.join(" · ") : "Other / unclassified";
 };
+
+export const getAgentModeForModelSelection = (mode: AgentMode, model: string): AgentMode =>
+  isTrueLocalModel(model) ? "local" : mode;
 
 const requestNeedsThinking = (prompt: string): boolean => {
   const normalized = prompt.toLowerCase();
@@ -76,8 +83,10 @@ const getAutoModelSequence = (models: string[], prompt: string, preferredModel =
   const cloudSequence = preferredModel && prioritized.includes(preferredModel)
     ? [preferredModel, ...prioritized.filter((model) => model !== preferredModel)]
     : prioritized;
-  const local = catalog.filter(isTrueLocalModel);
-  return [...cloudSequence, ...local];
+  // Local is never synthesized from a cloud alias and never starts an Auto
+  // request: only an account-authorized bare Local ID may be a capacity fallback.
+  if (!cloudSequence.length) return [];
+  return [...cloudSequence, ...catalog.filter(isTrueLocalModel)];
 };
 
 export const getAgentModelsForMode = (models: string[], mode: AgentMode): string[] => {
@@ -139,9 +148,12 @@ export const parseAgentModeSettings = (value: string | null): AgentModeSettings 
   try {
     const parsed = JSON.parse(value) as Partial<AgentModeSettings>;
     const validModes: AgentMode[] = ["auto", "thinking", "fast", "local"];
+    const mode = validModes.includes(parsed.mode as AgentMode) ? parsed.mode as AgentMode : "auto";
+    const model = typeof parsed.model === "string" ? parsed.model : "";
     return {
-      mode: validModes.includes(parsed.mode as AgentMode) ? parsed.mode as AgentMode : "auto",
-      model: typeof parsed.model === "string" ? parsed.model : "",
+      mode,
+      // Old Auto preferences must not visually select Local while routing cloud first.
+      model: mode === "auto" && isTrueLocalModel(model) ? "" : model,
     };
   } catch {
     return { mode: "auto", model: "" };

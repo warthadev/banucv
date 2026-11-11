@@ -1011,6 +1011,43 @@
   color: var(--text);
 }
 
+.setting-agent-model-groups {
+  display: grid;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.setting-agent-model-group {
+  display: grid;
+  gap: 5px;
+}
+
+.setting-agent-model-group > span {
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.setting-agent-model-list {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.setting-agent-model-list li {
+  overflow-wrap: anywhere;
+  padding: 7px 9px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-small);
+  background: var(--bg);
+  color: var(--text);
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 .setting-agent-error-text,
 .setting-agent-error {
   color: #dc2626;

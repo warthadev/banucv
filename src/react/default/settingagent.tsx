@@ -2,29 +2,29 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { AlertCircle, CheckCircle, KeyRound, LoaderCircle, RefreshCw, ShieldCheck, Trash2 } from "lucide-react";
 import { getAuth } from "@config/firebase";
-import { clearRouterCredentials, loadRouterCredentials, loadRouterModelCatalog, saveRouterCredentials, type RouterCredentials } from "@config/routerhelper";
-import { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
+import { clearRouterCredentials, loadRouterCredentials, saveRouterCredentials, type RouterCredentials } from "@config/routerhelper";
+import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
+import AgentModelCatalog from "./agentmodelcatalog";
 
 const SettingAgent: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [credentials, setCredentials] = useState<RouterCredentials | null>(null);
-  const [models, setModels] = useState<string[]>([]);
+  const { routerModels: models, isLoading: modelsLoading, catalogError: modelCatalogError } = useAgentModels();
   const [apiKey, setApiKey] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const requestIdRef = useRef(0);
 
   const refresh = useCallback(async (user: User | null) => {
     const requestId = ++requestIdRef.current;
     setLoading(true);
-    setCatalogError(null);
+    setSettingsError(null);
     if (!user) {
       setCredentials(null);
-      setModels([]);
       setLoading(false);
       return;
     }
@@ -32,24 +32,10 @@ const SettingAgent: React.FC = () => {
       const saved = await loadRouterCredentials();
       if (requestId !== requestIdRef.current) return;
       setCredentials(saved);
-      if (!saved) {
-        setModels([]);
-        return;
-      }
-      try {
-        const availableModels = await loadRouterModelCatalog();
-        if (requestId === requestIdRef.current) setModels(availableModels);
-      } catch (error) {
-        if (requestId === requestIdRef.current) {
-          setModels([]);
-          setCatalogError(error instanceof Error ? error.message : "Unable to load the model catalog.");
-        }
-      }
     } catch (error) {
       if (requestId === requestIdRef.current) {
         setCredentials(null);
-        setModels([]);
-        setCatalogError(error instanceof Error ? error.message : "Unable to load key status.");
+        setSettingsError(error instanceof Error ? error.message : "Unable to load key status.");
       }
     } finally {
       if (requestId === requestIdRef.current) setLoading(false);
@@ -64,12 +50,14 @@ const SettingAgent: React.FC = () => {
       unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
         setCurrentUser(user);
         setAuthReady(true);
+        setApiKey("");
+        setMessage(null);
         void refresh(user);
       });
     }).catch((error: unknown) => {
       setAuthReady(true);
       setLoading(false);
-      setCatalogError(error instanceof Error ? error.message : "Firebase authentication is unavailable.");
+      setSettingsError(error instanceof Error ? error.message : "Firebase authentication is unavailable.");
     });
     return () => {
       disposed = true;
@@ -138,8 +126,8 @@ const SettingAgent: React.FC = () => {
       ) : (
         <>
           <p className="setting-agent-account">Active account: <strong>{currentUser.email || currentUser.uid}</strong></p>
-          {catalogError && !credentials && (
-            <p className="setting-agent-error" role="alert"><AlertCircle size={15} /> Unable to load key status: {catalogError}</p>
+          {settingsError && !credentials && (
+            <p className="setting-agent-error" role="alert"><AlertCircle size={15} /> Unable to load key status: {settingsError}</p>
           )}
           {credentials && (
             <div className="setting-agent-safe-status">
@@ -173,7 +161,10 @@ const SettingAgent: React.FC = () => {
                 {saving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <ShieldCheck size={16} />}
                 {saving ? "Saving…" : credentials ? "Save new key" : "Save key"}
               </button>
-              <button className="setting-agent-secondary" type="button" onClick={() => void refresh(currentUser)} disabled={loading}>
+              <button className="setting-agent-secondary" type="button" onClick={() => {
+                void refresh(currentUser);
+                window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
+              }} disabled={loading || modelsLoading}>
                 <RefreshCw size={15} className={loading ? "setting-agent-spinner" : ""} /> Refresh status
               </button>
               {credentials && (
@@ -186,11 +177,7 @@ const SettingAgent: React.FC = () => {
           </form>
 
           {credentials && (
-            <div className="setting-agent-catalog" role="status">
-              <strong>{models.length} {models.length === 1 ? "model" : "models"} available</strong>
-              {models.length === 0 && !catalogError && <span>This account's model catalog is empty; global models are not shown.</span>}
-              {catalogError && <span className="setting-agent-error-text">Failed to load the model catalog: {catalogError}</span>}
-            </div>
+            <AgentModelCatalog models={models} isLoading={modelsLoading} error={modelCatalogError} />
           )}
           {message && (
             <p className={message.type === "success" ? "setting-agent-success" : "setting-agent-error"} role="status">

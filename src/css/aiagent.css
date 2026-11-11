@@ -1181,22 +1181,24 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
-.aiagent-model-picker-popover {
+.aiagent-popover-panel {
   position: fixed;
   z-index: 10000;
-  width: min(380px, calc(100vw - 48px));
-  max-height: min(72vh, 620px);
   display: flex;
   flex-direction: column;
-  gap: 8px;
   padding: 8px;
-  overflow: hidden;
   border: 1px solid var(--border-color);
   border-radius: 16px;
   background: var(--card-bg);
   box-shadow: 0 16px 48px var(--shadow-color);
   transform-origin: bottom left;
   box-sizing: border-box;
+}
+.aiagent-model-picker-popover {
+  width: min(380px, calc(100vw - 48px));
+  max-height: min(72vh, 620px);
+  gap: 8px;
+  overflow: hidden;
 }
 .aiagent-model-picker-header {
   display: flex;
@@ -1251,23 +1253,6 @@
 .aiagent-mode-option.selected {
   border-color: var(--primary);
   background: color-mix(in srgb, var(--primary) 10%, var(--card-bg));
-  color: var(--primary);
-}
-.aiagent-model-picker-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 auto;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text);
-  cursor: pointer;
-}
-.aiagent-model-picker-close:hover {
-  background: var(--primary-alpha);
   color: var(--primary);
 }
 .aiagent-model-option-list {
@@ -1387,22 +1372,12 @@
   color: var(--primary);
 }
 
-.upload-dropdown-menu.aiagent-upload-popover {
-  box-sizing: border-box;
+.aiagent-upload-popover {
   width: min(220px, calc(100vw - 24px));
   min-width: 0;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
   gap: 6px;
-  border-radius: 16px;
-  background: var(--card-bg);
-  z-index: 10000;
   overflow-x: hidden;
   overflow-y: auto;
-  box-shadow: 0 16px 48px var(--shadow-color);
-  transform-origin: bottom left;
-  animation: aiagent-upload-popover-enter 0.16s ease-out;
 }
 
 .aiagent-upload-popover button {
@@ -1412,6 +1387,7 @@
   border: 1px solid var(--border-color);
   border-radius: 12px;
   background: var(--card-bg);
+  color: var(--text);
   font-size: 0.78rem;
   font-weight: 600;
   flex-shrink: 0;
@@ -1444,11 +1420,6 @@
 .aiagent-upload-popover button > span:last-child {
   min-width: 0;
   flex: 1;
-}
-
-@keyframes aiagent-upload-popover-enter {
-  from { opacity: 0; transform: translateY(6px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .model-dropdown-menu button.active {

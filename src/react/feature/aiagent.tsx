@@ -49,6 +49,49 @@ interface UploadedImage {
   preview: string;
 }
 
+const AIAGENT_POPOVER_TRIGGER_GAP = 8;
+
+interface AIAgentPopoverPosition {
+  bottom: number;
+  left: number;
+  maxHeight: number;
+}
+
+interface AIAgentPopoverProps {
+  children: React.ReactNode;
+  className: string;
+  position: AIAgentPopoverPosition;
+  id?: string;
+  role?: React.AriaRole;
+  ariaModal?: boolean;
+  ariaLabelledBy?: string;
+}
+
+const AIAgentPopover: React.FC<AIAgentPopoverProps> = ({
+  children,
+  className,
+  position,
+  id,
+  role,
+  ariaModal,
+  ariaLabelledBy,
+}) => (
+  <motion.div
+    id={id}
+    className={`aiagent-popover-panel ${className}`}
+    style={{ position: "fixed", bottom: position.bottom, left: position.left, maxHeight: position.maxHeight }}
+    initial={{ opacity: 0, y: 6, scale: 0.98 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    exit={{ opacity: 0, y: 6, scale: 0.98 }}
+    transition={{ duration: 0.16, ease: "easeOut" }}
+    role={role}
+    aria-modal={ariaModal}
+    aria-labelledby={ariaLabelledBy}
+  >
+    {children}
+  </motion.div>
+);
+
 const TableBlock = ({ content }: { content: string }) => {
   const [copied, setCopied] = useState(false);
   
@@ -1029,11 +1072,10 @@ const AIAgent: React.FC = () => {
   ): { bottom: number; left: number; maxHeight: number } => {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    
-    const gap = 4;
-    const spaceAbove = btnRect.top - gap;
+
+    const gap = AIAGENT_POPOVER_TRIGGER_GAP;
     const bottom = vh - btnRect.top + gap;
-    const maxHeight = Math.min(menuHeight, Math.max(spaceAbove - gap, 140));
+    const maxHeight = Math.min(menuHeight, Math.max(btnRect.top - gap * 2, 140));
 
     let left = btnRect.right - menuWidth;
     const minLeft = 12;
@@ -1298,21 +1340,15 @@ const AIAgent: React.FC = () => {
               <div className="aiagent-input-buttons-left">
                 <div className="aiagent-upload-wrapper" ref={uploadDropdownRef}>
                   <button className="aiagent-icon-btn" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setUploadDropdownPos(calcDropdownPos(r, Math.min(220, window.innerWidth - 24), 180)); setIsUploadDropdownOpen(!isUploadDropdownOpen); }}><Plus size={24} /></button>
-                  {isUploadDropdownOpen && (
-                    <div
-                      className="upload-dropdown-menu aiagent-popover aiagent-upload-popover"
-                      style={{
-                        position: "fixed",
-                        bottom: uploadDropdownPos.bottom,
-                        left: uploadDropdownPos.left,
-                        maxHeight: uploadDropdownPos.maxHeight,
-                      }}
-                    >
-                      <button onClick={() => imageInputRef.current?.click()}><span className="aiagent-upload-option-icon"><ImageIcon size={18} /></span><span>Photos (multi)</span></button>
-                      <button onClick={() => multiFileInputRef.current?.click()}><span className="aiagent-upload-option-icon"><FileText size={18} /></span><span>Files (multi)</span></button>
-                      <button onClick={() => folderInputRef.current?.click()}><span className="aiagent-upload-option-icon"><Folder size={18} /></span><span>Folder</span></button>
-                    </div>
-                  )}
+                  <AnimatePresence>
+                    {isUploadDropdownOpen && (
+                      <AIAgentPopover className="aiagent-popover aiagent-upload-popover" position={uploadDropdownPos}>
+                        <button onClick={() => imageInputRef.current?.click()}><span className="aiagent-upload-option-icon"><ImageIcon size={18} /></span><span>Photos (multi)</span></button>
+                        <button onClick={() => multiFileInputRef.current?.click()}><span className="aiagent-upload-option-icon"><FileText size={18} /></span><span>Files (multi)</span></button>
+                        <button onClick={() => folderInputRef.current?.click()}><span className="aiagent-upload-option-icon"><Folder size={18} /></span><span>Folder</span></button>
+                      </AIAgentPopover>
+                    )}
+                  </AnimatePresence>
                 </div>
                 <div className="aiagent-model-wrapper" ref={modelPickerRef}>
                   <button
@@ -1346,26 +1382,17 @@ const AIAgent: React.FC = () => {
                   </button>
                   <AnimatePresence>
                     {isModelPickerOpen && (
-                      <motion.div
+                      <AIAgentPopover
                         id="aiagent-model-picker"
                         className="aiagent-popover aiagent-model-picker-popover"
-                        style={{
-                          position: "fixed",
-                          bottom: modelPickerPos.bottom,
-                          left: modelPickerPos.left,
-                          maxHeight: modelPickerPos.maxHeight,
-                        }}
-                        initial={{ opacity: 0, y: 6, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                        transition={{ duration: 0.16, ease: "easeOut" }}
+                        position={modelPickerPos}
                         role="dialog"
-                        aria-modal="false"
-                        aria-labelledby="aiagent-model-picker-title"
+                        ariaModal={false}
+                        ariaLabelledBy="aiagent-model-picker-title"
                       >
                         <div className="aiagent-model-picker-header">
                           <div className="aiagent-model-picker-icon"><Bot size={19} /></div>
-                          <div className="aiagent-model-picker-heading">
+                          <div className="aiagent-model-picker-heading aiagent-popover">
                             <h3 id="aiagent-model-picker-title">AI Agent</h3>
                             <p>
                               {agentMode === "auto"
@@ -1377,21 +1404,13 @@ const AIAgent: React.FC = () => {
                                     : "Use this account's configured Local Mimo inference route without model fallback. Its full authenticated 9Router catalog ID is preserved."}
                             </p>
                           </div>
-                          <button
-                            type="button"
-                            className="aiagent-model-picker-close"
-                            onClick={() => setIsModelPickerOpen(false)}
-                            aria-label="Close AI Agent model picker"
-                          >
-                            <X size={18} />
-                          </button>
                         </div>
                         <div className="aiagent-mode-options" role="group" aria-label="AI modes">
                           {(["auto", "thinking", "fast", "local"] as AgentMode[]).map((mode) => (
                             <button
                               key={mode}
                               type="button"
-                              className={`aiagent-mode-option${agentMode === mode ? " selected" : ""}`}
+                              className={`aiagent-mode-option aiagent-popover${agentMode === mode ? " selected" : ""}`}
                               aria-pressed={agentMode === mode}
                               onClick={() => selectAgentMode(mode)}
                             >
@@ -1425,7 +1444,7 @@ const AIAgent: React.FC = () => {
                                   setIsModelPickerOpen(false);
                                 }}
                               >
-                                <span className="aiagent-model-option-copy">
+                                <span className="aiagent-model-option-copy aiagent-popover">
                                   <strong>{model}</strong>
                                   <small>{modelDescription}</small>
                                 </span>
@@ -1433,7 +1452,7 @@ const AIAgent: React.FC = () => {
                               </button>
                             );
                           }) : (
-                            <p className="aiagent-model-empty" role="status">
+                            <p className="aiagent-model-empty aiagent-popover" role="status">
                               {agentMode === "auto"
                                 ? "No supported Thinking or Fast cloud model is available in this account's catalog. Choose Local explicitly if it is authorized."
                                 : agentMode === "thinking"
@@ -1444,7 +1463,7 @@ const AIAgent: React.FC = () => {
                             </p>
                           )}
                         </div>
-                      </motion.div>
+                      </AIAgentPopover>
                     )}
                   </AnimatePresence>
                 </div>

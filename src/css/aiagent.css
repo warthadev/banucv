@@ -1610,19 +1610,6 @@
   outline-offset: 3px;
 }
 
-.aiagent-key-settings-action {
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: none;
-  color: var(--btn-text);
-  text-decoration: none;
-}
-
-.aiagent-key-settings-action:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 3px;
-}
-
 .aiagent-catalog-status .aiagent-settings-link {
   flex: 0 0 auto;
 }

@@ -1381,6 +1381,66 @@
   color: var(--primary);
 }
 
+.aiagent-upload-popover {
+  box-sizing: border-box;
+  width: min(220px, calc(100vw - 24px));
+  min-width: 0;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-radius: 16px;
+  background: var(--card-bg);
+  box-shadow: 0 16px 48px var(--shadow-color);
+  transform-origin: bottom left;
+  animation: aiagent-upload-popover-enter 0.16s ease-out;
+}
+
+.aiagent-upload-popover button {
+  box-sizing: border-box;
+  gap: 10px;
+  padding: 7px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--card-bg);
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.aiagent-upload-popover button:hover {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, var(--card-bg));
+  color: var(--primary);
+}
+
+.aiagent-upload-popover button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.aiagent-upload-option-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
+}
+
+.aiagent-upload-popover button > span:last-child {
+  min-width: 0;
+  flex: 1;
+}
+
+@keyframes aiagent-upload-popover-enter {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .model-dropdown-menu button.active {
   background: var(--primary);
   color: var(--btn-text);

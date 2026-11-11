@@ -1296,10 +1296,10 @@ const AIAgent: React.FC = () => {
             <div className="aiagent-input-buttons">
               <div className="aiagent-input-buttons-left">
                 <div className="aiagent-upload-wrapper" ref={uploadDropdownRef}>
-                  <button className="aiagent-icon-btn" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setUploadDropdownPos(calcDropdownPos(r, 160, 150)); setIsUploadDropdownOpen(!isUploadDropdownOpen); }}><Plus size={24} /></button>
+                  <button className="aiagent-icon-btn" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setUploadDropdownPos(calcDropdownPos(r, Math.min(220, window.innerWidth - 24), 180)); setIsUploadDropdownOpen(!isUploadDropdownOpen); }}><Plus size={24} /></button>
                   {isUploadDropdownOpen && (
                     <div
-                      className="upload-dropdown-menu"
+                      className="upload-dropdown-menu aiagent-upload-popover"
                       style={{
                         position: "fixed",
                         bottom: uploadDropdownPos.bottom,
@@ -1307,9 +1307,9 @@ const AIAgent: React.FC = () => {
                         maxHeight: uploadDropdownPos.maxHeight,
                       }}
                     >
-                      <button onClick={() => imageInputRef.current?.click()}><ImageIcon size={18} /> Photos (multi)</button>
-                      <button onClick={() => multiFileInputRef.current?.click()}><FileText size={18} /> Files (multi)</button>
-                      <button onClick={() => folderInputRef.current?.click()}><Folder size={18} /> Folder</button>
+                      <button onClick={() => imageInputRef.current?.click()}><span className="aiagent-upload-option-icon"><ImageIcon size={18} /></span><span>Photos (multi)</span></button>
+                      <button onClick={() => multiFileInputRef.current?.click()}><span className="aiagent-upload-option-icon"><FileText size={18} /></span><span>Files (multi)</span></button>
+                      <button onClick={() => folderInputRef.current?.click()}><span className="aiagent-upload-option-icon"><Folder size={18} /></span><span>Folder</span></button>
                     </div>
                   )}
                 </div>

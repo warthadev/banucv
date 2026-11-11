@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, Eye, EyeOff, Key, Sparkles } from "lucide-react";
+import { Link as RouterLink } from "react-router-dom";
 import { modalVariants, overlayVariants } from "@animation/githubeditor";
 
 interface RouterAuthModalProps {
@@ -132,6 +133,9 @@ export const RouterAuthModal: React.FC<RouterAuthModalProps> = ({
 
             <div className="github-modal-footer">
               <p>Don&apos;t have a key? Use one from a 9Router instance you administer.</p>
+              <RouterLink className="aiagent-settings-link" to="/setting">
+                Manage the 9Router key in Settings
+              </RouterLink>
               <p className="github-modal-footer-note">
                 Do not use a shared admin dashboard. Keys entered here are encrypted and stored for this signed-in account.
               </p>

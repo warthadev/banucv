@@ -6,8 +6,10 @@ import {
   Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Globe, Wand2, Link, ChevronDown
 } from "lucide-react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import useAgentModels from "@hook/useagentmodels";
+import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
 import { AI_AGENT_API_BASE } from "@config/api";
+import { saveRouterCredentials } from "@config/routerhelper";
+import { shouldShowRouterAuthModal } from "@config/agentauthflow";
 import { LOCAL_AGENT_MODEL, isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
 import { buildModelScopedHistory, getAgentModeForModelSelection, getAgentModelClassification, getAgentModelsForMode, getAgentRequestModels, getAgentMessagesStorageKey, getAgentPreferencesStorageKey, parseAgentModeSettings, type AgentMode } from "@config/agentmodes";
 import { useAudio } from "@hook/useaudio";
@@ -18,6 +20,7 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { getAuth, getDb } from "@config/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import { RouterAuthModal } from "./routerauthmodal";
 
 interface Message {
   id: string;
@@ -553,10 +556,16 @@ const AIAgent: React.FC = () => {
   };
 
   const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
-  useEffect(() => {
-    if (authLoading || !currentUserUid || isConfigured) return;
-    navigate("/dashboard", { replace: true });
-  }, [authLoading, currentUserUid, isConfigured, navigate]);
+  const isRouterAuthModalOpen = shouldShowRouterAuthModal({
+    isLoading: authLoading,
+    userUid: currentUserUid,
+    isConfigured,
+  });
+  const handleRouterAuthSave = async (apiKey: string) => {
+    await saveRouterCredentials(apiKey);
+    window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
+  };
+  const handleRouterAuthClose = () => navigate("/dashboard", { replace: true });
   const [messages, setMessages] = useState<Message[]>([]);
   const [messagesOwnerUid, setMessagesOwnerUid] = useState<string | null>(null);
   const [preferencesOwnerUid, setPreferencesOwnerUid] = useState<string | null>(null);
@@ -1097,7 +1106,16 @@ const AIAgent: React.FC = () => {
 
   const totalUploads = uploadedImages.length + uploadedFiles.length;
 
-  if (authLoading || !currentUserUid || !isConfigured) return <Loading />;
+  if (authLoading || !currentUserUid) return <Loading />;
+  if (isRouterAuthModalOpen) {
+    return (
+      <RouterAuthModal
+        isOpen
+        onSave={handleRouterAuthSave}
+        onClose={handleRouterAuthClose}
+      />
+    );
+  }
 
   return (
     <>

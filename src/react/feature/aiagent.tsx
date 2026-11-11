@@ -546,6 +546,7 @@ const AIAgent: React.FC = () => {
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<string>("Unknown");
   const [uploadDropdownPos, setUploadDropdownPos] = useState<{ bottom: number; left: number; maxHeight: number }>({ bottom: 0, left: 0, maxHeight: 0 });
+  const [modelPickerPos, setModelPickerPos] = useState<{ bottom: number; left: number; maxHeight: number }>({ bottom: 0, left: 0, maxHeight: 0 });
   const [textareaOverflow, setTextareaOverflow] = useState<"hidden" | "auto">("hidden");
   const [sourcesVisibility, setSourcesVisibility] = useState<Record<string, boolean>>({});
   
@@ -1299,7 +1300,7 @@ const AIAgent: React.FC = () => {
                   <button className="aiagent-icon-btn" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setUploadDropdownPos(calcDropdownPos(r, Math.min(220, window.innerWidth - 24), 180)); setIsUploadDropdownOpen(!isUploadDropdownOpen); }}><Plus size={24} /></button>
                   {isUploadDropdownOpen && (
                     <div
-                      className="upload-dropdown-menu aiagent-upload-popover"
+                      className="upload-dropdown-menu aiagent-popover aiagent-upload-popover"
                       style={{
                         position: "fixed",
                         bottom: uploadDropdownPos.bottom,
@@ -1317,7 +1318,23 @@ const AIAgent: React.FC = () => {
                   <button
                     type="button"
                     className="aiagent-icon-btn aiagent-model-picker-trigger"
-                    onClick={() => setIsModelPickerOpen((open) => !open)}
+                    onClick={(event) => {
+                      const triggerRect = event.currentTarget.getBoundingClientRect();
+                      const isNarrowViewport = window.innerWidth <= 639;
+                      const pickerWidth = isNarrowViewport
+                        ? Math.min(360, window.innerWidth - 60)
+                        : Math.min(380, window.innerWidth - 48);
+                      const pickerHeight = Math.min(
+                        isNarrowViewport ? 520 : 620,
+                        Math.round(window.innerHeight * (isNarrowViewport ? 0.68 : 0.72)),
+                      );
+                      setModelPickerPos(calcDropdownPos(
+                        triggerRect,
+                        pickerWidth,
+                        pickerHeight,
+                      ));
+                      setIsModelPickerOpen((open) => !open);
+                    }}
                     title={`Choose AI mode: ${agentMode}`}
                     aria-label={`AI Agent mode: ${agentMode}`}
                     aria-haspopup="dialog"
@@ -1331,8 +1348,14 @@ const AIAgent: React.FC = () => {
                     {isModelPickerOpen && (
                       <motion.div
                         id="aiagent-model-picker"
-                        className="aiagent-model-picker-popover"
-                        initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                        className="aiagent-popover aiagent-model-picker-popover"
+                        style={{
+                          position: "fixed",
+                          bottom: modelPickerPos.bottom,
+                          left: modelPickerPos.left,
+                          maxHeight: modelPickerPos.maxHeight,
+                        }}
+                        initial={{ opacity: 0, y: 6, scale: 0.98 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 6, scale: 0.98 }}
                         transition={{ duration: 0.16, ease: "easeOut" }}

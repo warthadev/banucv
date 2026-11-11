@@ -204,6 +204,16 @@
   font-family: 'JetBrains Mono', monospace;
 }
 
+.aiagent-message-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 4px 0 8px;
+  color: var(--text-sub);
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
 .aiagent-retry-btn-header {
   background: none;
   border: 1px solid transparent;
@@ -1149,23 +1159,24 @@
   white-space: nowrap;
 }
 .aiagent-model-picker-trigger {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 0;
+  justify-content: center;
+  padding: 8px;
   border: 0;
-  background: transparent;
-  color: var(--text);
+  border-radius: 12px;
+  background: var(--primary);
+  color: var(--btn-text);
   cursor: pointer;
-  max-width: min(42vw, 360px);
+  flex-shrink: 0;
+  transition: all 0.15s ease;
 }
-.aiagent-model-picker-trigger .aiagent-automatic-model {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.aiagent-model-picker-trigger:hover:not(:disabled) {
+  background: rgba(var(--primary-rgb), 0.9);
 }
-.aiagent-model-picker-trigger > svg {
-  flex: 0 0 auto;
-  color: var(--text-sub);
+.aiagent-model-picker-trigger:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 .aiagent-model-picker-overlay {
   z-index: 10000;
@@ -1201,6 +1212,28 @@
   margin: 0;
   color: var(--text-sub);
   font-size: 0.84rem;
+}
+.aiagent-mode-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.aiagent-mode-option {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--text-sub);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.aiagent-mode-option:hover,
+.aiagent-mode-option.selected {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, var(--card-bg));
+  color: var(--primary);
 }
 .aiagent-model-picker-close {
   display: flex;
@@ -1256,6 +1289,8 @@
 .aiagent-model-option-copy small {
   color: var(--text-sub);
   font-size: 0.76rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 .aiagent-model-option > svg {
   flex: 0 0 auto;

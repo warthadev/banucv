@@ -28,7 +28,7 @@ after(async () => {
 
 const render = (props) => renderToString(React.createElement(AgentModelCatalog, props));
 
-test("renders only supplied account IDs and groups canonical and alias local IDs without changing them", () => {
+test("renders only supplied account IDs and groups only the exact runtime model as Local", () => {
   const html = render({ models: ["account-a/cloud-model", LOCAL_AGENT_MODEL, LOCAL_AGENT_MODEL_ALIAS], isLoading: false, error: null });
   assert.match(html, /Cloud models/);
   assert.match(html, /Local models/);
@@ -36,6 +36,10 @@ test("renders only supplied account IDs and groups canonical and alias local IDs
   assert.ok(html.includes(`<li>${LOCAL_AGENT_MODEL}</li>`));
   assert.ok(html.includes(`<li>${LOCAL_AGENT_MODEL_ALIAS}</li>`));
   assert.equal((html.match(/<li>/g) || []).length, 3);
+  const cloudGroup = html.split("Cloud models")[1].split("Local models")[0];
+  const localGroup = html.split("Local models")[1];
+  assert.ok(cloudGroup.includes(LOCAL_AGENT_MODEL_ALIAS));
+  assert.ok(!localGroup.includes(LOCAL_AGENT_MODEL_ALIAS));
   assert.doesNotMatch(html, /openrouter\/openrouter\/free/);
 });
 

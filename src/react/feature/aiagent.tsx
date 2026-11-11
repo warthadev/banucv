@@ -8,7 +8,8 @@ import {
 import { Link as RouterLink } from "react-router-dom";
 import useAgentModels from "@hook/useagentmodels";
 import { AI_AGENT_API_BASE } from "@config/api";
-import { resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
+import { LOCAL_AGENT_MODEL, isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
+import { buildModelScopedHistory, getAgentModelClassification, getAgentModelsForMode, getAgentRequestModels, getAgentMessagesStorageKey, getAgentPreferencesStorageKey, parseAgentModeSettings, type AgentMode } from "@config/agentmodes";
 import { useAudio } from "@hook/useaudio";
 import { modalVariants, overlayVariants } from "@animation/githubeditor";
 import Loading from "@control/loading";
@@ -24,6 +25,8 @@ interface Message {
   role: "user" | "bot";
   content: string;
   model?: string;
+  requestedModel?: string;
+  usage?: { inputTokens?: number; outputTokens?: number; totalTokens?: number };
   timestamp: Date;
   imageData?: string;
   imageMimeType?: string;
@@ -313,6 +316,8 @@ const getErrorText = (error: unknown): string => {
   return error == null ? "" : String(error);
 };
 
+const isCurrentBackendCapacityFailure = (error: unknown): boolean => isRetryableAgentAvailabilityError(error);
+
 const getCatalogStatusMessage = (error: string | null): string => {
   if (!error) return "This account's model catalog is empty. Check the 9Router key and available models in Settings.";
   const normalizedError = error.toLowerCase();
@@ -399,6 +404,24 @@ const getFullErrorText = (msg: Message): string => {
   return text;
 };
 
+const normalizeTokenUsage = (value: unknown): Message["usage"] => {
+  if (typeof value !== "object" || value === null) return undefined;
+  const usage = value as Record<string, unknown>;
+  const read = (...keys: string[]): number | undefined => {
+    for (const key of keys) {
+      const candidate = usage[key];
+      if (typeof candidate === "number" && Number.isFinite(candidate) && candidate >= 0) return candidate;
+    }
+    return undefined;
+  };
+  const normalized = {
+    inputTokens: read("input_tokens", "prompt_tokens", "inputTokens", "promptTokens"),
+    outputTokens: read("output_tokens", "completion_tokens", "outputTokens", "completionTokens"),
+    totalTokens: read("total_tokens", "totalTokens"),
+  };
+  return Object.values(normalized).some((tokenCount) => tokenCount !== undefined) ? normalized : undefined;
+};
+
 const splitTextAndTables = (text: string) => {
   const parts: { type: 'text' | 'table'; content: string }[] = [];
   const tableRegex = /((?:^\|.*\|$\n?)+)/gm;
@@ -462,16 +485,9 @@ const AIAgent: React.FC = () => {
   const { isConfigured, isLoading: authLoading, routerModels, catalogError, configurationError } = useAgentModels();
   const { aiMode } = useAudio();
 
-  const loadMessages = (): Message[] => {
+  const loadMessages = (uid: string): Message[] => {
     try {
-      let saved = localStorage.getItem('aiagent_messages');
-      if (!saved) {
-        const legacyMessages = localStorage.getItem('aichat_messages');
-        if (legacyMessages) {
-          saved = legacyMessages;
-          localStorage.setItem('aiagent_messages', legacyMessages);
-        }
-      }
+      const saved = localStorage.getItem(getAgentMessagesStorageKey(uid));
       if (saved) {
         const parsed = JSON.parse(saved) as Array<Omit<Message, "timestamp"> & { timestamp: string | number }>;
         return parsed.map((msg) => ({
@@ -485,21 +501,31 @@ const AIAgent: React.FC = () => {
     return [];
   };
 
-  const saveMessages = (msgs: Message[]) => {
+  const saveMessages = (uid: string, msgs: Message[]) => {
     try {
-      localStorage.setItem('aiagent_messages', JSON.stringify(msgs));
+      localStorage.setItem(getAgentMessagesStorageKey(uid), JSON.stringify(msgs));
     } catch (e) {
       console.warn('Failed to save messages:', e);
     }
   };
 
-  const [messages, setMessages] = useState<Message[]>(() => loadMessages());
+  const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [messagesOwnerUid, setMessagesOwnerUid] = useState<string | null>(null);
+  const [preferencesOwnerUid, setPreferencesOwnerUid] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [preferredModel, setPreferredModel] = useState("");
+  const [agentMode, setAgentMode] = useState<AgentMode>("auto");
   const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
-  const modelOptions = routerModels;
+  const modelOptions = getAgentModelsForMode(routerModels, agentMode);
   const selectedModel = modelOptions.includes(preferredModel) ? preferredModel : modelOptions[0] || "";
+  const requestModelOptions = getAgentRequestModels(routerModels, agentMode, selectedModel);
+  const selectAgentMode = (mode: AgentMode) => {
+    const candidates = getAgentModelsForMode(routerModels, mode);
+    setAgentMode(mode);
+    setPreferredModel(candidates[0] || "");
+  };
   useEffect(() => {
     if (!isModelPickerOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -513,7 +539,6 @@ const AIAgent: React.FC = () => {
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isUploadDropdownOpen, setIsUploadDropdownOpen] = useState(false);
-  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [imageGenEnabled, setImageGenEnabled] = useState(false);
   const [, setRetryingMessageId] = useState<string | null>(null);
   const [userDisplayName, setUserDisplayName] = useState<string>("User");
@@ -531,22 +556,81 @@ const AIAgent: React.FC = () => {
   const uploadDropdownRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesRef = useRef<Message[]>([]);
+  const currentUserUidRef = useRef<string | null>(null);
+  const requestSequenceRef = useRef(0);
+  const activeRequestIdRef = useRef<number | null>(null);
   
   useEffect(() => { messagesRef.current = messages; }, [messages]);
   
   useEffect(() => {
-    saveMessages(messages);
-  }, [messages]);
+    if (!currentUserUid) {
+      setMessagesOwnerUid(null);
+      setMessages([]);
+      setPreferredModel("");
+      setAgentMode("auto");
+      setPreferencesOwnerUid(null);
+      return;
+    }
+    const uid = currentUserUid;
+    setMessagesOwnerUid(null);
+    setPreferencesOwnerUid(null);
+    setMessages(loadMessages(uid));
+    let savedPreferences = parseAgentModeSettings(null);
+    try {
+      savedPreferences = parseAgentModeSettings(localStorage.getItem(getAgentPreferencesStorageKey(uid)));
+    } catch (error) {
+      console.warn("Failed to load this account's AI preferences:", error);
+    }
+    setAgentMode(savedPreferences.mode);
+    setPreferredModel(savedPreferences.model);
+    setMessagesOwnerUid(uid);
+    setPreferencesOwnerUid(uid);
+  }, [currentUserUid]);
+
+  useEffect(() => {
+    if (currentUserUid && messagesOwnerUid === currentUserUid) saveMessages(currentUserUid, messages);
+  }, [currentUserUid, messagesOwnerUid, messages]);
+
+  useEffect(() => {
+    if (currentUserUid && preferencesOwnerUid === currentUserUid) {
+      try {
+        localStorage.setItem(getAgentPreferencesStorageKey(currentUserUid), JSON.stringify({ mode: agentMode, model: preferredModel }));
+      } catch (error) {
+        console.warn("Failed to save this account's AI preferences:", error);
+      }
+    }
+  }, [currentUserUid, preferencesOwnerUid, agentMode, preferredModel]);
   
   useEffect(() => {
+    let disposed = false;
+    let unsubscribe = () => {};
     const initAuth = async () => {
       try {
         const auth = await getAuth();
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (disposed) return;
+        unsubscribe = onAuthStateChanged(auth, async (user) => {
+          const nextUid = user?.uid || null;
+          currentUserUidRef.current = nextUid;
+          activeRequestIdRef.current = null;
+          setIsLoading(false);
+          setRetryingMessageId(null);
+          setCurrentUserUid(nextUid);
+          setMessagesOwnerUid(null);
+          setMessages([]);
+          setPreferencesOwnerUid(null);
+          setPreferredModel("");
+          setAgentMode("auto");
+          if (!user) {
+            setUserDisplayName("User");
+            setUserAvatar(null);
+            setUserLocation("Unknown");
+            return;
+          }
           if (user) {
             const db = await getDb();
             const userRef = doc(db, "users", user.uid);
             const userSnap = await getDoc(userRef);
+            if (disposed || auth.currentUser?.uid !== user.uid) return;
             if (userSnap.exists()) {
               const data = userSnap.data();
               setUserDisplayName(data.displayName || user.displayName || user.email?.split('@')[0] || "User");
@@ -558,13 +642,16 @@ const AIAgent: React.FC = () => {
             }
           }
         });
-        return () => unsubscribe();
       } catch (error) {
         console.error("Failed to initialize auth in AIAgent:", error);
       }
     };
     
     initAuth();
+    return () => {
+      disposed = true;
+      unsubscribe();
+    };
   }, []);
   
   useEffect(() => {
@@ -713,27 +800,40 @@ const AIAgent: React.FC = () => {
     modelIndex: number,
     currentMessages: Message[],
     isRetry: boolean,
-    originalUserMessage?: string
-  ): Promise<{ text: string; model: string; sources?: { title: string; url: string }[]; searchImages?: string[] }> => {
-    const modelName = modelOptions[modelIndex];
+    originalUserMessage: string | undefined,
+    modelSequence: string[],
+    requestOwnerUid: string,
+    requestId: number,
+  ): Promise<{ text: string; model: string; requestedModel: string; usage?: Message["usage"]; sources?: { title: string; url: string }[]; searchImages?: string[] }> => {
+    const modelName = modelSequence[modelIndex];
     if (!modelName) throw new Error("Model not found");
-    const history = currentMessages.filter(m => !m.error && !(isRetry && m.role === "user" && m.content === originalUserMessage)).map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.content }));
+    const originallyRequestedModel = modelSequence[0] || modelName;
+    const priorMessages = currentMessages.filter(m => !m.error && !(isRetry && m.role === "user" && m.content === originalUserMessage));
+    const history = buildModelScopedHistory(priorMessages, modelName);
     const textContext = messageText + buildContextFromFiles(files);
     const content: Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }> = [{ type: "text", text: textContext || "Describe these images" }];
     for (const image of images) content.push({ type: "image_url", image_url: { url: `data:${image.mimeType};base64,${image.data}` } });
     const firebaseAuth = await getAuth();
     const user = firebaseAuth.currentUser;
-    if (!user) throw new Error("Please sign in before using AI Agent");
+    if (!user || user.uid !== requestOwnerUid || currentUserUidRef.current !== requestOwnerUid || activeRequestIdRef.current !== requestId) {
+      throw new Error("The signed-in account changed before this AI request could continue");
+    }
     const idToken = await user.getIdToken(true);
+    if (firebaseAuth.currentUser?.uid !== requestOwnerUid || currentUserUidRef.current !== requestOwnerUid || activeRequestIdRef.current !== requestId) {
+      throw new Error("The signed-in account changed before this AI request could continue");
+    }
     const prompt = `${textContext}${images.length ? `\n\n[${images.length} image(s) attached]` : ""}`;
     const route = resolveAgentModelRoute(modelName, AI_AGENT_API_BASE);
     const response = await fetch(`${route.apiBase}/agent/chat`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` }, body: JSON.stringify({ provider: "9router", model: route.model, prompt, history }) });
     const data = await response.json();
+    if (currentUserUidRef.current !== requestOwnerUid || activeRequestIdRef.current !== requestId) {
+      throw new Error("The signed-in account changed while this AI request was running");
+    }
     if (!response.ok) throw new Error(data?.detail || `AI Agent request failed: ${response.status}`);
     const result = data?.data?.result || {};
     const text = cleanMarkdown(result.content || "");
     if (!text) throw new Error("AI Agent returned an empty response");
-    return { text, model: result.model || modelName, sources: [], searchImages: [] };
+    return { text, model: result.model || modelName, requestedModel: originallyRequestedModel, usage: normalizeTokenUsage(result.usage || data?.data?.usage), sources: [], searchImages: [] };
   };
 
   const generateImage = async (prompt: string): Promise<string> => {
@@ -756,7 +856,11 @@ const AIAgent: React.FC = () => {
     }
   };
 
-  const sendMessage = async (messageText: string, images: UploadedImage[], files: UploadedFile[], retryModelIndex: number = Math.max(0, modelOptions.indexOf(selectedModel)), isRetry: boolean = false) => {
+  const sendMessage = async (messageText: string, images: UploadedImage[], files: UploadedFile[], retryModelIndex = 0, isRetry = false, modelSequence: string[] = requestModelOptions, requestOwnerUid: string | null = currentUserUid, suppliedRequestId?: number) => {
+    if (!requestOwnerUid || currentUserUidRef.current !== requestOwnerUid || messagesOwnerUid !== requestOwnerUid) return;
+    const requestId = suppliedRequestId ?? ++requestSequenceRef.current;
+    activeRequestIdRef.current = requestId;
+    const isCurrentRequest = () => currentUserUidRef.current === requestOwnerUid && activeRequestIdRef.current === requestId && messagesOwnerUid === requestOwnerUid;
     setIsLoading(true);
 
     if (!isRetry) {
@@ -775,6 +879,7 @@ const AIAgent: React.FC = () => {
     if (imageGenEnabled && messageText.trim() && !images.length) {
       try {
         const imgDataUrl = await generateImage(messageText);
+        if (!isCurrentRequest()) return;
         setMessages(prev => [...prev, {
           id: (Date.now() + 1).toString(),
           role: "bot",
@@ -785,6 +890,7 @@ const AIAgent: React.FC = () => {
           imageMimeType: "image/png",
         }]);
       } catch (error: unknown) {
+        if (!isCurrentRequest()) return;
         const friendlyError = getErrorMessage(error);
         setMessages(prev => [...prev, { 
           id: (Date.now() + 1).toString(), 
@@ -796,19 +902,25 @@ const AIAgent: React.FC = () => {
           errorDetails: getErrorText(error)
         }]);
       } finally {
-        setIsLoading(false);
-        setRetryingMessageId(null);
+        if (activeRequestIdRef.current === requestId) {
+          activeRequestIdRef.current = null;
+          setIsLoading(false);
+          setRetryingMessageId(null);
+        }
       }
       return;
     }
     
     try {
-      const response = await callAI(messageText, images, files, retryModelIndex, messagesRef.current, isRetry, messageText);
+      const response = await callAI(messageText, images, files, retryModelIndex, messagesRef.current, isRetry, messageText, modelSequence, requestOwnerUid, requestId);
+      if (!isCurrentRequest()) return;
       const newMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "bot",
         content: response.text,
         model: response.model,
+        requestedModel: response.requestedModel,
+        usage: response.usage,
         timestamp: new Date(),
         sources: response.sources && response.sources.length > 0 ? response.sources : undefined,
         searchImages: response.searchImages && response.searchImages.length > 0 ? response.searchImages : undefined,
@@ -819,17 +931,18 @@ const AIAgent: React.FC = () => {
         speakText(response.text, (Date.now() + 1).toString());
       }
     } catch (error: unknown) {
+      if (!isCurrentRequest()) return;
       const errorType = getErrorType(error);
       const friendlyError = getErrorMessage(error);
-      
       const errorMessage = getErrorText(error);
-      const isServiceUnavailable = errorType === "SERVICE_UNAVAILABLE" || errorMessage.includes("503");
-      const isRateLimit = errorType === "RATE_LIMIT" || errorMessage.includes("429");
+      const errorObject = error instanceof Error ? error : new Error(errorMessage);
+      const isCapacityFailure = isCurrentBackendCapacityFailure(error);
       
-      const attemptedModel = modelOptions[retryModelIndex] || selectedModel;
-      if (shouldRetryWithNextAgentModel(attemptedModel, isServiceUnavailable || isRateLimit, retryModelIndex, modelOptions.length)) {
+      const attemptedModel = modelSequence[retryModelIndex] || selectedModel;
+      if (shouldRetryWithNextAgentModel(attemptedModel, isCapacityFailure, retryModelIndex, modelSequence.length)) {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        await sendMessage(messageText, images, files, retryModelIndex + 1, true);
+        if (!isCurrentRequest()) return;
+        await sendMessage(messageText, images, files, retryModelIndex + 1, true, modelSequence, requestOwnerUid, requestId);
         return;
       }
       
@@ -838,34 +951,42 @@ const AIAgent: React.FC = () => {
         role: "bot", 
         content: friendlyError, 
         model: "Error", 
+        requestedModel: modelSequence[0] || attemptedModel,
         timestamp: new Date(), 
         error: true,
-        errorDetails: error.message 
+        errorDetails: errorObject.message
       }]);
       
       console.error("API Error Details:", {
         type: errorType,
-        message: error.message,
-        stack: error.stack,
-        model: selectedModel,
+        message: errorObject.message,
+        stack: errorObject.stack,
+        model: attemptedModel,
         retryCount: retryModelIndex
       });
     } finally { 
-      setIsLoading(false); 
-      setRetryingMessageId(null); 
+      if (activeRequestIdRef.current === requestId) {
+        activeRequestIdRef.current = null;
+        setIsLoading(false);
+        setRetryingMessageId(null);
+      }
     }
   };
 
   const handleSendMessage = async () => {
-    if ((!input.trim() && !uploadedImages.length && !uploadedFiles.length) || isLoading || !isConfigured || !selectedModel || !modelOptions.includes(selectedModel)) return;
+    const requestOwnerUid = currentUserUidRef.current;
+    if (!requestOwnerUid || requestOwnerUid !== currentUserUid || messagesOwnerUid !== requestOwnerUid || (!input.trim() && !uploadedImages.length && !uploadedFiles.length) || isLoading || !isConfigured || !selectedModel || !modelOptions.includes(selectedModel) || !requestModelOptions.length) return;
     const currentInput = input, currentImages = [...uploadedImages], currentFiles = [...uploadedFiles];
+    const modelSequence = getAgentRequestModels(routerModels, agentMode, selectedModel, currentInput);
+    if (!modelSequence.length) return;
     setInput("");
     clearAllUploads();
-    await sendMessage(currentInput, currentImages, currentFiles);
+    await sendMessage(currentInput, currentImages, currentFiles, 0, false, modelSequence, requestOwnerUid);
   };
 
   const retryMessage = async (messageId: string) => {
-    if (!selectedModel || !modelOptions.includes(selectedModel)) return;
+    const requestOwnerUid = currentUserUidRef.current;
+    if (!requestOwnerUid || requestOwnerUid !== currentUserUid || messagesOwnerUid !== requestOwnerUid || isLoading || !selectedModel || !modelOptions.includes(selectedModel) || !requestModelOptions.length) return;
     const errorIndex = messages.findIndex(m => m.id === messageId);
     if (errorIndex <= 0) return;
     const userMsg = messages[errorIndex - 1];
@@ -874,15 +995,21 @@ const AIAgent: React.FC = () => {
     setMessages(prev => prev.filter(m => m.id !== messageId));
     const recoveredImages: UploadedImage[] = userMsg.images?.map(img => ({ data: img.data, mimeType: img.mimeType, preview: `data:${img.mimeType};base64,${img.data}` })) || [];
     const recoveredFiles: UploadedFile[] = userMsg.files?.map(f => ({ name: f.name, content: f.content, type: "" })) || [];
-    await sendMessage(userMsg.content, recoveredImages, recoveredFiles, Math.max(0, modelOptions.indexOf(selectedModel)), true);
+    const modelSequence = getAgentRequestModels(routerModels, agentMode, selectedModel, userMsg.content);
+    await sendMessage(userMsg.content, recoveredImages, recoveredFiles, 0, true, modelSequence, requestOwnerUid);
   };
 
   const copyMessage = (content: string) => navigator.clipboard.writeText(content);
   
   const clearChat = () => { 
     setMessages([]); 
-    localStorage.removeItem('aiagent_messages');
-    localStorage.removeItem('aichat_messages');
+    if (currentUserUid) {
+      try {
+        localStorage.removeItem(getAgentMessagesStorageKey(currentUserUid));
+      } catch (error) {
+        console.warn("Failed to clear this account's chat history:", error);
+      }
+    }
   };
 
   const calcDropdownPos = (
@@ -951,8 +1078,8 @@ const AIAgent: React.FC = () => {
               <div className="aiagent-model-picker-header">
                 <div className="aiagent-model-picker-icon"><Bot size={20} /></div>
                 <div className="aiagent-model-picker-heading">
-                  <h3 id="aiagent-model-picker-title">Choose an AI model</h3>
-                  <p>Choose a model for this conversation.</p>
+                  <h3 id="aiagent-model-picker-title">Choose an AI mode</h3>
+                  <p>Auto tries this account&apos;s documented Thinking/Fast models, then its Other models; exact Local is last only when this account lists that route. On explicit 429/503 capacity errors, fallback stays within this account and the responding model is shown. Charges may apply.</p>
                 </div>
                 <button
                   type="button"
@@ -963,9 +1090,35 @@ const AIAgent: React.FC = () => {
                   <X size={20} />
                 </button>
               </div>
+              <div className="aiagent-mode-options" role="group" aria-label="AI modes">
+                {(["auto", "thinking", "fast", "local", "manual"] as AgentMode[]).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    className={`aiagent-mode-option${agentMode === mode ? " selected" : ""}`}
+                    aria-pressed={agentMode === mode}
+                    onClick={() => selectAgentMode(mode)}
+                  >
+                    {mode === "manual" ? "All models" : mode[0].toUpperCase() + mode.slice(1)}
+                  </button>
+                ))}
+              </div>
               <div className="aiagent-model-option-list" role="radiogroup" aria-label="AI models">
                 {modelOptions.length ? modelOptions.map((model) => {
                   const isSelected = model === selectedModel;
+                  const classification = getAgentModelClassification(model);
+                  const isLocalModel = classification === "Local";
+                  const modelDescription = agentMode === "auto"
+                    ? isLocalModel
+                      ? "Exact Local route listed in this account; final Auto fallback."
+                      : classification === "Other / unclassified"
+                        ? "Other / unclassified; Auto fallback after Thinking/Fast candidates; charges may apply."
+                        : `${classification} Auto candidate in this account; charges may apply.`
+                    : agentMode === "local" || isLocalModel
+                      ? "Exact Local route from this account; no cloud fallback."
+                      : agentMode === "thinking" || agentMode === "fast"
+                        ? `${classification} candidate; on 429/503, fallback may use other models in this account. Actual model is shown; charges may apply.`
+                        : `${classification}; on 429/503, fallback may use other cloud models in this account. Actual model is shown; charges may apply.`;
                   return (
                     <button
                       type="button"
@@ -974,18 +1127,19 @@ const AIAgent: React.FC = () => {
                       role="radio"
                       aria-checked={isSelected}
                       onClick={() => {
+                        if (agentMode === "auto") setAgentMode(model.toLowerCase() === LOCAL_AGENT_MODEL ? "local" : "manual");
                         setPreferredModel(model);
                         setIsModelPickerOpen(false);
                       }}
                     >
                       <span className="aiagent-model-option-copy">
                         <strong>{model}</strong>
-                        <small>Available for this account</small>
+                        <small>{modelDescription}</small>
                       </span>
                       {isSelected && <Check size={18} aria-hidden="true" />}
                     </button>
                   );
-                }) : <p role="status">No model catalog is available for this account.</p>}
+                }) : <p role="status">{agentMode === "auto" ? "No model is available in this account's catalog. Check the 9Router key in Settings." : agentMode === "thinking" ? "No documented thinking-capable model is available in this account's catalog. Try All models to choose manually." : agentMode === "fast" ? "No documented fast model is available in this account's catalog. Try All models to choose manually." : agentMode === "local" ? "The exact bare Local model is not available in this account's catalog." : "No model catalog is available for this account."}</p>}
               </div>
             </motion.div>
           </motion.div>
@@ -995,8 +1149,8 @@ const AIAgent: React.FC = () => {
         <div className="aiagent-container">
           {!modelOptions.length && (
             <div className="aiagent-catalog-status" role={catalogError ? "alert" : "status"}>
-              <p>{getCatalogStatusMessage(catalogError)}</p>
-              <RouterLink className="aiagent-settings-link" to="/setting">Manage the 9Router key in Settings</RouterLink>
+              <p>{routerModels.length ? `No model is classified for ${agentMode} mode. Open the plus button and choose All models or another mode.` : getCatalogStatusMessage(catalogError)}</p>
+              {!routerModels.length && <RouterLink className="aiagent-settings-link" to="/setting">Manage the 9Router key in Settings</RouterLink>}
             </div>
           )}
           <div className="aiagent-messages" ref={scrollRef}>
@@ -1023,7 +1177,7 @@ const AIAgent: React.FC = () => {
                             <button 
                               onClick={() => retryMessage(msg.id)} 
                               className="aiagent-retry-btn-header"
-                              title="Retry with same model"
+                              title="Retry from the current selection, using this account's fallback models on 429/503"
                             >
                               <RefreshCw size={12} /> Retry
                             </button>
@@ -1053,6 +1207,20 @@ const AIAgent: React.FC = () => {
                               <Copy size={14} /> Copy
                             </button>
                           </div>
+                        )}
+                      </div>
+                    )}
+                    {msg.role === "bot" && ((msg.requestedModel && msg.requestedModel !== msg.model) || (!msg.error && msg.usage)) && (
+                      <div className="aiagent-message-metadata">
+                        {msg.requestedModel && msg.requestedModel !== msg.model && <span>{msg.error ? "Started with" : "Requested"}: {msg.requestedModel}</span>}
+                        {!msg.error && msg.usage && (
+                          <span>
+                            Usage: {[
+                              msg.usage.inputTokens !== undefined ? `${msg.usage.inputTokens.toLocaleString()} input` : "",
+                              msg.usage.outputTokens !== undefined ? `${msg.usage.outputTokens.toLocaleString()} output` : "",
+                              msg.usage.totalTokens !== undefined ? `${msg.usage.totalTokens.toLocaleString()} total tokens` : "",
+                            ].filter(Boolean).join(" · ")}
+                          </span>
                         )}
                       </div>
                     )}
@@ -1231,21 +1399,23 @@ const AIAgent: React.FC = () => {
                 <div className="aiagent-model-wrapper">
                   <button
                     type="button"
-                    className="aiagent-model-picker-trigger"
+                    className="aiagent-icon-btn aiagent-model-picker-trigger"
                     onClick={() => setIsModelPickerOpen(true)}
-                    title="Choose an AI model"
-                    aria-label="Choose an AI model"
+                    title={`Choose AI mode: ${agentMode}`}
+                    aria-label={`Choose AI mode: ${agentMode}`}
                     aria-haspopup="dialog"
                     aria-expanded={isModelPickerOpen}
-                    disabled={!modelOptions.length}
+                    disabled={!routerModels.length}
                   >
-                    <span className="aiagent-icon-btn" aria-hidden="true"><Bot size={24} /></span>
+                    <Plus size={22} aria-hidden="true" />
                   </button>
                 </div>
-                <button 
-                  className={`aiagent-icon-btn globe-btn${webSearchEnabled ? " web-search-active" : ""}`} 
-                  onClick={() => setWebSearchEnabled(v => !v)} 
-                  title={webSearchEnabled ? "Web Search ON" : "Web Search OFF"}
+                <button
+                  className="aiagent-icon-btn globe-btn"
+                  type="button"
+                  disabled
+                  aria-label="Web Search unavailable"
+                  title="Web Search needs an approved search provider before it can send queries."
                 >
                   <Globe size={22} />
                 </button>
@@ -1258,7 +1428,7 @@ const AIAgent: React.FC = () => {
                 </button>
                 <button onClick={clearChat} className="aiagent-clear-btn"><Trash2 size={22} /></button>
               </div>
-              <button onClick={handleSendMessage} disabled={isLoading || !selectedModel || !modelOptions.includes(selectedModel) || (!input.trim() && !uploadedImages.length && !uploadedFiles.length)} className="aiagent-send-btn">
+              <button onClick={handleSendMessage} disabled={isLoading || !selectedModel || !modelOptions.includes(selectedModel) || !requestModelOptions.length || (!input.trim() && !uploadedImages.length && !uploadedFiles.length)} className="aiagent-send-btn">
                 {isLoading ? <Loader2 size={24} className="spin" /> : <Send size={24} />}
               </button>
             </div>

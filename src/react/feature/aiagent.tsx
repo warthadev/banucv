@@ -5,7 +5,7 @@ import {
   Send, Bot, Trash2, Volume2, VolumeX, Check,
   Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Globe, Wand2, Link, ChevronDown
 } from "lucide-react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
 import { AI_AGENT_API_BASE } from "@config/api";
 import { saveRouterCredentials } from "@config/routerhelper";
@@ -528,6 +528,7 @@ const splitMarkdown = (content: string) => {
 const AIAgent: React.FC = () => {
   const { isConfigured, isLoading: authLoading, routerModels, catalogError, configurationError } = useAgentModels();
   const { aiMode } = useAudio();
+  const navigate = useNavigate();
 
   const loadMessages = (uid: string): Message[] => {
     try {
@@ -585,8 +586,7 @@ const AIAgent: React.FC = () => {
     window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
   };
   const handleRouterAuthClose = () => {
-    setIsRouterAuthModalManuallyOpen(false);
-    if (currentUserUid) setDismissedRouterAuthUid(currentUserUid);
+    navigate("/dashboard", { replace: true });
   };
   useEffect(() => {
     if (!isConfigured) return;

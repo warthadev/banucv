@@ -1,6 +1,6 @@
 import { LOCAL_AGENT_MODEL } from "./agentrouting.ts";
 
-export type AgentMode = "auto" | "thinking" | "fast" | "local" | "manual";
+export type AgentMode = "auto" | "thinking" | "fast" | "local";
 export type AgentModeSettings = { mode: AgentMode; model: string };
 export type ScopedHistoryMessage = { role: "user" | "assistant"; content: string };
 type StoredConversationMessage = {
@@ -65,16 +65,19 @@ const requestNeedsThinking = (prompt: string): boolean => {
 
 const uniqueModels = (models: string[]): string[] => [...new Set(models)];
 
-const getAutoModelSequence = (models: string[], prompt: string): string[] => {
+const getAutoModelSequence = (models: string[], prompt: string, preferredModel = ""): string[] => {
   const catalog = uniqueModels(models);
-  const cloud = catalog.filter((model) => !isTrueLocalModel(model));
+  const cloud = catalog.filter((model) =>
+    !isTrueLocalModel(model) && (isDocumentedThinkingAgentModel(model) || isDocumentedFastAgentModel(model))
+  );
   const fast = cloud.filter(isDocumentedFastAgentModel);
   const thinking = cloud.filter(isDocumentedThinkingAgentModel);
-  const classified = requestNeedsThinking(prompt) ? [...thinking, ...fast] : [...fast, ...thinking];
-  const prioritized = uniqueModels(classified);
-  const other = cloud.filter((model) => !prioritized.includes(model));
+  const prioritized = uniqueModels(requestNeedsThinking(prompt) ? [...thinking, ...fast] : [...fast, ...thinking]);
+  const cloudSequence = preferredModel && prioritized.includes(preferredModel)
+    ? [preferredModel, ...prioritized.filter((model) => model !== preferredModel)]
+    : prioritized;
   const local = catalog.filter(isTrueLocalModel);
-  return [...prioritized, ...other, ...local];
+  return [...cloudSequence, ...local];
 };
 
 export const getAgentModelsForMode = (models: string[], mode: AgentMode): string[] => {
@@ -83,7 +86,7 @@ export const getAgentModelsForMode = (models: string[], mode: AgentMode): string
   if (mode === "thinking") return deduplicated.filter(isDocumentedThinkingAgentModel);
   if (mode === "fast") return deduplicated.filter(isDocumentedFastAgentModel);
   if (mode === "local") return deduplicated.filter(isTrueLocalModel);
-  return deduplicated;
+  return [];
 };
 
 export const getAgentRequestModels = (
@@ -91,32 +94,15 @@ export const getAgentRequestModels = (
   mode: AgentMode,
   selectedModel: string,
   prompt = "",
+  preferSelectedModel = false,
 ): string[] => {
   const catalog = uniqueModels(models);
-  if (mode === "auto") return getAutoModelSequence(catalog, prompt);
+  if (mode === "auto") return getAutoModelSequence(catalog, prompt, preferSelectedModel ? selectedModel : "");
   if (!selectedModel || !catalog.includes(selectedModel)) return [];
   if (mode === "local") return isTrueLocalModel(selectedModel) ? [selectedModel] : [];
-  if (isTrueLocalModel(selectedModel)) return [selectedModel];
-
-  const cloud = catalog.filter((model) => !isTrueLocalModel(model));
   const eligible = getAgentModelsForMode(catalog, mode);
-  if (mode !== "manual" && !eligible.includes(selectedModel)) return [];
-
-  let preferredPeers: string[] = [];
-  if (mode === "thinking") {
-    preferredPeers = eligible.filter((model) => model !== selectedModel);
-  } else if (mode === "fast") {
-    preferredPeers = eligible.filter((model) => model !== selectedModel);
-  } else {
-    const matchesSelectedClass = (model: string): boolean =>
-      (isDocumentedThinkingAgentModel(selectedModel) && isDocumentedThinkingAgentModel(model)) ||
-      (isDocumentedFastAgentModel(selectedModel) && isDocumentedFastAgentModel(model));
-    preferredPeers = cloud.filter((model) => model !== selectedModel && matchesSelectedClass(model));
-  }
-
-  const preferred = [selectedModel, ...preferredPeers];
-  const remaining = cloud.filter((model) => !preferred.includes(model));
-  return [...preferred, ...remaining];
+  if (!eligible.includes(selectedModel)) return [];
+  return [selectedModel, ...eligible.filter((model) => model !== selectedModel)];
 };
 
 export const buildModelScopedHistory = (
@@ -152,7 +138,7 @@ export const parseAgentModeSettings = (value: string | null): AgentModeSettings 
   if (!value) return { mode: "auto", model: "" };
   try {
     const parsed = JSON.parse(value) as Partial<AgentModeSettings>;
-    const validModes: AgentMode[] = ["auto", "thinking", "fast", "local", "manual"];
+    const validModes: AgentMode[] = ["auto", "thinking", "fast", "local"];
     return {
       mode: validModes.includes(parsed.mode as AgentMode) ? parsed.mode as AgentMode : "auto",
       model: typeof parsed.model === "string" ? parsed.model : "",

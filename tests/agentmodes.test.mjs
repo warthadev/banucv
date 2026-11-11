@@ -44,18 +44,14 @@ const autoSimple = [
   freeFastLiteModel,
   thinkingModel,
   freeThinkingModel,
-  unknownModel,
-  freeRouter,
-  freeVariant,
-  localAlias,
   localModel,
 ];
 
-test("Auto uses classified Thinking/Fast first, then this account's Other models, and exact Local last", () => {
+test("Auto uses only this account's classified Thinking/Fast models, then exact Local last", () => {
   assert.deepEqual(getAgentModelsForMode(catalog, "auto"), autoSimple);
 });
 
-test("Auto orders the account catalog by prompt complexity and includes all fallback candidates", () => {
+test("Auto orders eligible account models by prompt complexity and keeps exact Local as final fallback", () => {
   assert.deepEqual(getAgentRequestModels(catalog, "auto", flashModel, "Hi"), autoSimple);
   assert.deepEqual(getAgentRequestModels(catalog, "auto", flashModel, "Please analyze the architecture step by step"), [
     thinkingModel,
@@ -64,72 +60,51 @@ test("Auto orders the account catalog by prompt complexity and includes all fall
     freeFlashModel,
     fastLiteModel,
     freeFastLiteModel,
-    unknownModel,
-    freeRouter,
-    freeVariant,
-    localAlias,
+    localModel,
+  ]);
+  assert.deepEqual(getAgentRequestModels([unknownModel, localAlias, localModel], "auto", "", "Hi"), [localModel]);
+});
+
+test("an explicitly selected Auto model stays first without escaping the eligible account pool", () => {
+  assert.deepEqual(getAgentRequestModels(catalog, "auto", fastLiteModel, "Please analyze this", true), [
+    fastLiteModel,
+    thinkingModel,
+    flashModel,
+    freeThinkingModel,
+    freeFlashModel,
+    freeFastLiteModel,
     localModel,
   ]);
 });
 
-test("Thinking and Fast modes start with the selected model, then same-mode peers, then other cloud models from the same catalog", () => {
+test("Thinking and Fast modes route only to supported models in the selected category", () => {
   assert.deepEqual(getAgentRequestModels(catalog, "thinking", thinkingModel), [
     thinkingModel,
     flashModel,
     freeThinkingModel,
     freeFlashModel,
-    fastLiteModel,
-    unknownModel,
-    freeRouter,
-    freeVariant,
-    freeFastLiteModel,
-    localAlias,
   ]);
   assert.deepEqual(getAgentRequestModels(catalog, "fast", fastLiteModel), [
     fastLiteModel,
     flashModel,
     freeFlashModel,
     freeFastLiteModel,
-    thinkingModel,
-    unknownModel,
-    freeRouter,
-    freeVariant,
-    freeThinkingModel,
-    localAlias,
   ]);
   assert.deepEqual(getAgentModelsForMode(catalog, "thinking"), [thinkingModel, flashModel, freeThinkingModel, freeFlashModel]);
   assert.deepEqual(getAgentModelsForMode(catalog, "fast"), [flashModel, fastLiteModel, freeFlashModel, freeFastLiteModel]);
 });
 
-test("All models exposes every account model and labels unknown models under Other / unclassified", () => {
-  assert.deepEqual(getAgentModelsForMode(catalog, "manual"), catalog);
+test("unknown account models stay unclassified and are excluded from the four supported modes", () => {
   assert.equal(getAgentModelClassification(unknownModel), "Other / unclassified");
   assert.equal(getAgentModelClassification(localAlias), "Other / unclassified");
   assert.equal(getAgentModelClassification(localModel), "Local");
-});
-
-test("manual fallback starts with the selected model and stays within the same account catalog", () => {
-  assert.deepEqual(getAgentRequestModels(catalog, "manual", unknownModel), [
-    unknownModel,
-    thinkingModel,
-    flashModel,
-    fastLiteModel,
-    freeRouter,
-    freeVariant,
-    freeThinkingModel,
-    freeFlashModel,
-    freeFastLiteModel,
-    localAlias,
-  ]);
-  const accountB = ["account-b/gemini-3.6-flash", "account-b/private-model"];
-  assert.ok(getAgentRequestModels(catalog, "manual", unknownModel).every((model) => !accountB.includes(model)));
-  assert.deepEqual(getAgentRequestModels(catalog, "manual", accountB[0]), []);
+  assert.deepEqual(getAgentModelsForMode(catalog, "thinking").filter((model) => model === unknownModel || model === localAlias), []);
+  assert.deepEqual(getAgentModelsForMode(catalog, "fast").filter((model) => model === unknownModel || model === localAlias), []);
 });
 
 test("Local mode and a manually selected bare local model do not fall back to cloud", () => {
   assert.deepEqual(getAgentModelsForMode(catalog, "local"), [localModel]);
   assert.deepEqual(getAgentRequestModels(catalog, "local", localModel), [localModel]);
-  assert.deepEqual(getAgentRequestModels(catalog, "manual", localModel), [localModel]);
   assert.deepEqual(getAgentRequestModels([localAlias], "local", localAlias), []);
 });
 
@@ -143,6 +118,7 @@ test("messages and preferences are namespaced by Firebase UID", () => {
   assert.notEqual(getAgentMessagesStorageKey("uid-a"), getAgentMessagesStorageKey("uid-b"));
   assert.notEqual(getAgentPreferencesStorageKey("uid-a"), getAgentPreferencesStorageKey("uid-b"));
   assert.deepEqual(parseAgentModeSettings('{"mode":"fast","model":"x"}'), { mode: "fast", model: "x" });
+  assert.deepEqual(parseAgentModeSettings('{"mode":"manual","model":"x"}'), { mode: "auto", model: "x" });
   assert.deepEqual(parseAgentModeSettings("invalid"), { mode: "auto", model: "" });
 });
 

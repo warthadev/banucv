@@ -8,10 +8,9 @@ import {
 import { Link as RouterLink } from "react-router-dom";
 import useAgentModels from "@hook/useagentmodels";
 import { AI_AGENT_API_BASE } from "@config/api";
-import { LOCAL_AGENT_MODEL, isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
+import { isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
 import { buildModelScopedHistory, getAgentModelClassification, getAgentModelsForMode, getAgentRequestModels, getAgentMessagesStorageKey, getAgentPreferencesStorageKey, parseAgentModeSettings, type AgentMode } from "@config/agentmodes";
 import { useAudio } from "@hook/useaudio";
-import { modalVariants, overlayVariants } from "@animation/githubeditor";
 import Loading from "@control/loading";
 import ReactMarkdown, { type Components } from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -520,11 +519,13 @@ const AIAgent: React.FC = () => {
   const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
   const modelOptions = getAgentModelsForMode(routerModels, agentMode);
   const selectedModel = modelOptions.includes(preferredModel) ? preferredModel : modelOptions[0] || "";
-  const requestModelOptions = getAgentRequestModels(routerModels, agentMode, selectedModel);
+  const hasPreferredAutoModel = agentMode === "auto" && modelOptions.includes(preferredModel);
+  const requestModelOptions = getAgentRequestModels(routerModels, agentMode, selectedModel, "", hasPreferredAutoModel);
+  const autoRecommendedModel = agentMode === "auto" ? getAgentRequestModels(routerModels, "auto", "", input)[0] || "" : "";
   const selectAgentMode = (mode: AgentMode) => {
     const candidates = getAgentModelsForMode(routerModels, mode);
     setAgentMode(mode);
-    setPreferredModel(candidates[0] || "");
+    setPreferredModel(mode === "auto" ? "" : candidates[0] || "");
   };
   useEffect(() => {
     if (!isModelPickerOpen) return;
@@ -554,6 +555,7 @@ const AIAgent: React.FC = () => {
   const multiFileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
   const uploadDropdownRef = useRef<HTMLDivElement>(null);
+  const modelPickerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesRef = useRef<Message[]>([]);
   const currentUserUidRef = useRef<string | null>(null);
@@ -675,6 +677,13 @@ const AIAgent: React.FC = () => {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (modelPickerRef.current && !modelPickerRef.current.contains(event.target as Node)) setIsModelPickerOpen(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, []);
 
   const speakText = (text: string, messageId: string) => {
@@ -977,7 +986,7 @@ const AIAgent: React.FC = () => {
     const requestOwnerUid = currentUserUidRef.current;
     if (!requestOwnerUid || requestOwnerUid !== currentUserUid || messagesOwnerUid !== requestOwnerUid || (!input.trim() && !uploadedImages.length && !uploadedFiles.length) || isLoading || !isConfigured || !selectedModel || !modelOptions.includes(selectedModel) || !requestModelOptions.length) return;
     const currentInput = input, currentImages = [...uploadedImages], currentFiles = [...uploadedFiles];
-    const modelSequence = getAgentRequestModels(routerModels, agentMode, selectedModel, currentInput);
+    const modelSequence = getAgentRequestModels(routerModels, agentMode, selectedModel, currentInput, hasPreferredAutoModel);
     if (!modelSequence.length) return;
     setInput("");
     clearAllUploads();
@@ -995,7 +1004,7 @@ const AIAgent: React.FC = () => {
     setMessages(prev => prev.filter(m => m.id !== messageId));
     const recoveredImages: UploadedImage[] = userMsg.images?.map(img => ({ data: img.data, mimeType: img.mimeType, preview: `data:${img.mimeType};base64,${img.data}` })) || [];
     const recoveredFiles: UploadedFile[] = userMsg.files?.map(f => ({ name: f.name, content: f.content, type: "" })) || [];
-    const modelSequence = getAgentRequestModels(routerModels, agentMode, selectedModel, userMsg.content);
+    const modelSequence = getAgentRequestModels(routerModels, agentMode, selectedModel, userMsg.content, hasPreferredAutoModel);
     await sendMessage(userMsg.content, recoveredImages, recoveredFiles, 0, true, modelSequence, requestOwnerUid);
   };
 
@@ -1053,103 +1062,11 @@ const AIAgent: React.FC = () => {
           </div>
         </div>
       )}
-      <AnimatePresence>
-        {isConfigured && isModelPickerOpen && (
-          <motion.div
-            className="github-modal-overlay aiagent-model-picker-overlay"
-            variants={overlayVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) setIsModelPickerOpen(false);
-            }}
-          >
-            <motion.div
-              className="github-modal aiagent-model-picker-modal"
-              variants={modalVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="aiagent-model-picker-title"
-            >
-              <div className="aiagent-model-picker-header">
-                <div className="aiagent-model-picker-icon"><Bot size={20} /></div>
-                <div className="aiagent-model-picker-heading">
-                  <h3 id="aiagent-model-picker-title">Choose an AI mode</h3>
-                  <p>Auto tries this account&apos;s documented Thinking/Fast models, then its Other models; exact Local is last only when this account lists that route. On explicit 429/503 capacity errors, fallback stays within this account and the responding model is shown. Charges may apply.</p>
-                </div>
-                <button
-                  type="button"
-                  className="aiagent-model-picker-close"
-                  onClick={() => setIsModelPickerOpen(false)}
-                  aria-label="Close model picker"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <div className="aiagent-mode-options" role="group" aria-label="AI modes">
-                {(["auto", "thinking", "fast", "local", "manual"] as AgentMode[]).map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    className={`aiagent-mode-option${agentMode === mode ? " selected" : ""}`}
-                    aria-pressed={agentMode === mode}
-                    onClick={() => selectAgentMode(mode)}
-                  >
-                    {mode === "manual" ? "All models" : mode[0].toUpperCase() + mode.slice(1)}
-                  </button>
-                ))}
-              </div>
-              <div className="aiagent-model-option-list" role="radiogroup" aria-label="AI models">
-                {modelOptions.length ? modelOptions.map((model) => {
-                  const isSelected = model === selectedModel;
-                  const classification = getAgentModelClassification(model);
-                  const isLocalModel = classification === "Local";
-                  const modelDescription = agentMode === "auto"
-                    ? isLocalModel
-                      ? "Exact Local route listed in this account; final Auto fallback."
-                      : classification === "Other / unclassified"
-                        ? "Other / unclassified; Auto fallback after Thinking/Fast candidates; charges may apply."
-                        : `${classification} Auto candidate in this account; charges may apply.`
-                    : agentMode === "local" || isLocalModel
-                      ? "Exact Local route from this account; no cloud fallback."
-                      : agentMode === "thinking" || agentMode === "fast"
-                        ? `${classification} candidate; on 429/503, fallback may use other models in this account. Actual model is shown; charges may apply.`
-                        : `${classification}; on 429/503, fallback may use other cloud models in this account. Actual model is shown; charges may apply.`;
-                  return (
-                    <button
-                      type="button"
-                      key={model}
-                      className={`aiagent-model-option${isSelected ? " selected" : ""}`}
-                      role="radio"
-                      aria-checked={isSelected}
-                      onClick={() => {
-                        if (agentMode === "auto") setAgentMode(model.toLowerCase() === LOCAL_AGENT_MODEL ? "local" : "manual");
-                        setPreferredModel(model);
-                        setIsModelPickerOpen(false);
-                      }}
-                    >
-                      <span className="aiagent-model-option-copy">
-                        <strong>{model}</strong>
-                        <small>{modelDescription}</small>
-                      </span>
-                      {isSelected && <Check size={18} aria-hidden="true" />}
-                    </button>
-                  );
-                }) : <p role="status">{agentMode === "auto" ? "No model is available in this account's catalog. Check the 9Router key in Settings." : agentMode === "thinking" ? "No documented thinking-capable model is available in this account's catalog. Try All models to choose manually." : agentMode === "fast" ? "No documented fast model is available in this account's catalog. Try All models to choose manually." : agentMode === "local" ? "The exact bare Local model is not available in this account's catalog." : "No model catalog is available for this account."}</p>}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
       {isConfigured && (
         <div className="aiagent-container">
           {!modelOptions.length && (
             <div className="aiagent-catalog-status" role={catalogError ? "alert" : "status"}>
-              <p>{routerModels.length ? `No model is classified for ${agentMode} mode. Open the plus button and choose All models or another mode.` : getCatalogStatusMessage(catalogError)}</p>
+              <p>{routerModels.length ? `No model is classified for ${agentMode} mode. Open the AI Agent menu to choose another available mode.` : getCatalogStatusMessage(catalogError)}</p>
               {!routerModels.length && <RouterLink className="aiagent-settings-link" to="/setting">Manage the 9Router key in Settings</RouterLink>}
             </div>
           )}
@@ -1396,19 +1313,117 @@ const AIAgent: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <div className="aiagent-model-wrapper">
+                <div className="aiagent-model-wrapper" ref={modelPickerRef}>
                   <button
                     type="button"
                     className="aiagent-icon-btn aiagent-model-picker-trigger"
-                    onClick={() => setIsModelPickerOpen(true)}
+                    onClick={() => setIsModelPickerOpen((open) => !open)}
                     title={`Choose AI mode: ${agentMode}`}
-                    aria-label={`Choose AI mode: ${agentMode}`}
+                    aria-label={`AI Agent mode: ${agentMode}`}
                     aria-haspopup="dialog"
                     aria-expanded={isModelPickerOpen}
+                    aria-controls="aiagent-model-picker"
                     disabled={!routerModels.length}
                   >
-                    <Plus size={22} aria-hidden="true" />
+                    <Bot size={22} aria-hidden="true" />
                   </button>
+                  <AnimatePresence>
+                    {isModelPickerOpen && (
+                      <motion.div
+                        id="aiagent-model-picker"
+                        className="aiagent-model-picker-popover"
+                        initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                        transition={{ duration: 0.16, ease: "easeOut" }}
+                        role="dialog"
+                        aria-modal="false"
+                        aria-labelledby="aiagent-model-picker-title"
+                      >
+                        <div className="aiagent-model-picker-header">
+                          <div className="aiagent-model-picker-icon"><Bot size={19} /></div>
+                          <div className="aiagent-model-picker-heading">
+                            <h3 id="aiagent-model-picker-title">AI Agent</h3>
+                            <p>
+                              {agentMode === "auto"
+                                ? "Auto picks supported Thinking/Fast models for this account, then tries its exact Local model after capacity failures. Cloud usage may incur charges."
+                                : agentMode === "thinking"
+                                  ? "Only documented Thinking models from this account are available in this mode."
+                                  : agentMode === "fast"
+                                    ? "Only documented Fast models from this account are available in this mode."
+                                    : "Use this account's exact Local model without cloud fallback."}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            className="aiagent-model-picker-close"
+                            onClick={() => setIsModelPickerOpen(false)}
+                            aria-label="Close AI Agent model picker"
+                          >
+                            <X size={18} />
+                          </button>
+                        </div>
+                        <div className="aiagent-mode-options" role="group" aria-label="AI modes">
+                          {(["auto", "thinking", "fast", "local"] as AgentMode[]).map((mode) => (
+                            <button
+                              key={mode}
+                              type="button"
+                              className={`aiagent-mode-option${agentMode === mode ? " selected" : ""}`}
+                              aria-pressed={agentMode === mode}
+                              onClick={() => selectAgentMode(mode)}
+                            >
+                              {mode[0].toUpperCase() + mode.slice(1)}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="aiagent-model-option-list" role="list" aria-label={`${agentMode} models available to this account`}>
+                          {modelOptions.length ? modelOptions.map((model) => {
+                            const classification = getAgentModelClassification(model);
+                            const isLocalModel = classification === "Local";
+                            const isSelected = agentMode === "auto"
+                              ? hasPreferredAutoModel ? model === selectedModel : model === autoRecommendedModel
+                              : model === selectedModel;
+                            const modelDescription = agentMode === "auto"
+                              ? isLocalModel
+                                ? "Exact Local route. Auto tries this only after eligible cloud models hit capacity limits."
+                                : `${classification} candidate in this account's Auto pool; eligible cloud models remain available as fallbacks.`
+                              : agentMode === "local"
+                                ? "Exact Local route; this mode does not fall back to cloud."
+                                : `${classification} model; capacity fallback stays within the ${agentMode} category.`;
+                            return (
+                              <button
+                                type="button"
+                                key={model}
+                                className={`aiagent-model-option${isSelected ? " selected" : ""}`}
+                                aria-pressed={isSelected}
+                                onClick={() => {
+                                  if (agentMode === "auto" && isLocalModel) setAgentMode("local");
+                                  setPreferredModel(model);
+                                  setIsModelPickerOpen(false);
+                                }}
+                              >
+                                <span className="aiagent-model-option-copy">
+                                  <strong>{model}</strong>
+                                  <small>{modelDescription}</small>
+                                </span>
+                                {isSelected && <Check size={17} aria-hidden="true" />}
+                              </button>
+                            );
+                          }) : (
+                            <p className="aiagent-model-empty" role="status">
+                              {agentMode === "auto"
+                                ? "No documented Thinking or Fast model is available in this account's catalog."
+                                : agentMode === "thinking"
+                                  ? "No documented Thinking model is available in this account's catalog."
+                                  : agentMode === "fast"
+                                    ? "No documented Fast model is available in this account's catalog."
+                                    : "The exact Local model is not available in this account's catalog."}
+                            </p>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
                 <button
                   className="aiagent-icon-btn globe-btn"

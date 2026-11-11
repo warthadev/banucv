@@ -8,21 +8,24 @@ import {
   getAgentModelsForMode,
   getAgentPreferencesStorageKey,
   getAgentRequestModels,
+  isLocalInferenceAgentModel,
   isVerifiedFreeAgentModel,
   parseAgentModeSettings,
 } from "../src/react/config/agentmodes.ts";
+import { isLocalAgentModel, resolveAgentModelRoute } from "../src/react/config/agentrouting.ts";
 
-const localModel = "mimo-v2.6:latest";
-const cloudMimo = "openai-compatible-chat-test-provider/mimo-v2.6:latest";
+const bareLocalModel = "mimo-v2.6:latest";
+const localCatalogModel = "openai-compatible-chat-test-provider/mimo-v2.6:latest";
+const otherMimo = "other-provider/mimo-v2.7";
 const unknownModel = "provider/model-with-unknown-capabilities";
 const freeRouter = "openrouter/openrouter/free";
 const flashModel = "gemini/gemini-3.6-flash";
 const fastLiteModel = "gemini/gemini-3.5-flash-lite";
 const minimaxFast = "mmg/MiniMax-M2.7-highspeed";
 
-// Families and reasoning flags verified in the account's upstream catalog.
-// The custom provider namespace is synthetic: never couple modes to an account ID.
-// Fast also includes explicitly Flash/highspeed variants; it is not a latency SLA.
+// Families/reasoning flags verified in the account's upstream catalog. The custom
+// provider namespace is synthetic: never couple eligibility to an account UUID.
+// Local is an inference category; its original 9Router route must stay intact.
 const catalogFixture = [
   { id: freeRouter, reasoning: false, fast: true },
   { id: "openrouter/nvidia/nemotron-3.5-super-vl:free", reasoning: true, fast: false },
@@ -31,36 +34,38 @@ const catalogFixture = [
   { id: flashModel, reasoning: true, fast: true },
   { id: fastLiteModel, reasoning: true, fast: true },
   { id: "gemini/gemini-3-flash-preview", reasoning: true, fast: true },
-  { id: cloudMimo, reasoning: true, fast: false },
+  { id: localCatalogModel, reasoning: true, fast: false, local: true },
   { id: "mmg/MiniMax-M3.1-Flash-Preview", reasoning: true, fast: true },
   { id: "mmg/MiniMax-M3", reasoning: true, fast: false },
   { id: "mmg/MiniMax-M2.7", reasoning: true, fast: false },
   { id: minimaxFast, reasoning: true, fast: true },
 ];
-const cloudCatalog = catalogFixture.map(({ id }) => id);
-const thinkingModels = catalogFixture.filter(({ reasoning }) => reasoning).map(({ id }) => id);
+const accountCatalog = catalogFixture.map(({ id }) => id);
+const thinkingModels = catalogFixture.filter(({ reasoning, local }) => reasoning && !local).map(({ id }) => id);
 const fastModels = catalogFixture.filter(({ fast }) => fast).map(({ id }) => id);
-const catalog = [...cloudCatalog, unknownModel, localModel];
+const catalog = [...accountCatalog, unknownModel];
 const unique = (models) => [...new Set(models)];
-const autoSimple = [...unique([...fastModels, ...thinkingModels]), localModel];
-const autoThinking = [...unique([...thinkingModels, ...fastModels]), localModel];
+const autoSimple = [...unique([...fastModels, ...thinkingModels]), localCatalogModel];
+const autoThinking = [...unique([...thinkingModels, ...fastModels]), localCatalogModel];
 
-test("all twelve verified cloud catalog families appear in Auto without adding global models", () => {
-  const models = getAgentModelsForMode(cloudCatalog, "auto");
+test("all twelve account catalog models appear in Auto, with no synthesized bare or global model", () => {
+  const models = getAgentModelsForMode(accountCatalog, "auto");
   assert.equal(models.length, 12);
-  assert.deepEqual(new Set(models), new Set(cloudCatalog));
-  assert.ok(models.every((model) => cloudCatalog.includes(model)));
-  assert.ok(!models.includes(localModel));
+  assert.deepEqual(new Set(models), new Set(accountCatalog));
+  assert.ok(models.every((model) => accountCatalog.includes(model)));
+  assert.ok(!models.includes(bareLocalModel));
+  assert.equal(models.at(-1), localCatalogModel);
   assert.deepEqual(getAgentModelsForMode([], "auto"), []);
 });
 
-test("Thinking includes every catalog reasoning family, not only Gemini", () => {
+test("Thinking covers verified reasoning families across providers while Local stays Local-only", () => {
   assert.deepEqual(getAgentModelsForMode(catalog, "thinking"), thinkingModels);
-  assert.equal(thinkingModels.length, 10);
+  assert.equal(thinkingModels.length, 9);
   assert.ok(thinkingModels.includes(fastLiteModel));
-  assert.equal(getAgentModelClassification(cloudMimo), "Thinking");
+  assert.equal(getAgentModelClassification(localCatalogModel), "Local");
   assert.equal(getAgentModelClassification("mmg/MiniMax-M3"), "Thinking");
   assert.equal(getAgentModelClassification(minimaxFast), "Thinking · Fast");
+  assert.equal(getAgentModelClassification(otherMimo), "Thinking");
 });
 
 test("Fast includes direct-response routes and speed variants across providers", () => {
@@ -70,7 +75,7 @@ test("Fast includes direct-response routes and speed variants across providers",
   assert.equal(getAgentModelClassification("mmg/MiniMax-M3.1-Flash-Preview"), "Thinking · Fast");
 });
 
-test("classification ignores dynamic provider namespaces and versions, while preserving route IDs", () => {
+test("classification ignores provider namespaces and versions without rewriting model IDs", () => {
   const alternateIds = [
     "tenant-provider/nested/MiniMax-M3.1-Flash-Preview",
     "other-provider/gemini-3.8-flash",
@@ -82,85 +87,82 @@ test("classification ignores dynamic provider namespaces and versions, while pre
   assert.deepEqual(getAgentModelsForMode([flashModel, flashModel], "thinking"), [flashModel]);
 });
 
-test("Auto orders account candidates by prompt complexity and keeps authorized bare Local last", () => {
+test("Auto orders Thinking/Fast account models by prompt complexity, then the full Local catalog ID", () => {
   assert.deepEqual(getAgentModelsForMode(catalog, "auto"), autoSimple);
   assert.deepEqual(getAgentRequestModels(catalog, "auto", flashModel, "Hi"), autoSimple);
   assert.deepEqual(getAgentRequestModels(catalog, "auto", flashModel, "Please analyze the architecture step by step"), autoThinking);
 });
 
-test("Auto never starts a bare Local request without a cloud candidate to fail first", () => {
-  assert.deepEqual(getAgentModelsForMode([unknownModel, localModel], "auto"), []);
-  assert.deepEqual(getAgentRequestModels([localModel], "auto", localModel, "Hi", true), []);
-  assert.deepEqual(getAgentModelsForMode([localModel], "local"), [localModel]);
+test("Auto cannot start Local without an eligible Thinking/Fast candidate to fail first", () => {
+  for (const local of [localCatalogModel, bareLocalModel]) {
+    assert.deepEqual(getAgentModelsForMode([unknownModel, local], "auto"), []);
+    assert.deepEqual(getAgentRequestModels([local], "auto", local, "Hi", true), []);
+    assert.deepEqual(getAgentModelsForMode([local], "local"), [local]);
+  }
 });
 
-test("an explicitly selected Auto cloud model stays first without moving Local ahead of cloud", () => {
+test("explicit Auto cloud preference stays first but a Local preference cannot move Local ahead", () => {
   assert.deepEqual(getAgentRequestModels(catalog, "auto", minimaxFast, "Please analyze this", true), [
-    minimaxFast,
-    ...autoThinking.filter((model) => model !== minimaxFast),
+    minimaxFast, ...autoThinking.filter((model) => model !== minimaxFast),
   ]);
-  assert.deepEqual(getAgentRequestModels(catalog, "auto", localModel, "Hi", true), autoSimple);
+  assert.deepEqual(getAgentRequestModels(catalog, "auto", localCatalogModel, "Hi", true), autoSimple);
 });
 
-test("Thinking and Fast fallback stay within the selected category and never reach Local", () => {
-  assert.deepEqual(getAgentRequestModels(catalog, "thinking", cloudMimo), [
-    cloudMimo,
-    ...thinkingModels.filter((model) => model !== cloudMimo),
-  ]);
+test("Thinking/Fast fallback stays in category and excludes Local inference routes", () => {
+  assert.deepEqual(getAgentRequestModels(catalog, "thinking", thinkingModels[0]), thinkingModels);
   assert.deepEqual(getAgentRequestModels(catalog, "fast", minimaxFast), [
-    minimaxFast,
-    ...fastModels.filter((model) => model !== minimaxFast),
+    minimaxFast, ...fastModels.filter((model) => model !== minimaxFast),
   ]);
-  assert.deepEqual(getAgentRequestModels(catalog, "fast", cloudMimo), []);
+  assert.deepEqual(getAgentRequestModels(catalog, "fast", localCatalogModel), []);
+  assert.deepEqual(getAgentRequestModels(catalog, "thinking", localCatalogModel), []);
   assert.deepEqual(getAgentRequestModels(catalog, "thinking", freeRouter), []);
 });
 
-test("model selection preserves the current mode except an explicit bare Local selection", () => {
+test("selecting cloud preserves mode; explicitly selecting an authorized Local inference route selects Local", () => {
   for (const mode of ["auto", "thinking", "fast", "local"]) {
-    for (const model of [flashModel, cloudMimo, minimaxFast]) {
-      assert.equal(getAgentModeForModelSelection(mode, model), mode);
-    }
-    assert.equal(getAgentModeForModelSelection(mode, localModel), "local");
+    for (const model of [flashModel, otherMimo, minimaxFast]) assert.equal(getAgentModeForModelSelection(mode, model), mode);
+    assert.equal(getAgentModeForModelSelection(mode, localCatalogModel), "local");
+    assert.equal(getAgentModeForModelSelection(mode, bareLocalModel), "local");
   }
 });
 
-test("unknown families remain unclassified rather than guessing their capabilities", () => {
+test("unknown families remain unclassified instead of guessing capabilities", () => {
   assert.equal(getAgentModelClassification(unknownModel), "Other / unclassified");
-  for (const mode of ["auto", "thinking", "fast", "local"]) {
-    assert.ok(!getAgentModelsForMode(catalog, mode).includes(unknownModel));
-  }
+  for (const mode of ["auto", "thinking", "fast", "local"]) assert.ok(!getAgentModelsForMode(catalog, mode).includes(unknownModel));
 });
 
-test("Local contains only the authorized bare Mimo, never Gemini or a prefixed 9Router Mimo", () => {
-  assert.equal(getAgentModelClassification(localModel), "Local");
-  assert.deepEqual(getAgentModelsForMode(catalog, "local"), [localModel]);
-  assert.deepEqual(getAgentRequestModels(catalog, "local", localModel), [localModel]);
-  assert.deepEqual(getAgentModelsForMode(cloudCatalog, "local"), []);
-  assert.deepEqual(getAgentRequestModels(cloudCatalog, "local", localModel), []);
-  assert.deepEqual(getAgentRequestModels(catalog, "local", cloudMimo), []);
-  assert.ok(!getAgentModelsForMode(catalog, "thinking").includes(localModel));
-  assert.ok(!getAgentModelsForMode(catalog, "fast").includes(localModel));
+test("Local inference preserves the authorized 9Router route, key path, and exact request ID", () => {
+  assert.equal(isLocalInferenceAgentModel(localCatalogModel), true);
+  assert.equal(isLocalAgentModel(localCatalogModel), false, "UI Local must not turn a prefixed route into direct bare/Ollama routing");
+  assert.deepEqual(getAgentModelsForMode(catalog, "local"), [localCatalogModel]);
+  const sequence = getAgentRequestModels(catalog, "local", localCatalogModel);
+  assert.deepEqual(sequence, [localCatalogModel]);
+  assert.deepEqual(resolveAgentModelRoute(sequence[0], "https://authenticated-backend.test"), { apiBase: "https://authenticated-backend.test", model: localCatalogModel });
+  assert.deepEqual(getAgentRequestModels(catalog, "local", bareLocalModel), [], "bare ID must not be synthesized");
+  assert.deepEqual(getAgentModelsForMode([flashModel, minimaxFast, otherMimo], "local"), []);
+  assert.deepEqual(getAgentModelsForMode([], "local"), []);
+  const anotherPrefix = "another-authorized-provider/mimo-v2.6:latest";
+  assert.deepEqual(getAgentModelsForMode([anotherPrefix], "local"), [anotherPrefix]);
 });
 
-test("catalogs remain per-user and a stale selection cannot import another account's model", () => {
+test("per-user catalogs remain isolated and stale selections cannot import another user's Local route", () => {
   const accountB = ["another-provider/MiniMax-M3", "another-provider/mimo-v2.6:latest"];
   for (const mode of ["auto", "thinking", "fast", "local"]) {
-    const selected = getAgentModelsForMode(cloudCatalog, mode);
-    assert.ok(selected.every((model) => cloudCatalog.includes(model)));
-    assert.ok(selected.every((model) => !accountB.includes(model)));
+    const selected = getAgentModelsForMode(accountCatalog, mode);
+    assert.ok(selected.every((model) => accountCatalog.includes(model) && !accountB.includes(model)));
   }
-  assert.deepEqual(getAgentRequestModels(cloudCatalog, "thinking", accountB[0]), []);
-  assert.deepEqual(getAgentRequestModels(accountB, "thinking", cloudMimo), []);
+  assert.deepEqual(getAgentRequestModels(accountCatalog, "local", accountB[1]), []);
+  assert.deepEqual(getAgentRequestModels(accountB, "local", localCatalogModel), []);
   assert.deepEqual(new Set(getAgentRequestModels(accountB, "auto", flashModel, "analyze this", true)), new Set(accountB));
 });
 
-test("free status is recognized only for documented OpenRouter free routes", () => {
+test("free status is limited to OpenRouter free routes and never inferred from other providers", () => {
   assert.equal(isVerifiedFreeAgentModel(freeRouter), true);
   assert.equal(isVerifiedFreeAgentModel(catalogFixture[1].id), true);
   assert.equal(isVerifiedFreeAgentModel("provider/model:free"), false);
 });
 
-test("messages and preferences are namespaced by Firebase UID", () => {
+test("messages and preferences stay namespaced by Firebase UID", () => {
   assert.notEqual(getAgentMessagesStorageKey("uid-a"), getAgentMessagesStorageKey("uid-b"));
   assert.notEqual(getAgentPreferencesStorageKey("uid-a"), getAgentPreferencesStorageKey("uid-b"));
   assert.deepEqual(parseAgentModeSettings('{"mode":"fast","model":"x"}'), { mode: "fast", model: "x" });
@@ -168,16 +170,16 @@ test("messages and preferences are namespaced by Firebase UID", () => {
   assert.deepEqual(parseAgentModeSettings("invalid"), { mode: "auto", model: "" });
 });
 
-test("stale Auto Local preferences are cleared without silently changing the mode", () => {
-  assert.deepEqual(parseAgentModeSettings(JSON.stringify({ mode: "auto", model: localModel })), { mode: "auto", model: "" });
-  assert.deepEqual(parseAgentModeSettings(JSON.stringify({ mode: "local", model: localModel })), { mode: "local", model: localModel });
-  assert.deepEqual(parseAgentModeSettings(JSON.stringify({ mode: "auto", model: cloudMimo })), { mode: "auto", model: cloudMimo });
-  const normalizedLocal = " MIMO-V2.6:LATEST ";
-  assert.equal(getAgentModelClassification(normalizedLocal), "Local");
-  assert.deepEqual(getAgentModelsForMode([normalizedLocal, cloudMimo, flashModel], "local"), [normalizedLocal]);
+test("stale Auto Local preferences clear without changing mode, while explicit Local preserves the full ID", () => {
+  for (const local of [bareLocalModel, localCatalogModel]) {
+    assert.deepEqual(parseAgentModeSettings(JSON.stringify({ mode: "auto", model: local })), { mode: "auto", model: "" });
+    assert.deepEqual(parseAgentModeSettings(JSON.stringify({ mode: "local", model: local })), { mode: "local", model: local });
+  }
+  assert.deepEqual(parseAgentModeSettings(JSON.stringify({ mode: "auto", model: otherMimo })), { mode: "auto", model: otherMimo });
+  assert.equal(getAgentModelClassification(" MIMO-V2.6:LATEST "), "Local");
 });
 
-test("history uses the actual responding model rather than the initial request model", () => {
+test("history attributes assistant replies to the actual responding model", () => {
   assert.deepEqual(buildModelScopedHistory([
     { role: "user", content: "tanya" },
     { role: "bot", content: "jawaban fallback", model: "actual-model-b", requestedModel: "requested-model-a" },

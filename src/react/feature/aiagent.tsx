@@ -1351,7 +1351,7 @@ const AIAgent: React.FC = () => {
                                   ? "Reasoning-capable model families from this account's catalog are available in this mode."
                                   : agentMode === "fast"
                                     ? "Direct-response and speed-optimized models from this account's catalog. Response times vary by provider."
-                                    : "Use this account's authorized bare Local Mimo model without cloud fallback. Prefixed 9Router models are not Local."}
+                                    : "Use this account's configured Local Mimo inference route without model fallback. Its full authenticated 9Router catalog ID is preserved."}
                             </p>
                           </div>
                           <button
@@ -1385,10 +1385,10 @@ const AIAgent: React.FC = () => {
                               : model === selectedModel;
                             const modelDescription = agentMode === "auto"
                               ? isLocalModel
-                                ? "Exact Local route. Auto tries this only after eligible cloud models hit capacity limits."
+                                ? "Local Mimo inference via this catalog route. Auto tries it only after eligible Thinking/Fast models hit capacity limits."
                                 : `${classification} candidate in this account's Auto pool; eligible cloud models remain available as fallbacks.`
                               : agentMode === "local"
-                                ? "Exact Local route; this mode does not fall back to cloud."
+                                ? "Local Mimo inference using the full catalog ID and this account's 9Router key; no model fallback."
                                 : `${classification} model; capacity fallback stays within the ${agentMode} category.`;
                             return (
                               <button
@@ -1417,7 +1417,7 @@ const AIAgent: React.FC = () => {
                                   ? "No supported reasoning-capable model is available in this account's catalog."
                                   : agentMode === "fast"
                                     ? "No supported direct-response or speed-optimized model is available in this account's catalog."
-                                    : `The bare Local Mimo (${LOCAL_AGENT_MODEL}) is not authorized in this account's catalog. Prefixed 9Router Mimo models are cloud routes.`}
+                                    : `No authorized catalog route matches the configured Local Mimo identity (${LOCAL_AGENT_MODEL}).`}
                             </p>
                           )}
                         </div>

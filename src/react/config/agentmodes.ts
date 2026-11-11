@@ -1,4 +1,4 @@
-import { isLocalAgentModel } from "./agentrouting.ts";
+import { LOCAL_AGENT_MODEL } from "./agentrouting.ts";
 
 export type AgentMode = "auto" | "thinking" | "fast" | "local";
 export type AgentModeSettings = { mode: AgentMode; model: string };
@@ -16,7 +16,11 @@ type StoredConversationMessage = {
 const normalizedId = (model: string): string =>
   (model.trim().toLowerCase().split("/").at(-1) || "").replace(/:free$/, "");
 
-const isTrueLocalModel = isLocalAgentModel;
+// Local is an inference category, not a transport switch. The configured Mimo
+// identity may be exposed through a per-user 9Router provider namespace. Keep
+// the full catalog ID for authorization and requests; never synthesize a bare ID.
+export const isLocalInferenceAgentModel = (model: string): boolean =>
+  (model.trim().toLowerCase().split("/").at(-1) || "") === LOCAL_AGENT_MODEL.toLowerCase();
 
 export const isVerifiedFreeAgentModel = (model: string): boolean => {
   const normalized = model.trim().toLowerCase();
@@ -36,14 +40,14 @@ const thinkingFamilies = [
 ];
 
 export const isDocumentedThinkingAgentModel = (model: string): boolean => {
-  if (isTrueLocalModel(model)) return false;
+  if (isLocalInferenceAgentModel(model)) return false;
   const id = normalizedId(model);
   return thinkingFamilies.some((family) => family.test(id)) ||
     /(?:^|[-_.])(?:thinking|reasoning|reasoner)(?:[-_.:]|$)/.test(id);
 };
 
 export const isDocumentedFastAgentModel = (model: string): boolean => {
-  if (isTrueLocalModel(model)) return false;
+  if (isLocalInferenceAgentModel(model)) return false;
   const id = normalizedId(model);
   // Fast means direct-response or explicitly speed-optimized, not a latency
   // guarantee. The free router and Dots Note advertise reasoning:false; Flash
@@ -54,7 +58,7 @@ export const isDocumentedFastAgentModel = (model: string): boolean => {
 };
 
 export const getAgentModelClassification = (model: string): string => {
-  if (isTrueLocalModel(model)) return "Local";
+  if (isLocalInferenceAgentModel(model)) return "Local";
   const tags = [
     ...(isDocumentedThinkingAgentModel(model) ? ["Thinking"] : []),
     ...(isDocumentedFastAgentModel(model) ? ["Fast"] : []),
@@ -63,7 +67,7 @@ export const getAgentModelClassification = (model: string): string => {
 };
 
 export const getAgentModeForModelSelection = (mode: AgentMode, model: string): AgentMode =>
-  isTrueLocalModel(model) ? "local" : mode;
+  isLocalInferenceAgentModel(model) ? "local" : mode;
 
 const requestNeedsThinking = (prompt: string): boolean => {
   const normalized = prompt.toLowerCase();
@@ -75,7 +79,7 @@ const uniqueModels = (models: string[]): string[] => [...new Set(models)];
 const getAutoModelSequence = (models: string[], prompt: string, preferredModel = ""): string[] => {
   const catalog = uniqueModels(models);
   const cloud = catalog.filter((model) =>
-    !isTrueLocalModel(model) && (isDocumentedThinkingAgentModel(model) || isDocumentedFastAgentModel(model))
+    !isLocalInferenceAgentModel(model) && (isDocumentedThinkingAgentModel(model) || isDocumentedFastAgentModel(model))
   );
   const fast = cloud.filter(isDocumentedFastAgentModel);
   const thinking = cloud.filter(isDocumentedThinkingAgentModel);
@@ -83,10 +87,10 @@ const getAutoModelSequence = (models: string[], prompt: string, preferredModel =
   const cloudSequence = preferredModel && prioritized.includes(preferredModel)
     ? [preferredModel, ...prioritized.filter((model) => model !== preferredModel)]
     : prioritized;
-  // Local is never synthesized from a cloud alias and never starts an Auto
-  // request: only an account-authorized bare Local ID may be a capacity fallback.
+  // Only an existing account catalog route can be Local. It never starts an
+  // Auto request and keeps its original provider-qualified ID as the last fallback.
   if (!cloudSequence.length) return [];
-  return [...cloudSequence, ...catalog.filter(isTrueLocalModel)];
+  return [...cloudSequence, ...catalog.filter(isLocalInferenceAgentModel)];
 };
 
 export const getAgentModelsForMode = (models: string[], mode: AgentMode): string[] => {
@@ -94,7 +98,7 @@ export const getAgentModelsForMode = (models: string[], mode: AgentMode): string
   if (mode === "auto") return getAutoModelSequence(deduplicated, "");
   if (mode === "thinking") return deduplicated.filter(isDocumentedThinkingAgentModel);
   if (mode === "fast") return deduplicated.filter(isDocumentedFastAgentModel);
-  if (mode === "local") return deduplicated.filter(isTrueLocalModel);
+  if (mode === "local") return deduplicated.filter(isLocalInferenceAgentModel);
   return [];
 };
 
@@ -108,7 +112,7 @@ export const getAgentRequestModels = (
   const catalog = uniqueModels(models);
   if (mode === "auto") return getAutoModelSequence(catalog, prompt, preferSelectedModel ? selectedModel : "");
   if (!selectedModel || !catalog.includes(selectedModel)) return [];
-  if (mode === "local") return isTrueLocalModel(selectedModel) ? [selectedModel] : [];
+  if (mode === "local") return isLocalInferenceAgentModel(selectedModel) ? [selectedModel] : [];
   const eligible = getAgentModelsForMode(catalog, mode);
   if (!eligible.includes(selectedModel)) return [];
   return [selectedModel, ...eligible.filter((model) => model !== selectedModel)];
@@ -153,7 +157,7 @@ export const parseAgentModeSettings = (value: string | null): AgentModeSettings 
     return {
       mode,
       // Old Auto preferences must not visually select Local while routing cloud first.
-      model: mode === "auto" && isTrueLocalModel(model) ? "" : model,
+      model: mode === "auto" && isLocalInferenceAgentModel(model) ? "" : model,
     };
   } catch {
     return { mode: "auto", model: "" };

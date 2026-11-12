@@ -6,6 +6,7 @@ export type ScopedHistoryMessage = { role: "user" | "assistant"; content: string
 type StoredConversationMessage = {
   role: "user" | "bot";
   content: string;
+  files?: { name: string; content: string }[];
   model?: string;
   requestedModel?: string;
   error?: boolean;
@@ -118,6 +119,16 @@ export const getAgentRequestModels = (
   return [selectedModel, ...eligible.filter((model) => model !== selectedModel)];
 };
 
+export const formatAgentFileContext = (files: { name: string; content: string }[]): string => {
+  if (!files.length) return "";
+  const formatted = files.map((file) => {
+    const longestFence = (file.content.match(/`+/g) || []).reduce((longest, fence) => Math.max(longest, fence.length), 0);
+    const fence = "`".repeat(Math.max(3, longestFence + 1));
+    return `File: ${file.name}\n${fence}\n${file.content}\n${fence}`;
+  });
+  return `\n\n--- Context from uploaded files ---\n\n${formatted.join("\n\n")}\n\n--- End of context from uploaded files ---\n`;
+};
+
 export const buildModelScopedHistory = (
   messages: StoredConversationMessage[],
   currentModel: string,
@@ -127,7 +138,7 @@ export const buildModelScopedHistory = (
   for (const message of messages) {
     if (message.error) continue;
     if (message.role === "user") {
-      history.push({ role: "user", content: message.content });
+      history.push({ role: "user", content: `${message.content}${formatAgentFileContext(message.files || [])}` });
       continue;
     }
     // The actual responding model owns the reply; requestedModel is only a fallback attribution.

@@ -11,7 +11,8 @@ import { AI_AGENT_API_BASE } from "@config/api";
 import { saveRouterCredentials } from "@config/routerhelper";
 import { shouldShowRouterAuthModal } from "@config/agentauthflow";
 import { LOCAL_AGENT_MODEL, isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
-import { buildModelScopedHistory, getAgentModeForModelSelection, getAgentModelClassification, getAgentModelsForMode, getAgentRequestModels, getAgentMessagesStorageKey, getAgentPreferencesStorageKey, parseAgentModeSettings, type AgentMode } from "@config/agentmodes";
+import { buildModelScopedHistory, formatAgentFileContext, getAgentModeForModelSelection, getAgentModelClassification, getAgentModelsForMode, getAgentRequestModels, getAgentMessagesStorageKey, getAgentPreferencesStorageKey, parseAgentModeSettings, type AgentMode } from "@config/agentmodes";
+import { parseAgentFile } from "@config/agentfileparser";
 import { useAudio } from "@hook/useaudio";
 import Loading from "@control/loading";
 import ReactMarkdown, { type Components } from "react-markdown";
@@ -51,6 +52,66 @@ interface UploadedImage {
   mimeType: string;
   preview: string;
 }
+
+const readBlobAsDataUrl = (blob: Blob): Promise<string> => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onerror = () => reject(new Error("Unable to read the selected image"));
+  reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Unable to read the selected image"));
+  reader.readAsDataURL(blob);
+});
+
+const prepareUploadedImage = async (file: File): Promise<UploadedImage> => {
+  if (!file.type.startsWith("image/")) throw new Error("Choose an image file");
+  const dataUrl = await readBlobAsDataUrl(file);
+  return { data: dataUrl.split(",", 2)[1] || "", mimeType: file.type.toLowerCase(), preview: dataUrl };
+};
+
+const isLikelyVisionAgentModel = (model: string): boolean => {
+  const id = model.trim().toLowerCase();
+  return /gemini|claude|pixtral|llava/.test(id) ||
+    /(^|[/-])gpt-(?:4o|4\.1|5)(?:[-/.:]|$)/.test(id) ||
+    /(^|[/_.:-])(?:vl|vision|omni)(?:[/_.:-]|$)/.test(id);
+};
+
+const prioritizeVisionAgentModels = (models: string[], hasImages: boolean): string[] => {
+  if (!hasImages) return models;
+  const cloudModels = models.filter((model) => !isLocalAgentModel(model));
+  const localModels = models.filter(isLocalAgentModel);
+  return [
+    ...cloudModels.filter(isLikelyVisionAgentModel),
+    ...cloudModels.filter((model) => !isLikelyVisionAgentModel(model)),
+    ...localModels,
+  ];
+};
+
+class AgentRequestError extends Error {
+  status: number;
+  code?: string;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = "AgentRequestError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
+const parseAgentErrorPayload = (payload: unknown, status: number): AgentRequestError => {
+  const payloadRecord = typeof payload === "object" && payload !== null ? payload as Record<string, unknown> : undefined;
+  const detail = payloadRecord && "detail" in payloadRecord ? payloadRecord.detail : payload;
+  if (typeof detail === "string") return new AgentRequestError(detail, status);
+  if (Array.isArray(detail)) {
+    const messages = detail.map((item) => {
+      if (typeof item !== "object" || item === null || !("msg" in item)) return "";
+      return typeof item.msg === "string" ? item.msg : "";
+    }).filter(Boolean);
+    return new AgentRequestError(messages.join("; ") || `AI Agent request failed: ${status}`, status);
+  }
+  const detailRecord = typeof detail === "object" && detail !== null ? detail as Record<string, unknown> : undefined;
+  const message = detailRecord && typeof detailRecord.message === "string" ? detailRecord.message : `AI Agent request failed: ${status}`;
+  const code = detailRecord && typeof detailRecord.code === "string" ? detailRecord.code : undefined;
+  return new AgentRequestError(message, status, code);
+};
 
 const AIAGENT_POPOVER_TRIGGER_GAP = 8;
 
@@ -363,6 +424,10 @@ const getErrorText = (error: unknown): string => {
 
 const isCurrentBackendCapacityFailure = (error: unknown): boolean => isRetryableAgentAvailabilityError(error);
 
+const isRetryableAgentFailure = (error: unknown, hasImages: boolean): boolean =>
+  isCurrentBackendCapacityFailure(error) ||
+  (hasImages && error instanceof AgentRequestError && error.code === "vision_unsupported");
+
 const getCatalogStatusMessage = (error: string | null): string => {
   if (!error) return "This account's model catalog is empty. Check the 9Router key and available models in Settings.";
   const normalizedError = error.toLowerCase();
@@ -548,10 +613,42 @@ const AIAgent: React.FC = () => {
   };
 
   const saveMessages = (uid: string, msgs: Message[]) => {
+    const key = getAgentMessagesStorageKey(uid);
+    const stripAttachments = (message: Message): Message => {
+      const textOnly = { ...message };
+      delete textOnly.images;
+      delete textOnly.imageData;
+      delete textOnly.imageMimeType;
+      delete textOnly.files;
+      return textOnly;
+    };
     try {
-      localStorage.setItem(getAgentMessagesStorageKey(uid), JSON.stringify(msgs));
-    } catch (e) {
-      console.warn('Failed to save messages:', e);
+      localStorage.setItem(key, JSON.stringify(msgs));
+      return;
+    } catch {
+      const recentStart = Math.max(0, msgs.length - 6);
+      const compacted = msgs.map((message, index) => index < recentStart ? stripAttachments(message) : message);
+      try {
+        localStorage.setItem(key, JSON.stringify(compacted));
+        return;
+      } catch {
+        const withoutAttachments = msgs.map(stripAttachments);
+        try {
+          localStorage.setItem(key, JSON.stringify(withoutAttachments));
+          return;
+        } catch {
+          const recent = withoutAttachments.slice(-6);
+          for (let start = 0; start < recent.length; start += 1) {
+            try {
+              localStorage.setItem(key, JSON.stringify(recent.slice(start)));
+              return;
+            } catch {
+              continue;
+            }
+          }
+          console.warn("Failed to save this account's AI history after compacting attachments");
+        }
+      }
     }
   };
 
@@ -595,6 +692,7 @@ const AIAgent: React.FC = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentSpeakingId, setCurrentSpeakingId] = useState<string | null>(null);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const [uploadNotice, setUploadNotice] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isUploadDropdownOpen, setIsUploadDropdownOpen] = useState(false);
   const [imageGenEnabled, setImageGenEnabled] = useState(false);
@@ -680,6 +778,9 @@ const AIAgent: React.FC = () => {
           setPreferencesOwnerUid(null);
           setPreferredModel("");
           setAgentMode("auto");
+          setUploadedImages([]);
+          setUploadedFiles([]);
+          setUploadNotice(null);
           if (!user) {
             setUserDisplayName("User");
             setUserAvatar(null);
@@ -766,26 +867,28 @@ const AIAgent: React.FC = () => {
     speechSynthRef.current.speak(utterance);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    
-    for (const file of Array.from(files)) {
-      if (!file.type.startsWith("image/")) {
-        continue;
+    const uploadOwnerUid = currentUserUidRef.current;
+    if (!uploadOwnerUid) return;
+
+    const selectedImages = Array.from(files).filter((file) => file.type.startsWith("image/"));
+    setUploadNotice(null);
+
+    const processedImages: UploadedImage[] = [];
+    for (const file of selectedImages) {
+      try {
+        const processedImage = await prepareUploadedImage(file);
+        if (currentUserUidRef.current !== uploadOwnerUid) return;
+        processedImages.push(processedImage);
+      } catch (error) {
+        if (currentUserUidRef.current !== uploadOwnerUid) return;
+        setUploadNotice(getErrorText(error) || `Unable to process ${file.name}`);
       }
-      
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64 = event.target?.result as string;
-        setUploadedImages(prev => [...prev, {
-          data: base64.split(",")[1],
-          mimeType: file.type,
-          preview: base64
-        }]);
-      };
-      reader.readAsDataURL(file);
     }
+    if (currentUserUidRef.current !== uploadOwnerUid) return;
+    if (processedImages.length) setUploadedImages((previous) => [...previous, ...processedImages]);
     setIsUploadDropdownOpen(false);
     if (imageInputRef.current) imageInputRef.current.value = "";
   };
@@ -793,22 +896,30 @@ const AIAgent: React.FC = () => {
   const handleMultiFilesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    const uploadOwnerUid = currentUserUidRef.current;
+    if (!uploadOwnerUid) return;
     const newFiles: UploadedFile[] = [];
+    const newImages: UploadedImage[] = [];
     for (const file of Array.from(files)) {
-      if (file.type.startsWith("image/")) continue;
-      const dangerousExts = ['.js', '.exe', '.bat', '.sh', '.php', '.py', '.rb', '.jsp', '.asp', '.aspx', '.cgi', '.pl'];
-      const ext = file.name.split('.').pop()?.toLowerCase();
-      if (dangerousExts.includes(ext || '')) {
-        console.warn('Dangerous file type blocked:', file.name);
+      if (file.type.startsWith("image/")) {
+        try {
+          newImages.push(await prepareUploadedImage(file));
+        } catch (error) {
+          setUploadNotice(getErrorText(error) || `Unable to process ${file.name}`);
+        }
+        if (currentUserUidRef.current !== uploadOwnerUid) return;
         continue;
       }
-      if (file.size > 5 * 1024 * 1024) {
-        console.warn('File too large:', file.name);
-        continue;
+      try {
+        newFiles.push(await parseAgentFile(file));
+      } catch (error) {
+        setUploadNotice(getErrorText(error) || `Unable to read ${file.name}`);
       }
-      try { newFiles.push({ name: file.name, content: await file.text(), type: file.type }); } catch { void 0; }
+      if (currentUserUidRef.current !== uploadOwnerUid) return;
     }
+    if (currentUserUidRef.current !== uploadOwnerUid) return;
     if (newFiles.length) { setUploadedFiles(prev => [...prev, ...newFiles]); }
+    if (newImages.length) setUploadedImages((previous) => [...previous, ...newImages]);
     if (multiFileInputRef.current) multiFileInputRef.current.value = "";
     setIsUploadDropdownOpen(false);
   };
@@ -816,28 +927,52 @@ const AIAgent: React.FC = () => {
   const handleFolderUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    const uploadOwnerUid = currentUserUidRef.current;
+    if (!uploadOwnerUid) return;
     const newFiles: UploadedFile[] = [];
+    const newImages: UploadedImage[] = [];
+    const ignoredDirectories = new Set([".git", ".next", ".firebase", "__pycache__", "build", "dist", "node_modules", "venv", ".venv"]);
+    const ignoredFiles = new Set([".ds_store", "package-lock.json", "pnpm-lock.yaml", "yarn.lock"]);
+    let skippedCount = 0;
+    let readError = "";
     for (const file of Array.from(files)) {
-      if (file.type.startsWith("image/")) continue;
-      const dangerousExts = ['.js', '.exe', '.bat', '.sh', '.php', '.py', '.rb', '.jsp', '.asp', '.aspx', '.cgi', '.pl'];
-      const ext = file.name.split('.').pop()?.toLowerCase();
-      if (dangerousExts.includes(ext || '')) {
-        console.warn('Dangerous file type blocked:', file.name);
+      const name = file.webkitRelativePath || file.name;
+      const pathParts = name.split("/").map((part) => part.toLowerCase());
+      if (pathParts.some((part) => ignoredDirectories.has(part)) || ignoredFiles.has(file.name.toLowerCase())) {
+        skippedCount += 1;
         continue;
       }
-      if (file.size > 5 * 1024 * 1024) {
-        console.warn('File too large:', file.name);
+      if (file.type.startsWith("image/")) {
+        try {
+          newImages.push(await prepareUploadedImage(file));
+        } catch (error) {
+          skippedCount += 1;
+          if (!readError) readError = getErrorText(error) || `Unable to process ${name}`;
+        }
+        if (currentUserUidRef.current !== uploadOwnerUid) return;
         continue;
       }
-      try { newFiles.push({ name: file.webkitRelativePath || file.name, content: await file.text(), type: file.type }); } catch { void 0; }
+      try {
+        newFiles.push(await parseAgentFile(file, name));
+        if (currentUserUidRef.current !== uploadOwnerUid) return;
+      } catch (error) {
+        skippedCount += 1;
+        if (!readError) readError = getErrorText(error) || `Unable to read ${name}`;
+      }
+      if (currentUserUidRef.current !== uploadOwnerUid) return;
     }
+    if (currentUserUidRef.current !== uploadOwnerUid) return;
     if (newFiles.length) { setUploadedFiles(prev => [...prev, ...newFiles]); }
+    if (newImages.length) setUploadedImages((previous) => [...previous, ...newImages]);
+    const readCount = newFiles.length + newImages.length;
+    setUploadNotice(`${readCount} read, ${skippedCount} skipped${readError ? `. ${readError}` : ""}`);
     if (folderInputRef.current) folderInputRef.current.value = "";
     setIsUploadDropdownOpen(false);
   };
 
   const removeImage = (index: number) => {
     setUploadedImages(prev => prev.filter((_, i) => i !== index));
+    setUploadNotice(null);
   };
 
   const removeFile = (index: number) => {
@@ -847,17 +982,14 @@ const AIAgent: React.FC = () => {
   const clearAllUploads = () => {
     setUploadedImages([]);
     setUploadedFiles([]);
+    setUploadNotice(null);
     if (imageInputRef.current) imageInputRef.current.value = "";
     if (multiFileInputRef.current) multiFileInputRef.current.value = "";
     if (folderInputRef.current) folderInputRef.current.value = "";
   };
 
   const buildContextFromFiles = (files: UploadedFile[]): string => {
-    if (!files.length) return "";
-    let context = "\n\n--- Context from uploaded files ---\n";
-    for (const file of files) context += `\nFile: ${file.name}\n\`\`\`\n${file.content.substring(0, 3000)}${file.content.length > 3000 ? "\n... (truncated)" : ""}\n\`\`\`\n`;
-    context += "\n--- End of context ---\n";
-    return context;
+    return formatAgentFileContext(files);
   };
 
   const callAI = async (
@@ -878,8 +1010,6 @@ const AIAgent: React.FC = () => {
     const priorMessages = currentMessages.filter(m => !m.error && !(isRetry && m.role === "user" && m.content === originalUserMessage));
     const history = buildModelScopedHistory(priorMessages, modelName);
     const textContext = messageText + buildContextFromFiles(files);
-    const content: Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }> = [{ type: "text", text: textContext || "Describe these images" }];
-    for (const image of images) content.push({ type: "image_url", image_url: { url: `data:${image.mimeType};base64,${image.data}` } });
     const firebaseAuth = await getAuth();
     const user = firebaseAuth.currentUser;
     if (!user || user.uid !== requestOwnerUid || currentUserUidRef.current !== requestOwnerUid || activeRequestIdRef.current !== requestId) {
@@ -889,14 +1019,24 @@ const AIAgent: React.FC = () => {
     if (firebaseAuth.currentUser?.uid !== requestOwnerUid || currentUserUidRef.current !== requestOwnerUid || activeRequestIdRef.current !== requestId) {
       throw new Error("The signed-in account changed before this AI request could continue");
     }
-    const prompt = `${textContext}${images.length ? `\n\n[${images.length} image(s) attached]` : ""}`;
+    const prompt = textContext || (images.length ? "Describe these images" : "");
     const route = resolveAgentModelRoute(modelName, AI_AGENT_API_BASE);
-    const response = await fetch(`${route.apiBase}/agent/chat`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` }, body: JSON.stringify({ provider: "9router", model: route.model, prompt, history }) });
-    const data = await response.json();
+    const response = await fetch(`${route.apiBase}/agent/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({
+        provider: "9router",
+        model: route.model,
+        prompt,
+        history,
+        images: images.map((image) => ({ mime_type: image.mimeType, data: image.data })),
+      }),
+    });
+    const data = await response.json().catch(() => null);
     if (currentUserUidRef.current !== requestOwnerUid || activeRequestIdRef.current !== requestId) {
       throw new Error("The signed-in account changed while this AI request was running");
     }
-    if (!response.ok) throw new Error(data?.detail || `AI Agent request failed: ${response.status}`);
+    if (!response.ok) throw parseAgentErrorPayload(data, response.status);
     const result = data?.data?.result || {};
     const text = cleanMarkdown(result.content || "");
     if (!text) throw new Error("AI Agent returned an empty response");
@@ -937,8 +1077,7 @@ const AIAgent: React.FC = () => {
         content: messageText || (images.length ? `[${images.length} image(s)]` : files.length ? `[${files.length} file(s)]` : ""),
         timestamp: new Date(),
         images: images.map(img => ({ data: img.data, mimeType: img.mimeType })),
-        imageData: images.length > 0 ? images[0].preview : undefined,
-        files: files.map(f => ({ name: f.name, content: f.content.substring(0, 500) }))
+        files: files.map(f => ({ name: f.name, content: f.content }))
       };
       setMessages(prev => [...prev, userMsg]);
     }
@@ -1003,10 +1142,10 @@ const AIAgent: React.FC = () => {
       const friendlyError = getErrorMessage(error);
       const errorMessage = getErrorText(error);
       const errorObject = error instanceof Error ? error : new Error(errorMessage);
-      const isCapacityFailure = isCurrentBackendCapacityFailure(error);
+      const isRetryableFailure = isRetryableAgentFailure(error, images.length > 0);
       
       const attemptedModel = modelSequence[retryModelIndex] || selectedModel;
-      if (shouldRetryWithNextAgentModel(attemptedModel, isCapacityFailure, retryModelIndex, modelSequence.length)) {
+      if (shouldRetryWithNextAgentModel(attemptedModel, isRetryableFailure, retryModelIndex, modelSequence.length)) {
         await new Promise(resolve => setTimeout(resolve, 1000));
         if (!isCurrentRequest()) return;
         await sendMessage(messageText, images, files, retryModelIndex + 1, true, modelSequence, requestOwnerUid, requestId);
@@ -1044,7 +1183,10 @@ const AIAgent: React.FC = () => {
     const requestOwnerUid = currentUserUidRef.current;
     if (!requestOwnerUid || requestOwnerUid !== currentUserUid || messagesOwnerUid !== requestOwnerUid || (!input.trim() && !uploadedImages.length && !uploadedFiles.length) || isLoading || !isConfigured || !selectedModel || !modelOptions.includes(selectedModel) || !requestModelOptions.length) return;
     const currentInput = input, currentImages = [...uploadedImages], currentFiles = [...uploadedFiles];
-    const modelSequence = getAgentRequestModels(routerModels, agentMode, selectedModel, currentInput, hasPreferredAutoModel);
+    const modelSequence = prioritizeVisionAgentModels(
+      getAgentRequestModels(routerModels, agentMode, selectedModel, currentInput, hasPreferredAutoModel),
+      currentImages.length > 0,
+    );
     if (!modelSequence.length) return;
     setInput("");
     clearAllUploads();
@@ -1062,7 +1204,10 @@ const AIAgent: React.FC = () => {
     setMessages(prev => prev.filter(m => m.id !== messageId));
     const recoveredImages: UploadedImage[] = userMsg.images?.map(img => ({ data: img.data, mimeType: img.mimeType, preview: `data:${img.mimeType};base64,${img.data}` })) || [];
     const recoveredFiles: UploadedFile[] = userMsg.files?.map(f => ({ name: f.name, content: f.content, type: "" })) || [];
-    const modelSequence = getAgentRequestModels(routerModels, agentMode, selectedModel, userMsg.content, hasPreferredAutoModel);
+    const modelSequence = prioritizeVisionAgentModels(
+      getAgentRequestModels(routerModels, agentMode, selectedModel, userMsg.content, hasPreferredAutoModel),
+      (userMsg.images?.length || 0) > 0,
+    );
     await sendMessage(userMsg.content, recoveredImages, recoveredFiles, 0, true, modelSequence, requestOwnerUid);
   };
 
@@ -1339,6 +1484,7 @@ const AIAgent: React.FC = () => {
               ))}
             </div>
           )}
+          {uploadNotice && <div role="status" style={{ fontSize: 12, padding: "0 12px 8px", color: "var(--text-muted, #666)" }}>{uploadNotice}</div>}
 
           <div className="aiagent-input-container">
             <textarea

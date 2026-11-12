@@ -1,6 +1,7 @@
 import { LOCAL_AGENT_MODEL } from "./agentrouting.ts";
+import type { AgentModel } from "./agentmodels.ts";
 
-export type AgentMode = "auto" | "thinking" | "fast" | "local";
+export type AgentMode = "auto" | "thinking" | "fast" | "other" | "local";
 export type AgentModeSettings = { mode: AgentMode; model: string; webSearchEnabled: boolean };
 export type ScopedHistoryMessage = { role: "user" | "assistant"; content: string };
 type StoredConversationMessage = {
@@ -11,11 +12,6 @@ type StoredConversationMessage = {
   requestedModel?: string;
   error?: boolean;
 };
-
-// Provider namespaces (including user-configured providers) are not capabilities.
-// Normalize only for classification; catalog IDs are always returned/routed unchanged.
-const normalizedId = (model: string): string =>
-  (model.trim().toLowerCase().split("/").at(-1) || "").replace(/:free$/, "");
 
 // Local is an inference category, not a transport switch. The configured Mimo
 // identity may be exposed through a per-user 9Router provider namespace. Keep
@@ -29,42 +25,20 @@ export const isVerifiedFreeAgentModel = (model: string): boolean => {
     (normalized.startsWith("openrouter/") && normalized.endsWith(":free"));
 };
 
-// /agent/models currently exposes IDs, not the upstream capabilities object.
-// These reasoning families were verified against 9Router catalog metadata. Match
-// families/explicit capability markers, not a vendor-only list of exact versions
-// or user-specific provider IDs. Unknown families remain unclassified.
-const thinkingFamilies = [
-  /^gemini-3(?:\.\d+)?-(?:pro|flash)(?:-|$)/,
-  /^nemotron-3(?:[.-]|$)/,
-  /^mimo-v2(?:[.:-]|$)/,
-  /^minimax-m(?:2|3)(?:[.-]|$)/,
-];
+const findCatalogModel = (model: string, catalog: readonly AgentModel[]): AgentModel | undefined =>
+  catalog.find((entry) => entry.id === model);
 
-export const isDocumentedThinkingAgentModel = (model: string): boolean => {
-  if (isLocalInferenceAgentModel(model)) return false;
-  const id = normalizedId(model);
-  return thinkingFamilies.some((family) => family.test(id)) ||
-    /(?:^|[-_.])(?:thinking|reasoning|reasoner)(?:[-_.:]|$)/.test(id);
-};
+export const isDocumentedThinkingAgentModel = (model: string, catalog: readonly AgentModel[] = []): boolean =>
+  !isLocalInferenceAgentModel(model) && findCatalogModel(model, catalog)?.capabilities?.reasoning === true;
 
-export const isDocumentedFastAgentModel = (model: string): boolean => {
-  if (isLocalInferenceAgentModel(model)) return false;
-  const id = normalizedId(model);
-  // Fast means direct-response or explicitly speed-optimized, not a latency
-  // guarantee. The free router and Dots Note advertise reasoning:false; Flash
-  // and highspeed variants can also be reasoning-capable and belong in both modes.
-  return model.trim().toLowerCase() === "openrouter/openrouter/free" ||
-    /^dots-3-note(?:-|$)/.test(id) ||
-    /(?:^|[-_.])(?:flash|fast|highspeed|turbo|instant)(?:[-_.:]|$)/.test(id);
-};
+export const isDocumentedFastAgentModel = (model: string, catalog: readonly AgentModel[] = []): boolean =>
+  !isLocalInferenceAgentModel(model) && findCatalogModel(model, catalog)?.capabilities?.reasoning === false;
 
-export const getAgentModelClassification = (model: string): string => {
+export const getAgentModelClassification = (model: string, catalog: readonly AgentModel[] = []): string => {
   if (isLocalInferenceAgentModel(model)) return "Local";
-  const tags = [
-    ...(isDocumentedThinkingAgentModel(model) ? ["Thinking"] : []),
-    ...(isDocumentedFastAgentModel(model) ? ["Fast"] : []),
-  ];
-  return tags.length ? tags.join(" · ") : "Other / unclassified";
+  if (isDocumentedThinkingAgentModel(model, catalog)) return "Thinking";
+  if (isDocumentedFastAgentModel(model, catalog)) return "Fast";
+  return "Other / unclassified";
 };
 
 export const getAgentModeForModelSelection = (mode: AgentMode, model: string): AgentMode =>
@@ -77,13 +51,19 @@ const requestNeedsThinking = (prompt: string): boolean => {
 
 const uniqueModels = (models: string[]): string[] => [...new Set(models)];
 
-const getAutoModelSequence = (models: string[], prompt: string, preferredModel = ""): string[] => {
+const getAutoModelSequence = (
+  models: string[],
+  prompt: string,
+  preferredModel = "",
+  modelCatalog: readonly AgentModel[] = [],
+): string[] => {
   const catalog = uniqueModels(models);
   const cloud = catalog.filter((model) =>
-    !isLocalInferenceAgentModel(model) && (isDocumentedThinkingAgentModel(model) || isDocumentedFastAgentModel(model))
+    !isLocalInferenceAgentModel(model) &&
+    (isDocumentedThinkingAgentModel(model, modelCatalog) || isDocumentedFastAgentModel(model, modelCatalog))
   );
-  const fast = cloud.filter(isDocumentedFastAgentModel);
-  const thinking = cloud.filter(isDocumentedThinkingAgentModel);
+  const fast = cloud.filter((model) => isDocumentedFastAgentModel(model, modelCatalog));
+  const thinking = cloud.filter((model) => isDocumentedThinkingAgentModel(model, modelCatalog));
   const prioritized = uniqueModels(requestNeedsThinking(prompt) ? [...thinking, ...fast] : [...fast, ...thinking]);
   const cloudSequence = preferredModel && prioritized.includes(preferredModel)
     ? [preferredModel, ...prioritized.filter((model) => model !== preferredModel)]
@@ -94,11 +74,20 @@ const getAutoModelSequence = (models: string[], prompt: string, preferredModel =
   return [...cloudSequence, ...catalog.filter(isLocalInferenceAgentModel)];
 };
 
-export const getAgentModelsForMode = (models: string[], mode: AgentMode): string[] => {
+export const getAgentModelsForMode = (
+  models: string[],
+  mode: AgentMode,
+  modelCatalog: readonly AgentModel[] = [],
+): string[] => {
   const deduplicated = uniqueModels(models);
-  if (mode === "auto") return getAutoModelSequence(deduplicated, "");
-  if (mode === "thinking") return deduplicated.filter(isDocumentedThinkingAgentModel);
-  if (mode === "fast") return deduplicated.filter(isDocumentedFastAgentModel);
+  if (mode === "auto") return getAutoModelSequence(deduplicated, "", "", modelCatalog);
+  if (mode === "thinking") return deduplicated.filter((model) => isDocumentedThinkingAgentModel(model, modelCatalog));
+  if (mode === "fast") return deduplicated.filter((model) => isDocumentedFastAgentModel(model, modelCatalog));
+  if (mode === "other") return deduplicated.filter((model) =>
+    !isLocalInferenceAgentModel(model) &&
+    !isDocumentedThinkingAgentModel(model, modelCatalog) &&
+    !isDocumentedFastAgentModel(model, modelCatalog)
+  );
   if (mode === "local") return deduplicated.filter(isLocalInferenceAgentModel);
   return [];
 };
@@ -109,12 +98,13 @@ export const getAgentRequestModels = (
   selectedModel: string,
   prompt = "",
   preferSelectedModel = false,
+  modelCatalog: readonly AgentModel[] = [],
 ): string[] => {
   const catalog = uniqueModels(models);
-  if (mode === "auto") return getAutoModelSequence(catalog, prompt, preferSelectedModel ? selectedModel : "");
+  if (mode === "auto") return getAutoModelSequence(catalog, prompt, preferSelectedModel ? selectedModel : "", modelCatalog);
   if (!selectedModel || !catalog.includes(selectedModel)) return [];
   if (mode === "local") return isLocalInferenceAgentModel(selectedModel) ? [selectedModel] : [];
-  const eligible = getAgentModelsForMode(catalog, mode);
+  const eligible = getAgentModelsForMode(catalog, mode, modelCatalog);
   if (!eligible.includes(selectedModel)) return [];
   return [selectedModel, ...eligible.filter((model) => model !== selectedModel)];
 };
@@ -162,7 +152,7 @@ export const parseAgentModeSettings = (value: string | null): AgentModeSettings 
   if (!value) return { mode: "auto", model: "", webSearchEnabled: false };
   try {
     const parsed = JSON.parse(value) as Partial<AgentModeSettings>;
-    const validModes: AgentMode[] = ["auto", "thinking", "fast", "local"];
+    const validModes: AgentMode[] = ["auto", "thinking", "fast", "other", "local"];
     const mode = validModes.includes(parsed.mode as AgentMode) ? parsed.mode as AgentMode : "auto";
     const model = typeof parsed.model === "string" ? parsed.model : "";
     return {

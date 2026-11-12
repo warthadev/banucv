@@ -1,16 +1,19 @@
 import React from "react";
-import { isLocalAgentModel } from "@config/agentrouting";
+import { getAgentModelClassification } from "@config/agentmodes";
+import type { AgentModel } from "@config/agentmodels";
 
 type AgentModelCatalogProps = {
-  models: string[];
+  models: AgentModel[];
   isLoading: boolean;
   error: string | null;
 };
 
 const AgentModelCatalog: React.FC<AgentModelCatalogProps> = ({ models, isLoading, error }) => {
   const groups = [
-    { title: "Cloud models", models: models.filter((model) => !isLocalAgentModel(model)) },
-    { title: "Local models", models: models.filter(isLocalAgentModel) },
+    { title: "Thinking", models: models.filter((model) => getAgentModelClassification(model.id, models) === "Thinking") },
+    { title: "Fast (reasoning:false)", models: models.filter((model) => getAgentModelClassification(model.id, models) === "Fast") },
+    { title: "Other / unclassified", models: models.filter((model) => getAgentModelClassification(model.id, models) === "Other / unclassified") },
+    { title: "Local models", models: models.filter((model) => getAgentModelClassification(model.id, models) === "Local") },
   ];
 
   return (
@@ -31,7 +34,7 @@ const AgentModelCatalog: React.FC<AgentModelCatalogProps> = ({ models, isLoading
                 <div className="setting-agent-model-group" key={group.title}>
                   <span>{group.title}</span>
                   <ul className="setting-agent-model-list" aria-label={`${group.title} available to this account`}>
-                    {group.models.map((model) => <li key={model}>{model}</li>)}
+                    {group.models.map((model) => <li key={model.id}>{model.id}</li>)}
                   </ul>
                 </div>
               ))}

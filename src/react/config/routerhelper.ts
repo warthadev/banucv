@@ -1,6 +1,6 @@
 import { getAuth } from "./firebase";
 import { AI_AGENT_API_BASE } from "./api";
-import { extractAgentModelIds } from "./agentmodels";
+import { extractAgentModels, type AgentModel } from "./agentmodels";
 
 export interface RouterCredentials {
   model: string;
@@ -73,7 +73,7 @@ export const loadRouterCredentials = async (): Promise<RouterCredentials | null>
   };
 };
 
-export const loadRouterModelCatalog = async (): Promise<string[]> => {
+export const loadRouterModelCatalog = async (): Promise<AgentModel[]> => {
   const { idToken } = await getAuthenticatedUser();
   const response = await fetch(`${AI_AGENT_API_BASE}/agent/models`, {
     headers: { Authorization: `Bearer ${idToken}` },
@@ -86,7 +86,7 @@ export const loadRouterModelCatalog = async (): Promise<string[]> => {
       : undefined;
     throw new Error(typeof detail === "string" ? detail : `Failed to load the model catalog (${response.status})`);
   }
-  return extractAgentModelIds(data);
+  return extractAgentModels(data);
 };
 
 export const clearRouterCredentials = async (): Promise<void> => {

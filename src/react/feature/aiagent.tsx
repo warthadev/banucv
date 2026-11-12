@@ -609,7 +609,7 @@ const splitMarkdown = (content: string) => {
 };
 
 const AIAgent: React.FC = () => {
-  const { isConfigured, isLoading: authLoading, routerModels, catalogError } = useAgentModels();
+  const { isConfigured, isLoading: authLoading, routerModels: routerModelCatalog, routerModelIds: routerModels, catalogError } = useAgentModels();
   const { aiMode } = useAudio();
   const navigate = useNavigate();
 
@@ -689,13 +689,13 @@ const AIAgent: React.FC = () => {
   const [agentMode, setAgentMode] = useState<AgentMode>("auto");
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
-  const modelOptions = getAgentModelsForMode(routerModels, agentMode);
+  const modelOptions = getAgentModelsForMode(routerModels, agentMode, routerModelCatalog);
   const selectedModel = modelOptions.includes(preferredModel) ? preferredModel : modelOptions[0] || "";
   const hasPreferredAutoModel = agentMode === "auto" && modelOptions.includes(preferredModel);
-  const requestModelOptions = getAgentRequestModels(routerModels, agentMode, selectedModel, "", hasPreferredAutoModel);
-  const autoRecommendedModel = agentMode === "auto" ? getAgentRequestModels(routerModels, "auto", "", input)[0] || "" : "";
+  const requestModelOptions = getAgentRequestModels(routerModels, agentMode, selectedModel, "", hasPreferredAutoModel, routerModelCatalog);
+  const autoRecommendedModel = agentMode === "auto" ? getAgentRequestModels(routerModels, "auto", "", input, false, routerModelCatalog)[0] || "" : "";
   const selectAgentMode = (mode: AgentMode) => {
-    const candidates = getAgentModelsForMode(routerModels, mode);
+    const candidates = getAgentModelsForMode(routerModels, mode, routerModelCatalog);
     setAgentMode(mode);
     setPreferredModel(mode === "auto" ? "" : candidates[0] || "");
   };
@@ -1208,7 +1208,7 @@ const AIAgent: React.FC = () => {
     if (!requestOwnerUid || requestOwnerUid !== currentUserUid || messagesOwnerUid !== requestOwnerUid || (!input.trim() && !uploadedImages.length && !uploadedFiles.length) || isLoading || !isConfigured || !selectedModel || !modelOptions.includes(selectedModel) || !requestModelOptions.length) return;
     const currentInput = input, currentImages = [...uploadedImages], currentFiles = [...uploadedFiles];
     const modelSequence = prioritizeVisionAgentModels(
-      getAgentRequestModels(routerModels, agentMode, selectedModel, currentInput, hasPreferredAutoModel),
+      getAgentRequestModels(routerModels, agentMode, selectedModel, currentInput, hasPreferredAutoModel, routerModelCatalog),
       currentImages.length > 0,
     );
     if (!modelSequence.length) return;
@@ -1229,7 +1229,7 @@ const AIAgent: React.FC = () => {
     const recoveredImages: UploadedImage[] = userMsg.images?.map(img => ({ data: img.data, mimeType: img.mimeType, preview: `data:${img.mimeType};base64,${img.data}` })) || [];
     const recoveredFiles: UploadedFile[] = userMsg.files?.map(f => ({ name: f.name, content: f.content, type: "" })) || [];
     const modelSequence = prioritizeVisionAgentModels(
-      getAgentRequestModels(routerModels, agentMode, selectedModel, userMsg.content, hasPreferredAutoModel),
+      getAgentRequestModels(routerModels, agentMode, selectedModel, userMsg.content, hasPreferredAutoModel, routerModelCatalog),
       (userMsg.images?.length || 0) > 0,
     );
     await sendMessage(userMsg.content, recoveredImages, recoveredFiles, 0, true, modelSequence, requestOwnerUid);
@@ -1584,13 +1584,15 @@ const AIAgent: React.FC = () => {
                                 : agentMode === "thinking"
                                   ? "Reasoning-capable model families from this account's catalog are available in this mode."
                                   : agentMode === "fast"
-                                    ? "Direct-response and speed-optimized models from this account's catalog. Response times vary by provider."
-                                    : "Use this account's configured Local Mimo inference route without model fallback. Its full authenticated 9Router catalog ID is preserved."}
+                                    ? "Models marked reasoning:false in this account's catalog. This is not a response-time guarantee."
+                                    : agentMode === "other"
+                                      ? "Models without reasoning capability metadata. Choose one manually; they are not guessed into Thinking or Fast."
+                                      : "Use this account's configured Local Mimo inference route without model fallback. Its full authenticated 9Router catalog ID is preserved."}
                             </p>
                           </div>
                         </div>
                         <div className="aiagent-mode-options" role="group" aria-label="AI modes">
-                          {(["auto", "thinking", "fast", "local"] as AgentMode[]).map((mode) => (
+                          {(["auto", "thinking", "fast", "other", "local"] as AgentMode[]).map((mode) => (
                             <button
                               key={mode}
                               type="button"
@@ -1604,7 +1606,7 @@ const AIAgent: React.FC = () => {
                         </div>
                         <div className="aiagent-model-option-list" role="list" aria-label={`${agentMode} models available to this account`}>
                           {modelOptions.length ? modelOptions.map((model) => {
-                            const classification = getAgentModelClassification(model);
+                            const classification = getAgentModelClassification(model, routerModelCatalog);
                             const isLocalModel = classification === "Local";
                             const isSelected = agentMode === "auto"
                               ? hasPreferredAutoModel ? model === selectedModel : model === autoRecommendedModel
@@ -1641,9 +1643,11 @@ const AIAgent: React.FC = () => {
                                 ? "No supported Thinking or Fast cloud model is available in this account's catalog. Choose Local explicitly if it is authorized."
                                 : agentMode === "thinking"
                                   ? "No supported reasoning-capable model is available in this account's catalog."
-                                  : agentMode === "fast"
-                                    ? "No supported direct-response or speed-optimized model is available in this account's catalog."
-                                    : `No authorized catalog route matches the configured Local Mimo identity (${LOCAL_AGENT_MODEL}).`}
+                                    : agentMode === "fast"
+                                      ? "No model marked reasoning:false is available in this account's catalog."
+                                      : agentMode === "other"
+                                        ? "No unclassified model is available in this account's catalog."
+                                        : `No authorized catalog route matches the configured Local Mimo identity (${LOCAL_AGENT_MODEL}).`}
                             </p>
                           )}
                         </div>

@@ -2,13 +2,14 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { getAuth } from "@config/firebase";
 import { loadRouterCredentials, loadRouterModelCatalog } from "@config/routerhelper";
+import type { AgentModel } from "@config/agentmodels";
 
 export const ROUTER_CREDENTIAL_UPDATED_EVENT = "routerCredentialUpdated";
 
 export const useAgentModels = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isConfigured, setIsConfigured] = useState(false);
-  const [routerModels, setRouterModels] = useState<string[]>([]);
+  const [routerModels, setRouterModels] = useState<AgentModel[]>([]);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [configurationError, setConfigurationError] = useState<string | null>(null);
   const mountedRef = useRef(true);
@@ -91,7 +92,14 @@ export const useAgentModels = () => {
     };
   }, [refreshAccount]);
 
-  return { isLoading, isConfigured, routerModels, catalogError, configurationError };
+  return {
+    isLoading,
+    isConfigured,
+    routerModels,
+    routerModelIds: routerModels.map((model) => model.id),
+    catalogError,
+    configurationError,
+  };
 };
 
 export default useAgentModels;

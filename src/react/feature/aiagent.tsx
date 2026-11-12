@@ -1051,6 +1051,7 @@ const AIAgent: React.FC = () => {
         prompt,
         web_search: webSearchEnabled,
         search_query: webSearchEnabled ? messageText.trim().slice(0, 500) : "",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta",
         history,
         images: images.map((image) => ({ mime_type: image.mimeType, data: image.data })),
       }),

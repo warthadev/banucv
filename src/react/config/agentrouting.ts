@@ -1,9 +1,8 @@
 export const LOCAL_AGENT_MODEL = "mimo-v2.6:latest";
 export const LOCAL_AGENT_MODEL_ALIAS = "openai-compatible-chat-0082e0a8-8fc6-41da-99d3-3c9f2f986404/mimo-v2.6:latest";
 
-/** The runtime's Local route matches only the configured bare model ID. */
 export const isLocalAgentModel = (model: string): boolean =>
-  model.trim().toLowerCase() === LOCAL_AGENT_MODEL;
+  model.trim().toLowerCase().split("/").at(-1) === LOCAL_AGENT_MODEL;
 
 export const shouldRetryWithNextAgentModel = (
   model: string,

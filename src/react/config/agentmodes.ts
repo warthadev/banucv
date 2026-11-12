@@ -1,7 +1,7 @@
 import { LOCAL_AGENT_MODEL } from "./agentrouting.ts";
 
 export type AgentMode = "auto" | "thinking" | "fast" | "local";
-export type AgentModeSettings = { mode: AgentMode; model: string };
+export type AgentModeSettings = { mode: AgentMode; model: string; webSearchEnabled: boolean };
 export type ScopedHistoryMessage = { role: "user" | "assistant"; content: string };
 type StoredConversationMessage = {
   role: "user" | "bot";
@@ -159,7 +159,7 @@ export const getAgentMessagesStorageKey = (uid: string): string => `aiagent_mess
 export const getAgentPreferencesStorageKey = (uid: string): string => `aiagent_preferences_${encodeURIComponent(uid)}`;
 
 export const parseAgentModeSettings = (value: string | null): AgentModeSettings => {
-  if (!value) return { mode: "auto", model: "" };
+  if (!value) return { mode: "auto", model: "", webSearchEnabled: false };
   try {
     const parsed = JSON.parse(value) as Partial<AgentModeSettings>;
     const validModes: AgentMode[] = ["auto", "thinking", "fast", "local"];
@@ -167,10 +167,11 @@ export const parseAgentModeSettings = (value: string | null): AgentModeSettings 
     const model = typeof parsed.model === "string" ? parsed.model : "";
     return {
       mode,
+      webSearchEnabled: parsed.webSearchEnabled === true,
       // Old Auto preferences must not visually select Local while routing cloud first.
       model: mode === "auto" && isLocalInferenceAgentModel(model) ? "" : model,
     };
   } catch {
-    return { mode: "auto", model: "" };
+    return { mode: "auto", model: "", webSearchEnabled: false };
   }
 };

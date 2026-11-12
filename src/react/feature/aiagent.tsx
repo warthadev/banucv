@@ -113,6 +113,23 @@ const parseAgentErrorPayload = (payload: unknown, status: number): AgentRequestE
   return new AgentRequestError(message, status, code);
 };
 
+const normalizeAgentSources = (value: unknown): { title: string; url: string }[] => {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((source: unknown) => {
+    if (typeof source !== "object" || source === null) return [];
+    const record = source as Record<string, unknown>;
+    if (typeof record.url !== "string") return [];
+    try {
+      const url = new URL(record.url);
+      if (!["http:", "https:"].includes(url.protocol) || url.username || url.password) return [];
+      const title = typeof record.title === "string" && record.title.trim() ? record.title.trim().slice(0, 240) : url.hostname;
+      return [{ title, url: url.href }];
+    } catch {
+      return [];
+    }
+  }).slice(0, 8);
+};
+
 const AIAGENT_POPOVER_TRIGGER_GAP = 8;
 
 interface AIAgentPopoverPosition {
@@ -670,6 +687,7 @@ const AIAgent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [preferredModel, setPreferredModel] = useState("");
   const [agentMode, setAgentMode] = useState<AgentMode>("auto");
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
   const modelOptions = getAgentModelsForMode(routerModels, agentMode);
   const selectedModel = modelOptions.includes(preferredModel) ? preferredModel : modelOptions[0] || "";
@@ -726,6 +744,7 @@ const AIAgent: React.FC = () => {
       setMessages([]);
       setPreferredModel("");
       setAgentMode("auto");
+      setWebSearchEnabled(false);
       setPreferencesOwnerUid(null);
       return;
     }
@@ -741,6 +760,7 @@ const AIAgent: React.FC = () => {
     }
     setAgentMode(savedPreferences.mode);
     setPreferredModel(savedPreferences.model);
+    setWebSearchEnabled(savedPreferences.webSearchEnabled);
     setMessagesOwnerUid(uid);
     setPreferencesOwnerUid(uid);
   }, [currentUserUid]);
@@ -752,12 +772,12 @@ const AIAgent: React.FC = () => {
   useEffect(() => {
     if (currentUserUid && preferencesOwnerUid === currentUserUid) {
       try {
-        localStorage.setItem(getAgentPreferencesStorageKey(currentUserUid), JSON.stringify({ mode: agentMode, model: preferredModel }));
+        localStorage.setItem(getAgentPreferencesStorageKey(currentUserUid), JSON.stringify({ mode: agentMode, model: preferredModel, webSearchEnabled }));
       } catch (error) {
         console.warn("Failed to save this account's AI preferences:", error);
       }
     }
-  }, [currentUserUid, preferencesOwnerUid, agentMode, preferredModel]);
+  }, [currentUserUid, preferencesOwnerUid, agentMode, preferredModel, webSearchEnabled]);
   
   useEffect(() => {
     let disposed = false;
@@ -778,6 +798,7 @@ const AIAgent: React.FC = () => {
           setPreferencesOwnerUid(null);
           setPreferredModel("");
           setAgentMode("auto");
+          setWebSearchEnabled(false);
           setUploadedImages([]);
           setUploadedFiles([]);
           setUploadNotice(null);
@@ -1028,6 +1049,8 @@ const AIAgent: React.FC = () => {
         provider: "9router",
         model: route.model,
         prompt,
+        web_search: webSearchEnabled,
+        search_query: webSearchEnabled ? messageText.trim().slice(0, 500) : "",
         history,
         images: images.map((image) => ({ mime_type: image.mimeType, data: image.data })),
       }),
@@ -1040,7 +1063,7 @@ const AIAgent: React.FC = () => {
     const result = data?.data?.result || {};
     const text = cleanMarkdown(result.content || "");
     if (!text) throw new Error("AI Agent returned an empty response");
-    return { text, model: result.model || modelName, requestedModel: originallyRequestedModel, usage: normalizeTokenUsage(result.usage || data?.data?.usage), sources: [], searchImages: [] };
+    return { text, model: result.model || modelName, requestedModel: originallyRequestedModel, usage: normalizeTokenUsage(result.usage || data?.data?.usage), sources: normalizeAgentSources(result.sources), searchImages: [] };
   };
 
   const generateImage = async (prompt: string): Promise<string> => {
@@ -1628,11 +1651,12 @@ const AIAgent: React.FC = () => {
                   </AnimatePresence>
                 </div>
                 <button
-                  className="aiagent-icon-btn globe-btn"
+                  className={`aiagent-icon-btn globe-btn${webSearchEnabled ? " web-search-active" : ""}`}
                   type="button"
-                  disabled
-                  aria-label="Web Search unavailable"
-                  title="Web Search needs an approved search provider before it can send queries."
+                  aria-label={webSearchEnabled ? "Web Search ON" : "Web Search OFF"}
+                  aria-pressed={webSearchEnabled}
+                  title={webSearchEnabled ? "Web Search ON. SafeSearch is off; your question text is sent to web search services." : "Web Search OFF. Click to enable web search."}
+                  onClick={() => setWebSearchEnabled((enabled) => !enabled)}
                 >
                   <Globe size={22} />
                 </button>

@@ -7,14 +7,17 @@ import {
   getWorkspaceInfo,
   listAdminPackageRequests,
   listLocalModelInventory,
+  listOwnerHostFiles,
   listWorkspaceFiles,
   listWorkspacePackages,
   moveWorkspaceFile,
+  readOwnerHostFile,
   readWorkspaceFile,
   requestWorkspacePackage,
   reviewAdminPackageRequest,
   updateLocalModelInventory,
   writeWorkspaceFile,
+  type OwnerHostTextFile,
   type PackageRecord,
   type WorkspaceEntry,
   type WorkspaceFile,
@@ -98,9 +101,14 @@ const AgentWorkspace: React.FC = () => {
   const [entries, setEntries] = useState<WorkspaceEntry[]>([]);
   const [selectedFile, setSelectedFile] = useState<WorkspaceFile | null>(null);
   const [selectedFileOwnerUid, setSelectedFileOwnerUid] = useState<string | null>(null);
+  const [hostPath, setHostPath] = useState("/");
+  const [hostEntries, setHostEntries] = useState<WorkspaceEntry[]>([]);
+  const [selectedHostPath, setSelectedHostPath] = useState<string | null>(null);
+  const [selectedHostOwnerUid, setSelectedHostOwnerUid] = useState<string | null>(null);
+  const [selectedHostFile, setSelectedHostFile] = useState<OwnerHostTextFile | null>(null);
   const [draft, setDraft] = useState("");
   const [moveDestination, setMoveDestination] = useState("");
-  const [tab, setTab] = useState<"files" | "packages" | "admin">("files");
+  const [tab, setTab] = useState<"files" | "packages" | "admin" | "host">("files");
   const [packageName, setPackageName] = useState("");
   const [packageRequests, setPackageRequests] = useState<PackageRecord[]>([]);
   const [sharedPackages, setSharedPackages] = useState<string[]>([]);
@@ -108,7 +116,7 @@ const AgentWorkspace: React.FC = () => {
   const [localModels, setLocalModels] = useState<string[]>([]);
   const [localModelName, setLocalModelName] = useState("");
   const activeUidRef = useRef<string | null>(null);
-  const visibleTabs: Array<"files" | "packages" | "admin"> = info?.owner ? ["files", "packages", "admin"] : ["files", "packages"];
+  const visibleTabs: Array<"files" | "packages" | "admin" | "host"> = info?.owner ? ["files", "packages", "admin", "host"] : ["files", "packages"];
 
   useEffect(() => {
     let active = true;
@@ -125,6 +133,11 @@ const AgentWorkspace: React.FC = () => {
         setEntries([]);
         setSelectedFile(null);
         setSelectedFileOwnerUid(null);
+        setHostPath("/");
+        setHostEntries([]);
+        setSelectedHostPath(null);
+        setSelectedHostOwnerUid(null);
+        setSelectedHostFile(null);
         setDraft("");
         setMoveDestination("");
         setPackageName("");
@@ -167,7 +180,11 @@ const AgentWorkspace: React.FC = () => {
       } else {
         setAdminRequests([]);
         setLocalModels([]);
-        if (tab === "admin") setTab("files");
+        if (tab === "admin" || tab === "host") setTab("files");
+        setHostEntries([]);
+        setSelectedHostPath(null);
+        setSelectedHostOwnerUid(null);
+        setSelectedHostFile(null);
       }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : String(loadError));
@@ -175,6 +192,31 @@ const AgentWorkspace: React.FC = () => {
       setBusy(false);
     }
   }, [path, tab]);
+
+  const loadHostDirectory = useCallback(async (folder = hostPath) => {
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const expectedUid = activeUidRef.current;
+      if (!expectedUid) throw new Error("Sign in to access this workspace");
+      const currentInfo = await getWorkspaceInfo(expectedUid);
+      if (activeUidRef.current !== expectedUid || currentInfo.uid !== expectedUid) return;
+      if (!currentInfo.owner) throw new Error("Owner access required");
+      const listing = await listOwnerHostFiles(folder, expectedUid);
+      if (activeUidRef.current !== expectedUid) return;
+      setInfo(currentInfo);
+      setHostEntries(listing.entries || []);
+      setHostPath(listing.path);
+      setSelectedHostPath(null);
+      setSelectedHostOwnerUid(null);
+      setSelectedHostFile(null);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : String(loadError));
+    } finally {
+      setBusy(false);
+    }
+  }, [hostPath]);
 
   const openEntry = async (entry: WorkspaceEntry) => {
     if (entry.type === "directory") {
@@ -197,6 +239,37 @@ const AgentWorkspace: React.FC = () => {
       setDraft(file.text || "");
       setMoveDestination("");
       setNotice(file.isText ? "File dibuka untuk diedit atau diunduh." : "File biner siap diunduh; editor teks tidak tersedia.");
+    } catch (readError) {
+      setError(readError instanceof Error ? readError.message : String(readError));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const selectHostEntry = (entry: WorkspaceEntry) => {
+    if (entry.type === "directory") {
+      void loadHostDirectory(entry.path);
+      return;
+    }
+    const expectedUid = activeUidRef.current;
+    if (entry.type !== "file" || !expectedUid || !info?.owner || info.uid !== expectedUid) return;
+    setError("");
+    setNotice("Isi file belum dimuat. Tekan “Baca teks” untuk membukanya secara read-only.");
+    setSelectedHostPath(entry.path);
+    setSelectedHostOwnerUid(expectedUid);
+    setSelectedHostFile(null);
+  };
+
+  const readSelectedHostFile = async () => {
+    const expectedUid = activeUidRef.current;
+    if (!selectedHostPath || !expectedUid || selectedHostOwnerUid !== expectedUid || !info?.owner || info.uid !== expectedUid) return;
+    setBusy(true);
+    setError("");
+    try {
+      const file = await readOwnerHostFile(selectedHostPath, expectedUid);
+      if (activeUidRef.current !== expectedUid || selectedHostOwnerUid !== expectedUid) return;
+      setSelectedHostFile(file);
+      setNotice("File host dibuka dalam mode read-only.");
     } catch (readError) {
       setError(readError instanceof Error ? readError.message : String(readError));
     } finally {
@@ -331,10 +404,22 @@ const AgentWorkspace: React.FC = () => {
     void loadWorkspace(parts.join("/") || ".");
   };
 
+  const goHostUp = () => {
+    if (hostPath === "/") return;
+    const parts = hostPath.split("/").filter(Boolean);
+    parts.pop();
+    void loadHostDirectory(parts.length ? `/${parts.join("/")}` : "/");
+  };
+
   const close = () => {
     setOpen(false);
     setSelectedFile(null);
     setSelectedFileOwnerUid(null);
+    setHostPath("/");
+    setHostEntries([]);
+    setSelectedHostPath(null);
+    setSelectedHostOwnerUid(null);
+    setSelectedHostFile(null);
     setDraft("");
     setError("");
     setNotice("");
@@ -349,14 +434,14 @@ const AgentWorkspace: React.FC = () => {
           setOpen(nextOpen);
           if (nextOpen) void loadWorkspace(".");
         }}
-        title="Workspace files and packages"
-        aria-label="Open workspace files and packages"
+        title="Workspace files, packages, and Sandbox disk"
+        aria-label="Open workspace files, packages, and Sandbox disk"
         style={buttonStyle}
       >
         <Folder size={19} />
       </button>
       {open && (
-        <section style={panelStyle} aria-label="Per-user workspace">
+        <section style={panelStyle} aria-label="Workspace files and Sandbox disk">
           <header style={{ display: "flex", alignItems: "center", gap: 9, padding: "12px 14px", borderBottom: "1px solid var(--border, #373b45)" }}>
             <Folder size={19} />
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -365,13 +450,21 @@ const AgentWorkspace: React.FC = () => {
                 {info?.owner ? "Owner admin" : "Folder kerja privat per akun"}{info?.uid ? ` · UID ${info.uid}` : ""}
               </div>
             </div>
-            <button type="button" style={buttonStyle} onClick={() => void loadWorkspace(path)} disabled={busy} aria-label="Refresh workspace"><RefreshCw size={15} /></button>
+            <button type="button" style={buttonStyle} onClick={() => tab === "host" ? void loadHostDirectory(hostPath) : void loadWorkspace(path)} disabled={busy} aria-label="Refresh workspace"><RefreshCw size={15} /></button>
             <button type="button" style={buttonStyle} onClick={close} aria-label="Close workspace"><X size={16} /></button>
           </header>
-          <nav style={{ display: "flex", gap: 6, padding: "8px 12px", borderBottom: "1px solid var(--border, #373b45)" }}>
+          <nav style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "8px 12px", borderBottom: "1px solid var(--border, #373b45)" }}>
             {visibleTabs.map((item) => (
-              <button key={item} type="button" style={{ ...buttonStyle, minHeight: 30, background: tab === item ? "var(--accent, #3156d3)" : buttonStyle.background }} onClick={() => setTab(item)}>
-                {item === "files" ? "Files" : item === "packages" ? "Packages" : "Owner admin"}
+              <button key={item} type="button" style={{ ...buttonStyle, minHeight: 30, background: tab === item ? "var(--accent, #3156d3)" : buttonStyle.background }} onClick={() => {
+                setTab(item);
+                if (item === "host") void loadHostDirectory(tab === "host" ? hostPath : "/");
+                else {
+                  setSelectedHostPath(null);
+                  setSelectedHostOwnerUid(null);
+                  setSelectedHostFile(null);
+                }
+              }}>
+                {item === "files" ? "Files" : item === "packages" ? "Packages" : item === "admin" ? "Owner admin" : "Sandbox disk"}
               </button>
             ))}
           </nav>
@@ -444,6 +537,39 @@ const AgentWorkspace: React.FC = () => {
                   <div style={{ display: "flex", gap: 6 }}><input value={localModelName} onChange={(event) => setLocalModelName(event.target.value)} placeholder="model ID Ollama yang sudah ada" style={inputStyle} /><button type="button" style={buttonStyle} onClick={() => void updateLocalModel(localModelName.trim(), "add")} disabled={busy || !localModelName.trim()}>Daftarkan</button></div>
                   {localModels.map((model) => <div key={model} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "7px 9px", border: "1px solid var(--border, #373b45)", borderRadius: 7 }}><code>{model}</code><button type="button" style={buttonStyle} onClick={() => void updateLocalModel(model, "remove")} disabled={busy || model === "mimo-v2.6:latest"} title={model === "mimo-v2.6:latest" ? "Model Mimo default tetap tersedia" : "Remove from local model inventory"}><Trash2 size={14} /> Hapus dari daftar</button></div>)}
                 </section>
+              </div>
+            )}
+            {tab === "host" && info?.owner && (
+              <div style={{ display: "grid", gap: 10 }}>
+                <p style={{ margin: 0, fontSize: 12, opacity: 0.82 }}>Filesystem Sandbox dalam mode read-only. Nama berkas ditampilkan saat folder dibuka; isi hanya diambil setelah tombol “Baca teks” ditekan. Hanya teks UTF-8 hingga 1 MiB yang dapat dibaca; symlink dan file pseudo seperti /proc, /sys, dan /dev tidak diikuti/dibuka. Mutasi host tetap melalui konfirmasi di chat AI.</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <button type="button" style={buttonStyle} onClick={goHostUp} disabled={hostPath === "/" || busy} aria-label="Parent Sandbox directory"><ArrowUp size={15} /></button>
+                  <code style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{hostPath}</code>
+                  <button type="button" style={buttonStyle} onClick={() => void loadHostDirectory(hostPath)} disabled={busy} aria-label="Refresh Sandbox directory"><RefreshCw size={15} /></button>
+                </div>
+                <div style={{ display: "grid", gap: 4 }}>
+                  {hostEntries.map((entry) => (
+                    <button key={entry.path} type="button" onClick={() => selectHostEntry(entry)} disabled={busy || entry.type === "symlink" || entry.type === "other"} style={{ display: "flex", textAlign: "left", alignItems: "center", gap: 9, padding: "8px 9px", color: "inherit", background: selectedHostPath === entry.path ? "var(--surface-raised, rgba(255,255,255,.09))" : "transparent", border: "1px solid var(--border, #373b45)", borderRadius: 7, cursor: "pointer" }}>
+                      {entry.type === "directory" ? <Folder size={16} /> : <FileText size={16} />}
+                      <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.name}</span>
+                      <small style={{ opacity: 0.65 }}>{entry.type === "directory" ? "folder" : entry.type === "file" ? formatSize(entry.size) : "symlink"}</small>
+                    </button>
+                  ))}
+                  {!hostEntries.length && <div style={{ padding: 10, opacity: 0.7 }}>Tidak ada direktori atau file biasa yang dapat ditampilkan.</div>}
+                </div>
+                {selectedHostPath && (
+                  <section style={{ display: "grid", gap: 8, paddingTop: 12, borderTop: "1px solid var(--border, #373b45)" }}>
+                    <strong style={{ overflowWrap: "anywhere" }}>{selectedHostPath}</strong>
+                    {selectedHostFile ? (
+                      <>
+                        <small style={{ opacity: 0.7 }}>{selectedHostFile.mimeType} · {formatSize(selectedHostFile.size)} · read-only</small>
+                        <pre style={{ margin: 0, padding: 9, maxHeight: 320, overflow: "auto", whiteSpace: "pre-wrap", overflowWrap: "anywhere", border: "1px solid var(--border, #373b45)", borderRadius: 7, fontSize: 12 }}>{selectedHostFile.text}</pre>
+                      </>
+                    ) : (
+                      <button type="button" style={buttonStyle} onClick={() => void readSelectedHostFile()} disabled={busy || !info?.owner || selectedHostOwnerUid !== info?.uid}><FileText size={15} /> Baca teks (maks. 1 MiB)</button>
+                    )}
+                  </section>
+                )}
               </div>
             )}
           </div>

@@ -25,6 +25,15 @@ export interface WorkspaceFile {
   size: number;
 }
 
+export interface OwnerHostTextFile {
+  path: string;
+  name: string;
+  mimeType: string;
+  isText: true;
+  text: string;
+  size: number;
+}
+
 export interface PackageRecord {
   id: string;
   package: string;
@@ -74,6 +83,12 @@ export const listWorkspaceFiles = (path: string, uid: string) =>
 
 export const readWorkspaceFile = (path: string, uid: string) =>
   apiRequest<WorkspaceFile>(`/file?path=${encodeURIComponent(path)}`, uid);
+
+export const listOwnerHostFiles = (path: string, uid: string) =>
+  apiRequest<{ path: string; entries: WorkspaceEntry[] }>(`/admin/host/files?path=${encodeURIComponent(path)}`, uid);
+
+export const readOwnerHostFile = (path: string, uid: string) =>
+  apiRequest<OwnerHostTextFile>(`/admin/host/file?path=${encodeURIComponent(path)}`, uid);
 
 export const writeWorkspaceFile = (path: string, content: string, uid: string) =>
   apiRequest<{ success: boolean; path: string; size: number }>(`/file?path=${encodeURIComponent(path)}`, uid, {

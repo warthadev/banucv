@@ -43,7 +43,6 @@ export const useAgentModels = () => {
       const credentials = await loadRouterCredentials();
       if (!mountedRef.current || requestId !== requestIdRef.current) return;
       setIsConfigured(Boolean(credentials));
-      if (!credentials) return;
 
       try {
         const models = await loadRouterModelCatalog();

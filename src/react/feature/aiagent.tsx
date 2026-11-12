@@ -9,7 +9,7 @@ import { Link as RouterLink, useNavigate } from "react-router-dom";
 import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
 import { AI_AGENT_API_BASE } from "@config/api";
 import { saveRouterCredentials } from "@config/routerhelper";
-import { shouldShowRouterAuthModal } from "@config/agentauthflow";
+import { canSendAgentModel, shouldShowRouterAuthModal } from "@config/agentauthflow";
 import { LOCAL_AGENT_MODEL, isLocalAgentModel, isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
 import { buildModelScopedHistory, formatAgentFileContext, getAgentModeForModelSelection, getAgentModelClassification, getAgentModelsForMode, getAgentRequestModels, getAgentMessagesStorageKey, getAgentPreferencesStorageKey, parseAgentModeSettings, type AgentMode } from "@config/agentmodes";
 import { parseAgentFile } from "@config/agentfileparser";
@@ -21,7 +21,32 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { getAuth, getDb } from "@config/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import { confirmHostAction, type HostActionPreview } from "@config/agentworkspace";
+import AgentWorkspace from "./agentworkspace";
 import { RouterAuthModal } from "./routerauthmodal";
+
+const ROOT_CONFIRM_LABELS = {
+  A: "Setujui aksi ini",
+  B: "Jalankan aksi persis ini",
+  C: "Saya memahami dampaknya, lanjutkan",
+} as const;
+const rootConfirmInputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "8px 10px",
+  color: "var(--text, #eee)",
+  background: "var(--background, #101217)",
+  border: "1px solid var(--border, #373b45)",
+  borderRadius: 7,
+};
+
+const summarizeHostAction = (action: Record<string, string>) => {
+  const type = action.type || "unknown";
+  if (type === "write") return { title: "Tulis file host", path: action.path || "(path tidak tersedia)", impact: "Membuat atau mengganti isi file pada disk Sandbox. Isi persis terlihat di rincian aksi." };
+  if (type === "move") return { title: "Pindahkan file host", path: `${action.source || "?"} → ${action.destination || "?"}`, impact: "Memindahkan file atau direktori pada disk Sandbox." };
+  if (type === "delete") return { title: "Hapus dari disk host", path: action.path || "(path tidak tersedia)", impact: "Menghapus permanen file atau seluruh isi direktori pada disk Sandbox." };
+  if (type === "command") return { title: "Jalankan perintah sebagai root", path: "/ (seluruh root Sandbox)", impact: "Perintah shell ini berjalan dengan hak root dan dapat mengubah file sistem maupun konfigurasi host." };
+  return { title: "Aksi host", path: action.path || "(path tidak tersedia)", impact: "Periksa rincian aksi lengkap sebelum menyetujui." };
+};
 
 interface Message {
   id: string;
@@ -670,11 +695,6 @@ const AIAgent: React.FC = () => {
   };
 
   const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
-  const isRouterAuthModalOpen = shouldShowRouterAuthModal({
-    isLoading: authLoading,
-    userUid: currentUserUid,
-    isConfigured,
-  });
   const handleRouterAuthSave = async (apiKey: string) => {
     await saveRouterCredentials(apiKey);
     window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
@@ -687,15 +707,27 @@ const AIAgent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [preferredModel, setPreferredModel] = useState("");
   const [agentMode, setAgentMode] = useState<AgentMode>("auto");
+  const [userSelectedAgentMode, setUserSelectedAgentMode] = useState(false);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
-  const modelOptions = getAgentModelsForMode(routerModels, agentMode, routerModelCatalog);
+  const hasLocalModels = routerModels.some(isLocalAgentModel);
+  const localOnlyFallback = !isConfigured && hasLocalModels && !userSelectedAgentMode;
+  const effectiveAgentMode: AgentMode = localOnlyFallback ? "local" : agentMode;
+  const modelOptions = getAgentModelsForMode(routerModels, effectiveAgentMode, routerModelCatalog);
   const selectedModel = modelOptions.includes(preferredModel) ? preferredModel : modelOptions[0] || "";
-  const hasPreferredAutoModel = agentMode === "auto" && modelOptions.includes(preferredModel);
-  const requestModelOptions = getAgentRequestModels(routerModels, agentMode, selectedModel, "", hasPreferredAutoModel, routerModelCatalog);
-  const autoRecommendedModel = agentMode === "auto" ? getAgentRequestModels(routerModels, "auto", "", input, false, routerModelCatalog)[0] || "" : "";
+  const hasPreferredAutoModel = effectiveAgentMode === "auto" && modelOptions.includes(preferredModel);
+  const requestModelOptions = getAgentRequestModels(routerModels, effectiveAgentMode, selectedModel, "", hasPreferredAutoModel, routerModelCatalog);
+  const autoRecommendedModel = effectiveAgentMode === "auto" ? getAgentRequestModels(routerModels, "auto", "", input, false, routerModelCatalog)[0] || "" : "";
+  const isRouterAuthModalOpen = shouldShowRouterAuthModal({
+    isLoading: authLoading,
+    userUid: currentUserUid,
+    isConfigured,
+    hasLocalModels,
+    selectedModelIsLocal: isLocalAgentModel(selectedModel),
+  });
   const selectAgentMode = (mode: AgentMode) => {
     const candidates = getAgentModelsForMode(routerModels, mode, routerModelCatalog);
+    setUserSelectedAgentMode(mode !== "local");
     setAgentMode(mode);
     setPreferredModel(mode === "auto" ? "" : candidates[0] || "");
   };
@@ -722,6 +754,11 @@ const AIAgent: React.FC = () => {
   const [modelPickerPos, setModelPickerPos] = useState<{ bottom: number; left: number; maxHeight: number }>({ bottom: 0, left: 0, maxHeight: 0 });
   const [textareaOverflow, setTextareaOverflow] = useState<"hidden" | "auto">("hidden");
   const [sourcesVisibility, setSourcesVisibility] = useState<Record<string, boolean>>({});
+  const [pendingHostAction, setPendingHostAction] = useState<HostActionPreview | null>(null);
+  const [confirmingHostAction, setConfirmingHostAction] = useState(false);
+  const [hostActionError, setHostActionError] = useState("");
+  const [confirmLabelChoice, setConfirmLabelChoice] = useState<"A" | "B" | "C" | "custom">("A");
+  const [customConfirmLabel, setCustomConfirmLabel] = useState("");
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const speechSynthRef = useRef<SpeechSynthesis | null>(null);
@@ -798,10 +835,16 @@ const AIAgent: React.FC = () => {
           setPreferencesOwnerUid(null);
           setPreferredModel("");
           setAgentMode("auto");
+          setUserSelectedAgentMode(false);
           setWebSearchEnabled(false);
           setUploadedImages([]);
           setUploadedFiles([]);
           setUploadNotice(null);
+      setPendingHostAction(null);
+      setConfirmingHostAction(false);
+      setHostActionError("");
+      setConfirmLabelChoice("A");
+      setCustomConfirmLabel("");
           if (!user) {
             setUserDisplayName("User");
             setUserAvatar(null);
@@ -1024,7 +1067,7 @@ const AIAgent: React.FC = () => {
     modelSequence: string[],
     requestOwnerUid: string,
     requestId: number,
-  ): Promise<{ text: string; model: string; requestedModel: string; usage?: Message["usage"]; sources?: { title: string; url: string }[]; searchImages?: string[] }> => {
+  ): Promise<{ text: string; model: string; requestedModel: string; usage?: Message["usage"]; sources?: { title: string; url: string }[]; searchImages?: string[]; pendingHostAction?: HostActionPreview }> => {
     const modelName = modelSequence[modelIndex];
     if (!modelName) throw new Error("Model not found");
     const originallyRequestedModel = modelSequence[0] || modelName;
@@ -1062,6 +1105,18 @@ const AIAgent: React.FC = () => {
     }
     if (!response.ok) throw parseAgentErrorPayload(data, response.status);
     const result = data?.data?.result || {};
+    const pending = result.confirmation_required as HostActionPreview | undefined;
+    if (pending && pending.confirmationRequired === true && typeof pending.actionId === "string" && pending.action) {
+      return {
+        text: "",
+        model: result.model || modelName,
+        requestedModel: originallyRequestedModel,
+        usage: normalizeTokenUsage(result.usage || data?.data?.usage),
+        sources: normalizeAgentSources(result.sources),
+        searchImages: [],
+        pendingHostAction: pending,
+      };
+    }
     const text = cleanMarkdown(result.content || "");
     if (!text) throw new Error("AI Agent returned an empty response");
     return { text, model: result.model || modelName, requestedModel: originallyRequestedModel, usage: normalizeTokenUsage(result.usage || data?.data?.usage), sources: normalizeAgentSources(result.sources), searchImages: [] };
@@ -1144,6 +1199,13 @@ const AIAgent: React.FC = () => {
     try {
       const response = await callAI(messageText, images, files, retryModelIndex, messagesRef.current, isRetry, messageText, modelSequence, requestOwnerUid, requestId);
       if (!isCurrentRequest()) return;
+      if (response.pendingHostAction) {
+        setPendingHostAction(response.pendingHostAction);
+        setHostActionError("");
+        setConfirmLabelChoice("A");
+        setCustomConfirmLabel("");
+        return;
+      }
       const newMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "bot",
@@ -1205,10 +1267,10 @@ const AIAgent: React.FC = () => {
 
   const handleSendMessage = async () => {
     const requestOwnerUid = currentUserUidRef.current;
-    if (!requestOwnerUid || requestOwnerUid !== currentUserUid || messagesOwnerUid !== requestOwnerUid || (!input.trim() && !uploadedImages.length && !uploadedFiles.length) || isLoading || !isConfigured || !selectedModel || !modelOptions.includes(selectedModel) || !requestModelOptions.length) return;
+    if (!requestOwnerUid || requestOwnerUid !== currentUserUid || messagesOwnerUid !== requestOwnerUid || pendingHostAction || (!input.trim() && !uploadedImages.length && !uploadedFiles.length) || isLoading || !canSendAgentModel(isConfigured, isLocalAgentModel(selectedModel)) || !selectedModel || !modelOptions.includes(selectedModel) || !requestModelOptions.length) return;
     const currentInput = input, currentImages = [...uploadedImages], currentFiles = [...uploadedFiles];
     const modelSequence = prioritizeVisionAgentModels(
-      getAgentRequestModels(routerModels, agentMode, selectedModel, currentInput, hasPreferredAutoModel, routerModelCatalog),
+      getAgentRequestModels(routerModels, effectiveAgentMode, selectedModel, currentInput, hasPreferredAutoModel, routerModelCatalog),
       currentImages.length > 0,
     );
     if (!modelSequence.length) return;
@@ -1229,10 +1291,43 @@ const AIAgent: React.FC = () => {
     const recoveredImages: UploadedImage[] = userMsg.images?.map(img => ({ data: img.data, mimeType: img.mimeType, preview: `data:${img.mimeType};base64,${img.data}` })) || [];
     const recoveredFiles: UploadedFile[] = userMsg.files?.map(f => ({ name: f.name, content: f.content, type: "" })) || [];
     const modelSequence = prioritizeVisionAgentModels(
-      getAgentRequestModels(routerModels, agentMode, selectedModel, userMsg.content, hasPreferredAutoModel, routerModelCatalog),
+      getAgentRequestModels(routerModels, effectiveAgentMode, selectedModel, userMsg.content, hasPreferredAutoModel, routerModelCatalog),
       (userMsg.images?.length || 0) > 0,
     );
     await sendMessage(userMsg.content, recoveredImages, recoveredFiles, 0, true, modelSequence, requestOwnerUid);
+  };
+
+  const confirmPendingHostAction = async () => {
+    const pending = pendingHostAction;
+    const requestOwnerUid = currentUserUidRef.current;
+    if (!pending || !requestOwnerUid || requestOwnerUid !== currentUserUid || requestOwnerUid !== messagesOwnerUid || confirmingHostAction) return;
+    setConfirmingHostAction(true);
+    setHostActionError("");
+    try {
+      const result = await confirmHostAction(pending.actionId, requestOwnerUid);
+      if (currentUserUidRef.current !== requestOwnerUid) return;
+      const output = typeof result.output === "string" ? result.output.trim() : "";
+      const summary = result.message || (result.success ? "Host action completed." : `Host command exited with code ${result.exitCode ?? "unknown"}.`);
+      const content = output ? `${summary}\n\n\`\`\`text\n${output}\n\`\`\`` : summary;
+      setMessages((previous) => [...previous, {
+        id: (Date.now() + 2).toString(),
+        role: "bot",
+        content,
+        model: "Owner host action",
+        timestamp: new Date(),
+        error: result.success === false,
+      }]);
+      setPendingHostAction(null);
+    } catch (error) {
+      setHostActionError(getErrorText(error) || "Host action could not be confirmed");
+    } finally {
+      setConfirmingHostAction(false);
+    }
+  };
+
+  const dismissPendingHostAction = () => {
+    setPendingHostAction(null);
+    setHostActionError("");
   };
 
   const copyMessage = (content: string) => navigator.clipboard.writeText(content);
@@ -1288,11 +1383,11 @@ const AIAgent: React.FC = () => {
 
   return (
     <>
-      {isConfigured && (
+      {(isConfigured || hasLocalModels) && (
         <div className="aiagent-container">
           {!modelOptions.length && (
             <div className="aiagent-catalog-status" role={catalogError ? "alert" : "status"}>
-              <p>{routerModels.length ? `No model is classified for ${agentMode} mode. Open the AI Agent menu to choose another available mode.` : getCatalogStatusMessage(catalogError)}</p>
+              <p>{routerModels.length ? `No model is classified for ${effectiveAgentMode} mode. Open the AI Agent menu to choose another available mode.` : getCatalogStatusMessage(catalogError)}</p>
               {!routerModels.length && <RouterLink className="aiagent-settings-link" to="/setting">Manage the 9Router key in Settings</RouterLink>}
             </div>
           )}
@@ -1555,8 +1650,8 @@ const AIAgent: React.FC = () => {
                       ));
                       setIsModelPickerOpen((open) => !open);
                     }}
-                    title={`Choose AI mode: ${agentMode}`}
-                    aria-label={`AI Agent mode: ${agentMode}`}
+                    title={`Choose AI mode: ${effectiveAgentMode}`}
+                    aria-label={`AI Agent mode: ${effectiveAgentMode}`}
                     aria-haspopup="dialog"
                     aria-expanded={isModelPickerOpen}
                     aria-controls="aiagent-model-picker"
@@ -1579,15 +1674,15 @@ const AIAgent: React.FC = () => {
                           <div className="aiagent-model-picker-heading aiagent-popover">
                             <h3 id="aiagent-model-picker-title">AI Agent</h3>
                             <p>
-                              {agentMode === "auto"
+                              {effectiveAgentMode === "auto"
                                 ? "Auto picks supported Thinking/Fast models for this account, then tries its exact Local model after capacity failures. Cloud usage may incur charges."
-                                : agentMode === "thinking"
+                                : effectiveAgentMode === "thinking"
                                   ? "Reasoning-capable model families from this account's catalog are available in this mode."
-                                  : agentMode === "fast"
+                                  : effectiveAgentMode === "fast"
                                     ? "Models marked reasoning:false in this account's catalog. This is not a response-time guarantee."
-                                    : agentMode === "other"
+                                    : effectiveAgentMode === "other"
                                       ? "Models without reasoning capability metadata. Choose one manually; they are not guessed into Thinking or Fast."
-                                      : "Use this account's configured Local Mimo inference route without model fallback. Its full authenticated 9Router catalog ID is preserved."}
+                                      : "Use the registered Local Mimo inference route without a 9Router key. The backend checks this exact model ID against the supervisor inventory."}
                             </p>
                           </div>
                         </div>
@@ -1596,28 +1691,30 @@ const AIAgent: React.FC = () => {
                             <button
                               key={mode}
                               type="button"
-                              className={`aiagent-mode-option aiagent-popover${agentMode === mode ? " selected" : ""}`}
-                              aria-pressed={agentMode === mode}
+                              className={`aiagent-mode-option aiagent-popover${effectiveAgentMode === mode ? " selected" : ""}`}
+                              aria-pressed={effectiveAgentMode === mode}
                               onClick={() => selectAgentMode(mode)}
                             >
                               {mode[0].toUpperCase() + mode.slice(1)}
                             </button>
                           ))}
                         </div>
-                        <div className="aiagent-model-option-list" role="list" aria-label={`${agentMode} models available to this account`}>
+                        <div className="aiagent-model-option-list" role="list" aria-label={`${effectiveAgentMode} models available to this account`}>
                           {modelOptions.length ? modelOptions.map((model) => {
                             const classification = getAgentModelClassification(model, routerModelCatalog);
                             const isLocalModel = classification === "Local";
-                            const isSelected = agentMode === "auto"
+                            const isSelected = effectiveAgentMode === "auto"
                               ? hasPreferredAutoModel ? model === selectedModel : model === autoRecommendedModel
                               : model === selectedModel;
-                            const modelDescription = agentMode === "auto"
+                            const modelDescription = effectiveAgentMode === "auto"
                               ? isLocalModel
-                                ? "Local Mimo inference via this catalog route. Auto tries it only after eligible Thinking/Fast models hit capacity limits."
+                                ? localOnlyFallback
+                                  ? "Only the registered Local model is available because this account has no 9Router key."
+                                  : "Local Mimo inference via this catalog route. Auto tries it only after eligible Thinking/Fast models hit capacity limits."
                                 : `${classification} candidate in this account's Auto pool; eligible cloud models remain available as fallbacks.`
-                              : agentMode === "local"
-                                ? "Local Mimo inference using the full catalog ID and this account's 9Router key; no model fallback."
-                                : `${classification} model; capacity fallback stays within the ${agentMode} category.`;
+                              : effectiveAgentMode === "local"
+                                ? "Local Mimo inference using its full model ID; no 9Router key is required for this supervisor-registered model."
+                                : `${classification} model; capacity fallback stays within the ${effectiveAgentMode} category.`;
                             return (
                               <button
                                 type="button"
@@ -1625,7 +1722,9 @@ const AIAgent: React.FC = () => {
                                 className={`aiagent-model-option${isSelected ? " selected" : ""}`}
                                 aria-pressed={isSelected}
                                 onClick={() => {
-                                  setAgentMode(getAgentModeForModelSelection(agentMode, model));
+                                  const nextMode = getAgentModeForModelSelection(effectiveAgentMode, model);
+                                  setUserSelectedAgentMode(nextMode !== "local");
+                                  setAgentMode(nextMode);
                                   setPreferredModel(model);
                                   setIsModelPickerOpen(false);
                                 }}
@@ -1639,13 +1738,13 @@ const AIAgent: React.FC = () => {
                             );
                           }) : (
                             <p className="aiagent-model-empty aiagent-popover" role="status">
-                              {agentMode === "auto"
+                              {effectiveAgentMode === "auto"
                                 ? "No supported Thinking or Fast cloud model is available in this account's catalog. Choose Local explicitly if it is authorized."
-                                : agentMode === "thinking"
+                                : effectiveAgentMode === "thinking"
                                   ? "No supported reasoning-capable model is available in this account's catalog."
-                                    : agentMode === "fast"
+                                    : effectiveAgentMode === "fast"
                                       ? "No model marked reasoning:false is available in this account's catalog."
-                                      : agentMode === "other"
+                                      : effectiveAgentMode === "other"
                                         ? "No unclassified model is available in this account's catalog."
                                         : `No authorized catalog route matches the configured Local Mimo identity (${LOCAL_AGENT_MODEL}).`}
                             </p>
@@ -1655,6 +1754,7 @@ const AIAgent: React.FC = () => {
                     )}
                   </AnimatePresence>
                 </div>
+                <AgentWorkspace />
                 <button
                   className={`aiagent-icon-btn globe-btn${webSearchEnabled ? " web-search-active" : ""}`}
                   type="button"
@@ -1674,7 +1774,7 @@ const AIAgent: React.FC = () => {
                 </button>
                 <button onClick={clearChat} className="aiagent-clear-btn"><Trash2 size={22} /></button>
               </div>
-              <button onClick={handleSendMessage} disabled={isLoading || !selectedModel || !modelOptions.includes(selectedModel) || !requestModelOptions.length || (!input.trim() && !uploadedImages.length && !uploadedFiles.length)} className="aiagent-send-btn">
+              <button onClick={handleSendMessage} disabled={isLoading || Boolean(pendingHostAction) || !selectedModel || !modelOptions.includes(selectedModel) || !requestModelOptions.length || (!input.trim() && !uploadedImages.length && !uploadedFiles.length)} className="aiagent-send-btn">
                 {isLoading ? <Loader2 size={24} className="spin" /> : <Send size={24} />}
               </button>
             </div>
@@ -1683,6 +1783,35 @@ const AIAgent: React.FC = () => {
           <input type="file" ref={imageInputRef} accept="image/*" multiple style={{ display: "none" }} onChange={handleImageUpload} />
           <input type="file" ref={multiFileInputRef} multiple style={{ display: "none" }} onChange={handleMultiFilesUpload} />
           <input type="file" ref={folderInputRef} style={{ display: "none" }} {...{ webkitdirectory: "true", directory: "true" }} onChange={handleFolderUpload} />
+          {pendingHostAction && (
+            <div role="dialog" aria-modal="true" aria-labelledby="host-action-confirm-title" style={{ position: "fixed", inset: 0, zIndex: 1500, display: "grid", placeItems: "center", padding: 16, background: "rgba(0,0,0,.72)" }}>
+              <section style={{ width: "min(720px, 100%)", maxHeight: "85vh", display: "flex", flexDirection: "column", gap: 12, padding: 16, color: "var(--text, #eee)", background: "var(--surface, #171a21)", border: "1px solid var(--border, #4a4f59)", borderRadius: 12 }}>
+                <h3 id="host-action-confirm-title" style={{ margin: 0 }}>Konfirmasi aksi owner pada Sandbox</h3>
+                <div style={{ padding: 10, border: "1px solid var(--border, #4a4f59)", borderRadius: 8 }}>
+                  <strong>{summarizeHostAction(pendingHostAction.action).title}</strong>
+                  <div style={{ marginTop: 4, fontFamily: "monospace", overflowWrap: "anywhere" }}>{summarizeHostAction(pendingHostAction.action).path}</div>
+                  <p style={{ margin: "6px 0 0", fontSize: 13 }}>{summarizeHostAction(pendingHostAction.action).impact}</p>
+                </div>
+                <pre style={{ margin: 0, padding: 12, overflow: "auto", whiteSpace: "pre-wrap", overflowWrap: "anywhere", background: "var(--background, #101217)", borderRadius: 8, fontSize: 12 }}>{JSON.stringify(pendingHostAction.action, null, 2)}</pre>
+                <small style={{ opacity: 0.7 }}>Konfirmasi kedaluwarsa {new Date(pendingHostAction.expiresAt * 1000).toLocaleTimeString()}.</small>
+                <label style={{ display: "grid", gap: 6, fontSize: 12 }}>
+                  Teks tombol persetujuan
+                  <select value={confirmLabelChoice} onChange={(event) => setConfirmLabelChoice(event.target.value as "A" | "B" | "C" | "custom")} style={{ ...rootConfirmInputStyle, cursor: "pointer" }}>
+                    <option value="A">A — {ROOT_CONFIRM_LABELS.A}</option>
+                    <option value="B">B — {ROOT_CONFIRM_LABELS.B}</option>
+                    <option value="C">C — {ROOT_CONFIRM_LABELS.C}</option>
+                    <option value="custom">Tulis teks sendiri</option>
+                  </select>
+                </label>
+                {confirmLabelChoice === "custom" && <input value={customConfirmLabel} onChange={(event) => setCustomConfirmLabel(event.target.value)} maxLength={80} placeholder="Tulis label tombol (maks. 80 karakter)" aria-label="Teks tombol konfirmasi custom" style={rootConfirmInputStyle} />}
+                {hostActionError && <div role="alert" style={{ color: "#ff8989", fontSize: 13 }}>{hostActionError}</div>}
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                  <button type="button" className="aiagent-icon-btn" onClick={dismissPendingHostAction} disabled={confirmingHostAction}>Batalkan</button>
+                  <button type="button" className="aiagent-send-btn" onClick={() => void confirmPendingHostAction()} disabled={confirmingHostAction || (confirmLabelChoice === "custom" && !customConfirmLabel.trim())}>{confirmingHostAction ? "Menjalankan…" : confirmLabelChoice === "custom" ? customConfirmLabel.trim() : ROOT_CONFIRM_LABELS[confirmLabelChoice]}</button>
+                </div>
+              </section>
+            </div>
+          )}
         </div>
       )}
     </>

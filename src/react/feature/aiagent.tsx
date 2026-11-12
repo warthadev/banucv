@@ -10,7 +10,7 @@ import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentm
 import { AI_AGENT_API_BASE } from "@config/api";
 import { saveRouterCredentials } from "@config/routerhelper";
 import { shouldShowRouterAuthModal } from "@config/agentauthflow";
-import { LOCAL_AGENT_MODEL, isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
+import { LOCAL_AGENT_MODEL, isLocalAgentModel, isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
 import { buildModelScopedHistory, formatAgentFileContext, getAgentModeForModelSelection, getAgentModelClassification, getAgentModelsForMode, getAgentRequestModels, getAgentMessagesStorageKey, getAgentPreferencesStorageKey, parseAgentModeSettings, type AgentMode } from "@config/agentmodes";
 import { parseAgentFile } from "@config/agentfileparser";
 import { useAudio } from "@hook/useaudio";

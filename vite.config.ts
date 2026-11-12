@@ -6,17 +6,6 @@ import path from 'path'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-const DEVELOPMENT_FALLBACK_API_URL = 'https://7680-agq2firibhstlf6sr7k3ydjoim.instabox.tech'
-const PRODUCTION_FALLBACK_API_URL = 'https://warthadev-backend.onrender.com'
-
-const isLoopbackApiUrl = (value: string): boolean => {
-  try {
-    const hostname = new URL(value).hostname.toLowerCase().replace(/^\[|\]$/g, '')
-    return hostname === 'localhost' || hostname.endsWith('.localhost') || hostname === '::1' || /^127(?:\.\d{1,3}){3}$/.test(hostname)
-  } catch {
-    return false
-  }
-}
 
 const cacheImageMotionPlugin = (): Plugin => ({
   name: 'cache-image-motion',
@@ -40,11 +29,11 @@ const cacheImageMotionPlugin = (): Plugin => ({
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const configuredApiUrl = env.VITE_API_URL?.trim()
-  const useProductionFallback = mode === 'production' && (!configuredApiUrl || isLoopbackApiUrl(configuredApiUrl))
-  const API_URL = useProductionFallback
-    ? PRODUCTION_FALLBACK_API_URL
-    : configuredApiUrl || DEVELOPMENT_FALLBACK_API_URL
+  const API_URL = env.VITE_API_URL?.trim()
+
+  if (!API_URL) {
+    throw new Error('VITE_API_URL must be set')
+  }
 
   return {
     plugins: [react(), cacheImageMotionPlugin()],

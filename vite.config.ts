@@ -67,6 +67,7 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       host: true,
+      allowedHosts: ['conductional-marcelene-unmanageable.ngrok-free.dev'],
       historyApiFallback: true,
       watch: {
         usePolling: true,

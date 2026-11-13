@@ -116,7 +116,7 @@ const AgentWorkspace: React.FC = () => {
   const [localModels, setLocalModels] = useState<string[]>([]);
   const [localModelName, setLocalModelName] = useState("");
   const activeUidRef = useRef<string | null>(null);
-  const visibleTabs: Array<"files" | "packages" | "admin" | "host"> = info?.owner ? ["files", "packages", "admin", "host"] : ["files", "packages"];
+  const visibleTabs: Array<"files" | "packages" | "admin" | "host"> = info?.owner ? ["host", "admin"] : ["files", "packages"];
 
   useEffect(() => {
     let active = true;
@@ -156,7 +156,7 @@ const AgentWorkspace: React.FC = () => {
     };
   }, []);
 
-  const loadWorkspace = useCallback(async (folder = path) => {
+  const loadWorkspace = useCallback(async (folder = path, openOwnerHome = false) => {
     setBusy(true);
     setError("");
     try {
@@ -164,28 +164,44 @@ const AgentWorkspace: React.FC = () => {
       if (!expectedUid) throw new Error("Sign in to access this workspace");
       const currentInfo = await getWorkspaceInfo(expectedUid);
       if (activeUidRef.current !== expectedUid || currentInfo.uid !== expectedUid) return;
-      const listing = await listWorkspaceFiles(folder, expectedUid);
-      const packages = await listWorkspacePackages(expectedUid);
-      if (activeUidRef.current !== expectedUid) return;
       setInfo(currentInfo);
-      setEntries(listing.entries);
-      setPath(listing.path);
-      setPackageRequests(packages.requests || []);
-      setSharedPackages(packages.sharedPackages || []);
       if (currentInfo.owner) {
+        setPath(".");
+        setEntries([]);
+        setSelectedFile(null);
+        setSelectedFileOwnerUid(null);
+        setPackageRequests([]);
+        setSharedPackages([]);
+        if (openOwnerHome || tab !== "admin") {
+          setTab("host");
+          const listing = await listOwnerHostFiles("/", expectedUid);
+          if (activeUidRef.current !== expectedUid) return;
+          setHostEntries(listing.entries || []);
+          setHostPath(listing.path);
+          setSelectedHostPath(null);
+          setSelectedHostOwnerUid(null);
+          setSelectedHostFile(null);
+        }
         const [adminData, modelData] = await Promise.all([listAdminPackageRequests(expectedUid), listLocalModelInventory(expectedUid)]);
         if (activeUidRef.current !== expectedUid) return;
         setAdminRequests(adminData.requests || []);
         setLocalModels(modelData.models || []);
-      } else {
-        setAdminRequests([]);
-        setLocalModels([]);
-        if (tab === "admin" || tab === "host") setTab("files");
-        setHostEntries([]);
-        setSelectedHostPath(null);
-        setSelectedHostOwnerUid(null);
-        setSelectedHostFile(null);
+        return;
       }
+      const listing = await listWorkspaceFiles(folder, expectedUid);
+      const packages = await listWorkspacePackages(expectedUid);
+      if (activeUidRef.current !== expectedUid) return;
+      setEntries(listing.entries);
+      setPath(listing.path);
+      setPackageRequests(packages.requests || []);
+      setSharedPackages(packages.sharedPackages || []);
+      setAdminRequests([]);
+      setLocalModels([]);
+      if (tab === "admin" || tab === "host") setTab("files");
+      setHostEntries([]);
+      setSelectedHostPath(null);
+      setSelectedHostOwnerUid(null);
+      setSelectedHostFile(null);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : String(loadError));
     } finally {
@@ -432,7 +448,7 @@ const AgentWorkspace: React.FC = () => {
         onClick={() => {
           const nextOpen = !open;
           setOpen(nextOpen);
-          if (nextOpen) void loadWorkspace(".");
+          if (nextOpen) void loadWorkspace(".", true);
         }}
         title="Workspace files, packages, and Sandbox disk"
         aria-label="Open workspace files, packages, and Sandbox disk"
@@ -445,12 +461,12 @@ const AgentWorkspace: React.FC = () => {
           <header style={{ display: "flex", alignItems: "center", gap: 9, padding: "12px 14px", borderBottom: "1px solid var(--border, #373b45)" }}>
             <Folder size={19} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <strong>Workspace</strong>
+              <strong>{info?.owner ? "Sandbox" : "Workspace"}</strong>
               <div style={{ fontSize: 11, opacity: 0.72, overflowWrap: "anywhere" }}>
-                {info?.owner ? "Owner admin" : "Folder kerja privat per akun"}{info?.uid ? ` · UID ${info.uid}` : ""}
+                {info?.owner ? "Akses owner" : "Folder kerja privat per akun"}{info?.uid && !info.owner ? ` · UID ${info.uid}` : ""}
               </div>
             </div>
-            <button type="button" style={buttonStyle} onClick={() => tab === "host" ? void loadHostDirectory(hostPath) : void loadWorkspace(path)} disabled={busy} aria-label="Refresh workspace"><RefreshCw size={15} /></button>
+            <button type="button" style={buttonStyle} onClick={() => tab === "host" ? void loadHostDirectory(hostPath) : void loadWorkspace(path)} disabled={busy} aria-label={tab === "host" ? "Refresh Sandbox disk" : tab === "admin" ? "Refresh owner admin" : "Refresh workspace"}><RefreshCw size={15} /></button>
             <button type="button" style={buttonStyle} onClick={close} aria-label="Close workspace"><X size={16} /></button>
           </header>
           <nav style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "8px 12px", borderBottom: "1px solid var(--border, #373b45)" }}>

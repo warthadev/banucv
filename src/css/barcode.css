@@ -1,0 +1,212 @@
+/* src/css/barcode.css - UPDATED: Added CSS classes for inline styles */
+
+.barcode-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--bg);
+  padding: 20px;
+  overflow: hidden;
+}
+
+.barcode-card {
+  width: 100%;
+  max-width: 360px;
+  height: fit-content;
+  background: var(--card-bg);
+  padding: 35px 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 25px;
+  border: 1px solid var(--border-color);
+}
+
+.barcode-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.barcode-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+}
+
+.barcode-display {
+  background: white;
+  padding: 15px;
+  border-radius: var(--radius-medium);
+  width: fit-content;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid var(--border-color);
+}
+
+/* ============================================ */
+/* NEW CSS CLASSES FOR REFACTORED INLINE STYLES */
+/* ============================================ */
+
+.barcode-type-selector {
+  display: flex;
+  gap: 8px;
+  background: var(--bg);
+  padding: 5px;
+  border-radius: var(--radius-medium);
+  border: 1px solid var(--border-color);
+  width: 100%;
+}
+
+.barcode-type-btn {
+  flex: 1;
+  padding: 10px 5px;
+  border: none;
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: var(--radius-small);
+  transition: all 0.2s ease;
+}
+
+.barcode-type-btn.active {
+  background: var(--primary);
+  color: white;
+  border-radius: var(--radius-small);
+}
+
+.barcode-input-group {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.barcode-input-wrapper {
+  width: 100%;
+}
+
+.barcode-input {
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid var(--border-color);
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  font-size: 0.9rem;
+  border-radius: var(--radius-small);
+  box-sizing: border-box;
+}
+
+.barcode-input:focus {
+  border-color: var(--primary);
+}
+
+.barcode-wa-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.barcode-wifi-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.barcode-download-btn {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-button);
+  transition: opacity 0.2s ease;
+}
+
+.barcode-download-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.barcode-download-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.barcode-download-icon {
+  margin-right: 8px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .barcode-card {
+    padding: 24px 18px;
+    gap: 20px;
+  }
+  
+  .barcode-title {
+    font-size: 1.2rem;
+  }
+  
+  .barcode-type-btn {
+    font-size: 0.7rem;
+    padding: 8px 4px;
+  }
+  
+  .barcode-display svg {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .barcode-input {
+    padding: 12px 14px;
+    font-size: 0.85rem;
+  }
+  
+  .barcode-download-btn {
+    padding: 12px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .barcode-card {
+    padding: 16px 12px;
+    gap: 16px;
+  }
+  
+  .barcode-type-btn {
+    font-size: 0.6rem;
+    padding: 6px 2px;
+  }
+  
+  .barcode-type-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .barcode-display svg {
+    width: 120px;
+    height: 120px;
+  }
+}

@@ -1,0 +1,92 @@
+/* src/css/login.css */
+
+.login-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--bg);
+  padding: 20px;
+  -webkit-user-select: none;
+  user-select: none;
+  overflow: hidden;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  height: fit-content;
+  padding: 35px 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 25px;
+  margin-top: -30%;
+}
+
+@media (min-width: 768px) {
+  .login-card {
+    margin-top: 0;
+  }
+}
+
+.login-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  margin: 0;
+}
+
+.login-text {
+  color: var(--text-sub);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  opacity: 0.8;
+  margin: 0;
+}
+
+.login-icon-wrapper {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.login-icon-box {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-medium);
+  background: transparent;
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.login-icon-box:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.login-icon-box:active {
+  background: var(--primary-alpha);
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 0 20px var(--primary), inset 0 0 10px rgba(0, 168, 255, 0.3);
+  transform: scale(0.92);
+}
+
+.login-icon-box svg {
+  width: 32px;
+  height: 32px;
+  fill: currentColor;
+  pointer-events: none;
+}

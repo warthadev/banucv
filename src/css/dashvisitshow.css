@@ -1,0 +1,337 @@
+/* src/css/dashvisitshow.css - gaya seragam seperti AI Chat, scrollbar hidden di semua mode */
+
+.setting-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
+    max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  margin: 0;
+  box-sizing: border-box;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.setting-overlay .barcode-card {
+  width: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+  box-shadow: 0 20px 40px var(--shadow-color);
+  animation: fadeInUp 0.4s ease-out;
+  margin: 0 auto;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.setting-overlay .barcode-card::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes iconPop {
+  0% { transform: scale(0.6) rotate(-8deg); opacity: 0; }
+  60% { transform: scale(1.08) rotate(3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.setting-icon {
+  font-size: 56px;
+  background: radial-gradient(circle at 30% 30%, var(--primary-alpha), transparent 70%), var(--primary-alpha);
+  width: 80px;
+  height: 80px;
+  min-width: 80px;
+  min-height: 80px;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  box-shadow: 0 0 0 6px var(--primary-alpha);
+  animation: iconPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.setting-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.setting-desc {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-sub);
+  margin: 0 0 8px 0;
+}
+
+.ai-mode-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin: 8px 0 12px 0;
+}
+
+.mode-button,
+.next-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.mode-button {
+  border: 1px solid var(--border-color);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.mode-button:hover {
+  border-color: var(--primary);
+  background: var(--primary-alpha);
+  transform: translateY(-1px);
+}
+
+.mode-button.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+.mode-button.active:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+}
+
+.next-button {
+  background: var(--primary);
+  border: none;
+  color: white;
+  margin-top: 12px;
+}
+
+.next-button:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+.audio-manual-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: auto;
+  padding: 8px 20px;
+  border-radius: 40px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  text-align: center;
+  background: var(--primary-alpha);
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  margin: 8px 0 4px 0;
+}
+
+.audio-manual-trigger:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.mode-button:active,
+.audio-manual-trigger:active,
+.next-button:active {
+  transform: translateY(1px);
+}
+
+.scrollable-music-list {
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 6px;
+  width: 100%;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollable-music-list::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .setting-overlay {
+    padding: 16px;
+  }
+  
+  .setting-overlay .barcode-card {
+    max-width: 100%;
+    margin: 0 16px;
+    padding: 24px 20px;
+  }
+
+  .setting-title {
+    font-size: 1.3rem;
+  }
+
+  .setting-desc {
+    font-size: 0.8rem;
+  }
+
+  .setting-icon {
+    width: 64px;
+    height: 64px;
+    min-width: 64px;
+    min-height: 64px;
+    font-size: 44px;
+  }
+
+  .mode-button,
+  .next-button {
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    border-radius: 14px;
+  }
+  
+  .audio-manual-trigger {
+    padding: 6px 16px;
+    font-size: 0.75rem;
+  }
+  
+  .scrollable-music-list {
+    max-height: 220px;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .setting-overlay .barcode-card {
+    max-width: 440px;
+    padding: 32px 28px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .setting-overlay .barcode-card {
+    max-width: 420px;
+    padding: 32px 28px;
+  }
+}
+
+/* Layar pendek / mode landscape di HP: rapatkan spacing & kecilkan ikon */
+@media (max-height: 560px) {
+  .setting-overlay {
+    align-items: stretch;
+    padding: 12px;
+  }
+
+  .setting-overlay .barcode-card {
+    padding: 18px 20px;
+    gap: 12px;
+    justify-content: center;
+    margin: auto;
+  }
+
+  .setting-icon {
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    min-height: 52px;
+    font-size: 30px;
+    margin-bottom: 0;
+  }
+
+  .setting-title {
+    font-size: 1.1rem;
+  }
+
+  .setting-desc {
+    font-size: 0.78rem;
+    margin-bottom: 0;
+  }
+
+  .ai-mode-container {
+    gap: 8px;
+    margin: 4px 0;
+  }
+
+  .mode-button,
+  .next-button {
+    padding: 10px 16px;
+  }
+
+  .scrollable-music-list {
+    max-height: 140px;
+  }
+}
+
+/* Layar sangat kecil (HP lama, lebar < 360px) */
+@media (max-width: 359px) {
+  .setting-overlay .barcode-card {
+    padding: 20px 16px;
+    border-radius: 18px;
+  }
+
+  .setting-icon {
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    min-height: 56px;
+    font-size: 36px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .setting-overlay .barcode-card,
+  .setting-icon {
+    animation: none !important;
+  }
+
+  .mode-button,
+  .next-button,
+  .audio-manual-trigger {
+    transition: none !important;
+  }
+}

@@ -1,83 +1,20 @@
-// src/react/config/firebase.ts
-import { initializeApp } from "firebase/app";
-import { 
-  getAuth as firebaseGetAuth, 
-  setPersistence, 
-  browserLocalPersistence,
-  onAuthStateChanged 
-} from "firebase/auth";
-import { getFirestore as firebaseGetFirestore } from "firebase/firestore";
+import { initializeApp, type FirebaseApp } from "firebase/app";
+import { getAuth as firebaseGetAuth, setPersistence, browserLocalPersistence, type Auth } from "firebase/auth";
 import { getFirebaseConfig } from "./api";
 
-let appInitialized = false;
-let authInstance: Auth = null as unknown as Auth;
-let dbInstance: Firestore = null as unknown as Firestore;
+let app: FirebaseApp | null = null;
+let auth: Auth | null = null;
 
-export const initializeFirebase = async () => {
-  if (appInitialized) {
-    return { auth: authInstance, db: dbInstance };
-  }
-
-  try {
-    const config = await getFirebaseConfig();
-    
-    const firebaseConfig = {
-      apiKey: config.apiKey,
-      authDomain: config.authDomain,
-      projectId: config.projectId,
-      storageBucket: config.storageBucket,
-      messagingSenderId: config.messagingSenderId,
-      appId: config.appId,
-      measurementId: config.measurementId,
-    };
-
-    const app = initializeApp(firebaseConfig);
-    authInstance = firebaseGetAuth(app);
-    dbInstance = firebaseGetFirestore(app);
-
-    await setPersistence(authInstance, browserLocalPersistence);
-
-    appInitialized = true;
-    return { auth: authInstance, db: dbInstance };
-  } catch (error) {
-    console.error('Failed to initialize Firebase:', error);
-    throw error;
-  }
+export const initializeFirebase = async (): Promise<{ auth: Auth }> => {
+  if (auth) return { auth };
+  const config = await getFirebaseConfig();
+  app = initializeApp(config);
+  auth = firebaseGetAuth(app);
+  await setPersistence(auth, browserLocalPersistence);
+  return { auth };
 };
 
-export const getAuth = async () => {
-  if (!appInitialized) {
-    await initializeFirebase();
-  }
-  return authInstance;
+export const getAuth = async (): Promise<Auth> => {
+  if (!auth) await initializeFirebase();
+  return auth as Auth;
 };
-
-export const getDb = async () => {
-  if (!appInitialized) {
-    await initializeFirebase();
-  }
-  return dbInstance;
-};
-
-export const waitForAuth = (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    const checkAuth = async () => {
-      try {
-        const auth = await getAuth();
-        if (auth.currentUser) {
-          resolve(true);
-          return;
-        }
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-          unsubscribe();
-          resolve(!!user);
-        });
-      } catch {
-        resolve(false);
-      }
-    };
-    checkAuth();
-  });
-};
-
-export { authInstance as auth, dbInstance as db };

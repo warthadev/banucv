@@ -1,7 +1,7 @@
 import { LOCAL_AGENT_MODEL } from "./agentrouting.ts";
 import type { AgentModel } from "./agentmodels.ts";
 
-export type AgentMode = "auto" | "thinking" | "fast" | "other" | "local";
+export type AgentMode = "auto" | "thinking" | "fast" | "other";
 export type AgentModeSettings = { mode: AgentMode; model: string; webSearchEnabled: boolean };
 export type ScopedHistoryMessage = { role: "user" | "assistant"; content: string };
 type StoredConversationMessage = {
@@ -13,9 +13,7 @@ type StoredConversationMessage = {
   error?: boolean;
 };
 
-// Local is an inference category, not a transport switch. The configured Mimo
-// identity may be exposed through a per-user 9Router provider namespace. Keep
-// the full catalog ID for authorization and requests; never synthesize a bare ID.
+// Reject the legacy Ollama identity even if it appears in a stale client cache.
 export const isLocalInferenceAgentModel = (model: string): boolean =>
   (model.trim().toLowerCase().split("/").at(-1) || "") === LOCAL_AGENT_MODEL.toLowerCase();
 
@@ -41,9 +39,6 @@ export const getAgentModelClassification = (model: string, catalog: readonly Age
   return "Other / unclassified";
 };
 
-export const getAgentModeForModelSelection = (mode: AgentMode, model: string): AgentMode =>
-  isLocalInferenceAgentModel(model) ? "local" : mode;
-
 const requestNeedsThinking = (prompt: string): boolean => {
   const normalized = prompt.toLowerCase();
   return normalized.length > 320 || /\b(analy[sz]e|reason|step by step|compare|plan|debug|design|prove|derive|architecture|review|audit|explain in detail|analisis|jelaskan|bandingkan|rencanakan|buktikan|rancang|arsitektur|telaah|langkah demi langkah|hitung kompleks)\b/.test(normalized);
@@ -68,10 +63,7 @@ const getAutoModelSequence = (
   const cloudSequence = preferredModel && prioritized.includes(preferredModel)
     ? [preferredModel, ...prioritized.filter((model) => model !== preferredModel)]
     : prioritized;
-  // Only an existing account catalog route can be Local. It never starts an
-  // Auto request and keeps its original provider-qualified ID as the last fallback.
-  if (!cloudSequence.length) return [];
-  return [...cloudSequence, ...catalog.filter(isLocalInferenceAgentModel)];
+  return cloudSequence;
 };
 
 export const getAgentModelsForMode = (
@@ -88,7 +80,6 @@ export const getAgentModelsForMode = (
     !isDocumentedThinkingAgentModel(model, modelCatalog) &&
     !isDocumentedFastAgentModel(model, modelCatalog)
   );
-  if (mode === "local") return deduplicated.filter(isLocalInferenceAgentModel);
   return [];
 };
 
@@ -103,7 +94,6 @@ export const getAgentRequestModels = (
   const catalog = uniqueModels(models);
   if (mode === "auto") return getAutoModelSequence(catalog, prompt, preferSelectedModel ? selectedModel : "", modelCatalog);
   if (!selectedModel || !catalog.includes(selectedModel)) return [];
-  if (mode === "local") return isLocalInferenceAgentModel(selectedModel) ? [selectedModel] : [];
   const eligible = getAgentModelsForMode(catalog, mode, modelCatalog);
   if (!eligible.includes(selectedModel)) return [];
   return [selectedModel, ...eligible.filter((model) => model !== selectedModel)];
@@ -152,14 +142,14 @@ export const parseAgentModeSettings = (value: string | null): AgentModeSettings 
   if (!value) return { mode: "auto", model: "", webSearchEnabled: false };
   try {
     const parsed = JSON.parse(value) as Partial<AgentModeSettings>;
-    const validModes: AgentMode[] = ["auto", "thinking", "fast", "other", "local"];
+    const validModes: AgentMode[] = ["auto", "thinking", "fast", "other"];
     const mode = validModes.includes(parsed.mode as AgentMode) ? parsed.mode as AgentMode : "auto";
     const model = typeof parsed.model === "string" ? parsed.model : "";
     return {
       mode,
       webSearchEnabled: parsed.webSearchEnabled === true,
-      // Old Auto preferences must not visually select Local while routing cloud first.
-      model: mode === "auto" && isLocalInferenceAgentModel(model) ? "" : model,
+      // Drop legacy local model selections and preferences from Local mode.
+      model: isLocalInferenceAgentModel(model) ? "" : model,
     };
   } catch {
     return { mode: "auto", model: "", webSearchEnabled: false };

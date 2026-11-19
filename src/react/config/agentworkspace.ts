@@ -120,15 +120,6 @@ export const reviewAdminPackageRequest = (targetUid: string, requestId: string, 
     body: JSON.stringify({ target_uid: targetUid, request_id: requestId, decision }),
   });
 
-export const listLocalModelInventory = (uid: string) =>
-  apiRequest<{ models: string[] }>("/admin/models/local", uid);
-
-export const updateLocalModelInventory = (model: string, action: "add" | "remove", uid: string) =>
-  apiRequest<{ models: string[]; ollamaChanged: boolean }>("/admin/models/local", uid, {
-    method: "POST",
-    body: JSON.stringify({ model, action }),
-  });
-
 export const confirmHostAction = (actionId: string, uid: string) =>
   apiRequest<{ success: boolean; message?: string; exitCode?: number; output?: string }>("/host-actions/confirm", uid, {
     method: "POST",

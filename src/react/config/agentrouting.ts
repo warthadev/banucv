@@ -21,7 +21,7 @@ export const isRetryableAgentAvailabilityError = (error: unknown): boolean => {
     /Agent runtime temporarily unavailable \(503\)/i.test(message);
 };
 
-/** All chat traffic goes through the authenticated backend, including local models. */
+/** All chat traffic goes through the authenticated backend. */
 export const resolveAgentModelRoute = (
   model: string,
   cloudApiBase: string,

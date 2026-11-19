@@ -6,7 +6,6 @@ import {
   deleteWorkspaceFile,
   getWorkspaceInfo,
   listAdminPackageRequests,
-  listLocalModelInventory,
   listOwnerHostFiles,
   listWorkspaceFiles,
   listWorkspacePackages,
@@ -15,7 +14,6 @@ import {
   readWorkspaceFile,
   requestWorkspacePackage,
   reviewAdminPackageRequest,
-  updateLocalModelInventory,
   writeWorkspaceFile,
   type OwnerHostTextFile,
   type PackageRecord,
@@ -113,8 +111,6 @@ const AgentWorkspace: React.FC = () => {
   const [packageRequests, setPackageRequests] = useState<PackageRecord[]>([]);
   const [sharedPackages, setSharedPackages] = useState<string[]>([]);
   const [adminRequests, setAdminRequests] = useState<PackageRecord[]>([]);
-  const [localModels, setLocalModels] = useState<string[]>([]);
-  const [localModelName, setLocalModelName] = useState("");
   const activeUidRef = useRef<string | null>(null);
   const visibleTabs: Array<"files" | "packages" | "admin" | "host"> = info?.owner ? ["host", "admin"] : ["files", "packages"];
 
@@ -144,7 +140,6 @@ const AgentWorkspace: React.FC = () => {
         setPackageRequests([]);
         setSharedPackages([]);
         setAdminRequests([]);
-        setLocalModels([]);
         setTab("files");
         setError("");
         setNotice("");
@@ -182,10 +177,9 @@ const AgentWorkspace: React.FC = () => {
           setSelectedHostOwnerUid(null);
           setSelectedHostFile(null);
         }
-        const [adminData, modelData] = await Promise.all([listAdminPackageRequests(expectedUid), listLocalModelInventory(expectedUid)]);
+        const adminData = await listAdminPackageRequests(expectedUid);
         if (activeUidRef.current !== expectedUid) return;
         setAdminRequests(adminData.requests || []);
-        setLocalModels(modelData.models || []);
         return;
       }
       const listing = await listWorkspaceFiles(folder, expectedUid);
@@ -196,7 +190,6 @@ const AgentWorkspace: React.FC = () => {
       setPackageRequests(packages.requests || []);
       setSharedPackages(packages.sharedPackages || []);
       setAdminRequests([]);
-      setLocalModels([]);
       if (tab === "admin" || tab === "host") setTab("files");
       setHostEntries([]);
       setSelectedHostPath(null);
@@ -393,26 +386,6 @@ const AgentWorkspace: React.FC = () => {
     }
   };
 
-  const updateLocalModel = async (model: string, action: "add" | "remove") => {
-    const expectedUid = activeUidRef.current;
-    if (!expectedUid || !info?.owner || info.uid !== expectedUid) return;
-    setBusy(true);
-    setError("");
-    try {
-      const result = await updateLocalModelInventory(model, action, expectedUid);
-      if (activeUidRef.current !== expectedUid) return;
-      setLocalModels(result.models || []);
-      setNotice(action === "add"
-        ? `${model} terdaftar. Registrasi hanya berhasil jika model sudah tersedia di Ollama.`
-        : `${model} dihapus dari inventaris; data model Ollama tidak dihapus.`);
-      setLocalModelName("");
-    } catch (modelError) {
-      setError(modelError instanceof Error ? modelError.message : String(modelError));
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const goUp = () => {
     if (path === ".") return;
     const parts = path.split("/").filter(Boolean);
@@ -546,12 +519,6 @@ const AgentWorkspace: React.FC = () => {
                     </div>
                   ))}
                   {!adminRequests.length && <div style={{ opacity: 0.7 }}>Tidak ada permintaan paket.</div>}
-                </section>
-                <section style={{ display: "grid", gap: 8, paddingTop: 12, borderTop: "1px solid var(--border, #373b45)" }}>
-                  <h4 style={{ margin: 0 }}>Inventaris model lokal global</h4>
-                  <p style={{ margin: 0, fontSize: 12, opacity: 0.75 }}>Hanya owner dapat mendaftarkan model yang sudah terpasang di Ollama. Tidak ada tombol pull/install; Mimo yang ada tetap tersedia bagi semua akun.</p>
-                  <div style={{ display: "flex", gap: 6 }}><input value={localModelName} onChange={(event) => setLocalModelName(event.target.value)} placeholder="model ID Ollama yang sudah ada" style={inputStyle} /><button type="button" style={buttonStyle} onClick={() => void updateLocalModel(localModelName.trim(), "add")} disabled={busy || !localModelName.trim()}>Daftarkan</button></div>
-                  {localModels.map((model) => <div key={model} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "7px 9px", border: "1px solid var(--border, #373b45)", borderRadius: 7 }}><code>{model}</code><button type="button" style={buttonStyle} onClick={() => void updateLocalModel(model, "remove")} disabled={busy || model === "mimo-v2.6:latest"} title={model === "mimo-v2.6:latest" ? "Model Mimo default tetap tersedia" : "Remove from local model inventory"}><Trash2 size={14} /> Hapus dari daftar</button></div>)}
                 </section>
               </div>
             )}

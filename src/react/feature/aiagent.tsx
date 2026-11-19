@@ -10,8 +10,8 @@ import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentm
 import { AI_AGENT_API_BASE } from "@config/api";
 import { saveRouterCredentials } from "@config/routerhelper";
 import { canSendAgentModel, shouldShowRouterAuthModal } from "@config/agentauthflow";
-import { LOCAL_AGENT_MODEL, isLocalAgentModel, isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
-import { buildModelScopedHistory, formatAgentFileContext, getAgentModeForModelSelection, getAgentModelClassification, getAgentModelsForMode, getAgentRequestModels, getAgentMessagesStorageKey, getAgentPreferencesStorageKey, parseAgentModeSettings, type AgentMode } from "@config/agentmodes";
+import { isLocalAgentModel, isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
+import { buildModelScopedHistory, formatAgentFileContext, getAgentModelClassification, getAgentModelsForMode, getAgentRequestModels, getAgentMessagesStorageKey, getAgentPreferencesStorageKey, parseAgentModeSettings, type AgentMode } from "@config/agentmodes";
 import { parseAgentFile } from "@config/agentfileparser";
 import { useAudio } from "@hook/useaudio";
 import Loading from "@control/loading";
@@ -99,13 +99,11 @@ const isLikelyVisionAgentModel = (model: string): boolean => {
 };
 
 const prioritizeVisionAgentModels = (models: string[], hasImages: boolean): string[] => {
-  if (!hasImages) return models;
+  if (!hasImages) return models.filter((model) => !isLocalAgentModel(model));
   const cloudModels = models.filter((model) => !isLocalAgentModel(model));
-  const localModels = models.filter(isLocalAgentModel);
   return [
     ...cloudModels.filter(isLikelyVisionAgentModel),
     ...cloudModels.filter((model) => !isLikelyVisionAgentModel(model)),
-    ...localModels,
   ];
 };
 
@@ -707,12 +705,9 @@ const AIAgent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [preferredModel, setPreferredModel] = useState("");
   const [agentMode, setAgentMode] = useState<AgentMode>("auto");
-  const [userSelectedAgentMode, setUserSelectedAgentMode] = useState(false);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
-  const hasLocalModels = routerModels.some(isLocalAgentModel);
-  const localOnlyFallback = !isConfigured && hasLocalModels && !userSelectedAgentMode;
-  const effectiveAgentMode: AgentMode = localOnlyFallback ? "local" : agentMode;
+  const effectiveAgentMode: AgentMode = agentMode;
   const modelOptions = getAgentModelsForMode(routerModels, effectiveAgentMode, routerModelCatalog);
   const selectedModel = modelOptions.includes(preferredModel) ? preferredModel : modelOptions[0] || "";
   const hasPreferredAutoModel = effectiveAgentMode === "auto" && modelOptions.includes(preferredModel);
@@ -722,12 +717,9 @@ const AIAgent: React.FC = () => {
     isLoading: authLoading,
     userUid: currentUserUid,
     isConfigured,
-    hasLocalModels,
-    selectedModelIsLocal: isLocalAgentModel(selectedModel),
   });
   const selectAgentMode = (mode: AgentMode) => {
     const candidates = getAgentModelsForMode(routerModels, mode, routerModelCatalog);
-    setUserSelectedAgentMode(mode !== "local");
     setAgentMode(mode);
     setPreferredModel(mode === "auto" ? "" : candidates[0] || "");
   };
@@ -835,7 +827,6 @@ const AIAgent: React.FC = () => {
           setPreferencesOwnerUid(null);
           setPreferredModel("");
           setAgentMode("auto");
-          setUserSelectedAgentMode(false);
           setWebSearchEnabled(false);
           setUploadedImages([]);
           setUploadedFiles([]);
@@ -1383,7 +1374,7 @@ const AIAgent: React.FC = () => {
 
   return (
     <>
-      {(isConfigured || hasLocalModels) && (
+      {isConfigured && (
         <div className="aiagent-container">
           {!modelOptions.length && (
             <div className="aiagent-catalog-status" role={catalogError ? "alert" : "status"}>
@@ -1675,19 +1666,17 @@ const AIAgent: React.FC = () => {
                             <h3 id="aiagent-model-picker-title">AI Agent</h3>
                             <p>
                               {effectiveAgentMode === "auto"
-                                ? "Auto picks supported Thinking/Fast models for this account, then tries its exact Local model after capacity failures. Cloud usage may incur charges."
+                                ? "Auto picks supported Thinking/Fast models from this account's cloud catalog and uses cloud models only. Cloud usage may incur charges."
                                 : effectiveAgentMode === "thinking"
                                   ? "Reasoning-capable model families from this account's catalog are available in this mode."
                                   : effectiveAgentMode === "fast"
                                     ? "Models marked reasoning:false in this account's catalog. This is not a response-time guarantee."
-                                    : effectiveAgentMode === "other"
-                                      ? "Models without reasoning capability metadata. Choose one manually; they are not guessed into Thinking or Fast."
-                                      : "Use the registered Local Mimo inference route without a 9Router key. The backend checks this exact model ID against the supervisor inventory."}
+                                    : "Models without reasoning capability metadata. Choose one manually; they are not guessed into Thinking or Fast."}
                             </p>
                           </div>
                         </div>
                         <div className="aiagent-mode-options" role="group" aria-label="AI modes">
-                          {(["auto", "thinking", "fast", "other", "local"] as AgentMode[]).map((mode) => (
+                          {(["auto", "thinking", "fast", "other"] as AgentMode[]).map((mode) => (
                             <button
                               key={mode}
                               type="button"
@@ -1702,19 +1691,12 @@ const AIAgent: React.FC = () => {
                         <div className="aiagent-model-option-list" role="list" aria-label={`${effectiveAgentMode} models available to this account`}>
                           {modelOptions.length ? modelOptions.map((model) => {
                             const classification = getAgentModelClassification(model, routerModelCatalog);
-                            const isLocalModel = classification === "Local";
                             const isSelected = effectiveAgentMode === "auto"
                               ? hasPreferredAutoModel ? model === selectedModel : model === autoRecommendedModel
                               : model === selectedModel;
                             const modelDescription = effectiveAgentMode === "auto"
-                              ? isLocalModel
-                                ? localOnlyFallback
-                                  ? "Only the registered Local model is available because this account has no 9Router key."
-                                  : "Local Mimo inference via this catalog route. Auto tries it only after eligible Thinking/Fast models hit capacity limits."
-                                : `${classification} candidate in this account's Auto pool; eligible cloud models remain available as fallbacks.`
-                              : effectiveAgentMode === "local"
-                                ? "Local Mimo inference using its full model ID; no 9Router key is required for this supervisor-registered model."
-                                : `${classification} model; capacity fallback stays within the ${effectiveAgentMode} category.`;
+                              ? `${classification} candidate in this account's Auto pool; fallback stays within cloud models.`
+                              : `${classification} model; capacity fallback stays within the ${effectiveAgentMode} category.`;
                             return (
                               <button
                                 type="button"
@@ -1722,9 +1704,7 @@ const AIAgent: React.FC = () => {
                                 className={`aiagent-model-option${isSelected ? " selected" : ""}`}
                                 aria-pressed={isSelected}
                                 onClick={() => {
-                                  const nextMode = getAgentModeForModelSelection(effectiveAgentMode, model);
-                                  setUserSelectedAgentMode(nextMode !== "local");
-                                  setAgentMode(nextMode);
+                                  setAgentMode(effectiveAgentMode);
                                   setPreferredModel(model);
                                   setIsModelPickerOpen(false);
                                 }}
@@ -1739,14 +1719,12 @@ const AIAgent: React.FC = () => {
                           }) : (
                             <p className="aiagent-model-empty aiagent-popover" role="status">
                               {effectiveAgentMode === "auto"
-                                ? "No supported Thinking or Fast cloud model is available in this account's catalog. Choose Local explicitly if it is authorized."
+                                ? "No supported Thinking or Fast cloud model is available in this account's catalog."
                                 : effectiveAgentMode === "thinking"
                                   ? "No supported reasoning-capable model is available in this account's catalog."
                                     : effectiveAgentMode === "fast"
                                       ? "No model marked reasoning:false is available in this account's catalog."
-                                      : effectiveAgentMode === "other"
-                                        ? "No unclassified model is available in this account's catalog."
-                                        : `No authorized catalog route matches the configured Local Mimo identity (${LOCAL_AGENT_MODEL}).`}
+                                      : "No unclassified model is available in this account's catalog."}
                             </p>
                           )}
                         </div>

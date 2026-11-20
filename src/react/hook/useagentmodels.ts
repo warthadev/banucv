@@ -62,7 +62,7 @@ export const useAgentModels = () => {
       }
     } catch (error) {
       if (!mountedRef.current || requestId !== requestIdRef.current) return;
-      setConfigurationError(error instanceof Error ? error.message : "Unable to load provider connection status.");
+      setConfigurationError(error instanceof Error ? error.message : "Unable to load 9Router key status.");
       setIsConfigured(false);
       setProvider(null);
       setRouterModels([]);

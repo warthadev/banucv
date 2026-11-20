@@ -315,7 +315,7 @@ const projectItems: ProjectItem[] = [
     category: "AI Tools",
     icon: MessageSquareText,
     description:
-      "Connect your own supported AI provider. Each signed-in account has a separate encrypted key, model catalog, and chat route; workspace file and command tools remain disabled.",
+      "Connect a 9Router API key for this account. Restricted keys can filter the visible model catalog; provider connections remain global to the 9Router instance, and workspace file and command tools stay disabled.",
   },
   {
     name: "Downloader",
@@ -357,7 +357,7 @@ const featureItems: FeatureItem[] = [
     category: "Intelligence",
     icon: Cpu,
     description:
-      "The AI Agent uses an account-scoped provider gateway with encrypted per-account credentials and catalogs, while preserving the conversational interface and keeping workspace command tools disabled.",
+      "The AI Agent stores each account's 9Router key encrypted and uses that key's model allowlist to filter the catalog. Provider connections and upstream credentials remain global to the 9Router instance; workspace tools stay disabled.",
   },
   {
     name: "Full-Stack Integration",

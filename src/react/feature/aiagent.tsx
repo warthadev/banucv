@@ -468,15 +468,15 @@ const isRetryableAgentFailure = (error: unknown, hasImages: boolean): boolean =>
   (hasImages && error instanceof AgentRequestError && error.code === "vision_unsupported");
 
 const getCatalogStatusMessage = (error: string | null): string => {
-  if (!error) return "This account's model catalog is empty. Connect a provider key or check the connection in Settings.";
+  if (!error) return "This 9Router key has no visible models. Check its allowed-model settings or the 9Router connection in Settings.";
   const normalizedError = error.toLowerCase();
   if (normalizedError.includes("rejected the saved api key")) {
-    return "This account's provider key was rejected. Update it in Settings.";
+    return "9Router rejected this account's API key. Update the 9Router key in Settings.";
   }
-  if (normalizedError.includes("provider model catalog")) {
-    return "This provider cannot provide the model catalog right now. Try again later or check the connection in Settings.";
+  if (normalizedError.includes("no approved 9router endpoint")) {
+    return "A 9Router API endpoint is not configured on the approved backend, so the model catalog is unavailable.";
   }
-  return `Unable to load this account's provider catalog: ${error}`;
+  return `Unable to load this account's 9Router model catalog: ${error}`;
 };
 
 const getErrorMessage = (error: unknown): string => {
@@ -689,8 +689,8 @@ const AIAgent: React.FC = () => {
   };
 
   const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
-  const handleRouterAuthSave = async (apiKey: string, provider: string) => {
-    await saveRouterCredentials(apiKey, provider);
+  const handleRouterAuthSave = async (apiKey: string) => {
+    await saveRouterCredentials(apiKey);
     window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
   };
   const handleRouterAuthClose = () => navigate("/dashboard", { replace: true });
@@ -1359,7 +1359,7 @@ const AIAgent: React.FC = () => {
     return (
       <div className="aiagent-container">
         <div className="aiagent-catalog-status" role="alert">
-          <p>Unable to check this account&apos;s provider connection: {configurationError}</p>
+          <p>Unable to check this account&apos;s 9Router key: {configurationError}</p>
           <button type="button" className="aiagent-icon-btn" onClick={() => window.location.reload()}>Retry</button>
           <RouterLink className="aiagent-settings-link" to="/dashboard">Cancel and return to Dashboard</RouterLink>
         </div>
@@ -1383,7 +1383,7 @@ const AIAgent: React.FC = () => {
           {!modelOptions.length && (
             <div className="aiagent-catalog-status" role={catalogError ? "alert" : "status"}>
               <p>{routerModels.length ? `No model is classified for ${effectiveAgentMode} mode. Open the AI Agent menu to choose another available mode.` : getCatalogStatusMessage(catalogError)}</p>
-              {!routerModels.length && <RouterLink className="aiagent-settings-link" to="/setting">Manage this account&apos;s provider key in Settings</RouterLink>}
+              {!routerModels.length && <RouterLink className="aiagent-settings-link" to="/setting">Manage this account&apos;s 9Router key in Settings</RouterLink>}
             </div>
           )}
           <div className="aiagent-messages" ref={scrollRef}>

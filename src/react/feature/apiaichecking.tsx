@@ -88,8 +88,8 @@ const AICheck: React.FC = () => {
           animate="animate"
           className="aic-hero-wrapper"
         >
-          <h1 className="home-title">Provider Model Check</h1>
-          <p className="home-subtitle">Verify this signed-in account&apos;s provider connection and model catalog.</p>
+          <h1 className="home-title">9Router Model Check</h1>
+          <p className="home-subtitle">Check the model catalog visible to this signed-in account&apos;s 9Router API key.</p>
 
           <div className="aic-controls">
             <div className="aic-actions">

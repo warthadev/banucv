@@ -1,10 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { getAuth } from "@config/firebase";
-import { loadRouterCredentials, loadRouterModelCatalog } from "@config/routerhelper";
+import { loadOpenRouterCredentials, loadOpenRouterModelCatalog } from "@config/routerhelper";
 import type { AgentModel } from "@config/agentmodels";
 
-export const ROUTER_CREDENTIAL_UPDATED_EVENT = "routerCredentialUpdated";
+export const ROUTER_CREDENTIAL_UPDATED_EVENT = "openRouterCredentialUpdated";
 
 export const useAgentModels = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -44,9 +44,9 @@ export const useAgentModels = () => {
     setCatalogError(null);
     setConfigurationError(null);
     try {
-      const credentials = await loadRouterCredentials();
+      const credentials = await loadOpenRouterCredentials();
       if (!mountedRef.current || requestId !== requestIdRef.current) return;
-      const ready = Boolean(credentials?.baseUrl);
+      const ready = Boolean(credentials);
       setHasSavedKey(Boolean(credentials));
       setIsConfigured(ready);
       setProvider(credentials?.provider ?? null);
@@ -55,22 +55,17 @@ export const useAgentModels = () => {
         setRouterModels([]);
         return;
       }
-      if (!ready) {
-        setCatalogError("Add this account's 9Router base URL in Settings. Its saved key will be kept.");
-        return;
-      }
-
       try {
-        const models = await loadRouterModelCatalog();
+        const models = await loadOpenRouterModelCatalog();
         if (!mountedRef.current || requestId !== requestIdRef.current) return;
         setRouterModels(models);
       } catch (error) {
         if (!mountedRef.current || requestId !== requestIdRef.current) return;
-        setCatalogError(error instanceof Error ? error.message : "Unable to load the model catalog.");
+        setCatalogError(error instanceof Error ? error.message : "Unable to load OpenRouter's free-model catalog.");
       }
     } catch (error) {
       if (!mountedRef.current || requestId !== requestIdRef.current) return;
-      setConfigurationError(error instanceof Error ? error.message : "Unable to load 9Router settings.");
+      setConfigurationError(error instanceof Error ? error.message : "Unable to load OpenRouter settings.");
       setIsConfigured(false);
       setHasSavedKey(false);
       setProvider(null);

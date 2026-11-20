@@ -315,7 +315,7 @@ const projectItems: ProjectItem[] = [
     category: "AI Tools",
     icon: MessageSquareText,
     description:
-      "Connect this account's own 9Router URL and API key. Its model catalog and chats use that saved pair; if multiple accounts point to the same instance, provider connections remain shared. Workspace file and command tools stay disabled.",
+      "Connect this account's own OpenRouter API key. Its live free-model catalog and chats use the encrypted key saved on its own user record. Workspace file and command tools stay disabled.",
   },
   {
     name: "Downloader",
@@ -357,7 +357,7 @@ const featureItems: FeatureItem[] = [
     category: "Intelligence",
     icon: Cpu,
     description:
-      "The AI Agent stores each account's 9Router URL and encrypted key on its own user record, and uses the same pair for catalog and chat. Provider connections remain global within any shared 9Router instance; workspace tools stay disabled.",
+      "The AI Agent stores each account's encrypted OpenRouter key on its own user record, dynamically discovers zero-cost models from OpenRouter, and restricts chats to that live free catalog. Workspace tools stay disabled.",
   },
   {
     name: "Full-Stack Integration",

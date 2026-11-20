@@ -2,15 +2,13 @@ import { getAuth } from "./firebase";
 import { AI_AGENT_API_BASE } from "./api";
 import { extractAgentModels, type AgentModel } from "./agentmodels";
 
-export interface RouterCredentials {
-  provider: "9router";
-  baseUrl: string;
+export interface OpenRouterCredentials {
+  provider: "openrouter";
   fingerprint: string;
 }
 
 interface AgentKeyRecord {
   provider: string;
-  baseUrl?: string;
   enabled?: boolean;
   fingerprint?: string;
 }
@@ -24,16 +22,16 @@ interface AgentKeysResponse {
 const getAuthenticatedUser = async () => {
   const firebaseAuth = await getAuth();
   const user = firebaseAuth.currentUser;
-  if (!user) throw new Error("Sign in to manage this account's 9Router settings.");
+  if (!user) throw new Error("Sign in to manage this account's OpenRouter settings.");
   return { user, idToken: await user.getIdToken(true) };
 };
 
-const requestAgentKeys = async (
+const requestAgent = async (
   idToken: string,
-  method: "GET" | "PUT" | "DELETE",
+  path: string,
+  method: "GET" | "PUT" | "POST" | "DELETE",
   body?: Record<string, string>,
 ): Promise<AgentKeysResponse> => {
-  const path = method === "DELETE" ? "/agent/keys/9router" : "/agent/keys";
   const response = await fetch(`${AI_AGENT_API_BASE}${path}`, {
     method,
     headers: {
@@ -44,38 +42,31 @@ const requestAgentKeys = async (
     cache: "no-store",
   });
   const data = await response.json().catch(() => ({})) as AgentKeysResponse;
-  if (!response.ok) throw new Error(data.detail || `9Router settings request failed (${response.status})`);
+  if (!response.ok) throw new Error(data.detail || `OpenRouter request failed (${response.status})`);
   return data;
 };
 
-export const saveRouterCredentials = async (baseUrl: string, apiKey: string): Promise<void> => {
-  const normalizedBaseUrl = baseUrl.trim();
+export const saveOpenRouterCredentials = async (apiKey: string): Promise<void> => {
   const normalizedKey = apiKey.trim();
-  if (!normalizedBaseUrl) throw new Error("A 9Router base URL is required.");
   const { idToken } = await getAuthenticatedUser();
-  const body: Record<string, string> = {
-    provider: "9router",
-    base_url: normalizedBaseUrl,
-  };
-  // An empty key means keep the already-saved encrypted key while changing the URL.
+  const body: Record<string, string> = { provider: "openrouter" };
+  // Empty means keep this account's already-saved encrypted key.
   if (normalizedKey) body.api_key = normalizedKey;
-  await requestAgentKeys(idToken, "PUT", body);
+  await requestAgent(idToken, "/agent/keys", "PUT", body);
+  // Old 9Router fields are removed server-side only after this account's key passes a live API check.
+  await requestAgent(idToken, "/agent/keys/openrouter/verify", "POST");
 };
 
-export const loadRouterCredentials = async (): Promise<RouterCredentials | null> => {
+export const loadOpenRouterCredentials = async (): Promise<OpenRouterCredentials | null> => {
   const { idToken } = await getAuthenticatedUser();
-  const data = await requestAgentKeys(idToken, "GET");
+  const data = await requestAgent(idToken, "/agent/keys", "GET");
   const records = Array.isArray(data.keys) ? data.keys : [];
-  const credential = records.find((item) => item.provider?.toLowerCase() === "9router" && item.enabled !== false);
+  const credential = records.find((item) => item.provider?.toLowerCase() === "openrouter" && item.enabled !== false);
   if (!credential) return null;
-  return {
-    provider: "9router",
-    baseUrl: credential.baseUrl || "",
-    fingerprint: credential.fingerprint || "",
-  };
+  return { provider: "openrouter", fingerprint: credential.fingerprint || "" };
 };
 
-export const loadRouterModelCatalog = async (): Promise<AgentModel[]> => {
+export const loadOpenRouterModelCatalog = async (): Promise<AgentModel[]> => {
   const { idToken } = await getAuthenticatedUser();
   const response = await fetch(`${AI_AGENT_API_BASE}/agent/models`, {
     headers: { Authorization: `Bearer ${idToken}` },
@@ -86,12 +77,12 @@ export const loadRouterModelCatalog = async (): Promise<AgentModel[]> => {
     const detail = data && typeof data === "object" && "detail" in data
       ? (data as { detail?: unknown }).detail
       : undefined;
-    throw new Error(typeof detail === "string" ? detail : `Failed to load this account's model catalog (${response.status})`);
+    throw new Error(typeof detail === "string" ? detail : `Failed to load this account's OpenRouter free-model catalog (${response.status})`);
   }
   return extractAgentModels(data);
 };
 
-export const clearRouterCredentials = async (): Promise<void> => {
+export const clearOpenRouterCredentials = async (): Promise<void> => {
   const { idToken } = await getAuthenticatedUser();
-  await requestAgentKeys(idToken, "DELETE");
+  await requestAgent(idToken, "/agent/keys/openrouter", "DELETE");
 };

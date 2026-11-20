@@ -8,7 +8,7 @@ import {
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
 import { AI_AGENT_API_BASE } from "@config/api";
-import { saveRouterCredentials } from "@config/routerhelper";
+import { saveOpenRouterCredentials } from "@config/routerhelper";
 import { canSendAgentModel, shouldShowRouterAuthModal } from "@config/agentauthflow";
 import { isLocalAgentModel, isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
 import { buildModelScopedHistory, formatAgentFileContext, getAgentModelClassification, getAgentModelsForMode, getAgentRequestModels, getAgentMessagesStorageKey, getAgentPreferencesStorageKey, parseAgentModeSettings, type AgentMode } from "@config/agentmodes";
@@ -468,15 +468,12 @@ const isRetryableAgentFailure = (error: unknown, hasImages: boolean): boolean =>
   (hasImages && error instanceof AgentRequestError && error.code === "vision_unsupported");
 
 const getCatalogStatusMessage = (error: string | null): string => {
-  if (!error) return "This 9Router key has no visible models. Check its allowed-model settings or the 9Router connection in Settings.";
+  if (!error) return "No free models are currently available for this OpenRouter key. Check its access and try refreshing the catalog.";
   const normalizedError = error.toLowerCase();
   if (normalizedError.includes("rejected the saved api key")) {
-    return "9Router rejected this account's API key. Update the 9Router key in Settings.";
+    return "OpenRouter rejected this account's API key. Update the OpenRouter key in Settings.";
   }
-  if (normalizedError.includes("no approved 9router endpoint")) {
-    return "A 9Router API endpoint is not configured on the approved backend, so the model catalog is unavailable.";
-  }
-  return `Unable to load this account's 9Router model catalog: ${error}`;
+  return `Unable to load this account's OpenRouter free-model catalog: ${error}`;
 };
 
 const getErrorMessage = (error: unknown): string => {
@@ -689,8 +686,8 @@ const AIAgent: React.FC = () => {
   };
 
   const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
-  const handleRouterAuthSave = async (baseUrl: string, apiKey: string) => {
-    await saveRouterCredentials(baseUrl, apiKey);
+  const handleRouterAuthSave = async (apiKey: string) => {
+    await saveOpenRouterCredentials(apiKey);
     window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
   };
   const handleRouterAuthClose = () => navigate("/dashboard", { replace: true });
@@ -1359,7 +1356,7 @@ const AIAgent: React.FC = () => {
     return (
       <div className="aiagent-container">
         <div className="aiagent-catalog-status" role="alert">
-          <p>Unable to check this account&apos;s 9Router key: {configurationError}</p>
+          <p>Unable to check this account&apos;s OpenRouter key: {configurationError}</p>
           <button type="button" className="aiagent-icon-btn" onClick={() => window.location.reload()}>Retry</button>
           <RouterLink className="aiagent-settings-link" to="/dashboard">Cancel and return to Dashboard</RouterLink>
         </div>
@@ -1384,7 +1381,7 @@ const AIAgent: React.FC = () => {
           {!modelOptions.length && (
             <div className="aiagent-catalog-status" role={catalogError ? "alert" : "status"}>
               <p>{routerModels.length ? `No model is classified for ${effectiveAgentMode} mode. Open the AI Agent menu to choose another available mode.` : getCatalogStatusMessage(catalogError)}</p>
-              {!routerModels.length && <RouterLink className="aiagent-settings-link" to="/setting">Manage this account&apos;s 9Router key in Settings</RouterLink>}
+              {!routerModels.length && <RouterLink className="aiagent-settings-link" to="/setting">Manage this account&apos;s OpenRouter key in Settings</RouterLink>}
             </div>
           )}
           <div className="aiagent-messages" ref={scrollRef}>

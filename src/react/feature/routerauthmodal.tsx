@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertCircle, Eye, EyeOff, Key, Sparkles } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Key, Link2, Sparkles } from "lucide-react";
 import { Link as RouterLink } from "react-router-dom";
 import { modalVariants, overlayVariants } from "@animation/githubeditor";
 
 interface RouterAuthModalProps {
   isOpen: boolean;
-  onSave: (apiKey: string) => Promise<void>;
+  onSave: (baseUrl: string, apiKey: string) => Promise<void>;
   onClose: () => void;
+  hasSavedKey?: boolean;
   isLoading?: boolean;
 }
 
@@ -15,14 +16,17 @@ export const RouterAuthModal: React.FC<RouterAuthModalProps> = ({
   isOpen,
   onSave,
   onClose,
+  hasSavedKey = false,
   isLoading = false,
 }) => {
+  const [baseUrl, setBaseUrl] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   const handleClose = () => {
+    setBaseUrl("");
     setApiKey("");
     setShowKey(false);
     setError("");
@@ -31,20 +35,22 @@ export const RouterAuthModal: React.FC<RouterAuthModalProps> = ({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const normalizedBaseUrl = baseUrl.trim();
     const normalizedKey = apiKey.trim();
-    if (!normalizedKey) {
-      setError("A 9Router API key is required.");
+    if (!normalizedBaseUrl || (!normalizedKey && !hasSavedKey)) {
+      setError(hasSavedKey ? "Enter this account's 9Router base URL." : "Enter this account's 9Router base URL and API key.");
       return;
     }
 
     setError("");
     setIsSaving(true);
     try {
-      await onSave(normalizedKey);
+      await onSave(normalizedBaseUrl, normalizedKey);
+      setBaseUrl("");
       setApiKey("");
       setShowKey(false);
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Failed to save the 9Router API key.");
+      setError(saveError instanceof Error ? saveError.message : "Failed to save this account's 9Router settings.");
     } finally {
       setIsSaving(false);
     }
@@ -78,14 +84,34 @@ export const RouterAuthModal: React.FC<RouterAuthModalProps> = ({
                 Use API Key
               </h3>
               <p style={{ fontSize: "0.85rem", color: "var(--text-sub)", margin: 0 }}>
-                Enter this account&apos;s 9Router API key to load its allowed model catalog.
+                Connect this account&apos;s own 9Router URL and key to load its model catalog.
               </p>
             </div>
 
             <form onSubmit={handleSubmit}>
+              <div style={{ marginBottom: "16px" }}>
+                <label className="github-modal-label" htmlFor="aiagent-9router-url">
+                  <Link2 size={12} /> 9ROUTER BASE URL
+                </label>
+                <input
+                  id="aiagent-9router-url"
+                  name="nine-router-base-url"
+                  type="url"
+                  value={baseUrl}
+                  onChange={(event) => setBaseUrl(event.target.value)}
+                  placeholder="https://your-9router.example/v1"
+                  className="github-modal-input"
+                  autoComplete="url"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  autoFocus
+                  required
+                />
+              </div>
+
               <div style={{ marginBottom: "20px" }}>
                 <label className="github-modal-label" htmlFor="aiagent-9router-key">
-                  <Key size={12} /> 9ROUTER API KEY
+                  <Key size={12} /> 9ROUTER API KEY{hasSavedKey ? " (OPTIONAL)" : ""}
                 </label>
                 <div style={{ position: "relative" }}>
                   <input
@@ -94,14 +120,13 @@ export const RouterAuthModal: React.FC<RouterAuthModalProps> = ({
                     type={showKey ? "text" : "password"}
                     value={apiKey}
                     onChange={(event) => setApiKey(event.target.value)}
-                    placeholder="Paste your 9Router API key"
+                    placeholder={hasSavedKey ? "Leave blank to keep the saved key" : "Paste this account's 9Router API key"}
                     className="github-modal-input"
                     style={{ paddingRight: "48px" }}
                     autoComplete="off"
                     autoCapitalize="none"
                     spellCheck={false}
-                    autoFocus
-                    required
+                    required={!hasSavedKey}
                   />
                   <button
                     type="button"
@@ -126,19 +151,19 @@ export const RouterAuthModal: React.FC<RouterAuthModalProps> = ({
                 <button type="button" onClick={handleClose} className="github-modal-cancel" disabled={isSaving}>
                   Cancel
                 </button>
-                <button type="submit" disabled={isLoading || isSaving || !apiKey.trim()} className="github-modal-confirm">
+                <button type="submit" disabled={isLoading || isSaving || !baseUrl.trim() || (!apiKey.trim() && !hasSavedKey)} className="github-modal-confirm">
                   {isLoading || isSaving ? "Saving..." : "Save & Continue"}
                 </button>
               </div>
             </form>
 
             <div className="github-modal-footer">
-              <p>A restricted 9Router key can show only its allowed models. Unrestricted keys may see the instance&apos;s full catalog.</p>
+              <p>Use a public HTTPS hostname; private, local, and non-HTTPS endpoints are blocked.</p>
               <RouterLink className="aiagent-settings-link" to="/setting">
-                Manage this account&apos;s 9Router key in Settings
+                Manage this account&apos;s 9Router URL and key in Settings
               </RouterLink>
               <p className="github-modal-footer-note">
-                The key is encrypted on the server and never returned to the browser. Provider connections are managed globally by the 9Router instance.
+                The URL and encrypted key are saved on this account&apos;s user record. If multiple accounts point to the same 9Router instance, its provider connections remain shared; use separate instances for provider separation.
               </p>
             </div>
           </motion.div>

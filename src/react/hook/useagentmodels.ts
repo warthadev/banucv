@@ -9,6 +9,7 @@ export const ROUTER_CREDENTIAL_UPDATED_EVENT = "routerCredentialUpdated";
 export const useAgentModels = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isConfigured, setIsConfigured] = useState(false);
+  const [hasSavedKey, setHasSavedKey] = useState(false);
   const [provider, setProvider] = useState<string | null>(null);
   const [routerModels, setRouterModels] = useState<AgentModel[]>([]);
   const [catalogError, setCatalogError] = useState<string | null>(null);
@@ -30,6 +31,7 @@ export const useAgentModels = () => {
     if (!user) {
       setRouterModels([]);
       setIsConfigured(false);
+      setHasSavedKey(false);
       setProvider(null);
       setCatalogError(null);
       setConfigurationError(null);
@@ -44,11 +46,17 @@ export const useAgentModels = () => {
     try {
       const credentials = await loadRouterCredentials();
       if (!mountedRef.current || requestId !== requestIdRef.current) return;
-      setIsConfigured(Boolean(credentials));
+      const ready = Boolean(credentials?.baseUrl);
+      setHasSavedKey(Boolean(credentials));
+      setIsConfigured(ready);
       setProvider(credentials?.provider ?? null);
 
       if (!credentials) {
         setRouterModels([]);
+        return;
+      }
+      if (!ready) {
+        setCatalogError("Add this account's 9Router base URL in Settings. Its saved key will be kept.");
         return;
       }
 
@@ -62,8 +70,9 @@ export const useAgentModels = () => {
       }
     } catch (error) {
       if (!mountedRef.current || requestId !== requestIdRef.current) return;
-      setConfigurationError(error instanceof Error ? error.message : "Unable to load 9Router key status.");
+      setConfigurationError(error instanceof Error ? error.message : "Unable to load 9Router settings.");
       setIsConfigured(false);
+      setHasSavedKey(false);
       setProvider(null);
       setRouterModels([]);
     } finally {
@@ -88,6 +97,7 @@ export const useAgentModels = () => {
       if (!mountedRef.current) return;
       setRouterModels([]);
       setIsConfigured(false);
+      setHasSavedKey(false);
       setConfigurationError(error instanceof Error ? error.message : "Firebase authentication is unavailable.");
       setIsLoading(false);
     });
@@ -103,6 +113,7 @@ export const useAgentModels = () => {
   return {
     isLoading,
     isConfigured,
+    hasSavedKey,
     provider,
     routerModels,
     routerModelIds: routerModels.map((model) => model.id),

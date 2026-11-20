@@ -628,7 +628,7 @@ const splitMarkdown = (content: string) => {
 };
 
 const AIAgent: React.FC = () => {
-  const { isConfigured, provider: connectedProvider, isLoading: authLoading, routerModels: routerModelCatalog, routerModelIds: routerModels, catalogError, configurationError } = useAgentModels();
+  const { isConfigured, hasSavedKey, provider: connectedProvider, isLoading: authLoading, routerModels: routerModelCatalog, routerModelIds: routerModels, catalogError, configurationError } = useAgentModels();
   const { aiMode } = useAudio();
   const navigate = useNavigate();
 
@@ -689,8 +689,8 @@ const AIAgent: React.FC = () => {
   };
 
   const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
-  const handleRouterAuthSave = async (apiKey: string) => {
-    await saveRouterCredentials(apiKey);
+  const handleRouterAuthSave = async (baseUrl: string, apiKey: string) => {
+    await saveRouterCredentials(baseUrl, apiKey);
     window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
   };
   const handleRouterAuthClose = () => navigate("/dashboard", { replace: true });
@@ -1372,6 +1372,7 @@ const AIAgent: React.FC = () => {
         isOpen
         onSave={handleRouterAuthSave}
         onClose={handleRouterAuthClose}
+        hasSavedKey={hasSavedKey}
       />
     );
   }

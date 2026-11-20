@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Bot, Trash2, Volume2, VolumeX, Check,
-  Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Globe, Wand2, Link, ChevronDown
+  Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Wand2, Link, ChevronDown
 } from "lucide-react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
@@ -468,18 +468,15 @@ const isRetryableAgentFailure = (error: unknown, hasImages: boolean): boolean =>
   (hasImages && error instanceof AgentRequestError && error.code === "vision_unsupported");
 
 const getCatalogStatusMessage = (error: string | null): string => {
-  if (!error) return "This account's model catalog is empty. Check the 9Router key and available models in Settings.";
+  if (!error) return "This account's model catalog is empty. Connect a provider key or check the connection in Settings.";
   const normalizedError = error.toLowerCase();
-  if (normalizedError.includes("cooldown") || normalizedError.includes("machine_cooldown")) {
-    return "The 9Router server is cooling down, so the model catalog cannot be loaded yet. Reload the page when the server is available again.";
-  }
   if (normalizedError.includes("rejected the saved api key")) {
-    return "This account's 9Router key was rejected. Update it in Settings.";
+    return "This account's provider key was rejected. Update it in Settings.";
   }
-  if (normalizedError.includes("9router model catalog")) {
-    return "The 9Router server cannot provide the model catalog yet. Reload the page when the server is available again.";
+  if (normalizedError.includes("provider model catalog")) {
+    return "This provider cannot provide the model catalog right now. Try again later or check the connection in Settings.";
   }
-  return `Unable to load the 9Router catalog: ${error}`;
+  return `Unable to load this account's provider catalog: ${error}`;
 };
 
 const getErrorMessage = (error: unknown): string => {
@@ -631,7 +628,7 @@ const splitMarkdown = (content: string) => {
 };
 
 const AIAgent: React.FC = () => {
-  const { isConfigured, isLoading: authLoading, routerModels: routerModelCatalog, routerModelIds: routerModels, catalogError, configurationError } = useAgentModels();
+  const { isConfigured, provider: connectedProvider, isLoading: authLoading, routerModels: routerModelCatalog, routerModelIds: routerModels, catalogError, configurationError } = useAgentModels();
   const { aiMode } = useAudio();
   const navigate = useNavigate();
 
@@ -692,8 +689,8 @@ const AIAgent: React.FC = () => {
   };
 
   const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
-  const handleRouterAuthSave = async (apiKey: string) => {
-    await saveRouterCredentials(apiKey);
+  const handleRouterAuthSave = async (apiKey: string, provider: string) => {
+    await saveRouterCredentials(apiKey, provider);
     window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
   };
   const handleRouterAuthClose = () => navigate("/dashboard", { replace: true });
@@ -704,7 +701,6 @@ const AIAgent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [preferredModel, setPreferredModel] = useState("");
   const [agentMode, setAgentMode] = useState<AgentMode>("auto");
-  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
   const effectiveAgentMode: AgentMode = agentMode;
   const modelOptions = getAgentModelsForMode(routerModels, effectiveAgentMode, routerModelCatalog);
@@ -773,7 +769,6 @@ const AIAgent: React.FC = () => {
       setMessages([]);
       setPreferredModel("");
       setAgentMode("auto");
-      setWebSearchEnabled(false);
       setPreferencesOwnerUid(null);
       return;
     }
@@ -789,7 +784,6 @@ const AIAgent: React.FC = () => {
     }
     setAgentMode(savedPreferences.mode);
     setPreferredModel(savedPreferences.model);
-    setWebSearchEnabled(savedPreferences.webSearchEnabled);
     setMessagesOwnerUid(uid);
     setPreferencesOwnerUid(uid);
   }, [currentUserUid]);
@@ -801,12 +795,12 @@ const AIAgent: React.FC = () => {
   useEffect(() => {
     if (currentUserUid && preferencesOwnerUid === currentUserUid) {
       try {
-        localStorage.setItem(getAgentPreferencesStorageKey(currentUserUid), JSON.stringify({ mode: agentMode, model: preferredModel, webSearchEnabled }));
+        localStorage.setItem(getAgentPreferencesStorageKey(currentUserUid), JSON.stringify({ mode: agentMode, model: preferredModel }));
       } catch (error) {
         console.warn("Failed to save this account's AI preferences:", error);
       }
     }
-  }, [currentUserUid, preferencesOwnerUid, agentMode, preferredModel, webSearchEnabled]);
+  }, [currentUserUid, preferencesOwnerUid, agentMode, preferredModel]);
   
   useEffect(() => {
     let disposed = false;
@@ -827,7 +821,6 @@ const AIAgent: React.FC = () => {
           setPreferencesOwnerUid(null);
           setPreferredModel("");
           setAgentMode("auto");
-          setWebSearchEnabled(false);
           setUploadedImages([]);
           setUploadedFiles([]);
           setUploadNotice(null);
@@ -1080,11 +1073,11 @@ const AIAgent: React.FC = () => {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
       body: JSON.stringify({
-        provider: "9router",
+        provider: connectedProvider || "",
         model: route.model,
         prompt,
-        web_search: webSearchEnabled,
-        search_query: webSearchEnabled ? messageText.trim().slice(0, 500) : "",
+        web_search: false,
+        search_query: "",
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta",
         history,
         images: images.map((image) => ({ mime_type: image.mimeType, data: image.data })),
@@ -1366,7 +1359,7 @@ const AIAgent: React.FC = () => {
     return (
       <div className="aiagent-container">
         <div className="aiagent-catalog-status" role="alert">
-          <p>Unable to check this account&apos;s 9Router key status: {configurationError}</p>
+          <p>Unable to check this account&apos;s provider connection: {configurationError}</p>
           <button type="button" className="aiagent-icon-btn" onClick={() => window.location.reload()}>Retry</button>
           <RouterLink className="aiagent-settings-link" to="/dashboard">Cancel and return to Dashboard</RouterLink>
         </div>
@@ -1390,7 +1383,7 @@ const AIAgent: React.FC = () => {
           {!modelOptions.length && (
             <div className="aiagent-catalog-status" role={catalogError ? "alert" : "status"}>
               <p>{routerModels.length ? `No model is classified for ${effectiveAgentMode} mode. Open the AI Agent menu to choose another available mode.` : getCatalogStatusMessage(catalogError)}</p>
-              {!routerModels.length && <RouterLink className="aiagent-settings-link" to="/setting">Manage the 9Router key in Settings</RouterLink>}
+              {!routerModels.length && <RouterLink className="aiagent-settings-link" to="/setting">Manage this account&apos;s provider key in Settings</RouterLink>}
             </div>
           )}
           <div className="aiagent-messages" ref={scrollRef}>
@@ -1677,7 +1670,7 @@ const AIAgent: React.FC = () => {
                             <h3 id="aiagent-model-picker-title">AI Agent</h3>
                             <p>
                               {effectiveAgentMode === "auto"
-                                ? "Auto picks supported Thinking/Fast models from this account's cloud catalog and uses cloud models only. Cloud usage may incur charges."
+                                ? "Auto prioritizes known Thinking/Fast models, then includes other cloud models from this account's catalog. Provider usage may incur charges."
                                 : effectiveAgentMode === "thinking"
                                   ? "Reasoning-capable model families from this account's catalog are available in this mode."
                                   : effectiveAgentMode === "fast"
@@ -1730,7 +1723,7 @@ const AIAgent: React.FC = () => {
                           }) : (
                             <p className="aiagent-model-empty aiagent-popover" role="status">
                               {effectiveAgentMode === "auto"
-                                ? "No supported Thinking or Fast cloud model is available in this account's catalog."
+                                ? "No cloud model is available in this account's catalog."
                                 : effectiveAgentMode === "thinking"
                                   ? "No supported reasoning-capable model is available in this account's catalog."
                                     : effectiveAgentMode === "fast"
@@ -1743,16 +1736,6 @@ const AIAgent: React.FC = () => {
                     )}
                   </AnimatePresence>
                 </div>
-                <button
-                  className={`aiagent-icon-btn globe-btn${webSearchEnabled ? " web-search-active" : ""}`}
-                  type="button"
-                  aria-label={webSearchEnabled ? "Web Search ON" : "Web Search OFF"}
-                  aria-pressed={webSearchEnabled}
-                  title={webSearchEnabled ? "Web Search ON. SafeSearch is off; your question text is sent to web search services." : "Web Search OFF. Click to enable web search."}
-                  onClick={() => setWebSearchEnabled((enabled) => !enabled)}
-                >
-                  <Globe size={22} />
-                </button>
                 <button 
                   className={`aiagent-icon-btn wand2-btn${imageGenEnabled ? " image-gen-active" : ""}`} 
                   onClick={() => setImageGenEnabled(v => !v)} 

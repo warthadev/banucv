@@ -150,7 +150,7 @@ const techItems: TechItem[] = [
   {
     category: "AI & Intelligence",
     items: [
-      "9router AI Agent",
+      "Account-Scoped AI Agent",
       "Hermes Agent",
       "Pollinations",
       "OpenSubtitles Extractor",
@@ -315,7 +315,7 @@ const projectItems: ProjectItem[] = [
     category: "AI Tools",
     icon: MessageSquareText,
     description:
-      "Connect to the Instabox AI Agent through 9router using your configured token and model. Work with files, workspace tools, and routed AI models from one interface.",
+      "Connect your own supported AI provider. Each signed-in account has a separate encrypted key, model catalog, and chat route; workspace file and command tools remain disabled.",
   },
   {
     name: "Downloader",
@@ -357,7 +357,7 @@ const featureItems: FeatureItem[] = [
     category: "Intelligence",
     icon: Cpu,
     description:
-      "Instabox AI Agent connected through 9router with configurable tokens and models. The agent can work with workspace files and tools while keeping the existing conversational interface.",
+      "The AI Agent uses an account-scoped provider gateway with encrypted per-account credentials and catalogs, while preserving the conversational interface and keeping workspace command tools disabled.",
   },
   {
     name: "Full-Stack Integration",

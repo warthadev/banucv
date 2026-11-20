@@ -57,9 +57,14 @@ const getAutoModelSequence = (
     !isLocalInferenceAgentModel(model) &&
     (isDocumentedThinkingAgentModel(model, modelCatalog) || isDocumentedFastAgentModel(model, modelCatalog))
   );
+  const unclassified = catalog.filter((model) =>
+    !isLocalInferenceAgentModel(model) &&
+    !isDocumentedThinkingAgentModel(model, modelCatalog) &&
+    !isDocumentedFastAgentModel(model, modelCatalog)
+  );
   const fast = cloud.filter((model) => isDocumentedFastAgentModel(model, modelCatalog));
   const thinking = cloud.filter((model) => isDocumentedThinkingAgentModel(model, modelCatalog));
-  const prioritized = uniqueModels(requestNeedsThinking(prompt) ? [...thinking, ...fast] : [...fast, ...thinking]);
+  const prioritized = uniqueModels(requestNeedsThinking(prompt) ? [...thinking, ...fast, ...unclassified] : [...fast, ...thinking, ...unclassified]);
   const cloudSequence = preferredModel && prioritized.includes(preferredModel)
     ? [preferredModel, ...prioritized.filter((model) => model !== preferredModel)]
     : prioritized;

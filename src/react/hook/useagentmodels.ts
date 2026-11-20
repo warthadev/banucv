@@ -9,6 +9,7 @@ export const ROUTER_CREDENTIAL_UPDATED_EVENT = "routerCredentialUpdated";
 export const useAgentModels = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isConfigured, setIsConfigured] = useState(false);
+  const [provider, setProvider] = useState<string | null>(null);
   const [routerModels, setRouterModels] = useState<AgentModel[]>([]);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [configurationError, setConfigurationError] = useState<string | null>(null);
@@ -29,6 +30,7 @@ export const useAgentModels = () => {
     if (!user) {
       setRouterModels([]);
       setIsConfigured(false);
+      setProvider(null);
       setCatalogError(null);
       setConfigurationError(null);
       setIsLoading(false);
@@ -43,6 +45,7 @@ export const useAgentModels = () => {
       const credentials = await loadRouterCredentials();
       if (!mountedRef.current || requestId !== requestIdRef.current) return;
       setIsConfigured(Boolean(credentials));
+      setProvider(credentials?.provider ?? null);
 
       if (!credentials) {
         setRouterModels([]);
@@ -59,8 +62,9 @@ export const useAgentModels = () => {
       }
     } catch (error) {
       if (!mountedRef.current || requestId !== requestIdRef.current) return;
-      setConfigurationError(error instanceof Error ? error.message : "Unable to load 9Router key status.");
+      setConfigurationError(error instanceof Error ? error.message : "Unable to load provider connection status.");
       setIsConfigured(false);
+      setProvider(null);
       setRouterModels([]);
     } finally {
       if (mountedRef.current && requestId === requestIdRef.current) setIsLoading(false);
@@ -99,6 +103,7 @@ export const useAgentModels = () => {
   return {
     isLoading,
     isConfigured,
+    provider,
     routerModels,
     routerModelIds: routerModels.map((model) => model.id),
     catalogError,

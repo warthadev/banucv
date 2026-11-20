@@ -17,7 +17,8 @@ export const isRetryableAgentAvailabilityError = (error: unknown): boolean => {
     : error instanceof Error
       ? error.message
       : "";
-  return /Agent runtime rate limit \(429\)/i.test(message) ||
+  return /Provider rate limit \(429\)/i.test(message) ||
+    /Agent runtime rate limit \(429\)/i.test(message) ||
     /Agent runtime temporarily unavailable \(503\)/i.test(message);
 };
 

@@ -2,9 +2,9 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { heroVariants } from "@/react/animation/home";
-import { Play, AlertCircle, Loader2, Cpu, Copy, Check, Key, Globe, Eye, EyeOff, Terminal } from "lucide-react";
+import { Play, AlertCircle, Loader2, Cpu, Copy, Check, Terminal } from "lucide-react";
 import { getAuth } from "@config/firebase";
-import { AGENT_API_BASE, AI_AGENT_API_BASE } from "@config/api";
+import { AI_AGENT_API_BASE } from "@config/api";
 
 const listContainerVariants = {
   hidden: { opacity: 0 },
@@ -30,17 +30,13 @@ interface ModelInfo {
 }
 
 const AICheck: React.FC = () => {
-  const [systemModels, setSystemModels] = useState<ModelInfo[]>([]);
-  const [customModels, setCustomModels] = useState<ModelInfo[]>([]);
+  const [models, setModels] = useState<ModelInfo[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [copied, setCopied] = useState(false);
-  const [authMode, setAuthMode] = useState<"system" | "custom">("system");
-  const [customKey, setCustomKey] = useState("");
-  const [showKey, setShowKey] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
 
-  const currentModels = authMode === "system" ? systemModels : customModels;
+  const currentModels = models;
 
   const fetchModels = async () => {
     setStatus("loading");
@@ -49,25 +45,15 @@ const AICheck: React.FC = () => {
     setIsFetching(true);
 
     try {
-      let models: ModelInfo[] = [];
-
-      let response: Response;
-      if (authMode === "system") {
-        const firebaseAuth = await getAuth();
-        const user = firebaseAuth.currentUser;
-        if (!user) throw new Error("Sign in to check system models.");
-        const idToken = await user.getIdToken(true);
-        response = await fetch(`${AI_AGENT_API_BASE}/agent/models`, { headers: { Authorization: `Bearer ${idToken}` }, cache: "no-store" });
-      } else {
-        const token = customKey.trim();
-        if (!token) throw new Error("Enter a personal API key first.");
-        response = await fetch(`${AGENT_API_BASE}/router/models`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
-      }
+      const firebaseAuth = await getAuth();
+      const user = firebaseAuth.currentUser;
+      if (!user) throw new Error("Sign in to check this account's provider catalog.");
+      const idToken = await user.getIdToken(true);
+      const response = await fetch(`${AI_AGENT_API_BASE}/agent/models`, { headers: { Authorization: `Bearer ${idToken}` }, cache: "no-store" });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.detail || data?.error?.message || `Error ${response.status}`);
       const entries = (data.data || data.models || []) as ModelInfo[];
-      models = entries.map((model) => ({ ...model, name: model.name || model.id || "Unknown model" }));
-      if (authMode === "system") setSystemModels(models); else setCustomModels(models);
+      setModels(entries.map((model) => ({ ...model, name: model.name || model.id || "Unknown model" })));
 
       setStatus("idle");
     } catch (err: unknown) {
@@ -102,58 +88,10 @@ const AICheck: React.FC = () => {
           animate="animate"
           className="aic-hero-wrapper"
         >
-          <h1 className="home-title">9router Model Check</h1>
-          <p className="home-subtitle">Verify 9router connectivity and available models.</p>
+          <h1 className="home-title">Provider Model Check</h1>
+          <p className="home-subtitle">Verify this signed-in account&apos;s provider connection and model catalog.</p>
 
           <div className="aic-controls">
-            
-            <div className="aic-tabs">
-              <button 
-                onClick={() => { setAuthMode("system"); setErrorMessage(""); }} 
-                className={`aic-tab ${authMode === "system" ? "active" : ""}`}
-              >
-                {authMode === "system" && <motion.div layoutId="activeTab" className="aic-tab-active" />}
-                <span className="aic-tab-content"><Globe size={14} /> System</span>
-              </button>
-              <button 
-                onClick={() => { setAuthMode("custom"); setErrorMessage(""); }} 
-                className={`aic-tab ${authMode === "custom" ? "active" : ""}`}
-              >
-                {authMode === "custom" && <motion.div layoutId="activeTab" className="aic-tab-active" />}
-                <span className="aic-tab-content"><Key size={14} /> Personal</span>
-              </button>
-            </div>
-
-            <div className={`aic-key-input-wrapper ${authMode === "custom" ? "aic-key-input-expanded" : ""}`}>
-              <div className="aic-key-input-inner">
-                <AnimatePresence mode="wait">
-                  {authMode === "custom" && (
-                    <motion.div
-                      key="input-manual"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="aic-key-input-container"
-                    >
-                      <input 
-                        type={showKey ? "text" : "password"}
-                        placeholder="Paste your API key..."
-                        value={customKey}
-                        onChange={(e) => setCustomKey(e.target.value)}
-                        className="aic-key-input"
-                      />
-                      <button 
-                        onClick={() => setShowKey(!showKey)} 
-                        className="aic-key-eye-btn"
-                      >
-                        {showKey ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-
             <div className="aic-actions">
               <motion.button 
                 onClick={fetchModels} 
@@ -226,7 +164,7 @@ const AICheck: React.FC = () => {
 
             {currentModels.length > 0 && (
               <motion.div 
-                key={authMode} 
+                key="account-catalog"
                 variants={listContainerVariants}
                 initial="hidden"
                 animate="visible"

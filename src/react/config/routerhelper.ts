@@ -2,31 +2,39 @@ import { getAuth } from "./firebase";
 import { AI_AGENT_API_BASE } from "./api";
 import { extractAgentModels, type AgentModel } from "./agentmodels";
 
+export interface AgentProviderOption {
+  id: string;
+  name: string;
+}
+
+export const AGENT_PROVIDER_OPTIONS: AgentProviderOption[] = [
+  { id: "openai", name: "OpenAI" },
+  { id: "openrouter", name: "OpenRouter" },
+  { id: "deepseek", name: "DeepSeek" },
+];
+
 export interface RouterCredentials {
-  model: string;
+  provider: string;
   fingerprint: string;
 }
 
 interface AgentKeyRecord {
   provider: string;
-  model?: string;
   enabled?: boolean;
   fingerprint?: string;
+  gateway?: boolean;
 }
 
 interface AgentKeysResponse {
   keys?: AgentKeyRecord[];
-  fingerprint?: string;
-  model?: string;
+  configured?: boolean;
   detail?: string;
 }
-
-const DEFAULT_KEY_MODEL = "openrouter/openrouter/free";
 
 const getAuthenticatedUser = async () => {
   const firebaseAuth = await getAuth();
   const user = firebaseAuth.currentUser;
-  if (!user) throw new Error("Sign in to manage the 9Router key.");
+  if (!user) throw new Error("Sign in to manage your provider connection.");
   return { user, idToken: await user.getIdToken(true) };
 };
 
@@ -35,7 +43,7 @@ const requestAgentKeys = async (
   method: "GET" | "PUT" | "DELETE",
   body?: Record<string, string>,
 ): Promise<AgentKeysResponse> => {
-  const path = method === "DELETE" ? "/agent/keys/9router" : "/agent/keys";
+  const path = method === "DELETE" ? "/agent/keys/gateway" : "/agent/keys";
   const response = await fetch(`${AI_AGENT_API_BASE}${path}`, {
     method,
     headers: {
@@ -46,18 +54,21 @@ const requestAgentKeys = async (
     cache: "no-store",
   });
   const data = await response.json().catch(() => ({})) as AgentKeysResponse;
-  if (!response.ok) throw new Error(data.detail || `Agent key request failed (${response.status})`);
+  if (!response.ok) throw new Error(data.detail || `Provider connection request failed (${response.status})`);
   return data;
 };
 
-export const saveRouterCredentials = async (apiKey: string, model = DEFAULT_KEY_MODEL): Promise<void> => {
+export const saveRouterCredentials = async (apiKey: string, provider: string): Promise<void> => {
   const normalizedKey = apiKey.trim();
-  if (!normalizedKey) throw new Error("A 9Router API key is required.");
+  const selectedProvider = provider.trim().toLowerCase();
+  if (!AGENT_PROVIDER_OPTIONS.some((option) => option.id === selectedProvider)) {
+    throw new Error("Choose a supported provider.");
+  }
+  if (!normalizedKey) throw new Error("A provider API key is required.");
   const { idToken } = await getAuthenticatedUser();
   await requestAgentKeys(idToken, "PUT", {
-    provider: "9router",
+    provider: selectedProvider,
     api_key: normalizedKey,
-    model,
   });
 };
 
@@ -65,10 +76,10 @@ export const loadRouterCredentials = async (): Promise<RouterCredentials | null>
   const { idToken } = await getAuthenticatedUser();
   const data = await requestAgentKeys(idToken, "GET");
   const records = Array.isArray(data.keys) ? data.keys : [];
-  const credential = records.find((item) => item.provider?.toLowerCase() === "9router");
-  if (!credential || credential.enabled === false) return null;
+  const credential = records.find((item) => item.gateway === true && item.enabled !== false);
+  if (!credential || !AGENT_PROVIDER_OPTIONS.some((option) => option.id === credential.provider)) return null;
   return {
-    model: credential.model || DEFAULT_KEY_MODEL,
+    provider: credential.provider,
     fingerprint: credential.fingerprint || "",
   };
 };
@@ -84,7 +95,7 @@ export const loadRouterModelCatalog = async (): Promise<AgentModel[]> => {
     const detail = data && typeof data === "object" && "detail" in data
       ? (data as { detail?: unknown }).detail
       : undefined;
-    throw new Error(typeof detail === "string" ? detail : `Failed to load the model catalog (${response.status})`);
+    throw new Error(typeof detail === "string" ? detail : `Failed to load this account's model catalog (${response.status})`);
   }
   return extractAgentModels(data);
 };

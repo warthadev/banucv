@@ -158,7 +158,7 @@ export const RouterAuthModal: React.FC<RouterAuthModalProps> = ({
             </form>
 
             <div className="github-modal-footer">
-              <p>Use a public HTTPS hostname; private, local, and non-HTTPS endpoints are blocked.</p>
+              <p>Your 9Router instance must be reachable from the internet over HTTPS. Localhost and private-network URLs won&apos;t work from BanuCV.</p>
               <a
                 className="aiagent-settings-link"
                 href="https://github.com/decolua/9router#-deployment"

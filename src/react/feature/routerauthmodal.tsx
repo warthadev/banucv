@@ -159,6 +159,14 @@ export const RouterAuthModal: React.FC<RouterAuthModalProps> = ({
 
             <div className="github-modal-footer">
               <p>Use a public HTTPS hostname; private, local, and non-HTTPS endpoints are blocked.</p>
+              <a
+                className="aiagent-settings-link"
+                href="https://github.com/decolua/9router#-deployment"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Official 9Router setup guide (deployment and API key)
+              </a>
               <RouterLink className="aiagent-settings-link" to="/setting">
                 Manage this account&apos;s 9Router URL and key in Settings
               </RouterLink>

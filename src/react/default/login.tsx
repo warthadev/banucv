@@ -1,6 +1,6 @@
 // src/react/default/login.tsx
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { 
   signInWithPopup, 
   GoogleAuthProvider, 
@@ -19,6 +19,12 @@ import Loading from "@control/loading";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnState = location.state as { from?: { pathname?: string; search?: string; hash?: string } } | null;
+  const from = returnState?.from;
+  const returnTo = from?.pathname?.startsWith("/") && !from.pathname.startsWith("//")
+    ? `${from.pathname}${from.search || ""}${from.hash || ""}`
+    : "/dashboard";
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
   const [authReady, setAuthReady] = useState(false);
@@ -140,8 +146,9 @@ const Login: React.FC = () => {
       if (!email) {
         try {
           const tokenResult = await user.getIdTokenResult();
-          if (tokenResult.claims.email) {
-            email = tokenResult.claims.email;
+          const claimEmail = tokenResult.claims.email;
+          if (typeof claimEmail === "string" && claimEmail) {
+            email = claimEmail;
           }
         } catch {
           void 0;
@@ -154,7 +161,7 @@ const Login: React.FC = () => {
       const token = await user.getIdToken();
       dispatch(setToken(token));
       
-      navigate("/dashboard");
+      navigate(returnTo, { replace: true });
     } catch (error: unknown) {
       const errorCode = typeof error === "object" && error !== null && "code" in error && typeof error.code === "string"
         ? error.code
@@ -189,7 +196,7 @@ const Login: React.FC = () => {
             initial="initial"
             animate="animate"
           >
-            Sign In
+            Sign In or Create Account
           </motion.h1>
 
           <motion.p 
@@ -198,7 +205,7 @@ const Login: React.FC = () => {
             initial="initial"
             animate="animate"
           >
-            Choose a provider to continue
+            Choose Google, GitHub, or Yahoo. New users are registered with that provider, their profile is saved, and they return to the page they requested.
           </motion.p>
 
           <div className="login-icon-wrapper">

@@ -44,6 +44,11 @@ export const useAgentModels = () => {
       if (!mountedRef.current || requestId !== requestIdRef.current) return;
       setIsConfigured(Boolean(credentials));
 
+      if (!credentials) {
+        setRouterModels([]);
+        return;
+      }
+
       try {
         const models = await loadRouterModelCatalog();
         if (!mountedRef.current || requestId !== requestIdRef.current) return;

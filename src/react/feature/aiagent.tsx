@@ -631,7 +631,7 @@ const splitMarkdown = (content: string) => {
 };
 
 const AIAgent: React.FC = () => {
-  const { isConfigured, isLoading: authLoading, routerModels: routerModelCatalog, routerModelIds: routerModels, catalogError } = useAgentModels();
+  const { isConfigured, isLoading: authLoading, routerModels: routerModelCatalog, routerModelIds: routerModels, catalogError, configurationError } = useAgentModels();
   const { aiMode } = useAudio();
   const navigate = useNavigate();
 
@@ -716,6 +716,7 @@ const AIAgent: React.FC = () => {
     isLoading: authLoading,
     userUid: currentUserUid,
     isConfigured,
+    configurationError,
   });
   const selectAgentMode = (mode: AgentMode) => {
     const candidates = getAgentModelsForMode(routerModels, mode, routerModelCatalog);
@@ -1361,6 +1362,17 @@ const AIAgent: React.FC = () => {
   const totalUploads = uploadedImages.length + uploadedFiles.length;
 
   if (authLoading || !currentUserUid) return <Loading />;
+  if (configurationError) {
+    return (
+      <div className="aiagent-container">
+        <div className="aiagent-catalog-status" role="alert">
+          <p>Unable to check this account&apos;s 9Router key status: {configurationError}</p>
+          <button type="button" className="aiagent-icon-btn" onClick={() => window.location.reload()}>Retry</button>
+          <RouterLink className="aiagent-settings-link" to="/dashboard">Cancel and return to Dashboard</RouterLink>
+        </div>
+      </div>
+    );
+  }
   if (isRouterAuthModalOpen) {
     return (
       <RouterAuthModal

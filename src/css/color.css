@@ -155,7 +155,7 @@
   --border-color: #d5c4a1;
   --loading-text: rgba(101, 123, 131, 1);
   --shadow-color: rgba(0, 0, 0, 0.1);
-  --btn-text: #ffffff;
+  --btn-text: #000000;
   --btn-text-dark: #657b83;
   --primary-rgb: 101, 123, 131;
   --primary: #657b83;
@@ -177,6 +177,40 @@
   --primary-rgb: 248, 242, 248;
   --primary: #f8f8f2;
   --primary-alpha: rgba(248, 242, 248, 0.08);
+}
+
+/* Semantic color tokens: component styles should consume these instead of fixed colors. */
+:root {
+  --color-background: var(--bg);
+  --color-surface: var(--card-bg);
+  --color-text: var(--text);
+  --color-text-sub: var(--text-sub);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border-color);
+  --color-accent: var(--primary);
+  --color-accent-alpha: var(--primary-alpha);
+  --color-accent-foreground: var(--btn-text);
+  --color-icon: var(--text-icon);
+  --color-icon-hover: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface));
+  --color-success: #15803d;
+  --color-error: #b91c1c;
+  --color-error-foreground: #ffffff;
+  --color-warning: #a16207;
+  --color-info: #1d4ed8;
+}
+
+.dark,
+.night,
+.forest,
+.ocean,
+.amoled,
+.dim,
+.dracula {
+  --color-success: #4ade80;
+  --color-error: #f87171;
+  --color-error-foreground: #1f1010;
+  --color-warning: #fbbf24;
+  --color-info: #60a5fa;
 }
 
 .mediarender-control-btn {
@@ -548,37 +582,59 @@
 
 /* Shared semantic color utilities: use these same classes on every page. */
 .theme-color-text {
-  color: var(--text) !important;
+  color: var(--color-text) !important;
 }
 
 .theme-color-subtext {
-  color: var(--text-sub) !important;
+  color: var(--color-text-sub) !important;
 }
 
 .theme-color-muted {
-  color: var(--text-muted) !important;
+  color: var(--color-text-muted) !important;
 }
 
 .theme-color-accent {
-  color: var(--primary) !important;
+  color: var(--color-accent) !important;
 }
 
 .theme-color-on-primary {
-  color: var(--btn-text) !important;
+  color: var(--color-accent-foreground) !important;
 }
 
 /* Small action icons stay readable on every theme and palette. */
-.theme-icon-button {
-  color: var(--text-icon) !important;
+html .theme-icon-button {
+  color: var(--color-icon) !important;
 }
 
-.theme-icon-button:hover:not(:disabled),
-.theme-icon-button:focus-visible {
-  color: var(--text-icon) !important;
+html .theme-icon-button:hover:not(:disabled),
+html .theme-icon-button:focus-visible {
+  color: var(--color-icon) !important;
 }
 
-.theme-icon-button:disabled {
-  color: var(--text-muted) !important;
+html .theme-icon-button:disabled {
+  color: var(--color-text-sub) !important;
+}
+
+/* Hide/reveal and copy controls share a protected global color rule across pages. */
+html :is(.setting-eye-btn, .setting-agent-reveal-btn, .su-copy-btn, .setting-agent-copy-btn, .settings-token-copy-button) {
+  color: var(--color-icon) !important;
+}
+
+html :is(.setting-eye-btn, .setting-agent-reveal-btn, .su-copy-btn, .setting-agent-copy-btn, .settings-token-copy-button):hover:not(:disabled),
+html :is(.setting-eye-btn, .setting-agent-reveal-btn, .su-copy-btn, .setting-agent-copy-btn, .settings-token-copy-button):focus-visible {
+  color: var(--color-icon) !important;
+  background-color: var(--color-icon-hover) !important;
+}
+
+html :is(.setting-eye-btn, .setting-agent-reveal-btn, .su-copy-btn, .setting-agent-copy-btn, .settings-token-copy-button):disabled {
+  color: var(--color-text-sub) !important;
+  opacity: 0.65 !important;
+  cursor: not-allowed;
+}
+
+html :is(.setting-eye-btn, .setting-agent-reveal-btn, .su-copy-btn, .setting-agent-copy-btn, .settings-token-copy-button):focus-visible {
+  outline: 2px solid var(--color-icon) !important;
+  outline-offset: 2px;
 }
 
 /* One theme-independent foreground rule for all primary action controls. */
@@ -605,10 +661,12 @@
   .cva-btn,
   .next-button,
   .setting-overlay .barcode-card .mode-button.active,
+  .setting-agent-primary,
+  .su-retry-btn,
   .barcode-card .barcode-download-btn,
   .barcode-card .cva-btn
 ) {
-  color: var(--btn-text) !important;
+  color: var(--color-accent-foreground) !important;
 }
 
 /* Neutral actions retain the current theme's readable secondary text color. */
@@ -617,8 +675,7 @@
   color: var(--text-sub) !important;
 }
 
-.palette-default {
-}
+.palette-default {}
 
 .palette-emerald { --primary: #10b981; --primary-alpha: rgba(16, 185, 129, 0.1); --primary-rgb: 16, 185, 129; --btn-text: #000000; }
 .palette-sapphire { --primary: #3b82f6; --primary-alpha: rgba(59, 130, 246, 0.1); --primary-rgb: 59, 130, 246; --btn-text: #000000; }

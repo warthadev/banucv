@@ -88,7 +88,7 @@
   border-radius: 12px;
   border: 1px solid var(--border-color);
   background-color: var(--card-bg);
-  color: var(--text-main);
+  color: var(--color-text);
   outline: none;
   font-size: 14px;
   box-sizing: border-box;
@@ -130,7 +130,7 @@
   justify-content: center;
   gap: 8px;
   background-color: var(--primary);
-  color: #fff;
+  color: var(--color-accent-foreground);
   border: none;
   border-radius: 12px;
   padding: 15px 20px;
@@ -165,7 +165,7 @@
   justify-content: center;
   gap: 8px;
   background-color: var(--card-bg);
-  color: var(--text-main);
+  color: var(--color-text);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 15px 20px;

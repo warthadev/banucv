@@ -136,7 +136,7 @@
 .mode-button.active {
   background: var(--primary);
   border-color: var(--primary);
-  color: white;
+  color: var(--color-accent-foreground);
   box-shadow: 0 4px 12px var(--shadow-color);
 }
 
@@ -148,7 +148,7 @@
 .next-button {
   background: var(--primary);
   border: none;
-  color: white;
+  color: var(--color-accent-foreground);
   margin-top: 12px;
 }
 
@@ -179,7 +179,7 @@
 
 .audio-manual-trigger:hover {
   background: var(--primary);
-  color: white;
+  color: var(--color-accent-foreground);
   transform: translateY(-1px);
 }
 

@@ -29,14 +29,6 @@ const ROOT_CONFIRM_LABELS = {
   B: "Jalankan aksi persis ini",
   C: "Saya memahami dampaknya, lanjutkan",
 } as const;
-const rootConfirmInputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "8px 10px",
-  color: "var(--text, #eee)",
-  background: "var(--background, #101217)",
-  border: "1px solid var(--border, #373b45)",
-  borderRadius: 7,
-};
 
 const summarizeHostAction = (action: Record<string, string>) => {
   const type = action.type || "unknown";
@@ -1753,28 +1745,28 @@ const AIAgent: React.FC = () => {
           <input type="file" ref={multiFileInputRef} multiple style={{ display: "none" }} onChange={handleMultiFilesUpload} />
           <input type="file" ref={folderInputRef} style={{ display: "none" }} {...{ webkitdirectory: "true", directory: "true" }} onChange={handleFolderUpload} />
           {pendingHostAction && (
-            <div role="dialog" aria-modal="true" aria-labelledby="host-action-confirm-title" style={{ position: "fixed", inset: 0, zIndex: 1500, display: "grid", placeItems: "center", padding: 16, background: "rgba(0,0,0,.72)" }}>
-              <section style={{ width: "min(720px, 100%)", maxHeight: "85vh", display: "flex", flexDirection: "column", gap: 12, padding: 16, color: "var(--text, #eee)", background: "var(--surface, #171a21)", border: "1px solid var(--border, #4a4f59)", borderRadius: 12 }}>
-                <h3 id="host-action-confirm-title" style={{ margin: 0 }}>Konfirmasi aksi owner pada Sandbox</h3>
-                <div style={{ padding: 10, border: "1px solid var(--border, #4a4f59)", borderRadius: 8 }}>
+            <div className="aiagent-host-action-overlay" role="dialog" aria-modal="true" aria-labelledby="host-action-confirm-title">
+              <section className="aiagent-host-action-dialog">
+                <h3 id="host-action-confirm-title">Konfirmasi aksi owner pada Sandbox</h3>
+                <div className="aiagent-host-action-summary">
                   <strong>{summarizeHostAction(pendingHostAction.action).title}</strong>
-                  <div style={{ marginTop: 4, fontFamily: "monospace", overflowWrap: "anywhere" }}>{summarizeHostAction(pendingHostAction.action).path}</div>
-                  <p style={{ margin: "6px 0 0", fontSize: 13 }}>{summarizeHostAction(pendingHostAction.action).impact}</p>
+                  <div className="aiagent-host-action-path">{summarizeHostAction(pendingHostAction.action).path}</div>
+                  <p className="aiagent-host-action-impact">{summarizeHostAction(pendingHostAction.action).impact}</p>
                 </div>
-                <pre style={{ margin: 0, padding: 12, overflow: "auto", whiteSpace: "pre-wrap", overflowWrap: "anywhere", background: "var(--background, #101217)", borderRadius: 8, fontSize: 12 }}>{JSON.stringify(pendingHostAction.action, null, 2)}</pre>
-                <small style={{ opacity: 0.7 }}>Konfirmasi kedaluwarsa {new Date(pendingHostAction.expiresAt * 1000).toLocaleTimeString()}.</small>
-                <label style={{ display: "grid", gap: 6, fontSize: 12 }}>
+                <pre className="aiagent-host-action-json">{JSON.stringify(pendingHostAction.action, null, 2)}</pre>
+                <small className="aiagent-host-action-expiry">Konfirmasi kedaluwarsa {new Date(pendingHostAction.expiresAt * 1000).toLocaleTimeString()}.</small>
+                <label className="aiagent-host-action-label">
                   Teks tombol persetujuan
-                  <select value={confirmLabelChoice} onChange={(event) => setConfirmLabelChoice(event.target.value as "A" | "B" | "C" | "custom")} style={{ ...rootConfirmInputStyle, cursor: "pointer" }}>
+                  <select className="aiagent-host-action-input" value={confirmLabelChoice} onChange={(event) => setConfirmLabelChoice(event.target.value as "A" | "B" | "C" | "custom")}>
                     <option value="A">A — {ROOT_CONFIRM_LABELS.A}</option>
                     <option value="B">B — {ROOT_CONFIRM_LABELS.B}</option>
                     <option value="C">C — {ROOT_CONFIRM_LABELS.C}</option>
                     <option value="custom">Tulis teks sendiri</option>
                   </select>
                 </label>
-                {confirmLabelChoice === "custom" && <input value={customConfirmLabel} onChange={(event) => setCustomConfirmLabel(event.target.value)} maxLength={80} placeholder="Tulis label tombol (maks. 80 karakter)" aria-label="Teks tombol konfirmasi custom" style={rootConfirmInputStyle} />}
-                {hostActionError && <div role="alert" style={{ color: "#ff8989", fontSize: 13 }}>{hostActionError}</div>}
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                {confirmLabelChoice === "custom" && <input className="aiagent-host-action-input" value={customConfirmLabel} onChange={(event) => setCustomConfirmLabel(event.target.value)} maxLength={80} placeholder="Tulis label tombol (maks. 80 karakter)" aria-label="Teks tombol konfirmasi custom" />}
+                {hostActionError && <div className="aiagent-host-action-error" role="alert">{hostActionError}</div>}
+                <div className="aiagent-host-action-actions">
                   <button type="button" className="aiagent-icon-btn" onClick={dismissPendingHostAction} disabled={confirmingHostAction}>Batalkan</button>
                   <button type="button" className="aiagent-send-btn" onClick={() => void confirmPendingHostAction()} disabled={confirmingHostAction || (confirmLabelChoice === "custom" && !customConfirmLabel.trim())}>{confirmingHostAction ? "Menjalankan…" : confirmLabelChoice === "custom" ? customConfirmLabel.trim() : ROOT_CONFIRM_LABELS[confirmLabelChoice]}</button>
                 </div>

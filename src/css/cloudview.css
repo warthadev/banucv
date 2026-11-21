@@ -334,7 +334,7 @@
 }
 .cloudview-tree-badge, .cloudview-unread {
   background: var(--primary);
-  color: white;
+  color: var(--color-accent-foreground);
   font-size: 11px;
   font-weight: 700;
   padding: 2px 7px;
@@ -2780,23 +2780,9 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   flex-shrink: 0;
+  background: var(--color-accent);
+  color: var(--color-accent-foreground);
 }
-
-.hf-repo-type-dataset {
-  background: #e3f2fd;
-  color: #1565c0;
-}
-
-.hf-repo-type-model {
-  background: #f3e5f5;
-  color: #7b1fa2;
-}
-
-.hf-repo-type-space {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-
 .hf-repo-description {
   font-size: 13px;
   color: var(--text-sub);
@@ -2820,7 +2806,7 @@
 }
 
 .hf-repo-meta-private {
-  color: #e53935;
+  color: var(--color-error);
 }
 
 .hf-files-container {

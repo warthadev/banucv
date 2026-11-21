@@ -27,8 +27,7 @@ button, .btn {
   padding: 15px;
   border-radius: 12px;
   border: none;
-  background: var(--primary-blue);
-  color: var(--text);
+  color: var(--color-text);
   font-weight: 700;
 }
 
@@ -38,28 +37,28 @@ button, .btn {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-color);
+  background: var(--color-background);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: var(--color-border);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: var(--color-text-muted);
 }
 
 /* Scrollbar - Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--border-color) var(--bg-color);
+  scrollbar-color: var(--color-border) var(--color-background);
 }
 
 /* Selection Color */
 ::selection {
-  background-color: #00a8ff;
-  color: #ffffff;
+  background-color: var(--color-accent);
+  color: var(--color-accent-foreground);
 }
 
 /* Animasi spin untuk Loader */

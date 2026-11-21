@@ -32,7 +32,7 @@ const SettingVisual: React.FC = () => {
 
   return (
     <>
-      <section className="stack-item">
+      <section className="settings-bundle-section">
         <div className="section-header">
           <Paintbrush size={18} />
           <span className="section-label"><span>Theme Mode</span></span>
@@ -53,7 +53,7 @@ const SettingVisual: React.FC = () => {
         </div>
       </section>
 
-      <section className="stack-item">
+      <section className="settings-bundle-section">
         <div className="section-header">
           <Palette size={18} />
           <span className="section-label"><span>Color Palette</span></span>

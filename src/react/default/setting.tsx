@@ -77,7 +77,7 @@ const SettingsPage: React.FC = () => {
         </header>
 
         {/* User Profile & Credentials */}
-        <section className="stack-item settings-account-bundle" aria-label="Account and integrations">
+        <section className="stack-item settings-all-bundle" aria-label="Settings">
           <SettingUser registerSaveHandler={registerSaveHandler} onSettingsChanged={clearSaveSummary} />
           <SettingAgent registerSaveHandler={registerSaveHandler} onSettingsChanged={clearSaveSummary} />
 
@@ -108,13 +108,13 @@ const SettingsPage: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* Pengaturan Visual */}
+          <SettingVisual />
+
+          {/* Pengaturan Audio */}
+          <SettingAudio />
         </section>
-        
-        {/* Pengaturan Visual */}
-        <SettingVisual />
-        
-        {/* Pengaturan Audio */}
-        <SettingAudio />
 
         {/* Footer */}
         <footer className="settings-footer">

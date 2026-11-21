@@ -59,7 +59,7 @@ const SettingAudio: React.FC = () => {
 
   return (
     <>
-      <section className="stack-item">
+      <section className="settings-bundle-section">
         <div className="section-header">
           <Volume2 size={18} color="var(--primary)" />
           <span className="section-label"><span>Music Output</span></span>
@@ -76,7 +76,7 @@ const SettingAudio: React.FC = () => {
         />
       </section>
 
-      <section className="stack-item">
+      <section className="settings-bundle-section">
         <div className="section-header">
           <Play size={18} color="var(--primary)" />
           <span className="section-label"><span>Playback BGM</span></span>
@@ -101,7 +101,7 @@ const SettingAudio: React.FC = () => {
         </div>
       </section>
 
-      <section className="stack-item">
+      <section className="settings-bundle-section">
         <div className="section-header">
           <Cpu size={18} color="var(--primary)" />
           <span className="section-label"><span>AI Intelligence</span></span>
@@ -143,7 +143,7 @@ const SettingAudio: React.FC = () => {
         </div>
       </section>
 
-      <section className="stack-item">
+      <section className="settings-bundle-section">
         <div className="section-header">
           <Music size={18} color="var(--primary)" />
           <span className="section-label"><span>Music Palette</span></span>
@@ -166,7 +166,7 @@ const SettingAudio: React.FC = () => {
         </div>
       </section>
 
-      <section className="stack-item">
+      <section className="settings-bundle-section">
         <div className="section-header">
           <LayoutGrid size={18} color="var(--primary)" />
           <span className="section-label"><span>Quick Menu Access</span></span>

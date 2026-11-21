@@ -58,6 +58,7 @@ const SettingsPage: React.FC = () => {
 
   const allUnchanged = Boolean(saveResults?.length && saveResults.every((result) => result.status === 'unchanged'));
   const hasSaveErrors = Boolean(saveResults?.some((result) => result.status === 'error'));
+  const visibleSaveResults = saveResults?.filter((result) => result.status !== 'unchanged') ?? [];
 
   return (
     <div className="settings-page-container">
@@ -116,7 +117,7 @@ const SettingsPage: React.FC = () => {
                   >
                     {allUnchanged ? (
                       <p>No changes to save.</p>
-                    ) : saveResults.map((result) => (
+                    ) : visibleSaveResults.map((result) => (
                       <p key={result.sectionId} className={result.status === 'error' ? 'is-error' : ''}>
                         {result.status === 'error' ? <AlertCircle size={15} aria-hidden="true" /> : <CheckCircle size={15} aria-hidden="true" />}
                         <span><strong>{result.sectionName}:</strong> {result.message}</span>

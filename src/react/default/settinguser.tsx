@@ -240,7 +240,11 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
       } catch {
         // The write succeeded; keep the locally merged profile if refresh fails.
       }
-      return { sectionId, sectionName, status: "saved", message: "Changed credentials saved." };
+      const changedFields = [
+        ...(Object.hasOwn(updateData, "githubUsername") ? ["username"] : []),
+        ...(Object.hasOwn(updateData, "githubToken") ? ["personal access token"] : []),
+      ];
+      return { sectionId, sectionName, status: "saved", message: `${changedFields.join(" and ")} updated.` };
     } catch (err: unknown) {
       return {
         sectionId,

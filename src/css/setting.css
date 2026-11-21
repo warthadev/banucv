@@ -1309,13 +1309,11 @@
 .settings-service-section + .settings-service-section {
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid var(--border-color);
 }
 
 .settings-service-bundle > .settings-save-all-panel {
   margin: 20px 0 0;
   padding-top: 18px;
-  border-top: 1px solid var(--border-color);
 }
 
 .setting-eye-btn,
@@ -1353,4 +1351,20 @@
 
 .settings-token-input-wrapper .setting-agent-reveal-btn {
   right: 44px;
+}
+
+.settings-page-container :is(
+  .stack-item, .su-avatar, .su-stat-card, .su-location-card, .su-device-card,
+  .su-empty-box, .su-list-item, .su-message-success, .su-message-error,
+  .setting-sensitive-input, .setting-plain-input, .setting-agent-input,
+  .setting-agent-safe-status, .setting-agent-model-list li, .setting-agent-secondary,
+  .setting-agent-danger, .settings-save-all-results, .playback-btn, .genre-chip,
+  .footer-status
+) {
+  border: none;
+}
+
+.settings-page-container :is(.setting-sensitive-input, .setting-plain-input):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }

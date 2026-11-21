@@ -107,7 +107,7 @@ const SettingAudio: React.FC = () => {
           <span className="section-label"><span>AI Intelligence</span></span>
           <span className="section-value" translate="no">{(aiMode as AiMode).toUpperCase()}</span>
         </div>
-        <div style={{ display: 'flex', backgroundColor: 'var(--card-bg)', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-color)', marginTop: '8px' }}>
+        <div style={{ display: 'flex', backgroundColor: 'var(--bg)', padding: '4px', borderRadius: '12px', marginTop: '8px' }}>
           {(['off', 'auto', 'manual'] as AiMode[]).map((m) => (
             <button
               key={m}
@@ -172,7 +172,7 @@ const SettingAudio: React.FC = () => {
           <span className="section-label"><span>Quick Menu Access</span></span>
           <span className="section-value" translate="no">{isQuickVisible ? 'ON' : 'OFF'}</span>
         </div>
-        <div style={{ display: 'flex', backgroundColor: 'var(--card-bg)', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-color)', marginTop: '8px' }}>
+        <div style={{ display: 'flex', backgroundColor: 'var(--bg)', padding: '4px', borderRadius: '12px', marginTop: '8px' }}>
           <button
             type="button"
             className={`quick-toggle-btn ${isQuickVisible ? 'active' : ''}`}

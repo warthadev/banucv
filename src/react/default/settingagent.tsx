@@ -130,10 +130,8 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSett
       return {
         sectionId,
         sectionName,
-        status: "saved",
-        message: submittedNewKey
-          ? "Changed key verified and saved."
-          : "Existing key verified; its saved value was unchanged.",
+        status: submittedNewKey ? "saved" : "unchanged",
+        message: submittedNewKey ? "API key updated." : "No changes to save.",
       };
     } catch (error) {
       await refresh(currentUser);

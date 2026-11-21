@@ -4,13 +4,11 @@ import { extractAgentModels, type AgentModel } from "./agentmodels";
 
 export interface OpenRouterCredentials {
   provider: "openrouter";
-  fingerprint: string;
 }
 
 interface AgentKeyRecord {
   provider: string;
   enabled?: boolean;
-  fingerprint?: string;
 }
 
 interface AgentKeysResponse {
@@ -63,7 +61,7 @@ export const loadOpenRouterCredentials = async (): Promise<OpenRouterCredentials
   const records = Array.isArray(data.keys) ? data.keys : [];
   const credential = records.find((item) => item.provider?.toLowerCase() === "openrouter" && item.enabled !== false);
   if (!credential) return null;
-  return { provider: "openrouter", fingerprint: credential.fingerprint || "" };
+  return { provider: "openrouter" };
 };
 
 export const loadOpenRouterModelCatalog = async (): Promise<AgentModel[]> => {

@@ -133,16 +133,13 @@ const SettingAgent: React.FC = () => {
           {credentials && (
             <div className="setting-agent-safe-status">
               <ShieldCheck size={17} aria-hidden="true" />
-              <span>
-                OpenRouter key saved for this account
-                {credentials.fingerprint ? <small>Secure fingerprint: {credentials.fingerprint}</small> : null}
-              </span>
+              <span>OpenRouter key saved for this account</span>
             </div>
           )}
 
           <form className="setting-agent-form" onSubmit={handleSave}>
             <label className="setting-agent-label" htmlFor="setting-openrouter-key">
-              {credentials ? "Replace or re-verify OpenRouter API key" : "OpenRouter API key"}
+              OpenRouter API key
             </label>
             <input
               id="setting-openrouter-key"
@@ -151,16 +148,17 @@ const SettingAgent: React.FC = () => {
               name="openrouter-api-key"
               value={apiKey}
               onChange={(event) => setApiKey(event.target.value)}
-              placeholder={credentials ? "Leave blank to verify the saved key" : "Paste this account's OpenRouter API key"}
+              placeholder={credentials ? "Enter a key to replace the saved key" : "Paste this account's OpenRouter API key"}
               autoComplete="off"
               spellCheck={false}
               autoCapitalize="none"
               required={!credentials}
             />
+            {credentials && <span className="setting-agent-footnote">Enter a key to replace it, or leave blank to verify the saved key.</span>}
             <div className="setting-agent-actions">
               <button className="setting-agent-primary" type="submit" disabled={saving || (!apiKey.trim() && !credentials)}>
                 {saving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <ShieldCheck size={16} />}
-                {saving ? "Saving & verifying…" : credentials ? "Save / verify key" : "Save & verify key"}
+                {saving ? "Saving & verifying…" : "Save & verify key"}
               </button>
               <button className="setting-agent-secondary" type="button" onClick={() => {
                 void refresh(currentUser);

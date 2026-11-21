@@ -981,6 +981,30 @@
   margin-top: 0;
 }
 
+.setting-agent-reveal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-small);
+  background: transparent;
+  color: var(--text-sub);
+  cursor: pointer;
+}
+
+.setting-agent-reveal-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.setting-agent-reveal-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .setting-agent-copy-btn:disabled {
   cursor: not-allowed;
   opacity: 0.45;

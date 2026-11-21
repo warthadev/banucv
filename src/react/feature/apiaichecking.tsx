@@ -89,7 +89,7 @@ const AICheck: React.FC = () => {
           className="aic-hero-wrapper"
         >
           <h1 className="home-title">OpenRouter Free Model Check</h1>
-          <p className="home-subtitle">Check the live free-model catalog returned for this signed-in account&apos;s encrypted OpenRouter API key.</p>
+          <p className="home-subtitle">Check the live free-model catalog available to this signed-in account&apos;s OpenRouter API key.</p>
 
           <div className="aic-controls">
             <div className="aic-actions">

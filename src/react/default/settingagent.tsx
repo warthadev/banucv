@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
-import { AlertCircle, Check, CheckCircle, Copy, KeyRound, LoaderCircle, RefreshCw, ShieldCheck, Trash2 } from "lucide-react";
+import { AlertCircle, Check, CheckCircle, Copy, Eye, EyeOff, KeyRound, LoaderCircle, RefreshCw, ShieldCheck, Trash2 } from "lucide-react";
 import { getAuth } from "@config/firebase";
 import { clearOpenRouterCredentials, loadOpenRouterCredentials, saveOpenRouterCredentials, type OpenRouterCredentials } from "@config/routerhelper";
 import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
@@ -12,6 +12,7 @@ const SettingAgent: React.FC = () => {
   const [credentials, setCredentials] = useState<OpenRouterCredentials | null>(null);
   const { routerModels: models, isLoading: modelsLoading, catalogError: modelCatalogError } = useAgentModels();
   const [apiKey, setApiKey] = useState("");
+  const [showKey, setShowKey] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -32,13 +33,30 @@ const SettingAgent: React.FC = () => {
     setSettingsError(null);
     if (!user) {
       setCredentials(null);
+      setApiKey("");
+      setShowKey(false);
       setLoading(false);
       return;
     }
     try {
-      const saved = await loadOpenRouterCredentials();
+      let saved = await loadOpenRouterCredentials();
+      if (requestId !== requestIdRef.current) return;
+      if (saved?.migrationRequired) {
+        try {
+          saved = await saveOpenRouterCredentials("");
+        } catch (error) {
+          if (requestId === requestIdRef.current) {
+            setCredentials(saved);
+            setApiKey(saved.apiKey);
+            setSettingsError(error instanceof Error ? error.message : "The saved key could not be safely migrated.");
+          }
+          return;
+        }
+      }
       if (requestId !== requestIdRef.current) return;
       setCredentials(saved);
+      setApiKey(saved?.apiKey || "");
+      setShowKey(false);
     } catch (error) {
       if (requestId === requestIdRef.current) {
         setCredentials(null);
@@ -58,6 +76,7 @@ const SettingAgent: React.FC = () => {
         setCurrentUser(user);
         setAuthReady(true);
         setApiKey("");
+        setShowKey(false);
         setCopyStatus(null);
         setMessage(null);
         void refresh(user);
@@ -82,10 +101,11 @@ const SettingAgent: React.FC = () => {
     try {
       await saveOpenRouterCredentials(apiKey);
       setApiKey("");
+      setShowKey(false);
       setCopyStatus(null);
       await refresh(currentUser);
       window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
-      setMessage({ type: "success", text: "OpenRouter key verified. This account's old 9Router settings, if any, were removed." });
+      setMessage({ type: "success", text: "OpenRouter key verified and saved as plain text in this account's user record. This account's old 9Router settings, if any, were removed." });
     } catch (error) {
       await refresh(currentUser);
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Could not verify this account's OpenRouter key." });
@@ -128,12 +148,13 @@ const SettingAgent: React.FC = () => {
 
   const handleDelete = async () => {
     if (!currentUser || deleting) return;
-    if (!window.confirm("Remove this account's encrypted OpenRouter API key?")) return;
+    if (!window.confirm("Remove this account's OpenRouter API key?")) return;
     setDeleting(true);
     setMessage(null);
     try {
       await clearOpenRouterCredentials();
       setApiKey("");
+      setShowKey(false);
       setCopyStatus(null);
       await refresh(currentUser);
       window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
@@ -158,10 +179,10 @@ const SettingAgent: React.FC = () => {
       <div className="section-header">
         <KeyRound size={19} aria-hidden="true" />
         <span className="section-label" id="setting-agent-title">AI Agent · OpenRouter</span>
-        {credentials && <span className="setting-agent-status"><CheckCircle size={14} /> Configured</span>}
+        {credentials && <span className="setting-agent-status"><CheckCircle size={14} /> Connected</span>}
       </div>
       <p className="setting-agent-description">
-        Add this account&apos;s OpenRouter API key. The backend encrypts it in this account&apos;s existing user record, fetches the live model catalog, and offers only models marked free or priced at zero for both input and output.
+        Manage this account&apos;s OpenRouter API key. It is stored as plain text in this account&apos;s existing Firestore user record. The live catalog is checked and only models marked free or priced at zero for both input and output are offered.
       </p>
 
       {!currentUser ? (
@@ -169,13 +190,16 @@ const SettingAgent: React.FC = () => {
       ) : (
         <>
           <p className="setting-agent-account">Active account: <strong>{currentUser.email || currentUser.uid}</strong></p>
-          {settingsError && !credentials && (
-            <p className="setting-agent-error" role="alert"><AlertCircle size={15} /> Unable to load settings: {settingsError}</p>
+          {settingsError && (
+            <p className="setting-agent-error" role="alert"><AlertCircle size={15} /> OpenRouter settings warning: {settingsError}</p>
           )}
           {credentials && (
             <div className="setting-agent-safe-status">
               <ShieldCheck size={17} aria-hidden="true" />
-              <span>OpenRouter key saved for this account</span>
+              <span>
+                OpenRouter key connected for this account
+                <small>Stored as plain text in this account&apos;s existing Firestore user document.</small>
+              </span>
             </div>
           )}
 
@@ -187,7 +211,7 @@ const SettingAgent: React.FC = () => {
               <input
                 id="setting-openrouter-key"
                 className="setting-agent-input setting-agent-key-input"
-                type="password"
+                type={showKey ? "text" : "password"}
                 name="openrouter-api-key"
                 value={apiKey}
                 onChange={(event) => {
@@ -201,11 +225,21 @@ const SettingAgent: React.FC = () => {
                 required={!credentials}
               />
               <button
+                className="setting-agent-reveal-btn"
+                type="button"
+                onClick={() => setShowKey((current) => !current)}
+                aria-label={showKey ? "Hide saved OpenRouter API key" : "Reveal saved OpenRouter API key"}
+                aria-pressed={showKey}
+                disabled={!apiKey}
+              >
+                {showKey ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+              </button>
+              <button
                 className="su-copy-btn setting-agent-copy-btn"
                 type="button"
                 onClick={() => void handleCopyApiKey()}
                 disabled={!apiKey}
-                aria-label={copyStatus === "copied" ? "OpenRouter API key copied to clipboard" : "Copy entered OpenRouter API key"}
+                aria-label={copyStatus === "copied" ? "OpenRouter API key copied to clipboard" : "Copy displayed OpenRouter API key"}
                 title="Copy API key"
               >
                 {copyStatus === "copied" ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
@@ -242,7 +276,7 @@ const SettingAgent: React.FC = () => {
           </form>
 
           <p className="setting-agent-footnote">
-            OpenRouter&apos;s live catalog is checked whenever models are loaded; chat requests are rejected unless the selected model is still listed as free. The API key is never returned to this browser after saving.
+            OpenRouter&apos;s live catalog is checked whenever models are loaded; chat requests are rejected unless the selected model is still listed as free. The saved key is masked until you reveal it, and the copy control copies the key currently shown for this signed-in account.
           </p>
           {credentials && <AgentModelCatalog models={models} isLoading={modelsLoading} error={modelCatalogError} />}
           {message && (

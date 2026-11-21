@@ -4,16 +4,23 @@ import { extractAgentModels, type AgentModel } from "./agentmodels";
 
 export interface OpenRouterCredentials {
   provider: "openrouter";
+  apiKey: string;
+  migrationRequired: boolean;
 }
 
 interface AgentKeyRecord {
   provider: string;
   enabled?: boolean;
+  apiKey?: string;
+  migrationRequired?: boolean;
 }
 
 interface AgentKeysResponse {
   keys?: AgentKeyRecord[];
   configured?: boolean;
+  apiKey?: string;
+  migrationRequired?: boolean;
+  freeModelCount?: number;
   detail?: string;
 }
 
@@ -44,15 +51,17 @@ const requestAgent = async (
   return data;
 };
 
-export const saveOpenRouterCredentials = async (apiKey: string): Promise<void> => {
+export const saveOpenRouterCredentials = async (apiKey: string): Promise<OpenRouterCredentials> => {
   const normalizedKey = apiKey.trim();
   const { idToken } = await getAuthenticatedUser();
   const body: Record<string, string> = { provider: "openrouter" };
-  // Empty means keep this account's already-saved encrypted key.
+  // Empty means verify and migrate this account's existing saved key.
   if (normalizedKey) body.api_key = normalizedKey;
-  await requestAgent(idToken, "/agent/keys", "PUT", body);
-  // Old 9Router fields are removed server-side only after this account's key passes a live API check.
-  await requestAgent(idToken, "/agent/keys/openrouter/verify", "POST");
+  const data = await requestAgent(idToken, "/agent/keys", "PUT", body);
+  if (typeof data.apiKey !== "string" || !data.apiKey) {
+    throw new Error("The authenticated account's OpenRouter key was not returned for Settings.");
+  }
+  return { provider: "openrouter", apiKey: data.apiKey, migrationRequired: false };
 };
 
 export const loadOpenRouterCredentials = async (): Promise<OpenRouterCredentials | null> => {
@@ -61,7 +70,14 @@ export const loadOpenRouterCredentials = async (): Promise<OpenRouterCredentials
   const records = Array.isArray(data.keys) ? data.keys : [];
   const credential = records.find((item) => item.provider?.toLowerCase() === "openrouter" && item.enabled !== false);
   if (!credential) return null;
-  return { provider: "openrouter" };
+  if (typeof credential.apiKey !== "string" || !credential.apiKey) {
+    throw new Error("This account's OpenRouter key could not be loaded.");
+  }
+  return {
+    provider: "openrouter",
+    apiKey: credential.apiKey,
+    migrationRequired: credential.migrationRequired === true,
+  };
 };
 
 export const loadOpenRouterModelCatalog = async (): Promise<AgentModel[]> => {

@@ -29,12 +29,33 @@
   gap: var(--global-layout-gap);
 }
 
+.global-stack--gap-10 {
+  gap: 10px;
+}
+
 .global-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   min-width: 0;
   gap: var(--global-layout-gap);
+}
+
+.global-inline-row {
+  display: flex;
+  align-items: center;
+}
+
+.global-inline-row--gap-6 {
+  gap: 6px;
+}
+
+.global-inline-row--gap-8 {
+  gap: 8px;
+}
+
+.global-inline-row--gap-12 {
+  gap: 12px;
 }
 
 .global-grid {
@@ -140,6 +161,49 @@
   border: 1px solid var(--global-color-border);
   border-radius: var(--global-radius-medium);
   box-shadow: var(--global-shadow-popover);
+}
+
+.global-sidebar-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 20;
+  transition: background 0.15s ease;
+  touch-action: none;
+}
+
+.global-sidebar-resizer:hover,
+.global-sidebar-resizer:active,
+.global-sidebar-resizing .global-sidebar-resizer {
+  background: var(--global-color-accent);
+  opacity: 0.4;
+}
+
+.global-sidebar-resizer::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 32px;
+  background: var(--global-color-border);
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.global-sidebar-resizer:hover::before,
+.global-sidebar-resizable:hover .global-sidebar-resizer::before {
+  opacity: 1;
+}
+
+.global-sidebar-resizing .global-sidebar-resizer::before {
+  opacity: 0;
 }
 
 .global-text {

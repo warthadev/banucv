@@ -354,7 +354,7 @@ export const FilesPanel: React.FC<{
               onContextMenu={(e) => handleItemContextMenu(e, file)}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: Math.min(i, 20) * 0.01, duration: 0.15 }}
             >
-              <span className="cloudview-frow-main">
+              <span className="cloudview-frow-main global-inline-row global-inline-row--gap-12">
                 {selecting && renderSelectionCheckbox(file, wide ? 18 : 22)}
                 <span className="cloudview-frow-icon">
                   {isFolderItem ? <Folder size={18} /> : <FileIcon type={file.media_type} size={18} />}

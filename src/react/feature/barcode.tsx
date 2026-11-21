@@ -116,7 +116,7 @@ const BarcodePage: React.FC = () => {
               )}
 
               {type === "wa" && (
-                <div className="barcode-wa-inputs">
+                <div className="barcode-wa-inputs global-stack global-stack--gap-10">
                   <input
                     type="number"
                     className="barcode-input"
@@ -135,7 +135,7 @@ const BarcodePage: React.FC = () => {
               )}
 
               {type === "wifi" && (
-                <div className="barcode-wifi-inputs">
+                <div className="barcode-wifi-inputs global-stack global-stack--gap-10">
                   <input
                     type="text"
                     className="barcode-input"

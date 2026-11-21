@@ -1034,12 +1034,6 @@
   margin-top: 8px;
 }
 
-.aiagent-input-buttons-left {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .aiagent-icon-btn {
   background: var(--global-color-accent);
   border: none;

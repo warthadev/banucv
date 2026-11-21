@@ -298,7 +298,7 @@ const CloudRoot: React.FC<CloudRootProps> = ({ onSelectSource, clearSession }) =
             >
               <div className="cloudroot-modal-grabber" />
               <h3 className="cloudroot-modal-title">Add Cloud Source</h3>
-              <div className="cloudroot-modal-options">
+              <div className="cloudroot-modal-options global-stack global-stack--gap-10">
                 <button className="cloudroot-option" onClick={handleAddTelegram}>
                   <span className="cloudroot-option-icon">{getAddSourceIcon('telegram')}</span>
                   <span className="cloudroot-option-text">

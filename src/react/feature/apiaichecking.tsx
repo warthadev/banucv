@@ -107,7 +107,7 @@ const AICheck: React.FC = () => {
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       exit={{ y: -20, opacity: 0 }}
-                      className="aic-fetch-content"
+                      className="aic-fetch-content global-inline-row global-inline-row--gap-8"
                     >
                       <Loader2 className="animate-spin" size={18} />
                       <motion.span
@@ -123,7 +123,7 @@ const AICheck: React.FC = () => {
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       exit={{ y: -20, opacity: 0 }}
-                      className="aic-fetch-content"
+                      className="aic-fetch-content global-inline-row global-inline-row--gap-8"
                     >
                       <Play size={18} />
                       <span>Fetch Models</span>

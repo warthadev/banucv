@@ -293,12 +293,12 @@ export const Sidebar: React.FC<{
 
   return (
     <aside
-      className={`cloudview-sidebar${collapsed ? ' cloudview-sidebar--collapsed' : ''}${isResizing ? ' cloudview-sidebar--resizing' : ''}`}
+      className={`cloudview-sidebar global-sidebar-resizable${collapsed ? ' cloudview-sidebar--collapsed' : ''}${isResizing ? ' cloudview-sidebar--resizing global-sidebar-resizing' : ''}`}
       style={{ width: collapsed ? 44 : width, minWidth: collapsed ? 44 : width }}
     >
       {!collapsed && (
         <div
-          className="cloudview-sidebar-resize"
+          className="cloudview-sidebar-resize global-sidebar-resizer"
           onPointerDown={startResize}
           onPointerMove={onPointerMove}
           onPointerUp={endResize}
@@ -462,7 +462,7 @@ export const RepoRow: React.FC<{
       onPointerDown={handlePointerDown}
       onContextMenu={handleContextMenu}
     >
-      <span className="cloudview-frow-main">
+      <span className="cloudview-frow-main global-inline-row global-inline-row--gap-12">
         {selectionMode && (
           <span
             className={`cloudview-selection-checkbox ${isSelected ? 'cloudview-selection-checkbox--checked' : ''}`}

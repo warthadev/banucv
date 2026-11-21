@@ -117,18 +117,6 @@
   border-color: var(--global-color-accent);
 }
 
-.barcode-wa-inputs {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.barcode-wifi-inputs {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
 .barcode-download-btn {
   width: 100%;
   padding: 15px;

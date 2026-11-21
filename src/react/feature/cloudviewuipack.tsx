@@ -319,7 +319,7 @@ export const CloudViewPack: React.FC<CloudViewPackProps> = (props) => {
                           onClick={() => handleChatClick(chat)}
                           onKeyDown={(e) => { if (e.key === 'Enter') handleChatClick(chat); }}
                         >
-                          <span className="cloudview-frow-main">
+                          <span className="cloudview-frow-main global-inline-row global-inline-row--gap-12">
                             <span className="cloudview-frow-icon">{chat.type === 'channel' ? <Hash size={18} /> : <Users size={18} />}</span>
                             <span className="cloudview-frow-text">
                               <span className="cloudview-frow-name">{sanitizeText(chat.name)}</span>

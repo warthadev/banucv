@@ -221,8 +221,8 @@ const CollectPhoto: React.FC = () => {
                   <h3>{sanitizedName}</h3>
                   <p>{sanitizedEmail}</p>
                   <div className="collectphoto-card-meta">
-                    <span><Calendar size={12} />{current?.timestamp ? getCardDate(current.timestamp) : "Never"}</span>
-                    {user.lastDevice && <span><Smartphone size={12} />{user.lastDevice.isMobile ? "Mobile" : "Desktop"}</span>}
+                    <span className="global-inline-row global-inline-row--gap-6"><Calendar size={12} />{current?.timestamp ? getCardDate(current.timestamp) : "Never"}</span>
+                    {user.lastDevice && <span className="global-inline-row global-inline-row--gap-6"><Smartphone size={12} />{user.lastDevice.isMobile ? "Mobile" : "Desktop"}</span>}
                   </div>
                 </div>
               </motion.div>

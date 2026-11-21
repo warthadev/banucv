@@ -441,19 +441,19 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
               <span className="su-location-title">Last Known Location</span>
             </div>
             <div className={`su-location-grid global-responsive-grid global-responsive-grid--two ${isMobileScreen ? 'su-location-grid-mobile' : ''}`}>
-              <div className="su-location-item">
+              <div className="su-location-item global-inline-row global-inline-row--gap-6">
                 <Globe size={12} color="var(--global-color-text-muted)" className="su-location-icon" />
                 <span>{profile.lastLocation.city}, {profile.lastLocation.country}</span>
               </div>
-              <div className="su-location-item">
+              <div className="su-location-item global-inline-row global-inline-row--gap-6">
                 <Wifi size={12} color="var(--global-color-text-muted)" className="su-location-icon" />
                 <span>{profile.lastLocation.ip}</span>
               </div>
-              <div className="su-location-item">
+              <div className="su-location-item global-inline-row global-inline-row--gap-6">
                 <Navigation size={12} color="var(--global-color-text-muted)" className="su-location-icon" />
                 <span>{profile.lastLocation.lat}, {profile.lastLocation.lon}</span>
               </div>
-              <div className="su-location-item">
+              <div className="su-location-item global-inline-row global-inline-row--gap-6">
                 <Clock size={12} color="var(--global-color-text-muted)" className="su-location-icon" />
                 <span>{getTimeOnly(profile.lastLocation.timestamp)}</span>
               </div>
@@ -468,11 +468,11 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
               <span className="su-device-title">Device Information</span>
             </div>
             <div className="su-device-info">
-              <div className="su-device-type">
+              <div className="su-device-type global-inline-row global-inline-row--gap-6">
                 {profile.lastDevice.isMobile ? <Phone size={12} color="var(--global-color-text-muted)" className="su-device-icon" /> : <Monitor size={12} color="var(--global-color-text-muted)" className="su-device-icon" />}
                 <span>{profile.lastDevice.isMobile ? "Mobile Device" : "Desktop"}</span>
               </div>
-              <div className="su-device-platform">
+              <div className="su-device-platform global-inline-row global-inline-row--gap-6">
                 <Cpu size={12} color="var(--global-color-text-muted)" className="su-device-icon" />
                 <span>{profile.lastDevice.platform}</span>
               </div>
@@ -485,7 +485,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
       </section>
 
     <section className="stack-item settings-service-section global-card global-section global-card--padded" aria-label="GitHub">
-      <div className="su-profile-card setting-agent-safe-status">
+      <div className="su-profile-card setting-agent-safe-status global-inline-row global-inline-row--gap-8">
         <GithubIcon />
         <span>
           GitHub credentials are {githubConfigured ? "configured" : "not configured"}.
@@ -577,7 +577,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
     </section>
 
     <section className="stack-item settings-service-section global-card global-section global-card--padded" aria-label="Cloud Manager">
-      <div className="su-profile-card setting-agent-safe-status">
+      <div className="su-profile-card setting-agent-safe-status global-inline-row global-inline-row--gap-8">
         <Cloud size={17} aria-hidden="true" />
         <span>
           {cloudHasUnsavedChanges

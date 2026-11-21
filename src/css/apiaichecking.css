@@ -151,12 +151,6 @@
   opacity: 0.9;
 }
 
-.aic-fetch-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 /* Copy button */
 .aic-copy-btn {
   flex: 1;

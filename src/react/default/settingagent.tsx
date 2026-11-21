@@ -180,7 +180,7 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ onLoadingChange }) => {
   if (!authReady || loading) {
     return (
       <section className="stack-item settings-service-section setting-agent-card global-card global-section global-card--padded" aria-label="AI Agent · OpenRouter" aria-busy="true">
-        <div className="setting-agent-loading" role="status" aria-label="Loading OpenRouter settings">
+        <div className="setting-agent-loading global-inline-row global-inline-row--gap-8" role="status" aria-label="Loading OpenRouter settings">
           <LoaderCircle size={18} className="setting-agent-spinner" />
         </div>
       </section>
@@ -194,10 +194,10 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ onLoadingChange }) => {
       ) : (
         <>
           {settingsError && (
-            <p className="setting-agent-error" role="alert"><AlertCircle size={15} /> OpenRouter settings warning: {settingsError}</p>
+            <p className="setting-agent-error global-inline-row global-inline-row--gap-8" role="alert"><AlertCircle size={15} /> OpenRouter settings warning: {settingsError}</p>
           )}
           {credentials && (
-            <div className="su-profile-card setting-agent-safe-status">
+            <div className="su-profile-card setting-agent-safe-status global-inline-row global-inline-row--gap-8">
               <ShieldCheck size={17} aria-hidden="true" />
               <span>
                 OpenRouter key connected for this account

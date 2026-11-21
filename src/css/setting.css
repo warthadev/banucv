@@ -313,12 +313,6 @@
   grid-template-columns: 1fr;
 }
 
-.su-location-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .su-location-icon {
   color: var(--global-color-text-secondary);
   flex-shrink: 0;
@@ -352,16 +346,7 @@
 }
 
 .su-device-type {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   margin-left: 23px;
-}
-
-.su-device-platform {
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .su-device-icon {
@@ -873,11 +858,8 @@
 }
 
 .setting-agent-status,
-.setting-agent-safe-status,
 .setting-agent-actions,
-.setting-agent-loading,
-.setting-agent-success,
-.setting-agent-error {
+.setting-agent-success {
   display: flex;
   align-items: center;
   gap: 8px;

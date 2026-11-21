@@ -209,12 +209,6 @@
   color: var(--global-color-text-muted);
 }
 
-.collectphoto-card-meta span {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 /* Loading & Error States */
 .collectphoto-loading,
 .collectphoto-error {

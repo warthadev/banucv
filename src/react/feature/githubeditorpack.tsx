@@ -213,7 +213,7 @@ const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
           <motion.aside
             ref={sidebarRef}
             key="sidebar"
-            className={`github-editor-sidebar ${isMobile ? "mobile" : "desktop"}${isResizing ? " resizing" : ""}`}
+            className={`github-editor-sidebar global-sidebar-resizable ${isMobile ? "mobile" : "desktop"}${isResizing ? " resizing global-sidebar-resizing" : ""}`}
             initial={
               !isMobile
                 ? { width: 0, opacity: 0 }
@@ -238,7 +238,7 @@ const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
           >
             {!isMobile && isSidebarOpen && (
               <div
-                className="github-sidebar-resize"
+                className="github-sidebar-resize global-sidebar-resizer"
                 onPointerDown={startResize}
                 onPointerMove={onPointerMove}
                 onPointerUp={endResize}
@@ -472,7 +472,7 @@ const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
 
       <main className="github-editor-main">
         <div className="github-editor-header">
-          <div className="github-editor-info">
+          <div className="github-editor-info global-inline-row global-inline-row--gap-12">
             <AnimatePresence>
               {!isSidebarOpen && (
                 <motion.button

@@ -1599,7 +1599,7 @@ const AIAgent: React.FC = () => {
               style={{ overflowY: textareaOverflow }}
             />
             <div className="aiagent-input-buttons">
-              <div className="aiagent-input-buttons-left">
+              <div className="aiagent-input-buttons-left global-inline-row global-inline-row--gap-6">
                 <div className="aiagent-upload-wrapper" ref={uploadDropdownRef}>
                   <button type="button" className="aiagent-add-btn" aria-label="Add attachments" title="Add attachments" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setUploadDropdownPos(calcDropdownPos(r, Math.min(220, window.innerWidth - 24), 180)); setIsUploadDropdownOpen(!isUploadDropdownOpen); }}><Plus size={16} aria-hidden="true" /><span>Add</span></button>
                   <AnimatePresence>

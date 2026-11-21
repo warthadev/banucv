@@ -229,44 +229,6 @@
 .cloudview-tree-list,
 .cloudview-chats-list { list-style: none; padding: 0; margin: 0; }
 
-.cloudview-sidebar-resize {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 6px;
-  cursor: col-resize;
-  background: transparent;
-  z-index: 20;
-  transition: background 0.15s ease;
-  touch-action: none;
-}
-.cloudview-sidebar-resize:hover,
-.cloudview-sidebar-resize:active,
-.cloudview-sidebar--resizing .cloudview-sidebar-resize {
-  background: var(--global-color-accent);
-  opacity: 0.4;
-}
-.cloudview-sidebar-resize::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 2px;
-  height: 32px;
-  background: var(--global-color-border);
-  border-radius: 2px;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-.cloudview-sidebar:hover .cloudview-sidebar-resize::before {
-  opacity: 1;
-}
-.cloudview-sidebar--resizing .cloudview-sidebar-resize::before {
-  opacity: 0;
-}
-
 .cloudview-tree-item {
   --row-accent: var(--global-color-accent);
   --row-glow: 9%;
@@ -1214,9 +1176,6 @@
   box-shadow: none;
 }
 .cloudview-frow-main {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   min-width: 0;
 }
 .cloudview-frow-icon {
@@ -4815,11 +4774,6 @@
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--global-color-text);
-}
-.cloudroot-modal-options {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
 .cloudroot-option {
   display: flex;

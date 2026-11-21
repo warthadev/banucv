@@ -214,7 +214,7 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSett
 
   if (!authReady || loading) {
     return (
-      <section className="settings-bundle-section setting-agent-card" aria-busy="true">
+      <section className="stack-item settings-bundle-section setting-agent-card" aria-busy="true">
         <div className="section-header">
           <KeyRound size={19} aria-hidden="true" />
           <span className="section-label">AI Agent · OpenRouter</span>
@@ -225,7 +225,7 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSett
   }
 
   return (
-    <section className="settings-bundle-section setting-agent-card" aria-labelledby="setting-agent-title">
+    <section className="stack-item settings-bundle-section setting-agent-card" aria-labelledby="setting-agent-title">
       <div className="section-header">
         <KeyRound size={19} aria-hidden="true" />
         <span className="section-label" id="setting-agent-title">AI Agent · OpenRouter</span>

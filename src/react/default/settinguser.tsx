@@ -263,7 +263,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
 
   if (loading) {
     return (
-      <section className="settings-bundle-section">
+      <section className="stack-item settings-bundle-section">
         <div className="section-header">
           <UserIcon size={18} color="var(--primary)" />
           <span className="section-label">User Profile</span>
@@ -277,7 +277,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
 
   if (error) {
     return (
-      <section className="settings-bundle-section setting-user-profile-section">
+      <section className="stack-item settings-bundle-section">
         <div className="section-header">
           <UserIcon size={18} color="var(--primary)" />
           <span className="section-label">User Profile</span>
@@ -301,14 +301,12 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
 
   return (
     <>
-    <section className="settings-bundle-section setting-user-profile-section" aria-labelledby="setting-user-profile-title">
-      <div className="section-header">
-        <UserIcon size={18} color="var(--primary)" />
-        <span className="section-label" id="setting-user-profile-title">User Profile</span>
-        <span className="setting-agent-status"><CheckCircle size={14} /> Signed in</span>
-      </div>
-
-      <div className="su-profile-card">
+      <section className="stack-item settings-bundle-section" aria-labelledby="setting-user-profile-title">
+        <div className="section-header">
+          <UserIcon size={18} color="var(--primary)" />
+          <span className="section-label" id="setting-user-profile-title">User Profile</span>
+          <span className="setting-agent-status"><CheckCircle size={14} /> Signed in</span>
+        </div>
         <div className="su-profile-header">
           {profile?.photoURL && (
             <img src={profile.photoURL} alt="avatar" className="su-avatar" />
@@ -330,63 +328,61 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="su-stats-grid">
-        <div className="su-stat-card">
-          <div className="su-stat-header">
-            <Calendar size={16} color="var(--primary)" />
-            <span className="su-stat-label">REGISTERED</span>
-          </div>
-          <div className="su-stat-value">
-            {profile?.createdAt 
-              ? getDateOnly(profile.createdAt) 
-              : (profile?.lastLoginAt ? getDateOnly(profile.lastLoginAt) : "Not recorded")}
-          </div>
+      <section className="stack-item settings-bundle-section" aria-label="Registered">
+        <div className="section-header">
+          <Calendar size={18} color="var(--primary)" />
+          <span className="section-label">REGISTERED</span>
         </div>
-        <div className="su-stat-card">
-          <div className="su-stat-header">
-            <Activity size={16} color="var(--primary)" />
-            <span className="su-stat-label">LAST SEEN</span>
-          </div>
-          <div className="su-stat-value">
-            {profile?.lastSeen ? getDateOnly(profile.lastSeen) : "Unknown"}
-          </div>
+        <div className="su-stat-value">
+          {profile?.createdAt
+            ? getDateOnly(profile.createdAt)
+            : (profile?.lastLoginAt ? getDateOnly(profile.lastLoginAt) : "Not recorded")}
         </div>
-      </div>
+      </section>
 
-      {profile?.lastLocation && (
-        <div className="su-location-card">
-          <div className="su-location-header">
-            <MapPin size={16} color="var(--primary)" />
-            <span className="su-location-title">Last Known Location</span>
-          </div>
-          <div className={`su-location-grid ${isMobileScreen ? 'su-location-grid-mobile' : ''}`}>
-            <div className="su-location-item">
-              <Globe size={12} color="var(--text-muted)" className="su-location-icon" />
-              <span>{profile.lastLocation.city}, {profile.lastLocation.country}</span>
-            </div>
-            <div className="su-location-item">
-              <Wifi size={12} color="var(--text-muted)" className="su-location-icon" />
-              <span>{profile.lastLocation.ip}</span>
-            </div>
-            <div className="su-location-item">
-              <Navigation size={12} color="var(--text-muted)" className="su-location-icon" />
-              <span>{profile.lastLocation.lat}, {profile.lastLocation.lon}</span>
-            </div>
-            <div className="su-location-item">
-              <Clock size={12} color="var(--text-muted)" className="su-location-icon" />
-              <span>{getTimeOnly(profile.lastLocation.timestamp)}</span>
-            </div>
-          </div>
+      <section className="stack-item settings-bundle-section settings-last-seen-card" aria-label="Last Seen">
+        <div className="section-header">
+          <Activity size={18} color="var(--primary)" />
+          <span className="section-label">LAST SEEN</span>
         </div>
-      )}
+        <div className="su-stat-value">
+          {profile?.lastSeen ? getDateOnly(profile.lastSeen) : "Unknown"}
+        </div>
+        {profile?.lastLocation && (
+          <div className="su-location-card">
+            <div className="su-location-header">
+              <MapPin size={16} color="var(--primary)" />
+              <span className="su-location-title">Last Known Location</span>
+            </div>
+            <div className={`su-location-grid ${isMobileScreen ? 'su-location-grid-mobile' : ''}`}>
+              <div className="su-location-item">
+                <Globe size={12} color="var(--text-muted)" className="su-location-icon" />
+                <span>{profile.lastLocation.city}, {profile.lastLocation.country}</span>
+              </div>
+              <div className="su-location-item">
+                <Wifi size={12} color="var(--text-muted)" className="su-location-icon" />
+                <span>{profile.lastLocation.ip}</span>
+              </div>
+              <div className="su-location-item">
+                <Navigation size={12} color="var(--text-muted)" className="su-location-icon" />
+                <span>{profile.lastLocation.lat}, {profile.lastLocation.lon}</span>
+              </div>
+              <div className="su-location-item">
+                <Clock size={12} color="var(--text-muted)" className="su-location-icon" />
+                <span>{getTimeOnly(profile.lastLocation.timestamp)}</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
 
       {profile?.lastDevice && (
-        <div className="su-device-card">
-          <div className="su-device-header">
-            <Smartphone size={16} color="var(--primary)" />
-            <span className="su-device-title">Device Information</span>
+        <section className="stack-item settings-bundle-section" aria-labelledby="setting-device-title">
+          <div className="section-header">
+            <Smartphone size={18} color="var(--primary)" />
+            <span className="section-label" id="setting-device-title">Device Information</span>
           </div>
           <div className="su-device-info">
             <div className="su-device-type">
@@ -401,12 +397,10 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
               User Agent: {profile.lastDevice.userAgent}
             </div>
           </div>
-        </div>
+        </section>
       )}
 
-    </section>
-
-    <section className="settings-bundle-section" aria-labelledby="setting-github-title">
+    <section className="stack-item settings-bundle-section" aria-labelledby="setting-github-title">
       <div className="section-header">
         <GithubIcon />
         <span className="section-label" id="setting-github-title">GitHub</span>
@@ -475,7 +469,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
 
     </section>
 
-    <section className="settings-bundle-section" aria-labelledby="setting-cloud-manager-title">
+    <section className="stack-item settings-bundle-section" aria-labelledby="setting-cloud-manager-title">
       <div className="section-header">
         <Cloud size={18} color="var(--primary)" />
         <span className="section-label" id="setting-cloud-manager-title">Cloud Manager</span>

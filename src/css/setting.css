@@ -106,32 +106,16 @@
   animation: settings-content-enter 320ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
-.settings-all-content > .settings-bundle-section {
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  margin: 0;
+.settings-last-seen-card .su-location-card {
+  margin: 16px 0 0;
   padding: 0;
   border: 0;
   border-radius: 0;
-  animation: none;
-}
-
-.settings-all-content > .setting-user-profile-section {
-  padding: 16px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-small);
-  background: var(--bg);
-}
-
-.settings-all-content > .settings-bundle-section + .settings-bundle-section {
-  margin-top: 20px;
-  padding-top: 20px;
+  background: transparent;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .settings-all-bundle,
-  .settings-page-loading,
+  .settings-page-container .stack-item,
   .settings-all-content:not([hidden]) {
     animation: none;
   }
@@ -139,60 +123,6 @@
   .settings-page-loading .status-spinner {
     animation: none;
   }
-}
-
-.settings-all-bundle .su-profile-card,
-.settings-all-bundle .su-stat-card,
-.settings-all-bundle .su-location-card,
-.settings-all-bundle .su-device-card,
-.settings-all-bundle .su-empty-box {
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-}
-
-.settings-all-bundle .su-profile-card {
-  margin-bottom: 18px;
-  padding: 0;
-}
-
-.settings-all-bundle .su-stat-card {
-  padding: 0;
-}
-
-.settings-all-bundle .su-location-card,
-.settings-all-bundle .su-device-card {
-  margin-bottom: 16px;
-  padding: 14px 0 0;
-}
-
-.settings-all-bundle .su-empty-box {
-  padding: 8px 0;
-  text-align: left;
-}
-
-.settings-all-bundle .setting-agent-safe-status {
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-}
-
-.settings-all-bundle .setting-agent-catalog {
-  padding: 14px 0 0;
-  border-radius: 0;
-  background: transparent;
-}
-
-.settings-all-bundle .settings-save-all-panel {
-  margin: 20px 0;
-  padding: 16px 0;
-}
-
-.settings-all-bundle .settings-save-all-results {
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
 }
 
 .section-header {

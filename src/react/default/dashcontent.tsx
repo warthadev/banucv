@@ -492,7 +492,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
         className="dash-ecosystem"
         variants={itemVariants}
       >
-        <header className="dash-ecosystem-header ui-surface--card">
+        <header className="dash-ecosystem-header">
           <motion.h2
             className="dash-ecosystem-title"
             variants={titleVariants}
@@ -512,7 +512,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
           {brandItems.map((brand) => {
             const Icon = brand.icon;
             return (
-              <article key={brand.name} className="dash-ecosystem-item ui-surface--card">
+              <article key={brand.name} className="dash-ecosystem-item">
                 <div className="dash-ecosystem-item-header">
                   <div className="dash-ecosystem-item-icon">
                     <Icon size={30} strokeWidth={1.75} />
@@ -537,7 +537,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
         className="dash-tech"
         variants={itemVariants}
       >
-        <header className="dash-projects-header ui-surface--card">
+        <header className="dash-projects-header">
           <motion.h2
             className="dash-projects-title"
             variants={titleVariants}
@@ -548,7 +548,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
         <div className="dash-profile-sections">
           <motion.section
             variants={itemVariants}
-            className="dash-content-section ui-surface--card"
+            className="dash-content-section"
           >
             <div className="dash-content-section-body">
               <p className="dash-content-desc">{profileIntro}</p>
@@ -575,7 +575,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
         className="dash-projects"
         variants={itemVariants}
       >
-        <header className="dash-projects-header ui-surface--card">
+        <header className="dash-projects-header">
           <motion.h2
             className="dash-projects-title"
             variants={titleVariants}
@@ -598,7 +598,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
               <motion.section
                 key={item.name}
                 variants={itemVariants}
-                className="dash-content-section ui-surface--card"
+                className="dash-content-section"
               >
                 <div className="dash-content-section-icon">
                   <Icon size={30} strokeWidth={1.75} />
@@ -632,7 +632,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
         className="dash-tech"
         variants={itemVariants}
       >
-        <header className="dash-projects-header ui-surface--card">
+        <header className="dash-projects-header">
           <motion.h2
             className="dash-projects-title"
             variants={titleVariants}
@@ -655,7 +655,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
               <motion.section
                 key={item.name}
                 variants={itemVariants}
-                className="dash-content-section ui-surface--card"
+                className="dash-content-section"
               >
                 <div className="dash-content-section-icon">
                   <Icon size={30} strokeWidth={1.75} />
@@ -680,7 +680,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
         className="dash-tech"
         variants={itemVariants}
       >
-        <header className="dash-projects-header ui-surface--card">
+        <header className="dash-projects-header">
           <motion.h2
             className="dash-projects-title"
             variants={titleVariants}
@@ -697,7 +697,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
         </header>
         <div className="dash-tech-grid">
           {techItems.map((tech) => (
-            <div key={tech.category} className="dash-tech-card ui-surface--card">
+            <div key={tech.category} className="dash-tech-card">
               <h3 className="dash-tech-category">{tech.category}</h3>
               <ul className="dash-tech-list">
                 {tech.items.map((item) => (
@@ -715,7 +715,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
         className="dash-tech"
         variants={itemVariants}
       >
-        <header className="dash-projects-header ui-surface--card">
+        <header className="dash-projects-header">
           <motion.h2
             className="dash-projects-title"
             variants={titleVariants}

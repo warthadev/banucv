@@ -58,6 +58,9 @@ const getTimeOnly = (timestamp: unknown): string => {
   return parts.length > 1 ? parts[1] : formatted;
 };
 
+const areStringArraysEqual = (left: string[], right: string[]): boolean =>
+  left.length === right.length && left.every((value, index) => value === right[index]);
+
 interface SettingUserProps {
   onLoadingChange: (isLoading: boolean) => void;
 }
@@ -81,6 +84,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveResult, setSaveResult] = useState<SettingsSaveResult | null>(null);
+  const [cloudSaveResult, setCloudSaveResult] = useState<SettingsSaveResult | null>(null);
   
   const [isMobileScreen, setIsMobileScreen] = useState(window.innerWidth <= 768);
 
@@ -99,6 +103,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
       setLoading(true);
       setCurrentUser(user);
       setSaveResult(null);
+      setCloudSaveResult(null);
       setShowGithubToken(false);
       setShowCloudTokens({});
       setCopyFeedback({});
@@ -253,6 +258,79 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
     }
   };
 
+  const saveCloudManagerSettings = async (): Promise<SettingsSaveResult> => {
+    const sectionId = "cloudmanager" as const;
+    const sectionName = "Cloud Manager";
+    if (!authReady || loading) {
+      return { sectionId, sectionName, status: "error", message: "Cloud Manager settings are still loading." };
+    }
+    if (!currentUser) {
+      return { sectionId, sectionName, status: "error", message: "Sign in before saving Cloud Manager settings." };
+    }
+    if (error || !profile) {
+      return { sectionId, sectionName, status: "error", message: error || "Profile settings are unavailable." };
+    }
+    if (saving) {
+      return { sectionId, sectionName, status: "error", message: "Settings are already being saved." };
+    }
+
+    const telegramEntries = telegramSessions
+      .map((session, index) => ({
+        session: session.trim(),
+        name: (telegramAccountNames[index] || `Account ${index + 1}`).trim() || `Account ${index + 1}`,
+      }))
+      .filter((entry) => entry.session);
+    const hfEntries = hfUsernames.map((username, index) => ({
+      username: username.trim(),
+      token: (hfTokens[index] || "").trim(),
+    }));
+    if (hfEntries.some((entry) => Boolean(entry.username) !== Boolean(entry.token))) {
+      return {
+        sectionId,
+        sectionName,
+        status: "error",
+        message: "Each Hugging Face account needs both a username and token; clear both fields to remove an account.",
+      };
+    }
+
+    const nextTelegramSessions = telegramEntries.map((entry) => entry.session);
+    const nextTelegramAccountNames = telegramEntries.map((entry) => entry.name);
+    const activeHfEntries = hfEntries.filter((entry) => entry.username && entry.token);
+    const nextHfUsernames = activeHfEntries.map((entry) => entry.username);
+    const nextHfTokens = activeHfEntries.map((entry) => entry.token);
+    const updateData: Partial<Pick<UserProfile, "telegramSessions" | "telegramAccountNames" | "hfUsernames" | "hfTokens">> = {};
+
+    if (!areStringArraysEqual(nextTelegramSessions, profile.telegramSessions || [])) updateData.telegramSessions = nextTelegramSessions;
+    if (!areStringArraysEqual(nextTelegramAccountNames, profile.telegramAccountNames || [])) updateData.telegramAccountNames = nextTelegramAccountNames;
+    if (!areStringArraysEqual(nextHfUsernames, profile.hfUsernames || [])) updateData.hfUsernames = nextHfUsernames;
+    if (!areStringArraysEqual(nextHfTokens, profile.hfTokens || [])) updateData.hfTokens = nextHfTokens;
+
+    if (Object.keys(updateData).length === 0) {
+      return { sectionId, sectionName, status: "unchanged", message: "No changes to save." };
+    }
+
+    setSaving(true);
+    try {
+      const userRef = doc(db, "users", currentUser.uid);
+      await setDoc(userRef, updateData, { merge: true });
+      setProfile((current) => current ? { ...current, ...updateData } : current);
+      setTelegramSessions(nextTelegramSessions);
+      setTelegramAccountNames(nextTelegramAccountNames);
+      setHfUsernames(nextHfUsernames);
+      setHfTokens(nextHfTokens);
+      return { sectionId, sectionName, status: "saved", message: "Cloud Manager settings saved." };
+    } catch (err: unknown) {
+      return {
+        sectionId,
+        sectionName,
+        status: "error",
+        message: err instanceof Error ? err.message : "Failed to save Cloud Manager settings.",
+      };
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSave = async () => {
     setSaveResult(null);
     setSaving(true);
@@ -261,6 +339,11 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSaveCloudManager = async () => {
+    setCloudSaveResult(null);
+    setCloudSaveResult(await saveCloudManagerSettings());
   };
 
   if (loading) {
@@ -296,6 +379,10 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
   const providerNames = (profile?.providers || []).join(", ");
   const githubConfigured = Boolean(profile?.githubUsername?.trim() && profile?.githubToken?.trim());
   const cloudAccountCount = telegramSessions.length + hfUsernames.length;
+  const cloudHasUnsavedChanges = !areStringArraysEqual(telegramSessions, profile?.telegramSessions || [])
+    || !areStringArraysEqual(telegramAccountNames, profile?.telegramAccountNames || [])
+    || !areStringArraysEqual(hfUsernames, profile?.hfUsernames || [])
+    || !areStringArraysEqual(hfTokens, profile?.hfTokens || []);
 
   return (
     <>
@@ -493,7 +580,11 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
       <div className="su-profile-card setting-agent-safe-status">
         <Cloud size={17} aria-hidden="true" />
         <span>
-          {cloudAccountCount > 0 ? "Cloud Manager entries are saved in this profile." : "No Cloud Manager entries are saved in this profile."}
+          {cloudHasUnsavedChanges
+            ? "Cloud Manager edits are not saved yet."
+            : cloudAccountCount > 0
+              ? "Cloud Manager entries are saved in this profile."
+              : "No Cloud Manager entries are saved in this profile."}
           <small>Telegram: {telegramSessions.length} · Hugging Face: {hfUsernames.length}</small>
         </span>
       </div>
@@ -518,13 +609,33 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
               const feedback = copyFeedback[tokenId];
               return (
                 <div key={tokenId} className="settings-cloud-token-group">
-                  <label className="su-input-label" htmlFor={`${tokenId}-input`}>{accountName}</label>
+                  <label className="su-input-label" htmlFor={`${tokenId}-name-input`}>Account name</label>
+                  <input
+                    id={`${tokenId}-name-input`}
+                    type="text"
+                    value={accountName}
+                    onChange={(event) => {
+                      const next = [...telegramAccountNames];
+                      while (next.length <= index) next.push("");
+                      next[index] = event.target.value;
+                      setTelegramAccountNames(next);
+                      setCloudSaveResult(null);
+                    }}
+                    aria-label={`${accountName} Telegram account name`}
+                    className="setting-agent-input setting-plain-input"
+                  />
+                  <label className="su-input-label" htmlFor={`${tokenId}-input`}>Telegram session</label>
                   <div className="su-input-wrapper settings-token-input-wrapper">
                     <input
                       id={`${tokenId}-input`}
                       type={isVisible ? "text" : "password"}
                       value={session}
-                      readOnly
+                      onChange={(event) => {
+                        const next = [...telegramSessions];
+                        next[index] = event.target.value;
+                        setTelegramSessions(next);
+                        setCloudSaveResult(null);
+                      }}
                       aria-label={`${accountName} Telegram session token`}
                       className="setting-agent-input setting-sensitive-input"
                     />
@@ -580,13 +691,32 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
               const feedback = copyFeedback[tokenId];
               return (
                 <div key={tokenId} className="settings-cloud-token-group">
-                  <label className="su-input-label" htmlFor={`${tokenId}-input`}>{username}</label>
+                  <label className="su-input-label" htmlFor={`${tokenId}-username-input`}>Hugging Face username</label>
+                  <input
+                    id={`${tokenId}-username-input`}
+                    type="text"
+                    value={username}
+                    onChange={(event) => {
+                      const next = [...hfUsernames];
+                      next[index] = event.target.value;
+                      setHfUsernames(next);
+                      setCloudSaveResult(null);
+                    }}
+                    className="setting-agent-input setting-plain-input"
+                  />
+                  <label className="su-input-label" htmlFor={`${tokenId}-input`}>Hugging Face token</label>
                   <div className="su-input-wrapper settings-token-input-wrapper">
                     <input
                       id={`${tokenId}-input`}
                       type={isVisible ? "text" : "password"}
                       value={token}
-                      readOnly
+                      onChange={(event) => {
+                        const next = [...hfTokens];
+                        while (next.length <= index) next.push("");
+                        next[index] = event.target.value;
+                        setHfTokens(next);
+                        setCloudSaveResult(null);
+                      }}
                       aria-label={`${username} Hugging Face token`}
                       className="setting-agent-input setting-sensitive-input"
                     />
@@ -619,6 +749,30 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
               );
             })}
           </div>
+        )}
+      </div>
+
+      <div className="settings-section-actions">
+        <button
+          className="setting-agent-primary settings-section-save-btn"
+          type="button"
+          onClick={() => void handleSaveCloudManager()}
+          disabled={saving || loading || !currentUser || Boolean(error)}
+        >
+          {saving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Save size={16} aria-hidden="true" />}
+          {saving ? "Saving…" : "Save"}
+        </button>
+        {cloudSaveResult && (
+          <p
+            className={`settings-save-feedback${cloudSaveResult.status === "error" ? " is-error" : ""}`}
+            role={cloudSaveResult.status === "error" ? "alert" : "status"}
+            aria-live={cloudSaveResult.status === "error" ? "assertive" : "polite"}
+          >
+            {cloudSaveResult.status === "error"
+              ? <AlertCircle size={15} aria-hidden="true" />
+              : <CheckCircle size={15} aria-hidden="true" />}
+            <span>{cloudSaveResult.message}</span>
+          </p>
         )}
       </div>
 

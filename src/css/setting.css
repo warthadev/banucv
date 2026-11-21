@@ -1342,3 +1342,118 @@
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+
+
+/* Consistent Settings hierarchy; outer stack-item geometry remains unchanged. */
+.settings-page-container {
+  --settings-font-large: 16px;
+  --settings-font-medium: 13px;
+  --settings-font-small: 11px;
+  --settings-space-large: 16px;
+  --settings-space-medium: 12px;
+  --settings-space-small: 8px;
+}
+
+.settings-page-container :is(.section-label, .su-display-name, .su-location-title, .su-device-title) {
+  font-size: var(--settings-font-large);
+  line-height: 1.35;
+}
+
+.settings-page-container :is(
+  .section-value, .su-email, .su-stat-value, .su-location-grid, .su-device-info,
+  .setting-agent-input, .setting-plain-input, .setting-sensitive-input,
+  .setting-agent-primary, .setting-agent-secondary, .setting-agent-danger,
+  .playback-btn, .genre-chip
+) {
+  font-size: var(--settings-font-medium);
+}
+
+.settings-page-container :is(
+  .header-subtitle, .su-meta-info, .su-last-login, .su-stat-label, .su-input-label,
+  .setting-agent-description, .setting-agent-note, .setting-agent-account,
+  .setting-agent-footnote, .setting-agent-safe-status, .setting-agent-safe-status small,
+  .settings-save-feedback, .setting-agent-copy-feedback, .settings-token-copy-feedback
+) {
+  font-size: var(--settings-font-small);
+}
+
+.settings-page-container .section-header {
+  gap: 10px;
+  margin-bottom: var(--settings-space-medium);
+}
+
+.settings-page-container :is(.su-input-group, .su-input-group-lg) {
+  margin-bottom: var(--settings-space-large);
+}
+
+.settings-page-container .su-profile-card {
+  margin-bottom: var(--settings-space-large);
+  border-radius: var(--radius-small);
+}
+
+.settings-page-container .su-stats-grid {
+  gap: var(--settings-space-medium);
+  margin-bottom: var(--settings-space-large);
+}
+
+.settings-page-container :is(.su-location-card, .su-device-card) {
+  margin-bottom: var(--settings-space-large);
+  border-radius: var(--radius-small);
+}
+
+.settings-page-container :is(.su-location-header, .su-device-header) {
+  margin-bottom: var(--settings-space-medium);
+}
+
+.settings-page-container .setting-agent-safe-status {
+  margin-bottom: var(--settings-space-large);
+  border-radius: var(--radius-small);
+}
+
+.settings-page-container .settings-cloud-token-group {
+  gap: var(--settings-space-small);
+}
+
+.settings-page-container .settings-section-actions {
+  gap: var(--settings-space-small);
+  margin-top: var(--settings-space-medium);
+}
+
+.settings-page-container .setting-agent-catalog {
+  gap: var(--settings-space-small);
+  margin-top: var(--settings-space-medium);
+}
+
+.settings-page-container :is(
+  .su-profile-card, .su-stat-card, .su-location-card, .su-device-card,
+  .su-empty-box, .setting-agent-safe-status, .setting-agent-catalog
+) {
+  border-radius: var(--radius-small);
+}
+
+.settings-page-container :is(.section-header, .su-stat-header, .su-location-header, .su-device-header) > svg,
+.settings-page-container :is(
+  .su-email, .su-last-login, .su-meta-info, .su-location-item,
+  .su-device-type, .su-device-platform, .setting-agent-safe-status
+) > svg {
+  color: var(--primary) !important;
+}
+
+.settings-page-container :is(
+  .header-subtitle, .section-value, .su-meta-info, .su-last-login,
+  .su-stat-label, .su-input-label, .settings-save-feedback,
+  .setting-agent-safe-status small
+) {
+  color: var(--text-sub);
+}
+
+.settings-page-container .setting-agent-primary,
+.settings-page-container .playback-btn.active,
+.settings-page-container .genre-chip.active {
+  color: var(--btn-text);
+}
+
+.settings-page-container .settings-save-feedback.is-error,
+.settings-page-container .settings-save-feedback.is-error svg {
+  color: #dc2626;
+}

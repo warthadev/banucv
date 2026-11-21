@@ -1,4 +1,4 @@
-export type SettingsSaveSectionId = "github" | "openrouter";
+export type SettingsSaveSectionId = "github" | "openrouter" | "cloudmanager";
 
 export type SettingsSaveStatus = "saved" | "unchanged" | "error";
 

@@ -277,7 +277,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
 
   if (error) {
     return (
-      <section className="settings-bundle-section">
+      <section className="settings-bundle-section setting-user-profile-section">
         <div className="section-header">
           <UserIcon size={18} color="var(--primary)" />
           <span className="section-label">User Profile</span>
@@ -301,7 +301,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
 
   return (
     <>
-    <section className="settings-bundle-section" aria-labelledby="setting-user-profile-title">
+    <section className="settings-bundle-section setting-user-profile-section" aria-labelledby="setting-user-profile-title">
       <div className="section-header">
         <UserIcon size={18} color="var(--primary)" />
         <span className="section-label" id="setting-user-profile-title">User Profile</span>

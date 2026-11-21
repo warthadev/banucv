@@ -117,6 +117,13 @@
   animation: none;
 }
 
+.settings-all-content > .setting-user-profile-section {
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-small);
+  background: var(--bg);
+}
+
 .settings-all-content > .settings-bundle-section + .settings-bundle-section {
   margin-top: 20px;
   padding-top: 20px;

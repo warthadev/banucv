@@ -1,7 +1,7 @@
 // src/react/default/setting.tsx
 import React, { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, ArrowLeft, CheckCircle, LoaderCircle, Save } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle, LoaderCircle, Save, User } from 'lucide-react';
 import SettingAudio from './settingaudio';
 import SettingVisual from './settingvisual';
 import SettingUser from './settinguser';
@@ -13,6 +13,9 @@ const SettingsPage: React.FC = () => {
   const [saveHandlers, setSaveHandlers] = useState<Partial<Record<SettingsSaveSectionId, SettingsSaveHandler>>>({});
   const [isSavingAll, setIsSavingAll] = useState(false);
   const [saveResults, setSaveResults] = useState<SettingsSaveResult[] | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
+  const [isOpenRouterLoading, setIsOpenRouterLoading] = useState(true);
+  const isSettingsLoading = isProfileLoading || isOpenRouterLoading;
 
   const registerSaveHandler = useCallback<RegisterSettingsSaveHandler>((sectionId, handler) => {
     setSaveHandlers((current) => {
@@ -77,43 +80,66 @@ const SettingsPage: React.FC = () => {
         </header>
 
         {/* User Profile & Credentials */}
-        <section className="stack-item settings-all-bundle" aria-label="Settings">
-          <SettingUser registerSaveHandler={registerSaveHandler} onSettingsChanged={clearSaveSummary} />
-          <SettingAgent registerSaveHandler={registerSaveHandler} onSettingsChanged={clearSaveSummary} />
-
-          <div className="settings-save-all-panel">
-            <button
-              className="setting-agent-primary settings-save-all-button"
-              type="button"
-              onClick={() => void handleSaveAll()}
-              disabled={isSavingAll || !saveHandlers.github || !saveHandlers.openrouter}
-            >
-              {isSavingAll ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Save size={16} aria-hidden="true" />}
-              {isSavingAll ? 'Saving all…' : 'Save All'}
-            </button>
-            {saveResults && (
-              <div
-                className="settings-save-all-results"
-                role={hasSaveErrors ? 'alert' : 'status'}
-                aria-live={hasSaveErrors ? 'assertive' : 'polite'}
-              >
-                {allUnchanged ? (
-                  <p>No changes to save.</p>
-                ) : saveResults.map((result) => (
-                  <p key={result.sectionId} className={result.status === 'error' ? 'is-error' : ''}>
-                    {result.status === 'error' ? <AlertCircle size={15} aria-hidden="true" /> : <CheckCircle size={15} aria-hidden="true" />}
-                    <span><strong>{result.sectionName}:</strong> {result.message}</span>
-                  </p>
-                ))}
+        <section className="stack-item settings-all-bundle" aria-label="Settings" aria-busy={isSettingsLoading}>
+          {isSettingsLoading && (
+            <div className="settings-page-loading" role="status" aria-live="polite" aria-busy="true">
+              <div className="section-header">
+                <User size={18} color="var(--primary)" aria-hidden="true" />
+                <span className="section-label">User Profile</span>
               </div>
-            )}
+              <div className="settings-loading-message">
+                <LoaderCircle size={18} className="setting-agent-spinner" aria-hidden="true" />
+                <span>Loading settings…</span>
+              </div>
+            </div>
+          )}
+
+          <div className="settings-all-content" hidden={isSettingsLoading} aria-hidden={isSettingsLoading}>
+            <SettingUser
+              registerSaveHandler={registerSaveHandler}
+              onSettingsChanged={clearSaveSummary}
+              onLoadingChange={setIsProfileLoading}
+            />
+            <SettingAgent
+              registerSaveHandler={registerSaveHandler}
+              onSettingsChanged={clearSaveSummary}
+              onLoadingChange={setIsOpenRouterLoading}
+            />
+
+            <div className="settings-save-all-panel">
+              <button
+                className="setting-agent-primary settings-save-all-button"
+                type="button"
+                onClick={() => void handleSaveAll()}
+                disabled={isSavingAll || !saveHandlers.github || !saveHandlers.openrouter}
+              >
+                {isSavingAll ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Save size={16} aria-hidden="true" />}
+                {isSavingAll ? 'Saving all…' : 'Save All'}
+              </button>
+              {saveResults && (
+                <div
+                  className="settings-save-all-results"
+                  role={hasSaveErrors ? 'alert' : 'status'}
+                  aria-live={hasSaveErrors ? 'assertive' : 'polite'}
+                >
+                  {allUnchanged ? (
+                    <p>No changes to save.</p>
+                  ) : saveResults.map((result) => (
+                    <p key={result.sectionId} className={result.status === 'error' ? 'is-error' : ''}>
+                      {result.status === 'error' ? <AlertCircle size={15} aria-hidden="true" /> : <CheckCircle size={15} aria-hidden="true" />}
+                      <span><strong>{result.sectionName}:</strong> {result.message}</span>
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Pengaturan Visual */}
+            <SettingVisual />
+
+            {/* Pengaturan Audio */}
+            <SettingAudio />
           </div>
-
-          {/* Pengaturan Visual */}
-          <SettingVisual />
-
-          {/* Pengaturan Audio */}
-          <SettingAudio />
         </section>
 
         {/* Footer */}

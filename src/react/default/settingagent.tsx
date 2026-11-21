@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { AlertCircle, Check, CheckCircle, Copy, Eye, EyeOff, KeyRound, LoaderCircle, RefreshCw, ShieldCheck, Trash2 } from "lucide-react";
 import { getAuth } from "@config/firebase";
@@ -10,9 +10,10 @@ import type { RegisterSettingsSaveHandler, SettingsSaveHandler, SettingsSaveResu
 interface SettingAgentProps {
   registerSaveHandler: RegisterSettingsSaveHandler;
   onSettingsChanged: () => void;
+  onLoadingChange: (isLoading: boolean) => void;
 }
 
-const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSettingsChanged }) => {
+const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSettingsChanged, onLoadingChange }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [credentials, setCredentials] = useState<OpenRouterCredentials | null>(null);
@@ -27,6 +28,10 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSett
   const [copyStatus, setCopyStatus] = useState<"copied" | "error" | null>(null);
   const requestIdRef = useRef(0);
   const saveHandlerRef = useRef<SettingsSaveHandler | null>(null);
+
+  useLayoutEffect(() => {
+    onLoadingChange(!authReady || loading || modelsLoading);
+  }, [authReady, loading, modelsLoading, onLoadingChange]);
 
   useEffect(() => {
     if (!copyStatus) return;

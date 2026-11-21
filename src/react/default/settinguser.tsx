@@ -1,5 +1,5 @@
 // src/react/default/settinguser.tsx
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useState, useCallback, useRef } from "react";
 import { auth, db } from "@config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
@@ -61,9 +61,10 @@ const getTimeOnly = (timestamp: unknown): string => {
 interface SettingUserProps {
   registerSaveHandler: RegisterSettingsSaveHandler;
   onSettingsChanged: () => void;
+  onLoadingChange: (isLoading: boolean) => void;
 }
 
-const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettingsChanged }) => {
+const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettingsChanged, onLoadingChange }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +84,10 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
   const saveHandlerRef = useRef<SettingsSaveHandler | null>(null);
   
   const [isMobileScreen, setIsMobileScreen] = useState(window.innerWidth <= 768);
+
+  useLayoutEffect(() => {
+    onLoadingChange(!authReady || loading);
+  }, [authReady, loading, onLoadingChange]);
   
   useEffect(() => {
     const handleResize = () => setIsMobileScreen(window.innerWidth <= 768);
@@ -93,6 +98,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       onSettingsChanged();
+      setLoading(true);
       setCurrentUser(user);
       setShowGithubToken(false);
       setShowCloudTokens({});

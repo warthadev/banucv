@@ -28,7 +28,7 @@ button, .btn {
   border-radius: 12px;
   border: none;
   background: var(--primary-blue);
-  color: white;
+  color: var(--text);
   font-weight: 700;
 }
 

@@ -526,16 +526,16 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
           />
           <button
             type="button"
-            className="setting-eye-btn setting-agent-reveal-btn"
+            className="setting-eye-btn setting-agent-reveal-btn theme-icon-button"
             onClick={() => setShowGithubToken(!showGithubToken)}
             aria-label={showGithubToken ? "Hide GitHub personal access token" : "Reveal GitHub personal access token"}
             aria-pressed={showGithubToken}
           >
-            {showGithubToken ? <EyeOff size={16} color="var(--primary)" /> : <Eye size={16} color="var(--primary)" />}
+            {showGithubToken ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
           <button
             type="button"
-            className="su-copy-btn setting-agent-copy-btn settings-token-copy-button"
+            className="su-copy-btn setting-agent-copy-btn settings-token-copy-button theme-icon-button"
             onClick={() => void copyToken("github", githubToken)}
             aria-label={copyFeedback.github === "copied" ? "GitHub token copied to clipboard" : "Copy GitHub personal access token"}
             disabled={!githubToken}
@@ -641,7 +641,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
                     />
                     <button
                       type="button"
-                      className="setting-eye-btn setting-agent-reveal-btn"
+                      className="setting-eye-btn setting-agent-reveal-btn theme-icon-button"
                       onClick={() => setShowCloudTokens((current) => ({ ...current, [tokenId]: !current[tokenId] }))}
                       aria-label={`${isVisible ? "Hide" : "Show"} Telegram session for ${accountName}`}
                       aria-pressed={isVisible}
@@ -651,7 +651,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
                     </button>
                     <button
                       type="button"
-                      className="su-copy-btn setting-agent-copy-btn settings-token-copy-button"
+                      className="su-copy-btn setting-agent-copy-btn settings-token-copy-button theme-icon-button"
                       onClick={() => void copyToken(tokenId, session)}
                       aria-label={feedback === "copied" ? `Telegram session for ${accountName} copied to clipboard` : `Copy Telegram session for ${accountName}`}
                       disabled={!session}
@@ -722,7 +722,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
                     />
                     <button
                       type="button"
-                      className="setting-eye-btn setting-agent-reveal-btn"
+                      className="setting-eye-btn setting-agent-reveal-btn theme-icon-button"
                       onClick={() => setShowCloudTokens((current) => ({ ...current, [tokenId]: !current[tokenId] }))}
                       aria-label={`${isVisible ? "Hide" : "Show"} Hugging Face token for ${username}`}
                       aria-pressed={isVisible}
@@ -732,7 +732,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
                     </button>
                     <button
                       type="button"
-                      className="su-copy-btn setting-agent-copy-btn settings-token-copy-button"
+                      className="su-copy-btn setting-agent-copy-btn settings-token-copy-button theme-icon-button"
                       onClick={() => void copyToken(tokenId, token)}
                       aria-label={feedback === "copied" ? `Hugging Face token for ${username} copied to clipboard` : `Copy Hugging Face token for ${username}`}
                       disabled={!token}

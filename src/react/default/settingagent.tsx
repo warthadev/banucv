@@ -231,7 +231,7 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ onLoadingChange }) => {
                 required={!credentials}
               />
               <button
-                className="setting-agent-reveal-btn"
+                className="setting-agent-reveal-btn theme-icon-button"
                 type="button"
                 onClick={() => setShowKey((current) => !current)}
                 aria-label={showKey ? "Hide saved OpenRouter API key" : "Reveal saved OpenRouter API key"}
@@ -241,7 +241,7 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ onLoadingChange }) => {
                 {showKey ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
               </button>
               <button
-                className="su-copy-btn setting-agent-copy-btn"
+                className="su-copy-btn setting-agent-copy-btn theme-icon-button"
                 type="button"
                 onClick={() => void handleCopyApiKey()}
                 disabled={!apiKey}

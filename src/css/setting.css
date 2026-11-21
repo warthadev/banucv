@@ -1354,13 +1354,13 @@
   --settings-space-small: 8px;
 }
 
-.settings-page-container :is(.section-label, .su-display-name, .su-location-title, .su-device-title) {
+.settings-page-container :is(.section-label, .su-display-name) {
   font-size: var(--settings-font-large);
   line-height: 1.35;
 }
 
 .settings-page-container :is(
-  .section-value, .su-email, .su-stat-value, .su-location-grid, .su-device-info,
+  .section-value, .su-email, .su-stat-value,
   .setting-agent-input, .setting-plain-input, .setting-sensitive-input,
   .setting-agent-primary, .setting-agent-secondary, .setting-agent-danger,
   .playback-btn, .genre-chip
@@ -1399,6 +1399,10 @@
 .settings-page-container :is(.su-location-card, .su-device-card) {
   margin-bottom: var(--settings-space-large);
   border-radius: var(--radius-small);
+}
+
+.settings-page-container .su-device-card {
+  margin-bottom: 0;
 }
 
 .settings-page-container :is(.su-location-header, .su-device-header) {

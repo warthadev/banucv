@@ -62,17 +62,15 @@ const SettingsPage: React.FC = () => {
   return (
     <div className="settings-page-container">
       <main className="content-wrapper" aria-busy={isSettingsLoading}>
-        
-        {/* Header */}
         <header className="settings-header">
           <div className="header-left">
             <h1 className="header-title"><span>Control Center</span></h1>
             <p className="header-subtitle"><span>Personalize your experience</span></p>
           </div>
-          <button 
-            className="back-button-right" 
-            onClick={() => navigate(-1)} 
-            type="button" 
+          <button
+            className="back-button-right"
+            onClick={() => navigate(-1)}
+            type="button"
             aria-label="Go back"
           >
             <ArrowLeft size={20} />
@@ -93,49 +91,47 @@ const SettingsPage: React.FC = () => {
             registerSaveHandler={registerSaveHandler}
             onSettingsChanged={clearSaveSummary}
             onLoadingChange={setIsProfileLoading}
-          />
-          <SettingAgent
-            registerSaveHandler={registerSaveHandler}
-            onSettingsChanged={clearSaveSummary}
-            onLoadingChange={setIsOpenRouterLoading}
-          />
-
-          <div className="settings-save-all-panel">
-            <button
-              className="setting-agent-primary settings-save-all-button"
-              type="button"
-              onClick={() => void handleSaveAll()}
-              disabled={isSavingAll || !saveHandlers.github || !saveHandlers.openrouter}
-            >
-              {isSavingAll ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Save size={16} aria-hidden="true" />}
-              {isSavingAll ? 'Saving all…' : 'Save All'}
-            </button>
-            {saveResults && (
-              <div
-                className="settings-save-all-results"
-                role={hasSaveErrors ? 'alert' : 'status'}
-                aria-live={hasSaveErrors ? 'assertive' : 'polite'}
-              >
-                {allUnchanged ? (
-                  <p>No changes to save.</p>
-                ) : saveResults.map((result) => (
-                  <p key={result.sectionId} className={result.status === 'error' ? 'is-error' : ''}>
-                    {result.status === 'error' ? <AlertCircle size={15} aria-hidden="true" /> : <CheckCircle size={15} aria-hidden="true" />}
-                    <span><strong>{result.sectionName}:</strong> {result.message}</span>
-                  </p>
-                ))}
+          >
+            <>
+              <SettingAgent
+                registerSaveHandler={registerSaveHandler}
+                onSettingsChanged={clearSaveSummary}
+                onLoadingChange={setIsOpenRouterLoading}
+              />
+              <div className="settings-save-all-panel">
+                <button
+                  className="setting-agent-primary settings-save-all-button"
+                  type="button"
+                  onClick={() => void handleSaveAll()}
+                  disabled={isSavingAll || !saveHandlers.github || !saveHandlers.openrouter}
+                >
+                  {isSavingAll ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Save size={16} aria-hidden="true" />}
+                  {isSavingAll ? 'Saving all…' : 'Save All'}
+                </button>
+                {saveResults && (
+                  <div
+                    className="settings-save-all-results"
+                    role={hasSaveErrors ? 'alert' : 'status'}
+                    aria-live={hasSaveErrors ? 'assertive' : 'polite'}
+                  >
+                    {allUnchanged ? (
+                      <p>No changes to save.</p>
+                    ) : saveResults.map((result) => (
+                      <p key={result.sectionId} className={result.status === 'error' ? 'is-error' : ''}>
+                        {result.status === 'error' ? <AlertCircle size={15} aria-hidden="true" /> : <CheckCircle size={15} aria-hidden="true" />}
+                        <span><strong>{result.sectionName}:</strong> {result.message}</span>
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          </SettingUser>
 
-          {/* Pengaturan Visual */}
           <SettingVisual />
-
-          {/* Pengaturan Audio */}
           <SettingAudio />
         </div>
 
-        {/* Footer */}
         <footer className="settings-footer">
           <div className="footer-status">
             <div className="status-dot"></div>

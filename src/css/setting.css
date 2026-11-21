@@ -1299,3 +1299,58 @@
   flex: 0 0 auto;
   margin-top: 1px;
 }
+
+.settings-service-bundle {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.settings-service-section + .settings-service-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.settings-service-bundle > .settings-save-all-panel {
+  margin: 20px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-color);
+}
+
+.setting-eye-btn,
+.setting-agent-reveal-btn,
+.su-copy-btn,
+.setting-agent-copy-btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  flex: 0 0 32px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-small);
+  line-height: 0;
+}
+
+.setting-eye-btn svg,
+.setting-agent-reveal-btn svg,
+.su-copy-btn svg,
+.setting-agent-copy-btn svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+.settings-token-input-wrapper .setting-agent-input.setting-sensitive-input {
+  padding-right: 84px;
+}
+
+.settings-token-input-wrapper .setting-agent-reveal-btn {
+  right: 44px;
+}

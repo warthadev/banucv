@@ -62,9 +62,10 @@ interface SettingUserProps {
   registerSaveHandler: RegisterSettingsSaveHandler;
   onSettingsChanged: () => void;
   onLoadingChange: (isLoading: boolean) => void;
+  children?: React.ReactNode;
 }
 
-const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettingsChanged, onLoadingChange }) => {
+const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettingsChanged, onLoadingChange, children }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -263,34 +264,44 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
 
   if (loading) {
     return (
-      <section className="stack-item settings-bundle-section">
-        <div className="section-header">
-          <UserIcon size={18} color="var(--primary)" />
-          <span className="section-label">User Profile</span>
-        </div>
-        <div className="su-loading-container">
-          <div className="status-spinner" />
-        </div>
-      </section>
+      <>
+        <section className="stack-item settings-bundle-section">
+          <div className="section-header">
+            <UserIcon size={18} color="var(--primary)" />
+            <span className="section-label">User Profile</span>
+          </div>
+          <div className="su-loading-container">
+            <div className="status-spinner" />
+          </div>
+        </section>
+        <section className="stack-item settings-service-bundle" aria-label="Connected services">
+          {children}
+        </section>
+      </>
     );
   }
 
   if (error) {
     return (
-      <section className="stack-item settings-bundle-section">
-        <div className="section-header">
-          <UserIcon size={18} color="var(--primary)" />
-          <span className="section-label">User Profile</span>
-        </div>
-        <div className="su-error-container">
-          <AlertCircle size={24} className="su-error-icon" />
-          <div className="su-error-text">Failed to load profile</div>
-          <div className="su-error-detail">{error}</div>
-          <button onClick={fetchUserData} className="su-retry-btn">
-            Retry
-          </button>
-        </div>
-      </section>
+      <>
+        <section className="stack-item settings-bundle-section">
+          <div className="section-header">
+            <UserIcon size={18} color="var(--primary)" />
+            <span className="section-label">User Profile</span>
+          </div>
+          <div className="su-error-container">
+            <AlertCircle size={24} className="su-error-icon" />
+            <div className="su-error-text">Failed to load profile</div>
+            <div className="su-error-detail">{error}</div>
+            <button onClick={fetchUserData} className="su-retry-btn">
+              Retry
+            </button>
+          </div>
+        </section>
+        <section className="stack-item settings-service-bundle" aria-label="Connected services">
+          {children}
+        </section>
+      </>
     );
   }
 
@@ -405,7 +416,8 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
         )}
       </section>
 
-    <section className="stack-item settings-bundle-section" aria-labelledby="setting-github-title">
+    <section className="stack-item settings-service-bundle" aria-label="Connected services">
+    <section className="settings-service-section" aria-labelledby="setting-github-title">
       <div className="section-header">
         <GithubIcon />
         <span className="section-label" id="setting-github-title">GitHub</span>
@@ -474,7 +486,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
 
     </section>
 
-    <section className="stack-item settings-bundle-section" aria-labelledby="setting-cloud-manager-title">
+    <section className="settings-service-section" aria-labelledby="setting-cloud-manager-title">
       <div className="section-header">
         <Cloud size={18} color="var(--primary)" />
         <span className="section-label" id="setting-cloud-manager-title">Cloud Manager</span>
@@ -608,6 +620,8 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
         )}
       </div>
 
+    </section>
+    {children}
     </section>
     </>
   );

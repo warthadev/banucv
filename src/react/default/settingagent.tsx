@@ -192,7 +192,9 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSett
           <KeyRound size={19} aria-hidden="true" />
           <span className="section-label">AI Agent · OpenRouter</span>
         </div>
-        <div className="setting-agent-loading"><LoaderCircle size={18} className="setting-agent-spinner" /> Loading OpenRouter settings…</div>
+        <div className="setting-agent-loading" role="status" aria-label="Loading OpenRouter settings">
+          <LoaderCircle size={18} className="setting-agent-spinner" />
+        </div>
       </section>
     );
   }
@@ -209,7 +211,6 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSett
         <p className="setting-agent-note" role="status">Sign in to your Firebase account to manage its OpenRouter settings.</p>
       ) : (
         <>
-          <p className="setting-agent-account">Active account: <strong>{currentUser.email || currentUser.uid}</strong></p>
           {settingsError && (
             <p className="setting-agent-error" role="alert"><AlertCircle size={15} /> OpenRouter settings warning: {settingsError}</p>
           )}

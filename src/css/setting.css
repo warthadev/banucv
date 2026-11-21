@@ -1,5 +1,5 @@
 /* src/css/setting.css */
-.setting-page-container {
+.settings-page-container {
   width: 100%;
   min-height: 100dvh;
   display: flex;
@@ -24,11 +24,14 @@
 
 .content-wrapper {
   width: 100%;
-  max-width: 600px;
+  max-width: var(--global-layout-content-width);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   flex: 1;
+}
+.content-wrapper.global-wrapper {
+  padding-inline: 0;
 }
 
 .settings-header {
@@ -765,7 +768,7 @@
   }
   
   .content-wrapper {
-    max-width: 1000px;
+    max-width: var(--global-layout-content-width);
   }
   
   .stack-item {
@@ -783,7 +786,7 @@
   }
   
   .content-wrapper {
-    max-width: 1200px;
+    max-width: var(--global-layout-content-width);
   }
   
   .stack-item {

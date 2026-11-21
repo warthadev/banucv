@@ -5705,7 +5705,7 @@
 }
 
 @media (max-width: 768px) {
-  .cloudplaylist-overlay { padding: 0; }
+  .cloudplaylist-overlay.global-modal-overlay { padding: 0; }
   .cloudplaylist-stage { border-radius: 0; max-width: 100%; border: none; }
   .cloudplaylist-body { padding: 8px 20px 24px; }
   .cloudplaylist-queue-inner { max-height: 45vh; }

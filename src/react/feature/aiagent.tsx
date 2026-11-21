@@ -1574,14 +1574,14 @@ const AIAgent: React.FC = () => {
               {uploadedImages.map((img, idx) => (
                 <div key={`img-${idx}`} className="aiagent-image-preview">
                   <img src={img.preview} alt={`Preview ${idx + 1}`} />
-                  <button onClick={() => removeImage(idx)} className="aiagent-image-remove"><X size={16} /></button>
+                  <button type="button" onClick={() => removeImage(idx)} className="aiagent-image-remove global-icon-button" aria-label={`Remove image ${idx + 1}`}><X size={16} /></button>
                 </div>
               ))}
               {uploadedFiles.map((file, idx) => (
                 <div key={`file-${idx}`} className="aiagent-file-preview">
                   <FileText size={14} />
                   <span>{file.name.length > 30 ? file.name.substring(0,27)+"..." : file.name}</span>
-                  <button onClick={() => removeFile(idx)}><X size={14} /></button>
+                  <button type="button" onClick={() => removeFile(idx)} className="global-icon-button" aria-label={`Remove ${file.name}`}><X size={16} /></button>
                 </div>
               ))}
             </div>
@@ -1601,7 +1601,7 @@ const AIAgent: React.FC = () => {
             <div className="aiagent-input-buttons">
               <div className="aiagent-input-buttons-left global-inline-row global-inline-row--gap-6">
                 <div className="aiagent-upload-wrapper" ref={uploadDropdownRef}>
-                  <button type="button" className="aiagent-add-btn" aria-label="Add attachments" title="Add attachments" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setUploadDropdownPos(calcDropdownPos(r, Math.min(220, window.innerWidth - 24), 180)); setIsUploadDropdownOpen(!isUploadDropdownOpen); }}><Plus size={16} aria-hidden="true" /><span>Add</span></button>
+                  <button type="button" className="aiagent-add-btn" aria-label="Add attachments" title="Add attachments" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setUploadDropdownPos(calcDropdownPos(r, Math.min(220, window.innerWidth - 24), 180)); setIsUploadDropdownOpen(!isUploadDropdownOpen); }}><Plus size={20} aria-hidden="true" /></button>
                   <AnimatePresence>
                     {isUploadDropdownOpen && (
                       <AIAgentPopover className="aiagent-popover aiagent-upload-popover global-popover" position={uploadDropdownPos}>

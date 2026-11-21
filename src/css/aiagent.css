@@ -640,8 +640,8 @@
 
 .aiagent-message.user .aiagent-message-images .aiagent-message-image {
   flex: 0 0 auto;
-  width: 120px;
-  height: 120px;
+  width: 160px;
+  height: 160px;
   margin-bottom: 0;
   border-radius: 12px;
   overflow: hidden;
@@ -667,8 +667,8 @@
 
 .aiagent-message.bot .aiagent-message-images .aiagent-message-image {
   flex: 0 0 auto;
-  width: 120px;
-  height: 120px;
+  width: 160px;
+  height: 160px;
   margin-bottom: 0;
   border-radius: 12px;
   overflow: hidden;
@@ -930,8 +930,8 @@
 
 .aiagent-image-preview {
   position: relative;
-  width: 64px;
-  height: 64px;
+  width: 96px;
+  height: 96px;
   border-radius: 12px;
   overflow: hidden;
   border: 1.5px solid var(--global-color-accent);
@@ -943,18 +943,19 @@
 
 .aiagent-image-remove {
   position: absolute;
-  top: 3px;
-  right: 3px;
-  background: rgba(0, 0, 0, 0.7);
-  border: none;
+  top: 4px;
+  right: 4px;
+  background: var(--global-color-surface);
+  border: 1px solid var(--global-color-border);
   border-radius: 50%;
-  width: 18px;
-  height: 18px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: white;
+  color: var(--global-color-icon);
+  box-shadow: 0 2px 8px var(--global-color-shadow);
   transition: background 0.15s;
 }
 
@@ -963,23 +964,29 @@
 .aiagent-file-preview {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   background: var(--global-color-surface);
   border-radius: 10px;
-  padding: 5px 12px;
-  font-size: var(--global-font-size-0-72rem);
+  padding: 7px 10px;
+  min-height: 44px;
+  font-size: var(--global-font-size-0-8rem);
   font-weight: 500;
   border: 1px solid var(--global-color-border);
   color: var(--global-color-text-secondary);
   font-family: inherit;
-  max-width: 220px;
+  max-width: min(280px, 100%);
 }
 
 .aiagent-file-preview span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--global-color-text-secondary); }
 
 .aiagent-file-preview button {
-  background: none;
-  border: none;
+  width: 28px;
+  height: 28px;
+  justify-content: center;
+  padding: 0;
+  background: var(--global-color-surface);
+  border: 1px solid var(--global-color-border);
+  border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1061,9 +1068,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
   flex-shrink: 0;
-  padding: 8px 11px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
   border: 0;
   border-radius: 12px;
   background: var(--global-color-accent);
@@ -1404,14 +1412,19 @@
 
 .aiagent-upload-popover button {
   box-sizing: border-box;
+  display: flex;
+  align-items: center;
   gap: 10px;
-  padding: 7px 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 6px 10px;
   border: 1px solid var(--global-color-border);
   border-radius: 12px;
   background: var(--global-color-surface);
   color: var(--global-color-text);
   font-size: var(--global-font-size-0-78rem);
   font-weight: 600;
+  text-align: left;
   flex-shrink: 0;
   transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
 }
@@ -1431,8 +1444,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   flex: 0 0 auto;
   border-radius: 10px;
   background: color-mix(in srgb, var(--global-color-accent) 14%, transparent);
@@ -1472,8 +1485,8 @@
   .aiagent-messages { scrollbar-width: none; -ms-overflow-style: none; }
   .aiagent-message.user .aiagent-message-images .aiagent-message-image,
   .aiagent-message.bot .aiagent-message-images .aiagent-message-image {
-    width: 100px;
-    height: 100px;
+    width: 140px;
+    height: 140px;
   }
   .aiagent-search-image { max-width: 100px; max-height: 100px; }
 }
@@ -1486,8 +1499,8 @@
   .aiagent-messages { scrollbar-width: none; -ms-overflow-style: none; }
   .aiagent-message.user .aiagent-message-images .aiagent-message-image,
   .aiagent-message.bot .aiagent-message-images .aiagent-message-image {
-    width: 140px;
-    height: 140px;
+    width: 160px;
+    height: 160px;
   }
   .aiagent-search-image { max-width: 140px; max-height: 140px; }
 }
@@ -1509,11 +1522,11 @@
   .aiagent-welcome h3 { font-size: var(--global-font-size-1-25rem); }
   .aiagent-welcome-icon { width: 64px; height: 64px; border-radius: 22px; }
   .aiagent-previews { padding: 6px 12px 0 12px; gap: 6px; }
-  .aiagent-image-preview { width: 50px; height: 50px; }
+  .aiagent-image-preview { width: 84px; height: 84px; }
   .aiagent-message.user .aiagent-message-images .aiagent-message-image,
   .aiagent-message.bot .aiagent-message-images .aiagent-message-image {
-    width: 80px;
-    height: 80px;
+    width: 128px;
+    height: 128px;
   }
   .aiagent-message.user .aiagent-message-image img,
   .aiagent-message.bot .aiagent-message-image img {
@@ -1567,10 +1580,11 @@
 }
 
 @media (max-width: 400px) {
+  .aiagent-image-preview { width: 76px; height: 76px; }
   .aiagent-message.user .aiagent-message-images .aiagent-message-image,
   .aiagent-message.bot .aiagent-message-images .aiagent-message-image {
-    width: 65px;
-    height: 65px;
+    width: 112px;
+    height: 112px;
   }
   .aiagent-message.user .aiagent-message-image img,
   .aiagent-message.bot .aiagent-message-image img {

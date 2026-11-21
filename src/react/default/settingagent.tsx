@@ -213,72 +213,70 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSett
           {settingsError && (
             <p className="setting-agent-error" role="alert"><AlertCircle size={15} /> OpenRouter settings warning: {settingsError}</p>
           )}
-          <div className="su-profile-card setting-agent-key-surface">
-            {credentials && (
-              <div className="setting-agent-safe-status">
-                <ShieldCheck size={17} aria-hidden="true" />
-                <span>
-                  OpenRouter key connected for this account
-                  <small>{credentials.migrationRequired
-                    ? "Older key needs verification."
-                    : "Stored as plain text."}</small>
-                </span>
-              </div>
-            )}
-
-            <div className="setting-agent-form">
-              <label className="setting-agent-label" htmlFor="setting-openrouter-key">
-                OpenRouter API key
-              </label>
-              <div className="su-list-item setting-agent-key-control">
-                <input
-                  id="setting-openrouter-key"
-                  className="setting-agent-input setting-agent-key-input"
-                  type={showKey ? "text" : "password"}
-                  name="openrouter-api-key"
-                  value={apiKey}
-                  onChange={(event) => {
-                    setApiKey(event.target.value);
-                    setCopyStatus(null);
-                    onSettingsChanged();
-                  }}
-                  placeholder={credentials ? "Enter a key to replace the saved key" : "Paste this account's OpenRouter API key"}
-                  autoComplete="off"
-                  spellCheck={false}
-                  autoCapitalize="none"
-                  required={!credentials}
-                />
-                <button
-                  className="setting-agent-reveal-btn"
-                  type="button"
-                  onClick={() => setShowKey((current) => !current)}
-                  aria-label={showKey ? "Hide saved OpenRouter API key" : "Reveal saved OpenRouter API key"}
-                  aria-pressed={showKey}
-                  disabled={!apiKey}
-                >
-                  {showKey ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
-                </button>
-                <button
-                  className="su-copy-btn setting-agent-copy-btn"
-                  type="button"
-                  onClick={() => void handleCopyApiKey()}
-                  disabled={!apiKey}
-                  aria-label={copyStatus === "copied" ? "OpenRouter API key copied to clipboard" : "Copy displayed OpenRouter API key"}
-                  title="Copy API key"
-                >
-                  {copyStatus === "copied" ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
-                </button>
-              </div>
-              {copyStatus && (
-                <p
-                  className={`setting-agent-copy-feedback${copyStatus === "error" ? " is-error" : ""}`}
-                  role={copyStatus === "error" ? "alert" : "status"}
-                  aria-live={copyStatus === "error" ? "assertive" : "polite"}
-                >
-                  {copyStatus === "copied" ? "OpenRouter API key copied to clipboard." : "Could not copy the API key. Please try again."}
-                </p>
-              )}
+          {credentials && (
+            <div className="su-profile-card setting-agent-safe-status">
+              <ShieldCheck size={17} aria-hidden="true" />
+              <span>
+                OpenRouter key connected for this account
+                <small>{credentials.migrationRequired
+                  ? "Older key needs verification."
+                  : "Stored as plain text."}</small>
+              </span>
             </div>
+          )}
+
+          <div className="setting-agent-form">
+            <label className="setting-agent-label" htmlFor="setting-openrouter-key">
+              OpenRouter API key
+            </label>
+            <div className="su-list-item setting-agent-key-control">
+              <input
+                id="setting-openrouter-key"
+                className="setting-agent-input setting-agent-key-input"
+                type={showKey ? "text" : "password"}
+                name="openrouter-api-key"
+                value={apiKey}
+                onChange={(event) => {
+                  setApiKey(event.target.value);
+                  setCopyStatus(null);
+                  onSettingsChanged();
+                }}
+                placeholder={credentials ? "Enter a key to replace the saved key" : "Paste this account's OpenRouter API key"}
+                autoComplete="off"
+                spellCheck={false}
+                autoCapitalize="none"
+                required={!credentials}
+              />
+              <button
+                className="setting-agent-reveal-btn"
+                type="button"
+                onClick={() => setShowKey((current) => !current)}
+                aria-label={showKey ? "Hide saved OpenRouter API key" : "Reveal saved OpenRouter API key"}
+                aria-pressed={showKey}
+                disabled={!apiKey}
+              >
+                {showKey ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+              </button>
+              <button
+                className="su-copy-btn setting-agent-copy-btn"
+                type="button"
+                onClick={() => void handleCopyApiKey()}
+                disabled={!apiKey}
+                aria-label={copyStatus === "copied" ? "OpenRouter API key copied to clipboard" : "Copy displayed OpenRouter API key"}
+                title="Copy API key"
+              >
+                {copyStatus === "copied" ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+              </button>
+            </div>
+            {copyStatus && (
+              <p
+                className={`setting-agent-copy-feedback${copyStatus === "error" ? " is-error" : ""}`}
+                role={copyStatus === "error" ? "alert" : "status"}
+                aria-live={copyStatus === "error" ? "assertive" : "polite"}
+              >
+                {copyStatus === "copied" ? "OpenRouter API key copied to clipboard." : "Could not copy the API key. Please try again."}
+              </p>
+            )}
           </div>
 
           {credentials && <AgentModelCatalog models={models} isLoading={modelsLoading} error={modelCatalogError} />}

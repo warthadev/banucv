@@ -168,9 +168,6 @@ const SettingAgent: React.FC = () => {
         <span className="section-label" id="setting-agent-title">AI Agent · OpenRouter</span>
         {credentials && <span className="setting-agent-status"><CheckCircle size={14} /> Connected</span>}
       </div>
-      <p className="setting-agent-description">
-        Manage this account&apos;s OpenRouter API key. It is stored as plain text in this account&apos;s existing Firestore user record. The live catalog is checked and only models marked free or priced at zero for both input and output are offered.
-      </p>
 
       {!currentUser ? (
         <p className="setting-agent-note" role="status">Sign in to your Firebase account to manage its OpenRouter settings.</p>
@@ -186,8 +183,8 @@ const SettingAgent: React.FC = () => {
               <span>
                 OpenRouter key connected for this account
                 <small>{credentials.migrationRequired
-                  ? "An older saved key is awaiting verification and migration."
-                  : "Stored as plain text in this account's existing Firestore user document."}</small>
+                  ? "Older key needs verification."
+                  : "Stored as plain text."}</small>
               </span>
             </div>
           )}
@@ -243,7 +240,6 @@ const SettingAgent: React.FC = () => {
                 {copyStatus === "copied" ? "OpenRouter API key copied to clipboard." : "Could not copy the API key. Please try again."}
               </p>
             )}
-            {credentials && <span className="setting-agent-footnote">Edit the key to replace it, or save and verify it unchanged. A verified key is stored as plain text.</span>}
             <div className="setting-agent-actions">
               <button className="setting-agent-primary" type="submit" disabled={saving || (!apiKey.trim() && !credentials)}>
                 {saving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <ShieldCheck size={16} />}
@@ -264,9 +260,6 @@ const SettingAgent: React.FC = () => {
             </div>
           </form>
 
-          <p className="setting-agent-footnote">
-            OpenRouter&apos;s live catalog is checked whenever models are loaded; chat requests are rejected unless the selected model is still listed as free. The saved key is masked until you reveal it, and the copy control copies the key currently shown for this signed-in account.
-          </p>
           {credentials && <AgentModelCatalog models={models} isLoading={modelsLoading} error={modelCatalogError} />}
           {message && (
             <p className={message.type === "success" ? "setting-agent-success" : "setting-agent-error"} role="status">

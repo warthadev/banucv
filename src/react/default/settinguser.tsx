@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import {
-  User as UserIcon, AlertCircle, CheckCircle, LoaderCircle, Save,
+  AlertCircle, CheckCircle, LoaderCircle, Save,
   Mail, Calendar, MapPin, Smartphone, Globe, Clock, 
   Activity, Monitor, Phone, Cpu, Navigation, Wifi,
   Cloud, Copy, Eye, EyeOff, Check
@@ -267,10 +267,6 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
     return (
       <>
         <section className="stack-item settings-bundle-section">
-          <div className="section-header">
-            <UserIcon size={18} color="var(--primary)" />
-            <span className="section-label">User Profile</span>
-          </div>
           <div className="su-loading-container">
             <div className="status-spinner" />
           </div>
@@ -283,10 +279,6 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
     return (
       <>
         <section className="stack-item settings-bundle-section">
-          <div className="section-header">
-            <UserIcon size={18} color="var(--primary)" />
-            <span className="section-label">User Profile</span>
-          </div>
           <div className="su-error-container">
             <AlertCircle size={24} className="su-error-icon" />
             <div className="su-error-text">Failed to load profile</div>
@@ -307,13 +299,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
 
   return (
     <>
-      <section className="stack-item settings-bundle-section" aria-labelledby="setting-user-profile-title">
-        <div className="section-header">
-          <UserIcon size={18} color="var(--primary)" />
-          <span className="section-label" id="setting-user-profile-title">User Profile</span>
-          <span className="setting-agent-status"><CheckCircle size={14} /> Signed in</span>
-        </div>
-
+      <section className="stack-item settings-bundle-section" aria-label="User Profile">
         <div className="su-profile-card">
           <div className="su-profile-header">
             {profile?.photoURL && (
@@ -411,16 +397,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
         )}
       </section>
 
-    <section className="stack-item settings-service-section" aria-labelledby="setting-github-title">
-      <div className="section-header">
-        <GithubIcon />
-        <span className="section-label" id="setting-github-title">GitHub</span>
-        <span className={`setting-agent-status ${githubConfigured ? "" : "setting-agent-status-muted"}`}>
-          {githubConfigured && <CheckCircle size={14} />}
-          {githubConfigured ? "Configured" : "Not configured"}
-        </span>
-      </div>
-
+    <section className="stack-item settings-service-section" aria-label="GitHub">
       <div className="su-profile-card setting-agent-safe-status">
         <GithubIcon />
         <span>
@@ -512,16 +489,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
 
     </section>
 
-    <section className="stack-item settings-service-section" aria-labelledby="setting-cloud-manager-title">
-      <div className="section-header">
-        <Cloud size={18} color="var(--primary)" />
-        <span className="section-label" id="setting-cloud-manager-title">Cloud Manager</span>
-        <span className={`setting-agent-status ${cloudAccountCount ? "" : "setting-agent-status-muted"}`}>
-          {cloudAccountCount > 0 && <CheckCircle size={14} />}
-          {cloudAccountCount === 1 ? "1 account" : `${cloudAccountCount} accounts`}
-        </span>
-      </div>
-
+    <section className="stack-item settings-service-section" aria-label="Cloud Manager">
       <div className="su-profile-card setting-agent-safe-status">
         <Cloud size={17} aria-hidden="true" />
         <span>

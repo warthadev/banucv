@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
-import { AlertCircle, Check, CheckCircle, Copy, Eye, EyeOff, KeyRound, LoaderCircle, Save, ShieldCheck } from "lucide-react";
+import { AlertCircle, Check, CheckCircle, Copy, Eye, EyeOff, LoaderCircle, Save, ShieldCheck } from "lucide-react";
 import { getAuth } from "@config/firebase";
 import { loadOpenRouterCredentials, saveOpenRouterCredentials, type OpenRouterCredentials } from "@config/routerhelper";
 import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
@@ -179,11 +179,7 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ onLoadingChange }) => {
 
   if (!authReady || loading) {
     return (
-      <section className="stack-item settings-service-section setting-agent-card" aria-busy="true">
-        <div className="section-header">
-          <KeyRound size={19} aria-hidden="true" />
-          <span className="section-label">AI Agent · OpenRouter</span>
-        </div>
+      <section className="stack-item settings-service-section setting-agent-card" aria-label="AI Agent · OpenRouter" aria-busy="true">
         <div className="setting-agent-loading" role="status" aria-label="Loading OpenRouter settings">
           <LoaderCircle size={18} className="setting-agent-spinner" />
         </div>
@@ -192,13 +188,7 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ onLoadingChange }) => {
   }
 
   return (
-    <section className="stack-item settings-service-section setting-agent-card" aria-labelledby="setting-agent-title">
-      <div className="section-header">
-        <KeyRound size={19} aria-hidden="true" />
-        <span className="section-label" id="setting-agent-title">AI Agent · OpenRouter</span>
-        {credentials && <span className="setting-agent-status"><CheckCircle size={14} /> Connected</span>}
-      </div>
-
+    <section className="stack-item settings-service-section setting-agent-card" aria-label="AI Agent · OpenRouter">
       {!currentUser ? (
         <p className="setting-agent-note" role="status">Sign in to your Firebase account to manage its OpenRouter settings.</p>
       ) : (

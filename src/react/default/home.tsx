@@ -62,7 +62,7 @@ const Home: React.FC = () => {
         </motion.div>
 
         <motion.div 
-          className="home-grid"
+          className="home-grid global-responsive-grid"
           variants={gridVariants}
           initial="hidden"
           animate="visible"

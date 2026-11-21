@@ -178,9 +178,3 @@
 .global-icon-button:disabled {
   color: var(--global-color-text-secondary);
 }
-
-@media (max-width: 767px) {
-  .global-page .global-card--padded {
-    padding: var(--global-space-4);
-  }
-}

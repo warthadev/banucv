@@ -207,7 +207,7 @@ const CollectPhoto: React.FC = () => {
       ) : error ? (
         <div className="collectphoto-error"><AlertCircle size={48} /><p>{error}</p><button onClick={fetchAllUsers}>Retry</button></div>
       ) : (
-        <div className="collectphoto-grid">
+        <div className="collectphoto-grid global-responsive-grid">
           {filteredUsers.map((user) => {
             const current = getCurrentSelfie(user);
             const sanitizedName = sanitizeText(user.displayName || "Anonymous");

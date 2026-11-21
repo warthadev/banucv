@@ -592,7 +592,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
             clarity.
           </motion.p>
         </header>
-        <div className="dash-content-sections">
+        <div className="dash-content-sections global-responsive-grid">
           {projectItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -649,7 +649,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
             real-time media streaming and layered security.
           </motion.p>
         </header>
-        <div className="dash-content-sections">
+        <div className="dash-content-sections global-responsive-grid">
           {featureItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -696,7 +696,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
             built here.
           </motion.p>
         </header>
-        <div className="dash-tech-grid">
+        <div className="dash-tech-grid global-responsive-grid global-responsive-grid--four">
           {techItems.map((tech) => (
             <div key={tech.category} className="dash-tech-card global-card global-card--glass global-card--padded">
               <h3 className="dash-tech-category">{tech.category}</h3>

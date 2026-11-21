@@ -431,6 +431,14 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
         </span>
       </div>
 
+      <div className="su-profile-card setting-agent-safe-status">
+        <GithubIcon />
+        <span>
+          GitHub credentials are {githubConfigured ? "configured" : "not configured"}.
+          <small>Status reflects the saved username and personal access token.</small>
+        </span>
+      </div>
+
       <div className="su-input-group">
         <label className="su-input-label">
           GITHUB USERNAME
@@ -497,6 +505,14 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
         <span className={`setting-agent-status ${cloudAccountCount ? "" : "setting-agent-status-muted"}`}>
           {cloudAccountCount > 0 && <CheckCircle size={14} />}
           {cloudAccountCount === 1 ? "1 account" : `${cloudAccountCount} accounts`}
+        </span>
+      </div>
+
+      <div className="su-profile-card setting-agent-safe-status">
+        <Cloud size={17} aria-hidden="true" />
+        <span>
+          {cloudAccountCount > 0 ? "Cloud Manager entries are saved in this profile." : "No Cloud Manager entries are saved in this profile."}
+          <small>Telegram: {telegramSessions.length} · Hugging Face: {hfUsernames.length}</small>
         </span>
       </div>
 

@@ -1264,6 +1264,10 @@
   flex-direction: column;
   gap: 10px;
   margin-bottom: 16px;
+  position: sticky;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 4;
+  background: var(--bg);
 }
 
 .settings-save-all-button {
@@ -1312,8 +1316,8 @@
 }
 
 .settings-service-bundle > .settings-save-all-panel {
-  margin: 20px 0 0;
-  padding-top: 18px;
+  margin: 12px 0 0;
+  padding-top: 8px;
 }
 
 .setting-eye-btn,

@@ -219,13 +219,16 @@ const SettingUser: React.FC = () => {
 
   const displayEmail = profile?.email || currentUser?.email || "No email";
   const providerNames = (profile?.providers || []).join(", ");
+  const githubConfigured = Boolean(profile?.githubUsername?.trim() && profile?.githubToken?.trim());
+  const cloudAccountCount = telegramSessions.length + hfUsernames.length;
 
   return (
     <>
-    <section className="stack-item" aria-labelledby="setting-user-profile-title">
+    <section className="stack-item setting-agent-card" aria-labelledby="setting-user-profile-title">
       <div className="section-header">
         <UserIcon size={18} color="var(--primary)" />
         <span className="section-label" id="setting-user-profile-title">User Profile</span>
+        <span className="setting-agent-status"><CheckCircle size={14} /> Signed in</span>
       </div>
 
       <div className="su-profile-card">
@@ -326,10 +329,14 @@ const SettingUser: React.FC = () => {
 
     </section>
 
-    <section className="stack-item" aria-labelledby="setting-github-title">
+    <section className="stack-item setting-agent-card" aria-labelledby="setting-github-title">
       <div className="section-header">
         <GithubIcon />
         <span className="section-label" id="setting-github-title">GitHub</span>
+        <span className={`setting-agent-status ${githubConfigured ? "" : "setting-agent-status-muted"}`}>
+          {githubConfigured && <CheckCircle size={14} />}
+          {githubConfigured ? "Configured" : "Not configured"}
+        </span>
       </div>
 
       <div className="su-input-group">
@@ -342,7 +349,7 @@ const SettingUser: React.FC = () => {
           value={githubUser}
           onChange={(e) => setGithubUser(e.target.value)}
           placeholder="Username"
-          className="setting-plain-input"
+          className="setting-agent-input setting-plain-input"
         />
       </div>
 
@@ -357,12 +364,14 @@ const SettingUser: React.FC = () => {
             value={githubToken}
             onChange={(e) => setGithubToken(e.target.value)}
             placeholder="Token Access"
-            className="setting-sensitive-input"
+            className="setting-agent-input setting-sensitive-input"
           />
           <button
             type="button"
-            className="setting-eye-btn"
+            className="setting-eye-btn setting-agent-reveal-btn"
             onClick={() => setShowGithubToken(!showGithubToken)}
+            aria-label={showGithubToken ? "Hide GitHub personal access token" : "Reveal GitHub personal access token"}
+            aria-pressed={showGithubToken}
           >
             {showGithubToken ? <EyeOff size={16} color="var(--primary)" /> : <Eye size={16} color="var(--primary)" />}
           </button>
@@ -379,17 +388,21 @@ const SettingUser: React.FC = () => {
       <button
         onClick={handleSaveAll}
         disabled={saving}
-        className="su-save-btn"
+        className="setting-agent-primary setting-user-save-btn"
       >
-        {saving ? <div className="status-spinner" /> : null}
+        {saving ? <div className="status-spinner" /> : <CheckCircle size={16} aria-hidden="true" />}
         {saving ? "Saving..." : "Save Credentials"}
       </button>
     </section>
 
-    <section className="stack-item" aria-labelledby="setting-cloud-manager-title">
+    <section className="stack-item setting-agent-card" aria-labelledby="setting-cloud-manager-title">
       <div className="section-header">
         <Cloud size={18} color="var(--primary)" />
         <span className="section-label" id="setting-cloud-manager-title">Cloud Manager</span>
+        <span className={`setting-agent-status ${cloudAccountCount ? "" : "setting-agent-status-muted"}`}>
+          {cloudAccountCount > 0 && <CheckCircle size={14} />}
+          {cloudAccountCount === 1 ? "1 account" : `${cloudAccountCount} accounts`}
+        </span>
       </div>
 
       <div className="su-input-group su-input-group-lg">

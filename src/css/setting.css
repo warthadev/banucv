@@ -151,8 +151,9 @@
 .su-profile-card {
   margin-bottom: 20px;
   padding: 16px;
-  background: var(--primary-alpha);
-  border-radius: var(--radius-medium);
+  background: var(--bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-small);
 }
 
 .su-profile-header {
@@ -859,6 +860,10 @@
   font-weight: 700;
 }
 
+.setting-agent-status-muted {
+  color: var(--text-muted);
+}
+
 .setting-agent-description,
 .setting-agent-note,
 .setting-agent-account,
@@ -947,6 +952,10 @@
 .setting-agent-input:focus {
   outline: 2px solid var(--primary-alpha);
   border-color: var(--primary);
+}
+
+.setting-agent-input.setting-sensitive-input {
+  padding-right: 46px;
 }
 
 .setting-agent-key-control {
@@ -1046,6 +1055,10 @@
 .setting-agent-primary {
   background: var(--primary);
   color: #fff;
+}
+
+.setting-user-save-btn {
+  width: 100%;
 }
 
 .setting-agent-secondary {

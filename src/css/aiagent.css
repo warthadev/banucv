@@ -1,5 +1,5 @@
 /* src/css/aiagent.css */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
 .aiagent-messages::-webkit-scrollbar { width: 4px; }
 .aiagent-messages::-webkit-scrollbar-track { background: transparent; }
@@ -19,7 +19,7 @@
   background: var(--bg);
   z-index: 0;
   padding-top: 70px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-family-ui);
 }
 
 .aiagent-messages {
@@ -201,7 +201,7 @@
   color: var(--primary);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: inherit;
 }
 
 .aiagent-message-metadata {
@@ -226,7 +226,7 @@
   font-weight: 500;
   padding: 3px 8px;
   border-radius: 8px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: inherit;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
@@ -262,7 +262,7 @@
   font-weight: 500;
   padding: 3px 8px;
   border-radius: 8px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: inherit;
   transition: all 0.15s ease;
 }
 
@@ -441,7 +441,7 @@
   cursor: pointer;
   color: var(--color-text-sub);
   font-size: 11px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: inherit;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -510,7 +510,7 @@
   font-size: 0.7rem;
   color: var(--text-sub);
   margin-top: 6px;
-  font-family: monospace;
+  font-family: inherit;
   word-break: break-all;
 }
 
@@ -557,7 +557,7 @@
   font-size: 0.7rem;
   font-weight: 600;
   color: var(--text-sub);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: inherit;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -575,7 +575,7 @@
   cursor: pointer;
   color: var(--text-sub);
   font-size: 11px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: inherit;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -598,7 +598,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.85rem;
-  font-family: 'DM Sans', sans-serif;
+  font-family: inherit;
   min-width: 280px;
 }
 
@@ -847,7 +847,7 @@
   font-size: 0.72rem;
   font-weight: 500;
   color: var(--text-sub);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: inherit;
 }
 
 .aiagent-message-footer {
@@ -894,7 +894,7 @@
   font-size: 0.7rem;
   font-weight: 600;
   color: var(--text-sub);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: inherit;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -971,7 +971,7 @@
   font-weight: 500;
   border: 1px solid var(--border-color);
   color: var(--text-sub);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: inherit;
   max-width: 220px;
 }
 
@@ -1007,7 +1007,7 @@
   background: var(--card-bg);
   color: var(--text);
   font-size: 0.95rem;
-  font-family: 'DM Sans', sans-serif;
+  font-family: inherit;
   font-weight: 400;
   resize: none;
   max-height: 120px;
@@ -1154,7 +1154,7 @@
 .aiagent-automatic-model {
   margin-left: 6px;
   color: var(--text-sub);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: inherit;
   font-size: 0.68rem;
   white-space: nowrap;
 }
@@ -1292,7 +1292,7 @@
 }
 .aiagent-model-option-copy strong {
   overflow-wrap: anywhere;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: inherit;
   font-size: 0.76rem;
   font-weight: 500;
 }
@@ -1360,7 +1360,7 @@
   cursor: pointer;
   font-size: 0.85rem;
   font-weight: 500;
-  font-family: 'DM Sans', sans-serif;
+  font-family: inherit;
   text-align: left;
   transition: background 0.12s ease;
   white-space: nowrap;
@@ -1429,7 +1429,7 @@
 
 .model-dropdown-menu button {
   font-size: 0.78rem;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: inherit;
   font-weight: 400;
   padding: 9px 16px;
 }

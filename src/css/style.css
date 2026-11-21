@@ -1,9 +1,13 @@
 /* Import Font */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
 
+:root {
+  --font-family-ui: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
 /* Typography & Global Styles */
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-family-ui);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -29,6 +33,10 @@ button, .btn {
   border: none;
   color: var(--color-text);
   font-weight: 700;
+}
+
+input, select, textarea {
+  font-family: inherit;
 }
 
 /* Scrollbar - Chrome/Edge/Safari */

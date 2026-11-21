@@ -190,7 +190,7 @@
 .mediarender-time {
   font-size: 13px;
   color: #ffffff;
-  font-family: monospace;
+  font-family: inherit;
   flex-shrink: 0;
   line-height: 1;
   display: inline-flex;

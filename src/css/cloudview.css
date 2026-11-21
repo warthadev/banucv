@@ -1098,7 +1098,7 @@
 .cloudview-transfer-source-repo {
   font-size: 11px;
   color: var(--text-muted);
-  font-family: monospace;
+  font-family: inherit;
   margin-left: auto;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4127,7 +4127,7 @@
   gap: 10px;
   color: #cccccc;
   font-size: 14px;
-  font-family: monospace;
+  font-family: inherit;
 }
 
 .cloudslideshow-status--error {
@@ -4255,7 +4255,7 @@
   min-width: 0;
   flex: 1;
   color: #ffffff;
-  font-family: monospace;
+  font-family: inherit;
 }
 
 .cloudslideshow-counter {
@@ -4480,7 +4480,7 @@
   border: none;
   color: #cccccc;
   font-size: 13px;
-  font-family: monospace;
+  font-family: inherit;
   font-weight: 600;
   padding: 8px 12px;
   border-radius: 8px;

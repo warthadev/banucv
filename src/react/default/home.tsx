@@ -1,8 +1,8 @@
 // src/react/default/home.tsx
 import React from "react";
 import { motion } from "framer-motion";
-import { 
-  FiSmartphone, FiCode, FiShield, FiLink, 
+import {
+  FiSmartphone, FiCode, FiShield, FiLink,
   FiZap, FiCpu, FiMaximize, FiMoon, FiUser
 } from "react-icons/fi";
 import { GithubIcon, GoogleIcon, YahooIcon } from "@/react/control/icon";
@@ -17,10 +17,10 @@ interface FeatureCardProps {
 }
 
 const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, children }) => (
-  <motion.div 
+  <motion.div
     variants={cardVariants}
     whileHover={{ y: -5, transition: { duration: 0.2 } }}
-    className="home-card"
+    className="home-card ui-surface--card"
   >
     <div className="card-header">
       <div className="card-icon-wrapper">{icon}</div>
@@ -61,14 +61,14 @@ const Home: React.FC = () => {
 </p>
         </motion.div>
 
-        <motion.div 
+        <motion.div
           className="home-grid"
           variants={gridVariants}
           initial="hidden"
           animate="visible"
         >
           {features.map((item, index) => (
-            <FeatureCard 
+            <FeatureCard
               key={index}
               icon={item.icon}
               title={item.title}
@@ -76,8 +76,8 @@ const Home: React.FC = () => {
             />
           ))}
 
-          <FeatureCard 
-            icon={<FiLink size={22} />} 
+          <FeatureCard
+            icon={<FiLink size={22} />}
             title="Quick Connect"
             description="Securely authenticate through official identity providers in a single tap"
           >

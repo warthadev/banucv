@@ -28,7 +28,7 @@ const BarcodePage: React.FC = () => {
     const svg = qrRef.current?.querySelector("svg");
     if (!svg) return;
 
-    const size = 1200; 
+    const size = 1200;
     const svgData = new XMLSerializer().serializeToString(svg);
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -45,13 +45,13 @@ const BarcodePage: React.FC = () => {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, size, size);
       }
-      
+
       const pngFile = canvas.toDataURL("image/png", 1.0);
       const downloadLink = document.createElement("a");
       downloadLink.download = `qrcode-hd-${type}-${Date.now()}.png`;
       downloadLink.href = pngFile;
       downloadLink.click();
-      
+
       URL.revokeObjectURL(url);
       toast.success("HD QR Code downloaded successfully!");
     };
@@ -62,18 +62,18 @@ const BarcodePage: React.FC = () => {
   return (
     <div className="barcode-container">
       <Toaster position="top-center" richColors />
-      <motion.div 
-        layout 
-        className="barcode-card"
+      <motion.div
+        layout
+        className="barcode-card ui-surface--card"
         variants={cardVariants}
         initial="initial"
         animate="animate"
       >
         <motion.div layout className="barcode-header">
-          <QrCode size={24} color="var(--primary-blue)" />
+          <QrCode size={24} color="var(--primary)" />
           <h1 className="barcode-title">QR Generator</h1>
         </motion.div>
-        
+
         <motion.div layout className="barcode-type-selector">
           <button className={`barcode-type-btn ${type === "text" ? "active" : ""}`} onClick={() => setType("text")}>
             <Link size={16}/> Link
@@ -87,11 +87,11 @@ const BarcodePage: React.FC = () => {
         </motion.div>
 
         <motion.div layout className="barcode-display" ref={qrRef}>
-          <QRCodeSVG 
-            value={finalValue} 
-            size={180} 
-            level={"H"} 
-            includeMargin={false} 
+          <QRCodeSVG
+            value={finalValue}
+            size={180}
+            level={"H"}
+            includeMargin={false}
           />
         </motion.div>
 
@@ -155,10 +155,10 @@ const BarcodePage: React.FC = () => {
             </motion.div>
           </AnimatePresence>
 
-          <motion.button 
+          <motion.button
             layout
-            className="barcode-download-btn" 
-            onClick={handleDownload} 
+            className="barcode-download-btn"
+            onClick={handleDownload}
             disabled={finalValue === " "}
             whileTap={btnTapVariants}
           >

@@ -16,11 +16,11 @@
   -webkit-backdrop-filter: blur(15px) saturate(1.4);
   backdrop-filter: blur(15px) saturate(1.4);
   border: none;
-  border-radius: 100px;
-  padding: 10px 14px;
+  border-radius: var(--radius-pill);
+  padding: var(--space-4) var(--space-6);
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-7);
   pointer-events: auto;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   -webkit-transform: translateZ(0);
@@ -38,7 +38,7 @@
   height: 58px;
   border: 1px solid var(--border-color);
   border-right: none;
-  border-radius: 18px 0 0 18px;
+  border-radius: var(--radius-medium) var(--radius-square) var(--radius-square) var(--radius-medium);
   background-color: var(--bg-alpha);
   color: var(--primary);
   display: flex;
@@ -60,7 +60,7 @@
 
 .floating-player-restore.has-cover {
   width: 58px;
-  border-radius: 18px 0 0 18px;
+  border-radius: var(--radius-medium) var(--radius-square) var(--radius-square) var(--radius-medium);
   border: 1px solid var(--border-color);
 }
 
@@ -72,7 +72,7 @@
   width: 54px;
   height: 54px;
   background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -115,8 +115,8 @@
 }
 
 .player-genre-display {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: var(--type-small);
+  font-weight: var(--weight-bold);
   color: var(--text);
   line-height: 1.2;
 }
@@ -124,9 +124,9 @@
 .player-volume-info {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 8px;
-  font-weight: 800;
+  gap: var(--space-1);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-bold);
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -137,7 +137,7 @@
   border: none;
   width: 45px;
   height: 45px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -167,7 +167,7 @@
 .beat-ripple {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   border: 2px solid var(--primary);
   animation: ripple-out 1.2s infinite;
   opacity: 0;

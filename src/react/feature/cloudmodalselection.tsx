@@ -210,7 +210,7 @@ const RenameModal: React.FC<RenameModalProps> = ({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="cloudview-modal-overlay"
+          className="ui-overlay-blocker cloudview-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -277,7 +277,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
     <AnimatePresence>
       {open && targets.length > 0 && (
         <motion.div
-          className="cloudview-modal-overlay"
+          className="ui-overlay-blocker cloudview-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -334,7 +334,7 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="cloudview-modal-overlay"
+          className="ui-overlay-blocker cloudview-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -652,7 +652,7 @@ const TransferModal: React.FC<TransferModalProps> = ({
       <AnimatePresence>
         {open && !confirmOpen && (
           <motion.div
-            className="cloudview-modal-overlay"
+            className="ui-overlay-blocker cloudview-modal-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -976,7 +976,7 @@ const TransferModal: React.FC<TransferModalProps> = ({
       <AnimatePresence>
         {open && !isCopy && !isPublicSource && confirmOpen && (
           <motion.div
-            className="cloudview-modal-overlay"
+            className="ui-overlay-blocker cloudview-modal-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

@@ -5,31 +5,31 @@
 .collectphoto-container {
   min-height: 100vh;
   background: var(--bg);
-  padding: 80px 5% 40px;
+  padding: 80px 5% var(--space-12);
 }
 
 /* Header */
 .collectphoto-header {
   max-width: 1400px;
-  margin: 0 auto 48px;
+  margin: 0 auto var(--space-13);
   text-align: center;
 }
 
 .collectphoto-header h1 {
-  font-size: 2.5rem;
-  font-weight: 800;
+  font-size: var(--type-display);
+  font-weight: var(--weight-bold);
   background: linear-gradient(135deg, var(--text) 0%, var(--primary) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-5);
   letter-spacing: -0.02em;
 }
 
 .collectphoto-header > p {
   color: var(--text-sub);
-  font-size: 0.95rem;
-  margin-bottom: 32px;
+  font-size: var(--type-medium);
+  margin-bottom: var(--space-11);
 }
 
 /* Controls */
@@ -38,7 +38,7 @@
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: var(--space-8);
   max-width: 900px;
   margin: 0 auto;
 }
@@ -47,11 +47,11 @@
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-5);
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 60px;
-  padding: 12px 24px;
+  border-radius: var(--radius-pill);
+  padding: var(--space-5) var(--space-9);
   transition: all 0.2s ease;
 }
 
@@ -70,7 +70,7 @@
   border: none;
   outline: none;
   color: var(--text);
-  font-size: 0.9rem;
+  font-size: var(--type-medium);
 }
 
 .collectphoto-search input::placeholder {
@@ -81,28 +81,28 @@
 .collectphoto-toggle {
   display: flex;
   background: var(--card-bg);
-  padding: 4px;
-  border-radius: 60px;
+  padding: var(--space-1);
+  border-radius: var(--radius-pill);
   border: 1px solid var(--border-color);
   position: relative;
-  gap: 4px;
+  gap: var(--space-1);
   flex-shrink: 0;
 }
 
 .toggle-btn {
   position: relative;
-  padding: 10px 28px;
-  border-radius: 60px;
+  padding: var(--space-4) var(--space-10);
+  border-radius: var(--radius-pill);
   border: none;
   background: transparent;
   color: var(--text-sub);
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   transition: color 0.2s;
 }
 
@@ -120,7 +120,7 @@
   top: 4px;
   bottom: 4px;
   background: var(--primary);
-  border-radius: 60px;
+  border-radius: var(--radius-pill);
   z-index: 0;
   transition: left 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), width 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
 }
@@ -129,14 +129,14 @@
 .collectphoto-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 28px;
+  gap: var(--space-10);
   max-width: 1400px;
-  margin: 48px auto 0;
+  margin: var(--space-13) auto 0;
 }
 
 .collectphoto-card {
   background: var(--card-bg);
-  border-radius: 24px;
+  border-radius: var(--radius-card);
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
@@ -174,7 +174,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-5);
   color: var(--text-muted);
 }
 
@@ -185,34 +185,34 @@
 }
 
 .collectphoto-card-info {
-  padding: 20px;
+  padding: var(--space-8);
 }
 
 .collectphoto-card-info h3 {
-  font-size: 1.15rem;
-  font-weight: 700;
-  margin-bottom: 6px;
+  font-size: var(--type-large);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--space-2);
   color: var(--text);
 }
 
 .collectphoto-card-info p {
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   color: var(--text-sub);
-  margin-bottom: 12px;
+  margin-bottom: var(--space-5);
   word-break: break-all;
 }
 
 .collectphoto-card-meta {
   display: flex;
-  gap: 16px;
-  font-size: 0.7rem;
+  gap: var(--space-7);
+  font-size: var(--type-caption);
   color: var(--text-muted);
 }
 
 .collectphoto-card-meta span {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 /* Loading & Error States */
@@ -223,18 +223,18 @@
   align-items: center;
   justify-content: center;
   min-height: 400px;
-  gap: 20px;
+  gap: var(--space-8);
   text-align: center;
 }
 
 .collectphoto-error button {
-  margin-top: 8px;
-  padding: 10px 24px;
+  margin-top: var(--space-3);
+  padding: var(--space-4) var(--space-9);
   background: var(--primary);
   color: white;
   border: none;
-  border-radius: 40px;
-  font-weight: 600;
+  border-radius: var(--radius-pill);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: opacity 0.2s;
 }
@@ -255,47 +255,32 @@
 .collectphoto-empty {
   grid-column: 1 / -1;
   text-align: center;
-  padding: 80px 20px;
+  padding: 80px var(--space-8);
   color: var(--text-muted);
 }
 
 .collectphoto-empty svg {
   opacity: 0.5;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-7);
 }
 
 .collectphoto-empty p:first-of-type {
-  font-size: 1.1rem;
-  font-weight: 500;
+  font-size: var(--type-medium);
+  font-weight: var(--weight-medium);
 }
 
 .collectphoto-empty-sub {
-  font-size: 0.85rem;
+  font-size: var(--type-small);
   opacity: 0.7;
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 
 /* ============================================= */
 /* MODAL - PREMIUM DESIGN                       */
 /* ============================================= */
-.collectphoto-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(12px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  padding: 24px;
-}
-
 .collectphoto-modal {
   background: var(--card-bg);
-  border-radius: 0;
+  border-radius: var(--radius-square);
   width: 100%;
   max-width: 1000px;
   max-height: 85vh;
@@ -311,11 +296,11 @@
 }
 .collectphoto-modal::-webkit-scrollbar-track {
   background: var(--border-color);
-  border-radius: 10px;
+  border-radius: var(--radius-small);
 }
 .collectphoto-modal::-webkit-scrollbar-thumb {
   background: var(--primary);
-  border-radius: 10px;
+  border-radius: var(--radius-small);
 }
 
 /* Tombol close - SOLID */
@@ -325,7 +310,7 @@
   right: 30px;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   width: 40px;
   height: 40px;
   display: flex;
@@ -348,15 +333,15 @@
 .modal-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 28px;
-  padding: 32px;
+  gap: var(--space-10);
+  padding: var(--space-11);
 }
 
 /* Photo Carousel Section */
 .modal-photo-section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-7);
 }
 
 /* Pastikan carousel-root memiliki ruang untuk dot */
@@ -373,7 +358,7 @@
 .carousel-frame {
   aspect-ratio: 1;
   background: var(--bg);
-  border-radius: 20px;
+  border-radius: var(--radius-card);
   overflow: hidden;
   position: relative;
   cursor: pointer;
@@ -393,12 +378,12 @@
   left: 0;
   right: 0;
   background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
-  padding: 12px 16px;
+  padding: var(--space-5) var(--space-7);
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-3);
   color: white;
   pointer-events: none;
 }
@@ -415,7 +400,7 @@
 .carousel-fullscreen-btn {
   background: rgba(0,0,0,0.5);
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   width: 32px;
   height: 32px;
   display: flex;
@@ -435,16 +420,16 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  gap: 12px;
+  gap: var(--space-5);
   pointer-events: auto;
 }
 
 .carousel-date {
-  font-size: 0.7rem;
-  font-weight: 500;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
   background: rgba(0,0,0,0.5);
-  padding: 4px 10px;
-  border-radius: 40px;
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--radius-pill);
   backdrop-filter: blur(4px);
   white-space: nowrap;
   overflow: hidden;
@@ -455,13 +440,13 @@
 .carousel-download-btn {
   background: var(--primary);
   border: none;
-  border-radius: 40px;
-  padding: 6px 14px;
-  font-size: 0.7rem;
-  font-weight: 600;
+  border-radius: var(--radius-pill);
+  padding: var(--space-2) var(--space-6);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   cursor: pointer;
   color: white;
   transition: opacity 0.2s;
@@ -476,7 +461,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: var(--space-5);
   height: 100%;
   color: var(--text-muted);
 }
@@ -491,13 +476,13 @@
   left: auto !important;
   right: auto !important;
   top: auto !important;
-  margin-top: 20px !important;
+  margin-top: var(--space-8) !important;
   margin-bottom: 0 !important;
   padding: 0 !important;
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
-  gap: 12px !important;
+  gap: var(--space-5) !important;
   background: transparent !important;
   transform: none !important;
   width: 100% !important;
@@ -514,7 +499,7 @@
   margin: 0 !important;
   opacity: 0.5 !important;
   transition: all 0.2s ease !important;
-  border-radius: 50% !important;
+  border-radius: var(--radius-circle) !important;
   position: relative !important;
   display: inline-block !important;
 }
@@ -522,60 +507,60 @@
 .carousel .control-dots .dot.selected {
   background: var(--primary) !important;
   width: 24px !important;
-  border-radius: 10px !important;
+  border-radius: var(--radius-small) !important;
   opacity: 1 !important;
 }
 
 /* Data Container */
 .modal-details-container {
   background: var(--bg);
-  border-radius: 20px;
-  padding: 24px;
+  border-radius: var(--radius-card);
+  padding: var(--space-9);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-8);
   border: 1px solid var(--border-color);
 }
 
 .modal-user-header h2 {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin: 0 0 4px 0;
+  font-size: var(--type-large);
+  font-weight: var(--weight-bold);
+  margin: 0 0 var(--space-1) 0;
   color: var(--text);
 }
 
 .modal-email {
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   color: var(--text-sub);
   word-break: break-all;
 }
 
 .detail-section {
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
 .detail-section h4 {
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-bold);
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--primary);
-  margin-bottom: 12px;
+  margin-bottom: var(--space-5);
 }
 
 .detail-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 10px 0;
+  padding: var(--space-4) 0;
   border-bottom: 1px solid var(--border-color);
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--space-5);
 }
 .detail-row span:first-child {
   color: var(--text-sub);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   flex-shrink: 0;
   min-width: 90px;
 }
@@ -583,14 +568,14 @@
 .detail-row code {
   text-align: right;
   word-break: break-word;
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   flex: 1;
 }
 .detail-row code {
   background: var(--primary-alpha);
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 0.7rem;
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-card);
+  font-size: var(--type-caption);
   max-width: 70%;
   display: inline-block;
 }
@@ -613,7 +598,7 @@
   max-width: 90%;
   max-height: 90%;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: var(--radius-small);
   box-shadow: 0 0 30px rgba(0,0,0,0.5);
 }
 .fullscreen-close {
@@ -622,7 +607,7 @@
   right: 20px;
   background: rgba(255,255,255,0.2);
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   width: 48px;
   height: 48px;
   display: flex;
@@ -643,8 +628,8 @@
   }
   .modal-content {
     grid-template-columns: 1fr;
-    gap: 24px;
-    padding: 24px;
+    gap: var(--space-9);
+    padding: var(--space-9);
   }
   .modal-details-container {
     order: 2;
@@ -663,7 +648,7 @@
   .detail-row {
     flex-direction: column;
     align-items: flex-start;
-    gap: 6px;
+    gap: var(--space-2);
   }
   .detail-row span:first-child {
     min-width: auto;
@@ -681,8 +666,8 @@
     align-self: center;
   }
   .carousel .control-dots {
-    gap: 8px !important;
-    margin-top: 16px !important;
+    gap: var(--space-3) !important;
+    margin-top: var(--space-7) !important;
   }
   .carousel .control-dots .dot {
     width: 6px !important;
@@ -695,46 +680,46 @@
 
 @media (max-width: 550px) {
   .collectphoto-container {
-    padding: 70px 16px 30px;
+    padding: 70px var(--space-7) 30px;
   }
   .collectphoto-header h1 {
-    font-size: 1.8rem;
+    font-size: var(--type-large);
   }
   .collectphoto-search {
-    padding: 10px 18px;
+    padding: var(--space-4) 18px;
   }
   .toggle-btn {
-    padding: 6px 16px;
-    font-size: 0.7rem;
+    padding: var(--space-2) var(--space-7);
+    font-size: var(--type-caption);
   }
   .collectphoto-grid {
-    gap: 16px;
+    gap: var(--space-7);
   }
   .collectphoto-card-info {
-    padding: 16px;
+    padding: var(--space-7);
   }
   .modal-content {
-    padding: 20px;
+    padding: var(--space-8);
   }
   .modal-details-container {
-    padding: 20px;
+    padding: var(--space-8);
   }
   .modal-user-header h2 {
-    font-size: 1.2rem;
+    font-size: var(--type-large);
   }
   .carousel-overlay {
-    padding: 8px 12px;
+    padding: var(--space-3) var(--space-5);
   }
   .carousel-date {
-    font-size: 0.6rem;
+    font-size: var(--type-caption);
   }
   .carousel-download-btn {
-    padding: 4px 10px;
-    font-size: 0.6rem;
+    padding: var(--space-1) var(--space-4);
+    font-size: var(--type-caption);
   }
   .carousel .control-dots {
-    gap: 6px !important;
-    margin-top: 12px !important;
+    gap: var(--space-2) !important;
+    margin-top: var(--space-5) !important;
   }
   .carousel .control-dots .dot {
     width: 5px !important;
@@ -760,22 +745,22 @@
   justify-content: center;
   align-items: center;
   width: 100%;
-  margin-top: 20px;
-  padding: 8px 0;
+  margin-top: var(--space-8);
+  padding: var(--space-3) 0;
 }
 
 .custom-dots {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-5);
   background: transparent;
 }
 
 .custom-dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: var(--text-muted);
   border: none;
   cursor: pointer;
@@ -786,7 +771,7 @@
 
 .custom-dot.active {
   width: 24px;
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   background: var(--primary);
   opacity: 1;
 }

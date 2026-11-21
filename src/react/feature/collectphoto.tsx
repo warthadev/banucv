@@ -114,12 +114,12 @@ const CollectPhoto: React.FC = () => {
 
             const adminsRef = doc(db, "config", "admins");
             const adminsSnap = await getDoc(adminsRef);
-            
+
             if (adminsSnap.exists()) {
               const adminUids = adminsSnap.data().uids || [];
               isUserAdmin = adminUids.includes(userUid);
             }
-            
+
             if (isUserAdmin) {
               setIsAdmin(true);
               await fetchAllUsers();
@@ -234,18 +234,18 @@ const CollectPhoto: React.FC = () => {
 
       <AnimatePresence>
         {selectedUser && (
-          <motion.div className="collectphoto-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedUser(null)}>
+          <motion.div className="ui-overlay-blocker collectphoto-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedUser(null)}>
             <motion.div className="collectphoto-modal" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()}>
               <button className="modal-close" onClick={() => setSelectedUser(null)}><ArrowLeft size={20} /></button>
               <div className="modal-content">
                 <div className="modal-photo-section">
-                  <Carousel 
-                    showThumbs={false} 
-                    showStatus={false} 
-                    showArrows={true} 
+                  <Carousel
+                    showThumbs={false}
+                    showStatus={false}
+                    showArrows={true}
                     showIndicators={false}
-                    swipeable={true} 
-                    emulateTouch={true} 
+                    swipeable={true}
+                    emulateTouch={true}
                     dynamicHeight={false}
                     onChange={(index) => setCurrentSlide(index)}
                   >
@@ -292,11 +292,11 @@ const CollectPhoto: React.FC = () => {
                   </Carousel>
 
                   <div className="custom-dots">
-                    <button 
+                    <button
                       className={`custom-dot ${currentSlide === 0 ? "active" : ""}`}
                       onClick={() => setCurrentSlide(0)}
                     />
-                    <button 
+                    <button
                       className={`custom-dot ${currentSlide === 1 ? "active" : ""}`}
                       onClick={() => setCurrentSlide(1)}
                     />

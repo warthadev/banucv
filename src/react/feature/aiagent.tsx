@@ -32,10 +32,10 @@ const ROOT_CONFIRM_LABELS = {
 const rootConfirmInputStyle: React.CSSProperties = {
   width: "100%",
   padding: "8px 10px",
-  color: "var(--text, #eee)",
-  background: "var(--background, #101217)",
-  border: "1px solid var(--border, #373b45)",
-  borderRadius: 7,
+  color: "var(--text)",
+  background: "var(--bg)",
+  border: "1px solid var(--border-color)",
+  borderRadius: "var(--radius-button)",
 };
 
 const summarizeHostAction = (action: Record<string, string>) => {
@@ -197,39 +197,39 @@ const AIAgentPopover: React.FC<AIAgentPopoverProps> = ({
 
 const TableBlock = ({ content }: { content: string }) => {
   const [copied, setCopied] = useState(false);
-  
+
   const handleCopy = () => {
     navigator.clipboard.writeText(content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-  
+
   const handleDownload = () => {
     const lines = content.split('\n').filter(line => line.trim());
     const csvLines: string[] = [];
     let headerRow: string[] | null = null;
     const dataRows: string[][] = [];
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       if (line.match(/^\s*\|[\s\-:|]+\|\s*$/)) continue;
       const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell);
       if (cells.length === 0) continue;
-      
+
       if (headerRow === null) {
         headerRow = cells;
       } else {
         dataRows.push(cells);
       }
     }
-    
+
     if (headerRow) {
       csvLines.push(headerRow.join(','));
       for (const row of dataRows) {
         csvLines.push(row.join(','));
       }
     }
-    
+
     const csv = csvLines.join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -239,17 +239,17 @@ const TableBlock = ({ content }: { content: string }) => {
     a.click();
     URL.revokeObjectURL(url);
   };
-  
+
   const parseTable = (markdown: string) => {
     const lines = markdown.split('\n').filter(line => line.trim());
     if (lines.length < 2) return null;
-    
+
     const separatorIndex = lines.findIndex(line => line.match(/^\s*\|[\s\-:|]+\|\s*$/));
     if (separatorIndex === -1) return null;
-    
+
     const headerCells = lines[0].split('|').map(cell => cell.trim()).filter(cell => cell);
     const bodyLines = lines.slice(separatorIndex + 1);
-    
+
     return (
       <>
         <thead>
@@ -274,10 +274,10 @@ const TableBlock = ({ content }: { content: string }) => {
       </>
     );
   };
-  
+
   const tableContent = parseTable(content);
   if (!tableContent) return null;
-  
+
   return (
     <div className="aiagent-table-block-wrapper">
       <div className="aiagent-table-header">
@@ -407,9 +407,9 @@ const detectLanguage = (text: string): "id" | "en" => {
     .replace(/[^a-zA-Z ]/g, " ")
     .toLowerCase()
     .trim();
-  
+
   if (!cleanText) return "en";
-  
+
   const idWords = [
     "yang", "dan", "atau", "ini", "itu", "saya", "kamu", "kita", "mereka", "dia",
     "aku", "anda", "kami", "kalian", "adalah", "untuk", "dari", "dengan", "pada",
@@ -419,7 +419,7 @@ const detectLanguage = (text: string): "id" | "en" => {
     "atau", "seperti", "begitu", "begini", "begitu", "sehingga", "karena", "agar",
     "supaya", "tanpa", "per", "terlalu", "apa", "siapa", "mana", "bagaimana", "kenapa"
   ];
-  
+
   const enWords = [
     "the", "be", "to", "of", "and", "a", "in", "that", "have", "i",
     "it", "for", "not", "on", "with", "he", "as", "you", "do", "at",
@@ -432,25 +432,25 @@ const detectLanguage = (text: string): "id" | "en" => {
     "back", "after", "use", "two", "how", "our", "work", "first", "well", "way",
     "even", "new", "want", "because", "any", "these", "give", "day", "most", "us"
   ];
-  
+
   const words = cleanText.split(/\s+/).filter(w => w.length > 2);
   if (words.length === 0) return "en";
-  
+
   let idScore = 0;
   let enScore = 0;
-  
+
   for (const word of words) {
     if (idWords.includes(word)) idScore++;
     if (enWords.includes(word)) enScore++;
   }
-  
+
   const idPercentage = idScore / words.length;
   const enPercentage = enScore / words.length;
-  
+
   if (idPercentage > 0.12 && idPercentage > enPercentage * 1.5) {
     return "id";
   }
-  
+
   return "en";
 };
 
@@ -478,13 +478,13 @@ const getCatalogStatusMessage = (error: string | null): string => {
 
 const getErrorMessage = (error: unknown): string => {
   if (!error) return "Unknown error occurred";
-  
+
   const message = getErrorText(error);
-  
+
   if (message.includes("503") || message.includes("high demand") || message.includes("service unavailable")) {
     return "Error: This model is currently experiencing high demand. Please try again later or switch to another model.";
   }
-  
+
   if (message.includes("API key")) {
     return "Error: Invalid or expired API key. Please update your API Key in settings.";
   }
@@ -570,7 +570,7 @@ const splitTextAndTables = (text: string) => {
   const tableRegex = /((?:^\|.*\|$\n?)+)/gm;
   let lastIndex = 0;
   let match;
-  
+
   while ((match = tableRegex.exec(text)) !== null) {
     if (match.index > lastIndex) {
       parts.push({
@@ -584,14 +584,14 @@ const splitTextAndTables = (text: string) => {
     });
     lastIndex = match.index + match[0].length;
   }
-  
+
   if (lastIndex < text.length) {
     parts.push({
       type: 'text',
       content: text.substring(lastIndex)
     });
   }
-  
+
   return parts;
 };
 
@@ -600,7 +600,7 @@ const splitMarkdown = (content: string) => {
   const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
   let lastIndex = 0;
   let match;
-  
+
   while ((match = codeBlockRegex.exec(content)) !== null) {
     if (match.index > lastIndex) {
       const textContent = content.substring(lastIndex, match.index);
@@ -614,13 +614,13 @@ const splitMarkdown = (content: string) => {
     });
     lastIndex = match.index + match[0].length;
   }
-  
+
   if (lastIndex < content.length) {
     const textContent = content.substring(lastIndex);
     const tableParts = splitTextAndTables(textContent);
     parts.push(...tableParts);
   }
-  
+
   return parts;
 };
 
@@ -744,7 +744,7 @@ const AIAgent: React.FC = () => {
   const [hostActionError, setHostActionError] = useState("");
   const [confirmLabelChoice, setConfirmLabelChoice] = useState<"A" | "B" | "C" | "custom">("A");
   const [customConfirmLabel, setCustomConfirmLabel] = useState("");
-  
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const speechSynthRef = useRef<SpeechSynthesis | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -757,9 +757,9 @@ const AIAgent: React.FC = () => {
   const currentUserUidRef = useRef<string | null>(null);
   const requestSequenceRef = useRef(0);
   const activeRequestIdRef = useRef<number | null>(null);
-  
+
   useEffect(() => { messagesRef.current = messages; }, [messages]);
-  
+
   useEffect(() => {
     if (!currentUserUid) {
       setMessagesOwnerUid(null);
@@ -798,7 +798,7 @@ const AIAgent: React.FC = () => {
       }
     }
   }, [currentUserUid, preferencesOwnerUid, agentMode, preferredModel]);
-  
+
   useEffect(() => {
     let disposed = false;
     let unsubscribe = () => {};
@@ -852,14 +852,14 @@ const AIAgent: React.FC = () => {
         console.error("Failed to initialize auth in AIAgent:", error);
       }
     };
-    
+
     initAuth();
     return () => {
       disposed = true;
       unsubscribe();
     };
   }, []);
-  
+
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -1158,12 +1158,12 @@ const AIAgent: React.FC = () => {
       } catch (error: unknown) {
         if (!isCurrentRequest()) return;
         const friendlyError = getErrorMessage(error);
-        setMessages(prev => [...prev, { 
-          id: (Date.now() + 1).toString(), 
-          role: "bot", 
-          content: friendlyError, 
-          model: "pollinations", 
-          timestamp: new Date(), 
+        setMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: "bot",
+          content: friendlyError,
+          model: "pollinations",
+          timestamp: new Date(),
           error: true,
           errorDetails: getErrorText(error)
         }]);
@@ -1176,7 +1176,7 @@ const AIAgent: React.FC = () => {
       }
       return;
     }
-    
+
     try {
       const response = await callAI(messageText, images, files, retryModelIndex, messagesRef.current, isRetry, messageText, modelSequence, requestOwnerUid, requestId);
       if (!isCurrentRequest()) return;
@@ -1210,7 +1210,7 @@ const AIAgent: React.FC = () => {
       const errorMessage = getErrorText(error);
       const errorObject = error instanceof Error ? error : new Error(errorMessage);
       const isRetryableFailure = isRetryableAgentFailure(error, images.length > 0);
-      
+
       const attemptedModel = modelSequence[retryModelIndex] || selectedModel;
       if (shouldRetryWithNextAgentModel(attemptedModel, isRetryableFailure, retryModelIndex, modelSequence.length)) {
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -1218,18 +1218,18 @@ const AIAgent: React.FC = () => {
         await sendMessage(messageText, images, files, retryModelIndex + 1, true, modelSequence, requestOwnerUid, requestId);
         return;
       }
-      
-      setMessages(prev => [...prev, { 
-        id: (Date.now() + 1).toString(), 
-        role: "bot", 
-        content: friendlyError, 
-        model: "Error", 
+
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: "bot",
+        content: friendlyError,
+        model: "Error",
         requestedModel: modelSequence[0] || attemptedModel,
-        timestamp: new Date(), 
+        timestamp: new Date(),
         error: true,
         errorDetails: errorObject.message
       }]);
-      
+
       console.error("API Error Details:", {
         type: errorType,
         message: errorObject.message,
@@ -1237,7 +1237,7 @@ const AIAgent: React.FC = () => {
         model: attemptedModel,
         retryCount: retryModelIndex
       });
-    } finally { 
+    } finally {
       if (activeRequestIdRef.current === requestId) {
         activeRequestIdRef.current = null;
         setIsLoading(false);
@@ -1312,9 +1312,9 @@ const AIAgent: React.FC = () => {
   };
 
   const copyMessage = (content: string) => navigator.clipboard.writeText(content);
-  
-  const clearChat = () => { 
-    setMessages([]); 
+
+  const clearChat = () => {
+    setMessages([]);
     if (currentUserUid) {
       try {
         localStorage.removeItem(getAgentMessagesStorageKey(currentUserUid));
@@ -1405,8 +1405,8 @@ const AIAgent: React.FC = () => {
                             {msg.model === 'pollinations' ? 'Pollinations' : (msg.model || selectedModel)}
                           </span>
                           {msg.error && (
-                            <button 
-                              onClick={() => retryMessage(msg.id)} 
+                            <button
+                              onClick={() => retryMessage(msg.id)}
                               className="aiagent-retry-btn-header"
                               title="Retry from the current selection, using this account's fallback models on 429/503"
                             >
@@ -1416,22 +1416,22 @@ const AIAgent: React.FC = () => {
                         </div>
                         {!msg.imageData && (
                           <div className="aiagent-bot-actions">
-                            <button 
+                            <button
                               onClick={() => {
                                 const textToSpeak = msg.error ? getFullErrorText(msg) : msg.content;
                                 speakText(textToSpeak, msg.id);
-                              }} 
+                              }}
                               className="aiagent-speak-btn"
                               title={msg.error ? "Audio error message" : "Audio"}
                             >
                               {isSpeaking && currentSpeakingId === msg.id ? <VolumeX size={14} /> : <Volume2 size={14} />}
                               <span>Audio</span>
                             </button>
-                            <button 
+                            <button
                               onClick={() => {
                                 const textToCopy = msg.error ? getFullErrorText(msg) : msg.content;
                                 copyMessage(textToCopy);
-                              }} 
+                              }}
                               className="aiagent-copy-btn"
                               title={msg.error ? "Copy error message" : "Copy"}
                             >
@@ -1535,7 +1535,7 @@ const AIAgent: React.FC = () => {
                     )}
                     {msg.role === "bot" && msg.sources && msg.sources.length > 0 && (
                       <div className="aiagent-sources">
-                        <button 
+                        <button
                           className="aiagent-sources-toggle"
                           style={{ color: 'var(--text)' }}
                           onClick={() => {
@@ -1547,10 +1547,10 @@ const AIAgent: React.FC = () => {
                           <span style={{ color: 'var(--text)', fontWeight: 600 }}>
                             {sourcesVisibility[`sources_${msg.id}`] ? 'Hide' : 'Show'} Sources ({msg.sources.length})
                           </span>
-                          <ChevronDown 
-                            size={14} 
-                            style={{ color: 'var(--text)', stroke: 'var(--text)' }} 
-                            className={sourcesVisibility[`sources_${msg.id}`] ? 'rotate-180' : ''} 
+                          <ChevronDown
+                            size={14}
+                            style={{ color: 'var(--text)', stroke: 'var(--text)' }}
+                            className={sourcesVisibility[`sources_${msg.id}`] ? 'rotate-180' : ''}
                           />
                         </button>
                         <ul className={`aiagent-sources-list ${sourcesVisibility[`sources_${msg.id}`] ? 'open' : ''}`}>
@@ -1734,9 +1734,9 @@ const AIAgent: React.FC = () => {
                     )}
                   </AnimatePresence>
                 </div>
-                <button 
-                  className={`aiagent-icon-btn wand2-btn${imageGenEnabled ? " image-gen-active" : ""}`} 
-                  onClick={() => setImageGenEnabled(v => !v)} 
+                <button
+                  className={`aiagent-icon-btn wand2-btn${imageGenEnabled ? " image-gen-active" : ""}`}
+                  onClick={() => setImageGenEnabled(v => !v)}
                   title={imageGenEnabled ? "Image Gen ON" : "Image Gen OFF"}
                 >
                   <Wand2 size={22} />
@@ -1753,17 +1753,17 @@ const AIAgent: React.FC = () => {
           <input type="file" ref={multiFileInputRef} multiple style={{ display: "none" }} onChange={handleMultiFilesUpload} />
           <input type="file" ref={folderInputRef} style={{ display: "none" }} {...{ webkitdirectory: "true", directory: "true" }} onChange={handleFolderUpload} />
           {pendingHostAction && (
-            <div role="dialog" aria-modal="true" aria-labelledby="host-action-confirm-title" style={{ position: "fixed", inset: 0, zIndex: 1500, display: "grid", placeItems: "center", padding: 16, background: "rgba(0,0,0,.72)" }}>
-              <section style={{ width: "min(720px, 100%)", maxHeight: "85vh", display: "flex", flexDirection: "column", gap: 12, padding: 16, color: "var(--text, #eee)", background: "var(--surface, #171a21)", border: "1px solid var(--border, #4a4f59)", borderRadius: 12 }}>
-                <h3 id="host-action-confirm-title" style={{ margin: 0 }}>Konfirmasi aksi owner pada Sandbox</h3>
-                <div style={{ padding: 10, border: "1px solid var(--border, #4a4f59)", borderRadius: 8 }}>
+            <div className="ui-overlay-blocker" role="dialog" aria-modal="true" aria-labelledby="host-action-confirm-title">
+              <section className="ui-blocking-content ui-blocking-content--wide aiagent-host-confirm-dialog">
+                <h3 id="host-action-confirm-title" className="aiagent-host-confirm-title">Konfirmasi aksi owner pada Sandbox</h3>
+                <div className="ui-surface--panel aiagent-host-confirm-summary">
                   <strong>{summarizeHostAction(pendingHostAction.action).title}</strong>
-                  <div style={{ marginTop: 4, fontFamily: "monospace", overflowWrap: "anywhere" }}>{summarizeHostAction(pendingHostAction.action).path}</div>
-                  <p style={{ margin: "6px 0 0", fontSize: 13 }}>{summarizeHostAction(pendingHostAction.action).impact}</p>
+                  <div className="aiagent-host-confirm-path">{summarizeHostAction(pendingHostAction.action).path}</div>
+                  <p className="aiagent-host-confirm-impact">{summarizeHostAction(pendingHostAction.action).impact}</p>
                 </div>
-                <pre style={{ margin: 0, padding: 12, overflow: "auto", whiteSpace: "pre-wrap", overflowWrap: "anywhere", background: "var(--background, #101217)", borderRadius: 8, fontSize: 12 }}>{JSON.stringify(pendingHostAction.action, null, 2)}</pre>
-                <small style={{ opacity: 0.7 }}>Konfirmasi kedaluwarsa {new Date(pendingHostAction.expiresAt * 1000).toLocaleTimeString()}.</small>
-                <label style={{ display: "grid", gap: 6, fontSize: 12 }}>
+                <pre className="aiagent-host-confirm-pre">{JSON.stringify(pendingHostAction.action, null, 2)}</pre>
+                <small className="aiagent-host-confirm-expiry">Konfirmasi kedaluwarsa {new Date(pendingHostAction.expiresAt * 1000).toLocaleTimeString()}.</small>
+                <label className="aiagent-host-confirm-label">
                   Teks tombol persetujuan
                   <select value={confirmLabelChoice} onChange={(event) => setConfirmLabelChoice(event.target.value as "A" | "B" | "C" | "custom")} style={{ ...rootConfirmInputStyle, cursor: "pointer" }}>
                     <option value="A">A — {ROOT_CONFIRM_LABELS.A}</option>
@@ -1773,8 +1773,8 @@ const AIAgent: React.FC = () => {
                   </select>
                 </label>
                 {confirmLabelChoice === "custom" && <input value={customConfirmLabel} onChange={(event) => setCustomConfirmLabel(event.target.value)} maxLength={80} placeholder="Tulis label tombol (maks. 80 karakter)" aria-label="Teks tombol konfirmasi custom" style={rootConfirmInputStyle} />}
-                {hostActionError && <div role="alert" style={{ color: "#ff8989", fontSize: 13 }}>{hostActionError}</div>}
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                {hostActionError && <div className="ui-text-danger aiagent-host-confirm-error" role="alert">{hostActionError}</div>}
+                <div className="aiagent-host-confirm-actions">
                   <button type="button" className="aiagent-icon-btn" onClick={dismissPendingHostAction} disabled={confirmingHostAction}>Batalkan</button>
                   <button type="button" className="aiagent-send-btn" onClick={() => void confirmPendingHostAction()} disabled={confirmingHostAction || (confirmLabelChoice === "custom" && !customConfirmLabel.trim())}>{confirmingHostAction ? "Menjalankan…" : confirmLabelChoice === "custom" ? customConfirmLabel.trim() : ROOT_CONFIRM_LABELS[confirmLabelChoice]}</button>
                 </div>

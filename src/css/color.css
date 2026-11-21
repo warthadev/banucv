@@ -2,7 +2,7 @@
 
 :root, .light {
   --bg: #f5f7fa;
-  --bg-alpha: rgba(245, 247, 250, 0.2); 
+  --bg-alpha: rgba(245, 247, 250, 0.2);
   --card-bg: #ffffff;
   --text: #1a1a2e;
   --text-sub: #4a4a6a;
@@ -12,21 +12,96 @@
   --shadow-color: rgba(0, 0, 0, 0.08);
   --btn-text: #ffffff;
   --btn-text-dark: #000000;
-  
+
   --radius-card: 20px;
   --radius-button: 14px;
   --radius-small: 12px;
   --radius-medium: 18px;
   --radius-circle: 50%;
-  
+
   --primary-rgb: 0, 0, 0;
   --primary: #000000;
   --primary-alpha: rgba(0, 0, 0, 0.08);
+
+  /* Shared design tokens: all pages and breakpoints use the same scale. */
+  --font-family-ui: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  --type-display: clamp(2rem, 1.5rem + 3vw, 3rem);
+  --type-large: clamp(1.5rem, 1.25rem + 1.2vw, 2rem);
+  --type-medium: 1rem;
+  --type-small: 0.8125rem;
+  --type-caption: 0.6875rem;
+  --icon-size-small: 16px;
+  --icon-size-medium: 24px;
+  --icon-size-large: clamp(36px, 5vw, 56px);
+  --line-tight: 1.25;
+  --line-normal: 1.5;
+  --line-relaxed: 1.65;
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.1em;
+  --weight-regular: 400;
+  --weight-medium: 600;
+  --weight-bold: 700;
+  --weight-heavy: 900;
+
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 10px;
+  --space-5: 12px;
+  --space-6: 14px;
+  --space-7: 16px;
+  --space-8: 20px;
+  --space-9: 24px;
+  --space-10: 28px;
+  --space-11: 32px;
+  --space-12: 40px;
+  --space-13: 48px;
+  --space-14: 56px;
+  --space-15: 64px;
+  --space-16: 80px;
+  --page-gutter: clamp(16px, 4vw, 64px);
+  --content-width: 1200px;
+  --content-width-narrow: 760px;
+
+  --radius-square: 0;
+  --radius-micro: 2px;
+  --radius-pill: 999px;
+  --control-height: 44px;
+  --control-height-compact: 36px;
+  --focus-ring: 0 0 0 3px var(--primary-alpha);
+  --surface-shadow: 0 10px 30px var(--shadow-color);
+  --overlay-scrim: rgba(0, 0, 0, 0.68);
+  --overlay-soft: rgba(0, 0, 0, 0.28);
+  --overlay-blur: 8px;
+  --z-modal: 9999;
+  --z-local-overlay: 20;
+  --status-danger: #dc2626;
+  --status-danger-rgb: 220, 38, 38;
+  --status-danger-hover: #b91c1c;
+  --status-danger-alpha: rgba(220, 38, 38, 0.12);
+  --status-success: #16a34a;
+  --status-success-rgb: 22, 163, 74;
+  --status-success-alpha: rgba(22, 163, 74, 0.12);
+  --status-warning: #d97706;
+  --status-warning-alpha: rgba(217, 119, 6, 0.12);
+  --status-info: #0284c7;
+  --status-info-alpha: rgba(2, 132, 199, 0.12);
+  --status-danger-text: #ffffff;
+  --status-success-text: #052e16;
+  --status-warning-text: #1f2937;
+  --status-info-text: #ffffff;
+  --surface-code: #1e1e1e;
+  --text-code: #e5e7eb;
+  --text-code-muted: #a3a3a3;
+  --surface-code-control: rgba(255, 255, 255, 0.07);
+  --border-code-control: rgba(255, 255, 255, 0.1);
 }
 
 .dark {
   --bg: #0a0a0a;
-  --bg-alpha: rgba(255, 255, 255, 0.1); 
+  --bg-alpha: rgba(255, 255, 255, 0.1);
   --card-bg: #111111;
   --text: #ffffff;
   --text-sub: #888888;
@@ -549,7 +624,6 @@
 .light .playback-btn.active,
 .light .quick-toggle-btn.active,
 .light .barcode-type-btn.active,
-.light .aic-tab.active .aic-tab-content,
 .light .cva-tab.active,
 .light .github-modal-confirm,
 .light .github-save-btn,
@@ -576,7 +650,6 @@
 .dark .playback-btn.active,
 .dark .quick-toggle-btn.active,
 .dark .barcode-type-btn.active,
-.dark .aic-tab.active .aic-tab-content,
 .dark .cva-tab.active,
 .dark .github-modal-confirm,
 .dark .github-save-btn,
@@ -601,7 +674,7 @@
 .dark .barcode-card .cva-btn,
 .dark .github-modal .github-modal-confirm,
 .dark .github-modal .github-save-btn,
-.dark button:not(.nav-item-link):not(.home-nav-link):not(.nav-btn-dash):not(.dropdown-link):not(.genre-chip):not(.mode-button):not(.next-button):not(.playback-btn):not(.quick-toggle-btn):not(.barcode-type-btn):not(.barcode-download-btn):not(.aic-tab):not(.aic-fetch-btn):not(.aic-copy-btn):not(.cva-tab):not(.cva-btn):not(.cva-modal-close):not(.cva-modal-back):not(.cva-eye-btn):not(.cva-country-btn):not(.cva-country-option):not(.github-modal-confirm):not(.github-save-btn):not(.github-create-btn-center):not(.ytdl-btn-run):not(.ytdl-tab):not(.ytdl-format-btn):not(.cloudview-retry-btn):not(.cloudview-toolbar-btn):not(.cloudview-sidebar-refresh):not(.cloudview-sidebar-toggle):not(.cloudview-bc-item):not(.cloudview-bc-link):not(.cloudview-tree-item):not(.cloudview-chat-row):not(.cloudview-transfer-select-item):not(.cloudview-mobile-back):not(.aiagent-send-btn):not(.aiagent-icon-btn):not(.aiagent-clear-btn):not(.aiagent-retry-btn-header):not(.aiagent-speak-btn):not(.aiagent-copy-btn):not(.upload-dropdown-menu button):not(.model-dropdown-menu button):not(.mediarender-control-btn):not(.mediarender-play-btn):not(.mediarender-btn-transparent):not(.mediarender-center-play):not(.mediarender-ext-item):not(.mediarender-ext-close):not(.cloudroot-card):not(.cloudroot-provider):not(.cloudroot-option):not(.cloudroot-modal-cancel):not(.cloudroot-cta):not(.cloudplaylist-btn):not(.cloudplaylist-ctrl):not(.cloudplaylist-play):not(.cloudplaylist-qrow) {
+.dark button:not(.nav-item-link):not(.home-nav-link):not(.nav-btn-dash):not(.dropdown-link):not(.genre-chip):not(.mode-button):not(.next-button):not(.playback-btn):not(.quick-toggle-btn):not(.barcode-type-btn):not(.barcode-download-btn):not(.aic-fetch-btn):not(.aic-copy-btn):not(.cva-tab):not(.cva-btn):not(.cva-modal-close):not(.cva-modal-back):not(.cva-eye-btn):not(.cva-country-btn):not(.cva-country-option):not(.github-modal-confirm):not(.github-save-btn):not(.github-create-btn-center):not(.ytdl-btn-run):not(.ytdl-tab):not(.ytdl-format-btn):not(.cloudview-retry-btn):not(.cloudview-toolbar-btn):not(.cloudview-sidebar-refresh):not(.cloudview-sidebar-toggle):not(.cloudview-bc-item):not(.cloudview-bc-link):not(.cloudview-tree-item):not(.cloudview-chat-row):not(.cloudview-transfer-select-item):not(.cloudview-mobile-back):not(.aiagent-send-btn):not(.aiagent-icon-btn):not(.aiagent-clear-btn):not(.aiagent-retry-btn-header):not(.aiagent-speak-btn):not(.aiagent-copy-btn):not(.upload-dropdown-menu button):not(.model-dropdown-menu button):not(.mediarender-control-btn):not(.mediarender-play-btn):not(.mediarender-btn-transparent):not(.mediarender-center-play):not(.mediarender-ext-item):not(.mediarender-ext-close):not(.cloudroot-card):not(.cloudroot-provider):not(.cloudroot-option):not(.cloudroot-modal-cancel):not(.cloudroot-cta):not(.cloudplaylist-btn):not(.cloudplaylist-ctrl):not(.cloudplaylist-play):not(.cloudplaylist-qrow) {
   color: #000000 !important;
 }
 
@@ -610,7 +683,6 @@
 .amoled .playback-btn.active,
 .amoled .quick-toggle-btn.active,
 .amoled .barcode-type-btn.active,
-.amoled .aic-tab.active .aic-tab-content,
 .amoled .cva-tab.active,
 .amoled .github-modal-confirm,
 .amoled .github-save-btn,
@@ -635,7 +707,7 @@
 .amoled .barcode-card .cva-btn,
 .amoled .github-modal .github-modal-confirm,
 .amoled .github-modal .github-save-btn,
-.amoled button:not(.nav-item-link):not(.home-nav-link):not(.nav-btn-dash):not(.dropdown-link):not(.genre-chip):not(.mode-button):not(.next-button):not(.playback-btn):not(.quick-toggle-btn):not(.barcode-type-btn):not(.barcode-download-btn):not(.aic-tab):not(.aic-fetch-btn):not(.aic-copy-btn):not(.cva-tab):not(.cva-btn):not(.cva-modal-close):not(.cva-modal-back):not(.cva-eye-btn):not(.cva-country-btn):not(.cva-country-option):not(.github-modal-confirm):not(.github-save-btn):not(.github-create-btn-center):not(.ytdl-btn-run):not(.ytdl-tab):not(.ytdl-format-btn):not(.cloudview-retry-btn):not(.cloudview-toolbar-btn):not(.cloudview-sidebar-refresh):not(.cloudview-sidebar-toggle):not(.cloudview-bc-item):not(.cloudview-bc-link):not(.cloudview-tree-item):not(.cloudview-chat-row):not(.cloudview-transfer-select-item):not(.cloudview-mobile-back):not(.aiagent-send-btn):not(.aiagent-icon-btn):not(.aiagent-clear-btn):not(.aiagent-retry-btn-header):not(.aiagent-speak-btn):not(.aiagent-copy-btn):not(.upload-dropdown-menu button):not(.model-dropdown-menu button):not(.mediarender-control-btn):not(.mediarender-play-btn):not(.mediarender-btn-transparent):not(.mediarender-center-play):not(.mediarender-ext-item):not(.mediarender-ext-close):not(.cloudroot-card):not(.cloudroot-provider):not(.cloudroot-option):not(.cloudroot-modal-cancel):not(.cloudroot-cta):not(.cloudplaylist-btn):not(.cloudplaylist-ctrl):not(.cloudplaylist-play):not(.cloudplaylist-qrow) {
+.amoled button:not(.nav-item-link):not(.home-nav-link):not(.nav-btn-dash):not(.dropdown-link):not(.genre-chip):not(.mode-button):not(.next-button):not(.playback-btn):not(.quick-toggle-btn):not(.barcode-type-btn):not(.barcode-download-btn):not(.aic-fetch-btn):not(.aic-copy-btn):not(.cva-tab):not(.cva-btn):not(.cva-modal-close):not(.cva-modal-back):not(.cva-eye-btn):not(.cva-country-btn):not(.cva-country-option):not(.github-modal-confirm):not(.github-save-btn):not(.github-create-btn-center):not(.ytdl-btn-run):not(.ytdl-tab):not(.ytdl-format-btn):not(.cloudview-retry-btn):not(.cloudview-toolbar-btn):not(.cloudview-sidebar-refresh):not(.cloudview-sidebar-toggle):not(.cloudview-bc-item):not(.cloudview-bc-link):not(.cloudview-tree-item):not(.cloudview-chat-row):not(.cloudview-transfer-select-item):not(.cloudview-mobile-back):not(.aiagent-send-btn):not(.aiagent-icon-btn):not(.aiagent-clear-btn):not(.aiagent-retry-btn-header):not(.aiagent-speak-btn):not(.aiagent-copy-btn):not(.upload-dropdown-menu button):not(.model-dropdown-menu button):not(.mediarender-control-btn):not(.mediarender-play-btn):not(.mediarender-btn-transparent):not(.mediarender-center-play):not(.mediarender-ext-item):not(.mediarender-ext-close):not(.cloudroot-card):not(.cloudroot-provider):not(.cloudroot-option):not(.cloudroot-modal-cancel):not(.cloudroot-cta):not(.cloudplaylist-btn):not(.cloudplaylist-ctrl):not(.cloudplaylist-play):not(.cloudplaylist-qrow) {
   color: #000000 !important;
 }
 
@@ -644,7 +716,6 @@
 .night .playback-btn.active,
 .night .quick-toggle-btn.active,
 .night .barcode-type-btn.active,
-.night .aic-tab.active .aic-tab-content,
 .night .cva-tab.active,
 .night .github-modal-confirm,
 .night .github-save-btn,
@@ -669,7 +740,7 @@
 .night .barcode-card .cva-btn,
 .night .github-modal .github-modal-confirm,
 .night .github-modal .github-save-btn,
-.night button:not(.nav-item-link):not(.home-nav-link):not(.nav-btn-dash):not(.dropdown-link):not(.genre-chip):not(.mode-button):not(.next-button):not(.playback-btn):not(.quick-toggle-btn):not(.barcode-type-btn):not(.barcode-download-btn):not(.aic-tab):not(.aic-fetch-btn):not(.aic-copy-btn):not(.cva-tab):not(.cva-btn):not(.cva-modal-close):not(.cva-modal-back):not(.cva-eye-btn):not(.cva-country-btn):not(.cva-country-option):not(.github-modal-confirm):not(.github-save-btn):not(.github-create-btn-center):not(.ytdl-btn-run):not(.ytdl-tab):not(.ytdl-format-btn):not(.cloudview-retry-btn):not(.cloudview-toolbar-btn):not(.cloudview-sidebar-refresh):not(.cloudview-sidebar-toggle):not(.cloudview-bc-item):not(.cloudview-bc-link):not(.cloudview-tree-item):not(.cloudview-chat-row):not(.cloudview-transfer-select-item):not(.cloudview-mobile-back):not(.aiagent-send-btn):not(.aiagent-icon-btn):not(.aiagent-clear-btn):not(.aiagent-retry-btn-header):not(.aiagent-speak-btn):not(.aiagent-copy-btn):not(.upload-dropdown-menu button):not(.model-dropdown-menu button):not(.mediarender-control-btn):not(.mediarender-play-btn):not(.mediarender-btn-transparent):not(.mediarender-center-play):not(.mediarender-ext-item):not(.mediarender-ext-close):not(.cloudroot-card):not(.cloudroot-provider):not(.cloudroot-option):not(.cloudroot-modal-cancel):not(.cloudroot-cta):not(.cloudplaylist-btn):not(.cloudplaylist-ctrl):not(.cloudplaylist-play):not(.cloudplaylist-qrow) {
+.night button:not(.nav-item-link):not(.home-nav-link):not(.nav-btn-dash):not(.dropdown-link):not(.genre-chip):not(.mode-button):not(.next-button):not(.playback-btn):not(.quick-toggle-btn):not(.barcode-type-btn):not(.barcode-download-btn):not(.aic-fetch-btn):not(.aic-copy-btn):not(.cva-tab):not(.cva-btn):not(.cva-modal-close):not(.cva-modal-back):not(.cva-eye-btn):not(.cva-country-btn):not(.cva-country-option):not(.github-modal-confirm):not(.github-save-btn):not(.github-create-btn-center):not(.ytdl-btn-run):not(.ytdl-tab):not(.ytdl-format-btn):not(.cloudview-retry-btn):not(.cloudview-toolbar-btn):not(.cloudview-sidebar-refresh):not(.cloudview-sidebar-toggle):not(.cloudview-bc-item):not(.cloudview-bc-link):not(.cloudview-tree-item):not(.cloudview-chat-row):not(.cloudview-transfer-select-item):not(.cloudview-mobile-back):not(.aiagent-send-btn):not(.aiagent-icon-btn):not(.aiagent-clear-btn):not(.aiagent-retry-btn-header):not(.aiagent-speak-btn):not(.aiagent-copy-btn):not(.upload-dropdown-menu button):not(.model-dropdown-menu button):not(.mediarender-control-btn):not(.mediarender-play-btn):not(.mediarender-btn-transparent):not(.mediarender-center-play):not(.mediarender-ext-item):not(.mediarender-ext-close):not(.cloudroot-card):not(.cloudroot-provider):not(.cloudroot-option):not(.cloudroot-modal-cancel):not(.cloudroot-cta):not(.cloudplaylist-btn):not(.cloudplaylist-ctrl):not(.cloudplaylist-play):not(.cloudplaylist-qrow) {
   color: #0f172a !important;
 }
 
@@ -678,7 +749,6 @@
 .forest .playback-btn.active,
 .forest .quick-toggle-btn.active,
 .forest .barcode-type-btn.active,
-.forest .aic-tab.active .aic-tab-content,
 .forest .cva-tab.active,
 .forest .github-modal-confirm,
 .forest .github-save-btn,
@@ -703,7 +773,7 @@
 .forest .barcode-card .cva-btn,
 .forest .github-modal .github-modal-confirm,
 .forest .github-modal .github-save-btn,
-.forest button:not(.nav-item-link):not(.home-nav-link):not(.nav-btn-dash):not(.dropdown-link):not(.genre-chip):not(.mode-button):not(.next-button):not(.playback-btn):not(.quick-toggle-btn):not(.barcode-type-btn):not(.barcode-download-btn):not(.aic-tab):not(.aic-fetch-btn):not(.aic-copy-btn):not(.cva-tab):not(.cva-btn):not(.cva-modal-close):not(.cva-modal-back):not(.cva-eye-btn):not(.cva-country-btn):not(.cva-country-option):not(.github-modal-confirm):not(.github-save-btn):not(.github-create-btn-center):not(.ytdl-btn-run):not(.ytdl-tab):not(.ytdl-format-btn):not(.cloudview-retry-btn):not(.cloudview-toolbar-btn):not(.cloudview-sidebar-refresh):not(.cloudview-sidebar-toggle):not(.cloudview-bc-item):not(.cloudview-bc-link):not(.cloudview-tree-item):not(.cloudview-chat-row):not(.cloudview-transfer-select-item):not(.cloudview-mobile-back):not(.aiagent-send-btn):not(.aiagent-icon-btn):not(.aiagent-clear-btn):not(.aiagent-retry-btn-header):not(.aiagent-speak-btn):not(.aiagent-copy-btn):not(.upload-dropdown-menu button):not(.model-dropdown-menu button):not(.mediarender-control-btn):not(.mediarender-play-btn):not(.mediarender-btn-transparent):not(.mediarender-center-play):not(.mediarender-ext-item):not(.mediarender-ext-close):not(.cloudroot-card):not(.cloudroot-provider):not(.cloudroot-option):not(.cloudroot-modal-cancel):not(.cloudroot-cta):not(.cloudplaylist-btn):not(.cloudplaylist-ctrl):not(.cloudplaylist-play):not(.cloudplaylist-qrow) {
+.forest button:not(.nav-item-link):not(.home-nav-link):not(.nav-btn-dash):not(.dropdown-link):not(.genre-chip):not(.mode-button):not(.next-button):not(.playback-btn):not(.quick-toggle-btn):not(.barcode-type-btn):not(.barcode-download-btn):not(.aic-fetch-btn):not(.aic-copy-btn):not(.cva-tab):not(.cva-btn):not(.cva-modal-close):not(.cva-modal-back):not(.cva-eye-btn):not(.cva-country-btn):not(.cva-country-option):not(.github-modal-confirm):not(.github-save-btn):not(.github-create-btn-center):not(.ytdl-btn-run):not(.ytdl-tab):not(.ytdl-format-btn):not(.cloudview-retry-btn):not(.cloudview-toolbar-btn):not(.cloudview-sidebar-refresh):not(.cloudview-sidebar-toggle):not(.cloudview-bc-item):not(.cloudview-bc-link):not(.cloudview-tree-item):not(.cloudview-chat-row):not(.cloudview-transfer-select-item):not(.cloudview-mobile-back):not(.aiagent-send-btn):not(.aiagent-icon-btn):not(.aiagent-clear-btn):not(.aiagent-retry-btn-header):not(.aiagent-speak-btn):not(.aiagent-copy-btn):not(.upload-dropdown-menu button):not(.model-dropdown-menu button):not(.mediarender-control-btn):not(.mediarender-play-btn):not(.mediarender-btn-transparent):not(.mediarender-center-play):not(.mediarender-ext-item):not(.mediarender-ext-close):not(.cloudroot-card):not(.cloudroot-provider):not(.cloudroot-option):not(.cloudroot-modal-cancel):not(.cloudroot-cta):not(.cloudplaylist-btn):not(.cloudplaylist-ctrl):not(.cloudplaylist-play):not(.cloudplaylist-qrow) {
   color: #0d2818 !important;
 }
 
@@ -712,7 +782,6 @@
 .ocean .playback-btn.active,
 .ocean .quick-toggle-btn.active,
 .ocean .barcode-type-btn.active,
-.ocean .aic-tab.active .aic-tab-content,
 .ocean .cva-tab.active,
 .ocean .github-modal-confirm,
 .ocean .github-save-btn,
@@ -737,7 +806,7 @@
 .ocean .barcode-card .cva-btn,
 .ocean .github-modal .github-modal-confirm,
 .ocean .github-modal .github-save-btn,
-.ocean button:not(.nav-item-link):not(.home-nav-link):not(.nav-btn-dash):not(.dropdown-link):not(.genre-chip):not(.mode-button):not(.next-button):not(.playback-btn):not(.quick-toggle-btn):not(.barcode-type-btn):not(.barcode-download-btn):not(.aic-tab):not(.aic-fetch-btn):not(.aic-copy-btn):not(.cva-tab):not(.cva-btn):not(.cva-modal-close):not(.cva-modal-back):not(.cva-eye-btn):not(.cva-country-btn):not(.cva-country-option):not(.github-modal-confirm):not(.github-save-btn):not(.github-create-btn-center):not(.ytdl-btn-run):not(.ytdl-tab):not(.ytdl-format-btn):not(.cloudview-retry-btn):not(.cloudview-toolbar-btn):not(.cloudview-sidebar-refresh):not(.cloudview-sidebar-toggle):not(.cloudview-bc-item):not(.cloudview-bc-link):not(.cloudview-tree-item):not(.cloudview-chat-row):not(.cloudview-transfer-select-item):not(.cloudview-mobile-back):not(.aiagent-send-btn):not(.aiagent-icon-btn):not(.aiagent-clear-btn):not(.aiagent-retry-btn-header):not(.aiagent-speak-btn):not(.aiagent-copy-btn):not(.upload-dropdown-menu button):not(.model-dropdown-menu button):not(.mediarender-control-btn):not(.mediarender-play-btn):not(.mediarender-btn-transparent):not(.mediarender-center-play):not(.mediarender-ext-item):not(.mediarender-ext-close):not(.cloudroot-card):not(.cloudroot-provider):not(.cloudroot-option):not(.cloudroot-modal-cancel):not(.cloudroot-cta):not(.cloudplaylist-btn):not(.cloudplaylist-ctrl):not(.cloudplaylist-play):not(.cloudplaylist-qrow) {
+.ocean button:not(.nav-item-link):not(.home-nav-link):not(.nav-btn-dash):not(.dropdown-link):not(.genre-chip):not(.mode-button):not(.next-button):not(.playback-btn):not(.quick-toggle-btn):not(.barcode-type-btn):not(.barcode-download-btn):not(.aic-fetch-btn):not(.aic-copy-btn):not(.cva-tab):not(.cva-btn):not(.cva-modal-close):not(.cva-modal-back):not(.cva-eye-btn):not(.cva-country-btn):not(.cva-country-option):not(.github-modal-confirm):not(.github-save-btn):not(.github-create-btn-center):not(.ytdl-btn-run):not(.ytdl-tab):not(.ytdl-format-btn):not(.cloudview-retry-btn):not(.cloudview-toolbar-btn):not(.cloudview-sidebar-refresh):not(.cloudview-sidebar-toggle):not(.cloudview-bc-item):not(.cloudview-bc-link):not(.cloudview-tree-item):not(.cloudview-chat-row):not(.cloudview-transfer-select-item):not(.cloudview-mobile-back):not(.aiagent-send-btn):not(.aiagent-icon-btn):not(.aiagent-clear-btn):not(.aiagent-retry-btn-header):not(.aiagent-speak-btn):not(.aiagent-copy-btn):not(.upload-dropdown-menu button):not(.model-dropdown-menu button):not(.mediarender-control-btn):not(.mediarender-play-btn):not(.mediarender-btn-transparent):not(.mediarender-center-play):not(.mediarender-ext-item):not(.mediarender-ext-close):not(.cloudroot-card):not(.cloudroot-provider):not(.cloudroot-option):not(.cloudroot-modal-cancel):not(.cloudroot-cta):not(.cloudplaylist-btn):not(.cloudplaylist-ctrl):not(.cloudplaylist-play):not(.cloudplaylist-qrow) {
   color: #0a2a3a !important;
 }
 
@@ -746,7 +815,6 @@
 .dracula .playback-btn.active,
 .dracula .quick-toggle-btn.active,
 .dracula .barcode-type-btn.active,
-.dracula .aic-tab.active .aic-tab-content,
 .dracula .cva-tab.active,
 .dracula .github-modal-confirm,
 .dracula .github-save-btn,
@@ -771,7 +839,7 @@
 .dracula .barcode-card .cva-btn,
 .dracula .github-modal .github-modal-confirm,
 .dracula .github-modal .github-save-btn,
-.dracula button:not(.nav-item-link):not(.home-nav-link):not(.nav-btn-dash):not(.dropdown-link):not(.genre-chip):not(.mode-button):not(.next-button):not(.playback-btn):not(.quick-toggle-btn):not(.barcode-type-btn):not(.barcode-download-btn):not(.aic-tab):not(.aic-fetch-btn):not(.aic-copy-btn):not(.cva-tab):not(.cva-btn):not(.cva-modal-close):not(.cva-modal-back):not(.cva-eye-btn):not(.cva-country-btn):not(.cva-country-option):not(.github-modal-confirm):not(.github-save-btn):not(.github-create-btn-center):not(.ytdl-btn-run):not(.ytdl-tab):not(.ytdl-format-btn):not(.cloudview-retry-btn):not(.cloudview-toolbar-btn):not(.cloudview-sidebar-refresh):not(.cloudview-sidebar-toggle):not(.cloudview-bc-item):not(.cloudview-bc-link):not(.cloudview-tree-item):not(.cloudview-chat-row):not(.cloudview-transfer-select-item):not(.cloudview-mobile-back):not(.aiagent-send-btn):not(.aiagent-icon-btn):not(.aiagent-clear-btn):not(.aiagent-retry-btn-header):not(.aiagent-speak-btn):not(.aiagent-copy-btn):not(.upload-dropdown-menu button):not(.model-dropdown-menu button):not(.mediarender-control-btn):not(.mediarender-play-btn):not(.mediarender-btn-transparent):not(.mediarender-center-play):not(.mediarender-ext-item):not(.mediarender-ext-close):not(.cloudroot-card):not(.cloudroot-provider):not(.cloudroot-option):not(.cloudroot-modal-cancel):not(.cloudroot-cta):not(.cloudplaylist-btn):not(.cloudplaylist-ctrl):not(.cloudplaylist-play):not(.cloudplaylist-qrow) {
+.dracula button:not(.nav-item-link):not(.home-nav-link):not(.nav-btn-dash):not(.dropdown-link):not(.genre-chip):not(.mode-button):not(.next-button):not(.playback-btn):not(.quick-toggle-btn):not(.barcode-type-btn):not(.barcode-download-btn):not(.aic-fetch-btn):not(.aic-copy-btn):not(.cva-tab):not(.cva-btn):not(.cva-modal-close):not(.cva-modal-back):not(.cva-eye-btn):not(.cva-country-btn):not(.cva-country-option):not(.github-modal-confirm):not(.github-save-btn):not(.github-create-btn-center):not(.ytdl-btn-run):not(.ytdl-tab):not(.ytdl-format-btn):not(.cloudview-retry-btn):not(.cloudview-toolbar-btn):not(.cloudview-sidebar-refresh):not(.cloudview-sidebar-toggle):not(.cloudview-bc-item):not(.cloudview-bc-link):not(.cloudview-tree-item):not(.cloudview-chat-row):not(.cloudview-transfer-select-item):not(.cloudview-mobile-back):not(.aiagent-send-btn):not(.aiagent-icon-btn):not(.aiagent-clear-btn):not(.aiagent-retry-btn-header):not(.aiagent-speak-btn):not(.aiagent-copy-btn):not(.upload-dropdown-menu button):not(.model-dropdown-menu button):not(.mediarender-control-btn):not(.mediarender-play-btn):not(.mediarender-btn-transparent):not(.mediarender-center-play):not(.mediarender-ext-item):not(.mediarender-ext-close):not(.cloudroot-card):not(.cloudroot-provider):not(.cloudroot-option):not(.cloudroot-modal-cancel):not(.cloudroot-cta):not(.cloudplaylist-btn):not(.cloudplaylist-ctrl):not(.cloudplaylist-play):not(.cloudplaylist-qrow) {
   color: #282a36 !important;
 }
 
@@ -780,7 +848,6 @@
 .sepia .playback-btn.active,
 .sepia .quick-toggle-btn.active,
 .sepia .barcode-type-btn.active,
-.sepia .aic-tab.active .aic-tab-content,
 .sepia .cva-tab.active,
 .sepia .github-modal-confirm,
 .sepia .github-save-btn,
@@ -807,7 +874,6 @@
 .dim .playback-btn.active,
 .dim .quick-toggle-btn.active,
 .dim .barcode-type-btn.active,
-.dim .aic-tab.active .aic-tab-content,
 .dim .cva-tab.active,
 .dim .github-modal-confirm,
 .dim .github-save-btn,
@@ -832,7 +898,7 @@
 .dim .barcode-card .cva-btn,
 .dim .github-modal .github-modal-confirm,
 .dim .github-modal .github-save-btn,
-.dim button:not(.nav-item-link):not(.home-nav-link):not(.nav-btn-dash):not(.dropdown-link):not(.genre-chip):not(.mode-button):not(.next-button):not(.playback-btn):not(.quick-toggle-btn):not(.barcode-type-btn):not(.barcode-download-btn):not(.aic-tab):not(.aic-fetch-btn):not(.aic-copy-btn):not(.cva-tab):not(.cva-btn):not(.cva-modal-close):not(.cva-modal-back):not(.cva-eye-btn):not(.cva-country-btn):not(.cva-country-option):not(.github-modal-confirm):not(.github-save-btn):not(.github-create-btn-center):not(.ytdl-btn-run):not(.ytdl-tab):not(.ytdl-format-btn):not(.cloudview-retry-btn):not(.cloudview-toolbar-btn):not(.cloudview-sidebar-refresh):not(.cloudview-sidebar-toggle):not(.cloudview-bc-item):not(.cloudview-bc-link):not(.cloudview-tree-item):not(.cloudview-chat-row):not(.cloudview-transfer-select-item):not(.cloudview-mobile-back):not(.aiagent-send-btn):not(.aiagent-icon-btn):not(.aiagent-clear-btn):not(.aiagent-retry-btn-header):not(.aiagent-speak-btn):not(.aiagent-copy-btn):not(.upload-dropdown-menu button):not(.model-dropdown-menu button):not(.mediarender-control-btn):not(.mediarender-play-btn):not(.mediarender-btn-transparent):not(.mediarender-center-play):not(.mediarender-ext-item):not(.mediarender-ext-close):not(.cloudroot-card):not(.cloudroot-provider):not(.cloudroot-option):not(.cloudroot-modal-cancel):not(.cloudroot-cta):not(.cloudplaylist-btn):not(.cloudplaylist-ctrl):not(.cloudplaylist-play):not(.cloudplaylist-qrow) {
+.dim button:not(.nav-item-link):not(.home-nav-link):not(.nav-btn-dash):not(.dropdown-link):not(.genre-chip):not(.mode-button):not(.next-button):not(.playback-btn):not(.quick-toggle-btn):not(.barcode-type-btn):not(.barcode-download-btn):not(.aic-fetch-btn):not(.aic-copy-btn):not(.cva-tab):not(.cva-btn):not(.cva-modal-close):not(.cva-modal-back):not(.cva-eye-btn):not(.cva-country-btn):not(.cva-country-option):not(.github-modal-confirm):not(.github-save-btn):not(.github-create-btn-center):not(.ytdl-btn-run):not(.ytdl-tab):not(.ytdl-format-btn):not(.cloudview-retry-btn):not(.cloudview-toolbar-btn):not(.cloudview-sidebar-refresh):not(.cloudview-sidebar-toggle):not(.cloudview-bc-item):not(.cloudview-bc-link):not(.cloudview-tree-item):not(.cloudview-chat-row):not(.cloudview-transfer-select-item):not(.cloudview-mobile-back):not(.aiagent-send-btn):not(.aiagent-icon-btn):not(.aiagent-clear-btn):not(.aiagent-retry-btn-header):not(.aiagent-speak-btn):not(.aiagent-copy-btn):not(.upload-dropdown-menu button):not(.model-dropdown-menu button):not(.mediarender-control-btn):not(.mediarender-play-btn):not(.mediarender-btn-transparent):not(.mediarender-center-play):not(.mediarender-ext-item):not(.mediarender-ext-close):not(.cloudroot-card):not(.cloudroot-provider):not(.cloudroot-option):not(.cloudroot-modal-cancel):not(.cloudroot-cta):not(.cloudplaylist-btn):not(.cloudplaylist-ctrl):not(.cloudplaylist-play):not(.cloudplaylist-qrow) {
   color: #ffffff !important;
 }
 
@@ -841,7 +907,6 @@
 .solarized .playback-btn.active,
 .solarized .quick-toggle-btn.active,
 .solarized .barcode-type-btn.active,
-.solarized .aic-tab.active .aic-tab-content,
 .solarized .cva-tab.active,
 .solarized .github-modal-confirm,
 .solarized .github-save-btn,
@@ -901,14 +966,14 @@
 .palette-wine { --primary: #991b1b; --primary-alpha: rgba(153, 27, 27, 0.1); --primary-rgb: 153, 27, 27; }
 
 .theme-transition {
-  transition: 
+  transition:
     background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
     border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 button, .btn, .mode-button, .next-button, .playback-btn, .genre-chip, .quick-toggle-btn {
-  transition: 
+  transition:
     background-color 0.1s ease,
     transform 0.1s ease,
     color 0.1s ease;
@@ -919,11 +984,14 @@ body, .home-container {
   color: var(--text);
 }
 
-.home-card, .barcode-card, .login-card, .setting-overlay .barcode-card, .stack-item {
+.home-card:not(.ui-surface--card),
+.barcode-card:not(.ui-surface--card),
+.login-card:not(.ui-surface--card),
+.stack-item:not(.ui-surface--card) {
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-card);
-  box-shadow: 0 10px 30px var(--shadow-color);
+  box-shadow: var(--surface-shadow);
 }
 
 button, .btn, .mode-button, .next-button, .playback-btn, .genre-chip, .quick-toggle-btn {

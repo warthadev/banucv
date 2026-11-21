@@ -14,12 +14,12 @@
   -webkit-backdrop-filter: blur(15px);
   backdrop-filter: blur(15px);
   border: none;
-  border-radius: 20px;
-  padding: 8px;
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
   width: 230px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
   animation: slideUpQuick 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
@@ -32,10 +32,10 @@
 }
 
 .quick-menu-header {
-  padding: 12px 16px 6px;
+  padding: var(--space-5) var(--space-7) var(--space-2);
   color: var(--text-muted);
-  font-size: 10px;
-  font-weight: 800;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-bold);
   letter-spacing: 1px;
   text-transform: uppercase;
   flex-shrink: 0;
@@ -50,7 +50,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   max-height: 360px;
-  padding: 0 4px;
+  padding: 0 var(--space-1);
   margin: 0 -4px;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
@@ -76,12 +76,12 @@
 .dropdown-item-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
+  gap: var(--space-5);
+  padding: var(--space-5);
   width: 100%;
   background: transparent !important;
   border: none;
-  border-radius: 18px;
+  border-radius: var(--radius-medium);
   color: var(--text);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -96,8 +96,8 @@
 .item-icon-wrapper {
   background-color: var(--primary-alpha);
   color: var(--primary);
-  padding: 8px;
-  border-radius: 14px;
+  padding: var(--space-3);
+  border-radius: var(--radius-button);
   display: flex;
   flex-shrink: 0;
 }
@@ -111,13 +111,13 @@
 }
 
 .item-name {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: var(--type-small);
+  font-weight: var(--weight-bold);
   color: var(--text);
 }
 
 .item-desc {
-  font-size: 10px;
+  font-size: var(--type-caption);
   color: var(--text-sub);
   white-space: nowrap;
   overflow: hidden;
@@ -135,7 +135,7 @@
   -webkit-backdrop-filter: blur(15px);
   backdrop-filter: blur(15px);
   border: 1px solid var(--border-color);
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   color: var(--text);
   display: flex;
   align-items: center;
@@ -162,7 +162,7 @@
   background-color: var(--primary) !important;
   border-color: var(--primary);
   color: #ffffff;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
@@ -201,7 +201,7 @@
   height: 45px !important;
   background-color: var(--bg-alpha) !important;
   color: var(--text) !important;
-  border-radius: 50% !important;
+  border-radius: var(--radius-circle) !important;
   -webkit-backdrop-filter: blur(15px) !important;
   backdrop-filter: blur(15px) !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
@@ -240,21 +240,21 @@
   }
 
   .dropdown-item-btn {
-    padding: 10px;
-    gap: 10px;
+    padding: var(--space-4);
+    gap: var(--space-4);
   }
 
   .item-name {
-    font-size: 12px;
+    font-size: var(--type-caption);
   }
 
   .item-desc {
-    font-size: 9px;
+    font-size: var(--type-caption);
   }
 
   .item-icon-wrapper {
-    padding: 6px;
-    border-radius: 12px;
+    padding: var(--space-2);
+    border-radius: var(--radius-small);
   }
 
   .item-icon-wrapper svg {
@@ -299,21 +299,21 @@
   }
 
   .dropdown-item-btn {
-    padding: 8px;
-    gap: 8px;
+    padding: var(--space-3);
+    gap: var(--space-3);
   }
 
   .item-name {
-    font-size: 11px;
+    font-size: var(--type-caption);
   }
 
   .item-desc {
-    font-size: 8px;
+    font-size: var(--type-caption);
   }
 
   .item-icon-wrapper {
     padding: 5px;
-    border-radius: 10px;
+    border-radius: var(--radius-small);
   }
 
   .item-icon-wrapper svg {

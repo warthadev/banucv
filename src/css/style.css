@@ -1,71 +1,114 @@
-/* Import Font */
+/* Global UI baseline. The tokens in color.css are the source of truth. */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
 
-/* Typography & Global Styles */
+html {
+  font-size: var(--type-medium);
+  scroll-behavior: smooth;
+}
+
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-family-ui);
+  font-size: var(--type-medium);
+  line-height: var(--line-normal);
+  color: var(--text);
+  background: var(--bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Link Styling */
+h1, h2, h3, h4, h5, h6,
+button, input, textarea, select {
+  font-family: inherit;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text);
+  line-height: var(--line-tight);
+}
+
 a {
-  text-decoration: none;
   color: inherit;
-  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  transition: color 0.2s ease, opacity 0.2s ease;
 }
 
 a:hover {
-  opacity: 0.8;
+  color: var(--primary);
 }
 
-/* Button & Interactive Elements */
 button, .btn {
+  appearance: none;
   cursor: pointer;
-  outline: none;
-  font-family: inherit;
-  padding: 15px;
-  border-radius: 12px;
-  border: none;
-  background: var(--primary-blue);
-  color: white;
-  font-weight: 700;
+  font: inherit;
+  line-height: inherit;
+  border-radius: var(--radius-button);
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
-/* Scrollbar - Chrome/Edge/Safari */
+button:disabled,
+.btn:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+input, textarea, select {
+  color: var(--text);
+  font-size: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-color);
+  background: var(--bg);
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--border-color);
-  border-radius: 10px;
+  border-radius: var(--radius-pill);
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
 
-/* Scrollbar - Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--border-color) var(--bg-color);
+  scrollbar-color: var(--border-color) var(--bg);
 }
 
-/* Selection Color */
 ::selection {
-  background-color: #00a8ff;
-  color: #ffffff;
+  background: var(--primary-alpha);
+  color: var(--text);
 }
 
-/* Animasi spin untuk Loader */
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
 .animate-spin {
   animation: spin 0.7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -104,7 +104,7 @@ export const CloudModalHF: React.FC<CloudModalHFProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="github-modal-overlay"
+          className="ui-overlay-blocker github-modal-overlay"
           variants={overlayVariants}
           initial="initial"
           animate="animate"

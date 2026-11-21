@@ -26,8 +26,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 0 12px;
+  gap: var(--space-5);
+  padding: 0 var(--space-5);
   height: 44px;
   background: var(--bg);
   border-bottom: 1px solid var(--border-color);
@@ -36,7 +36,7 @@
 .cloudview-titlebar-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -44,7 +44,7 @@
 .cloudview-titlebar-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   flex-shrink: 0;
 }
 
@@ -58,8 +58,8 @@
 .cloudview-sidebar-toggle {
   background: none;
   border: none;
-  border-radius: 6px;
-  padding: 6px;
+  border-radius: var(--radius-small);
+  padding: var(--space-2);
   color: var(--text-sub);
   cursor: pointer;
   display: flex;
@@ -79,7 +79,7 @@
 .cloudview-breadcrumb {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -87,14 +87,14 @@
 .cloudview-bc-item {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 13px;
+  gap: var(--space-1);
+  font-size: var(--type-small);
   color: var(--text-sub);
   white-space: nowrap;
   background: none;
   border: none;
-  padding: 3px 6px;
-  border-radius: 6px;
+  padding: 3px var(--space-2);
+  border-radius: var(--radius-small);
   cursor: default;
   flex-shrink: 0;
 }
@@ -102,7 +102,7 @@
 .cloudview-bc-link:hover { background: var(--primary-alpha); color: var(--primary); }
 .cloudview-bc-current {
   color: var(--text);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -123,7 +123,7 @@
 .cloudview-mobile-back {
   background: none;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-small);
   color: var(--text-sub);
   cursor: pointer;
   display: flex;
@@ -132,8 +132,8 @@
   transition: all 0.15s;
   flex-shrink: 0;
 }
-.cloudview-toolbar-btn { padding: 5px 8px; border: 1px solid transparent; }
-.cloudview-mobile-back { padding: 8px; border-radius: 8px; }
+.cloudview-toolbar-btn { padding: 5px var(--space-3); border: 1px solid transparent; }
+.cloudview-mobile-back { padding: var(--space-3); border-radius: var(--radius-small); }
 .cloudview-toolbar-btn:hover {
   background: var(--primary-alpha);
   color: var(--primary);
@@ -170,15 +170,15 @@
   align-items: center;
   min-height: 47px;
   justify-content: space-between;
-  padding: 8px 10px 8px 16px;
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-7);
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
   background: var(--bg);
   transition: opacity 0.15s ease;
 }
 .cloudview-sidebar-title {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted);
@@ -186,8 +186,8 @@
 .cloudview-sidebar-refresh {
   background: none;
   border: none;
-  padding: 4px;
-  border-radius: 4px;
+  padding: var(--space-1);
+  border-radius: var(--radius-small);
   color: var(--text-muted);
   cursor: pointer;
   display: flex;
@@ -199,17 +199,17 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 24px 12px;
+  gap: var(--space-5);
+  padding: var(--space-9) var(--space-5);
   min-height: 200px;
   width: 100%;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--type-small);
 }
 .cloudview-sidebar-tree {
   flex: 1;
   overflow-y: auto;
-  padding: 6px 0;
+  padding: var(--space-2) 0;
   min-height: 0;
   position: relative;
   background: var(--bg);
@@ -218,10 +218,10 @@
 .cloudview-tree-root {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 10px 8px 16px;
-  font-size: 12px;
-  font-weight: 600;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-7);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -256,7 +256,7 @@
   width: 2px;
   height: 32px;
   background: var(--border-color);
-  border-radius: 2px;
+  border-radius: var(--radius-micro);
   opacity: 0;
   transition: opacity 0.15s ease;
 }
@@ -273,17 +273,17 @@
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px 8px 16px;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5) var(--space-3) var(--space-7);
   background: linear-gradient(270deg, color-mix(in srgb, var(--row-accent) var(--row-glow), transparent) 0%, transparent 65%);
   border: none;
   border-bottom: 1px solid var(--border-color);
-  border-radius: 0 !important;
+  border-radius: var(--radius-square) !important;
   cursor: pointer;
   text-align: left;
   color: var(--text);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
   white-space: nowrap;
   overflow: hidden;
   transition: background 0.12s, box-shadow 0.12s;
@@ -302,7 +302,7 @@
 .cloudview-tree-icon {
   width: 28px;
   height: 28px;
-  border-radius: 9px;
+  border-radius: var(--radius-small);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -316,29 +316,29 @@
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-bold);
   letter-spacing: 0.3px;
   line-height: 1.5;
-  padding: 1px 6px;
-  border-radius: 6px;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-small);
   color: var(--row-accent);
   background: color-mix(in srgb, var(--row-accent) 16%, transparent);
 }
 .cloudview-tree-size {
   flex-shrink: 0;
-  font-size: 10px;
-  font-weight: 500;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
 .cloudview-tree-badge, .cloudview-unread {
   background: var(--primary);
   color: white;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-bold);
   padding: 2px 7px;
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   flex-shrink: 0;
   min-width: 20px;
   text-align: center;
@@ -346,19 +346,19 @@
 
 .cloudview-sidebar--collapsed .cloudview-sidebar-header {
   justify-content: center;
-  padding: 8px 0;
+  padding: var(--space-3) 0;
 }
 .cloudview-sidebar--collapsed .cloudview-sidebar-refresh {
   margin: 0 auto;
 }
 .cloudview-sidebar--collapsed .cloudview-tree-root {
   justify-content: center;
-  padding: 6px 0;
+  padding: var(--space-2) 0;
   gap: 0;
 }
 .cloudview-sidebar--collapsed .cloudview-tree-item {
   justify-content: center;
-  padding: 8px 0;
+  padding: var(--space-3) 0;
   gap: 0;
 }
 .cloudview-sidebar--collapsed .cloudview-tree-icon {
@@ -387,11 +387,11 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  gap: 12px;
+  gap: var(--space-5);
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--type-small);
   text-align: center;
-  padding: 20px;
+  padding: var(--space-8);
 }
 .cloudview-detail-panel {
   display: flex;
@@ -403,10 +403,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 12px;
+  padding: var(--space-4) var(--space-5);
   border-bottom: 1px solid var(--border-color);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted);
@@ -416,7 +416,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 12px 12px;
+  padding: var(--space-8) var(--space-5) var(--space-5);
   border-bottom: 1px solid var(--border-color);
   text-align: center;
   background: var(--bg);
@@ -424,28 +424,28 @@
 .cloudview-detail-icon-wrap {
   width: 72px;
   height: 72px;
-  border-radius: 16px;
+  border-radius: var(--radius-medium);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 10px;
+  margin-bottom: var(--space-4);
 }
 .cloudview-detail-fname {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
   color: var(--text);
   word-break: break-word;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
   line-height: 1.3;
 }
 .cloudview-detail-ftype {
-  font-size: 11px;
+  font-size: var(--type-caption);
   color: var(--text-muted);
 }
 .cloudview-detail-rows {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 12px;
+  padding: var(--space-3) var(--space-5);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -456,18 +456,18 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 6px 0;
+  padding: var(--space-2) 0;
   border-bottom: 1px solid var(--border-color);
-  gap: 8px;
+  gap: var(--space-3);
 }
-.cloudview-detail-row--col { flex-direction: column; gap: 4px; }
+.cloudview-detail-row--col { flex-direction: column; gap: var(--space-1); }
 .cloudview-detail-row span {
-  font-size: 11px;
+  font-size: var(--type-caption);
   color: var(--text-muted);
   flex-shrink: 0;
 }
 .cloudview-detail-row strong {
-  font-size: 12px;
+  font-size: var(--type-caption);
   color: var(--text);
   text-align: left;
   word-break: break-word;
@@ -484,8 +484,8 @@
   right: 0;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
-  padding: 4px;
+  border-radius: var(--radius-small);
+  padding: var(--space-1);
   min-width: 140px;
   z-index: 200;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
@@ -497,13 +497,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 6px;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-small);
   border: none;
   background: none;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--type-small);
   cursor: pointer;
   transition: background 0.12s;
   text-align: left;
@@ -514,7 +514,7 @@
 .cloudview-sort-item--active {
   background: var(--primary-alpha);
   color: var(--primary);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 .cloudview-sort-label {
   text-transform: capitalize;
@@ -523,8 +523,8 @@
 .cloudview-panel-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
   border-bottom: 1px solid var(--border-color);
   background: var(--bg);
   flex-shrink: 0;
@@ -533,25 +533,25 @@
   box-sizing: border-box;
 }
 .cloudview-panel-count {
-  font-size: 12px;
+  font-size: var(--type-caption);
   color: var(--text-muted);
   white-space: nowrap;
 }
 .cloudview-panel-size {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11px;
+  gap: var(--space-1);
+  font-size: var(--type-caption);
   color: var(--text-muted);
   white-space: nowrap;
   background: var(--bg);
   border: 1px solid var(--border-color);
   padding: 2px 7px;
-  border-radius: 20px;
+  border-radius: var(--radius-card);
 }
 .cloudview-toolbar-actions {
   display: flex;
-  gap: 4px;
+  gap: var(--space-1);
   margin-left: auto;
   flex-shrink: 0;
 }
@@ -574,10 +574,10 @@
   width: 100%;
   background: var(--bg);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 7px 32px 7px 30px;
+  border-radius: var(--radius-small);
+  padding: 7px var(--space-11) 7px 30px;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--type-small);
   transition: border-color 0.15s;
   box-sizing: border-box;
 }
@@ -603,21 +603,21 @@
 .cloudview-selection-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
+  gap: var(--space-5);
+  padding: var(--space-3) var(--space-5);
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--primary) 14%, transparent) 0%, transparent 70%),
     var(--card-bg);
   border-bottom: 1px solid var(--primary);
-  border-radius: 0;
+  border-radius: var(--radius-square);
   flex-shrink: 0;
   flex-wrap: wrap;
 }
 .cloudview-selection-bar-cancel {
   background: none;
   border: none;
-  border-radius: 6px;
-  padding: 6px;
+  border-radius: var(--radius-small);
+  padding: var(--space-2);
   color: var(--text);
   cursor: pointer;
   display: flex;
@@ -630,8 +630,8 @@
   background: var(--primary-alpha);
 }
 .cloudview-selection-bar-count {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
   color: var(--primary);
   white-space: nowrap;
   flex-shrink: 0;
@@ -639,7 +639,7 @@
 .cloudview-selection-bar-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   margin-left: auto;
   flex-shrink: 0;
   flex-wrap: wrap;
@@ -647,14 +647,14 @@
 .cloudview-selection-bar-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: 8px;
+  gap: var(--space-2);
+  padding: 7px var(--space-6);
+  border-radius: var(--radius-small);
   border: 1px solid var(--border-color);
   background: var(--card-bg);
   color: var(--text);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
@@ -669,16 +669,16 @@
   cursor: not-allowed;
 }
 .cloudview-selection-bar-btn--danger:hover:not(:disabled) {
-  border-color: #ef4444;
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--status-danger);
+  color: var(--status-danger);
+  background: rgba(var(--status-danger-rgb), 0.1);
 }
 
 .cloudview-selection-checkbox {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   border: 2px solid var(--border-color);
   background: transparent;
   color: transparent;
@@ -719,11 +719,11 @@
   transform: translateX(-50%) !important;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
+  gap: var(--space-3);
+  padding: var(--space-4) 18px;
+  border-radius: var(--radius-card);
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
   z-index: 3000;
   box-shadow: 0 8px 24px rgba(0,0,0,0.2);
   max-width: 90vw;
@@ -731,36 +731,25 @@
   margin: 0 !important;
 }
 .cloudview-toast--error {
-  background: #ef4444;
+  background: var(--status-danger);
   color: #ffffff;
 }
 .cloudview-toast--success {
-  background: #10b981;
+  background: var(--status-success);
   color: #ffffff;
 }
 
-.cloudview-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.75);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2500;
-  padding: 20px;
-}
 .cloudview-modal {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 24px;
+  border-radius: var(--radius-card);
+  padding: var(--space-9);
   width: 100%;
   max-width: 440px;
   box-shadow: 0 24px 56px rgba(0,0,0,0.3);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-5);
   box-sizing: border-box;
   max-height: 90vh;
   overflow-y: auto;
@@ -783,7 +772,9 @@
   max-width: 480px;
   max-height: calc(100vh - 40px);
   max-height: calc(100dvh - 40px);
-  overflow: visible;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
 }
 .cloudview-modal--transfer .cloudview-transfer-field:has(.cloudview-modal-folder-list) {
   flex: 0 1 auto;
@@ -796,35 +787,35 @@
 .cloudview-modal-danger-icon {
   display: flex;
   justify-content: center;
-  color: #ef4444;
+  color: var(--status-danger);
 }
 .cloudview-modal-title {
   margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
+  font-size: var(--type-large);
+  font-weight: var(--weight-bold);
   color: var(--text);
   text-align: center;
 }
 .cloudview-modal-desc {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--type-small);
   color: var(--text-sub);
   line-height: 1.5;
   text-align: center;
 }
 .cloudview-modal-desc strong {
   color: var(--text);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   word-break: break-word;
 }
 .cloudview-modal-input {
   width: 100%;
-  padding: 12px 14px;
+  padding: var(--space-5) var(--space-6);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   background: var(--bg);
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--type-small);
   outline: none;
   transition: border-color 0.15s;
   box-sizing: border-box;
@@ -849,12 +840,12 @@
 }
 .cloudview-modal-search-input {
   width: 100%;
-  padding: 10px 36px 10px 34px;
+  padding: var(--space-4) 36px var(--space-4) 34px;
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   background: var(--bg);
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--type-small);
   outline: none;
   transition: border-color 0.15s;
   box-sizing: border-box;
@@ -874,9 +865,9 @@
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 4px;
+  padding: var(--space-1);
   display: flex;
-  border-radius: 4px;
+  border-radius: var(--radius-small);
   transition: background 0.15s, color 0.15s;
 }
 .cloudview-modal-search-clear:hover {
@@ -890,10 +881,10 @@
   gap: 2px;
   max-height: 320px;
   overflow-y: auto;
-  padding: 6px;
+  padding: var(--space-2);
   background: var(--bg);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   min-height: 80px;
 }
 
@@ -908,9 +899,9 @@
 .cloudview-folder-tree-row {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 8px 6px 4px;
-  border-radius: 6px;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-1);
+  border-radius: var(--radius-small);
   transition: background 0.12s;
   min-height: 32px;
   box-sizing: border-box;
@@ -927,10 +918,10 @@
 }
 .cloudview-folder-tree-row.active .cloudview-folder-tree-name {
   color: var(--primary);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
 }
 .cloudview-folder-tree-row--root {
-  padding-left: 4px;
+  padding-left: var(--space-1);
 }
 .cloudview-folder-tree-toggle {
   display: flex;
@@ -941,7 +932,7 @@
   padding: 0;
   background: none;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-small);
   color: var(--text);
   cursor: pointer;
   flex-shrink: 0;
@@ -963,17 +954,17 @@
 .cloudview-folder-tree-main {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   flex: 1;
   min-width: 0;
-  padding: 2px 4px;
+  padding: 2px var(--space-1);
   background: none;
   border: none;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--type-small);
   text-align: left;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--radius-small);
 }
 .cloudview-folder-tree-icon {
   flex-shrink: 0;
@@ -989,34 +980,34 @@
 .cloudview-folder-tree-check {
   color: var(--primary);
   flex-shrink: 0;
-  margin-left: 4px;
+  margin-left: var(--space-1);
 }
 
 .cloudview-modal-empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: var(--space-8);
   text-align: center;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--type-small);
   min-height: 60px;
 }
 .cloudview-modal-actions {
   display: flex;
-  gap: 10px;
+  gap: var(--space-4);
   justify-content: center;
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 .cloudview-modal-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 10px 22px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
+  gap: var(--space-2);
+  padding: var(--space-4) 22px;
+  border-radius: var(--radius-small);
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all 0.15s;
   min-width: 100px;
@@ -1037,11 +1028,11 @@
   opacity: 0.88;
 }
 .cloudview-modal-btn--danger {
-  background: #ef4444;
+  background: var(--status-danger);
   color: #ffffff;
 }
 .cloudview-modal-btn--danger:hover:not(:disabled) {
-  background: #dc2626;
+  background: var(--status-danger);
 }
 .cloudview-modal-btn:disabled {
   opacity: 0.5;
@@ -1057,7 +1048,7 @@
   flex-shrink: 0;
 }
 .cloudview-modal--move .cloudview-modal-search-wrap {
-  margin-top: 4px;
+  margin-top: var(--space-1);
   flex-shrink: 0;
 }
 .cloudview-modal--move .cloudview-modal-folder-list {
@@ -1067,22 +1058,22 @@
   overflow-y: auto;
 }
 .cloudview-modal--move .cloudview-modal-actions {
-  margin-top: 8px;
+  margin-top: var(--space-3);
   flex-shrink: 0;
 }
 
 .cloudview-transfer-source {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 10px 12px;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
   background: var(--bg);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: var(--radius-small);
 }
 .cloudview-transfer-source-label {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1090,15 +1081,15 @@
 .cloudview-transfer-source-value {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: var(--space-3);
+  font-size: var(--type-small);
   color: var(--text);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 .cloudview-transfer-source-repo {
-  font-size: 11px;
+  font-size: var(--type-caption);
   color: var(--text-muted);
-  font-family: monospace;
+  font-family: var(--font-family-mono);
   margin-left: auto;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1109,21 +1100,21 @@
 .cloudview-transfer-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
 }
 .cloudview-transfer-label {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
   color: var(--text);
 }
 .cloudview-transfer-select {
   width: 100%;
-  padding: 10px 12px;
+  padding: var(--space-4) var(--space-5);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   background: var(--bg);
   color: var(--text-sub);
-  font-size: 13px;
+  font-size: var(--type-small);
   outline: none;
   transition: border-color 0.15s;
   box-sizing: border-box;
@@ -1141,12 +1132,12 @@
 .cloudview-transfer-notice {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
   background: var(--primary-alpha);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
-  font-size: 12px;
+  border-radius: var(--radius-small);
+  font-size: var(--type-caption);
   color: var(--text-sub);
   line-height: 1.5;
 }
@@ -1185,14 +1176,14 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  column-gap: 12px;
+  column-gap: var(--space-5);
   min-width: 0;
-  padding: 12px 16px;
+  padding: var(--space-5) var(--space-7);
   box-sizing: border-box;
   cursor: pointer;
   border: none;
   border-bottom: 1px solid var(--border-color);
-  border-radius: 0;
+  border-radius: var(--radius-square);
   background: linear-gradient(270deg, color-mix(in srgb, var(--row-accent) 12%, transparent) 0%, transparent 65%);
   transition: background 0.12s;
   -webkit-touch-callout: none;
@@ -1215,13 +1206,13 @@
 .cloudview-frow-main {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-5);
   min-width: 0;
 }
 .cloudview-frow-icon {
   width: 46px;
   height: 46px;
-  border-radius: 30%;
+  border-radius: var(--radius-medium);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -1233,12 +1224,12 @@
 .cloudview-frow-text {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
   min-width: 0;
 }
 .cloudview-frow-name {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
   line-height: 1.3;
   color: var(--text);
   word-break: break-word;
@@ -1251,32 +1242,32 @@
 .cloudview-frow-type {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   min-width: 0;
 }
 .cloudview-frow-chip {
   display: inline-flex;
   align-items: center;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-bold);
   letter-spacing: 0.3px;
   line-height: 1.5;
   white-space: nowrap;
-  padding: 1px 6px;
-  border-radius: 6px;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-small);
   color: var(--row-accent);
   background: color-mix(in srgb, var(--row-accent) 16%, transparent);
 }
 .cloudview-frow-end {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   flex-shrink: 0;
 }
 .cloudview-frow-size,
 .cloudview-frow-date {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
   color: var(--text-muted);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -1286,21 +1277,21 @@
 /* Tablet / desktop: baris lebih rapat dengan kolom */
 .cloudview-frow--wide {
   grid-template-columns: minmax(0, 1fr) 110px 76px;
-  padding: 8px 16px;
+  padding: var(--space-3) var(--space-7);
   background: linear-gradient(270deg, color-mix(in srgb, var(--row-accent) 10%, transparent) 0%, transparent 50%);
 }
 .cloudview-frow--wide.cloudview-frow--date { grid-template-columns: minmax(0, 1fr) 120px 110px 76px; }
 .cloudview-frow--wide .cloudview-frow-icon { width: 34px; height: 34px; }
-.cloudview-frow--wide .cloudview-frow-name { -webkit-line-clamp: 1; font-size: 13px; }
+.cloudview-frow--wide .cloudview-frow-name { -webkit-line-clamp: 1; font-size: var(--type-small); }
 .cloudview-frow--wide .cloudview-frow-end { justify-content: flex-end; }
 .cloudview-frow-head {
   display: grid;
   align-items: center;
-  column-gap: 12px;
-  padding: 8px 16px;
+  column-gap: var(--space-5);
+  padding: var(--space-3) var(--space-7);
   border-bottom: 1px solid var(--border-color);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -1319,13 +1310,13 @@
 
 .cloudview-files-panel--mobile .cloudview-panel-toolbar {
   flex-shrink: 0;
-  padding: 6px 12px;
+  padding: var(--space-2) var(--space-5);
   border-bottom: 1px solid var(--border-color);
   background: var(--bg);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .cloudview-files-panel--mobile .cloudview-search-wrap {
@@ -1336,19 +1327,19 @@
 }
 
 .cloudview-files-panel--mobile .cloudview-search-input {
-  font-size: 14px;
-  padding: 8px 32px 8px 34px;
+  font-size: var(--type-small);
+  padding: var(--space-3) var(--space-11) var(--space-3) 34px;
   height: 36px;
 }
 
 .cloudview-files-panel--mobile .cloudview-panel-count {
   order: 2;
-  font-size: 11px;
+  font-size: var(--type-caption);
 }
 
 .cloudview-files-panel--mobile .cloudview-panel-size {
   order: 3;
-  font-size: 10px;
+  font-size: var(--type-caption);
 }
 
 .cloudview-files-panel--mobile .cloudview-toolbar-actions {
@@ -1369,29 +1360,29 @@
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-  padding: 12px;
+  padding: var(--space-5);
   align-content: flex-start;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
+  gap: var(--space-5);
 }
 
 .cloudview-files-panel--mobile .cloudview-file-thumbnail-grid {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-  padding: 12px;
+  padding: var(--space-5);
   align-content: flex-start;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
+  gap: var(--space-5);
 }
 
 .cloudview-file-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
-  padding: 12px;
+  gap: var(--space-5);
+  padding: var(--space-5);
   overflow-y: auto;
   flex: 1;
   min-height: 0;
@@ -1404,13 +1395,13 @@
     radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--card-accent) 14%, transparent) 0%, transparent 60%),
     var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 14px;
+  border-radius: var(--radius-medium);
+  padding: var(--space-6);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--space-4);
   height: 200px;
   overflow: visible;
   box-sizing: border-box;
@@ -1435,7 +1426,7 @@
 .cloudview-grid-card-icon {
   width: 44px;
   height: 44px;
-  border-radius: 14px;
+  border-radius: var(--radius-button);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1453,8 +1444,8 @@
   gap: 3px;
 }
 .cloudview-grid-card-name {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
   color: var(--text);
   line-height: 1.35;
   word-break: break-all;
@@ -1464,8 +1455,8 @@
   overflow: hidden;
 }
 .cloudview-grid-card-meta {
-  font-size: 11px;
-  font-weight: 500;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -1475,13 +1466,13 @@
 .cloudview-grid-card-type-chip {
   display: inline-flex;
   align-items: center;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-bold);
   letter-spacing: 0.3px;
   line-height: 1.5;
   white-space: nowrap;
-  padding: 1px 6px;
-  border-radius: 6px;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-small);
   align-self: flex-start;
   flex-shrink: 0;
   margin-top: auto;
@@ -1493,7 +1484,7 @@
   left: 6px;
   width: 22px;
   height: 22px;
-  border-radius: 7px;
+  border-radius: var(--radius-small);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1507,8 +1498,8 @@
 .cloudview-file-poster-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 12px;
-  padding: 12px;
+  gap: var(--space-5);
+  padding: var(--space-5);
   overflow-y: auto;
   flex: 1;
   min-height: 0;
@@ -1518,7 +1509,7 @@
   --card-accent: var(--primary);
   position: relative;
   aspect-ratio: 2 / 3;
-  border-radius: 14px;
+  border-radius: var(--radius-button);
   overflow: hidden;
   cursor: pointer;
   box-sizing: border-box;
@@ -1562,18 +1553,18 @@
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 36px 10px 10px;
+  padding: 36px var(--space-4) var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
   background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.55) 55%, rgba(0, 0, 0, 0) 100%);
   color: #fff;
   pointer-events: none;
 }
 .cloudview-poster-name {
   margin: 0;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
   line-height: 1.3;
   color: #fff;
   word-break: break-all;
@@ -1587,7 +1578,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: var(--space-2);
 }
 .cloudview-poster-res {
   position: absolute;
@@ -1608,20 +1599,20 @@
 .cloudview-poster-type {
   display: inline-flex;
   align-items: center;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-bold);
   letter-spacing: 0.3px;
   line-height: 1.5;
   white-space: nowrap;
-  padding: 1px 6px;
-  border-radius: 6px;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-small);
   background: rgba(255, 255, 255, 0.2);
   color: #fff;
   backdrop-filter: blur(4px);
 }
 .cloudview-poster-size {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
   color: rgba(255, 255, 255, 0.85);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -1630,8 +1621,8 @@
 .cloudview-file-thumbnail-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
-  padding: 12px;
+  gap: var(--space-5);
+  padding: var(--space-5);
   overflow-y: auto;
   flex: 1;
   min-height: 0;
@@ -1640,7 +1631,7 @@
 .cloudview-file-thumb-card {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: var(--radius-small);
   overflow: hidden;
   cursor: pointer;
   display: flex;
@@ -1685,15 +1676,15 @@
   justify-content: center;
 }
 .cloudview-thumb-info {
-  padding: 10px 12px;
+  padding: var(--space-4) var(--space-5);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
   flex: 1;
 }
 .cloudview-thumb-name {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
@@ -1704,24 +1695,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 4px;
+  gap: var(--space-1);
   margin-top: auto;
 }
 .cloudview-thumb-type {
   display: inline-flex;
   align-items: center;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-bold);
   letter-spacing: 0.3px;
   line-height: 1.5;
   white-space: nowrap;
-  padding: 1px 6px;
-  border-radius: 6px;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-small);
   background: var(--primary-alpha);
   color: var(--primary);
 }
 .cloudview-thumb-size {
-  font-size: 11px;
+  font-size: var(--type-caption);
   color: var(--text-muted);
 }
 
@@ -1730,7 +1721,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: var(--space-6);
   text-align: center;
   color: var(--text-sub);
   position: absolute;
@@ -1739,26 +1730,26 @@
   transform: translate(-50%, -50%);
   width: fit-content;
   max-width: 85%;
-  padding: 24px;
+  padding: var(--space-9);
   background: transparent;
   z-index: 10;
   margin: 0;
   box-sizing: border-box;
 }
-.cloudview-state-box--error { color: #e74c3c; }
+.cloudview-state-box--error { color: var(--status-danger); }
 .cloudview-state-icon { color: var(--primary); }
-.cloudview-empty-icon { font-size: 56px; opacity: 0.45; }
+.cloudview-empty-icon { font-size: var(--icon-size-large); opacity: 0.45; }
 .cloudview-retry-btn {
-  padding: 8px 24px;
+  padding: var(--space-3) var(--space-9);
   background: var(--primary);
-  color: white;
+  color: var(--btn-text);
   border: none;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
+  border-radius: var(--radius-card);
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: opacity 0.2s;
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 .cloudview-retry-btn:hover { opacity: 0.88; }
 
@@ -1804,51 +1795,51 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 56px 24px;
+  gap: var(--space-5);
+  padding: 56px var(--space-9);
   width: 100%;
   background: var(--bg);
   margin: 0;
   box-sizing: border-box;
 }
 .cloudview-file-preview-placeholder p {
-  font-size: 14px;
+  font-size: var(--type-small);
   color: var(--text-sub);
   margin: 0;
 }
 .cloudview-file-preview-placeholder span {
-  font-size: 12px;
+  font-size: var(--type-caption);
   color: var(--text-muted);
 }
 .cloudview-preview-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-3);
 }
 
 .cloudview-preview-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-3);
 }
 
 .cloudview-player-download {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 18px;
+  gap: var(--space-2);
+  padding: var(--space-4) 18px;
   background: var(--primary);
   color: var(--btn-text);
   border: none;
   border-radius: var(--radius-button);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
   font-family: inherit;
   cursor: pointer;
   transition: opacity 0.2s;
-  margin-top: 8px;
+  margin-top: var(--space-3);
 }
 
 .cloudview-player-download:hover {
@@ -1892,26 +1883,26 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
+  padding: 0 var(--space-5);
   z-index: 100;
   flex-shrink: 0;
 }
 .cloudview-mobile-header-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   flex: 1;
   min-width: 0;
 }
 .cloudview-mobile-header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   flex-shrink: 0;
 }
 .cloudview-mobile-title {
-  font-size: 17px;
-  font-weight: 600;
+  font-size: var(--type-medium);
+  font-weight: var(--weight-medium);
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
@@ -1919,7 +1910,7 @@
   flex: 1;
 }
 .cloudview-mobile-count {
-  font-size: 12px;
+  font-size: var(--type-caption);
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -1945,7 +1936,7 @@
   height: 24px;
   border: 2px solid var(--border-color);
   border-top-color: var(--primary);
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   animation: spin 0.6s linear infinite;
 }
 
@@ -1954,30 +1945,15 @@
   height: 28px;
 }
 
-.cloudview-files-loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(var(--bg-rgb, 0, 0, 0), 0.75);
-  backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 15;
-  border-radius: inherit;
-}
-
 .cloudview-files-loading-inline {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-5);
   background: var(--card-bg);
-  padding: 12px 24px;
-  border-radius: 40px;
+  padding: var(--space-5) var(--space-9);
+  border-radius: var(--radius-pill);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  font-size: 14px;
+  font-size: var(--type-small);
   color: var(--text);
   border: 1px solid var(--border-color);
   z-index: 16;
@@ -1986,14 +1962,6 @@
 .cloudview-files-loading-inline .cloudview-loading-spinner {
   width: 20px;
   height: 20px;
-}
-
-.dark .cloudview-files-loading-overlay {
-  background: rgba(0, 0, 0, 0.7);
-}
-
-.night .cloudview-files-loading-overlay {
-  background: rgba(15, 23, 42, 0.8);
 }
 
 .cva-modal {
@@ -2008,14 +1976,14 @@
 
 .cva-header {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-9);
 }
 
 .cva-icon-wrapper {
   width: 64px;
   height: 64px;
   background: var(--primary-alpha);
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2024,23 +1992,23 @@
 }
 
 .cva-title {
-  margin: 16px 0 8px 0;
-  font-size: 1.5rem;
-  font-weight: 700;
+  margin: var(--space-7) 0 var(--space-3) 0;
+  font-size: var(--type-large);
+  font-weight: var(--weight-bold);
   color: var(--text);
-  padding-top: 20px;
+  padding-top: var(--space-8);
 }
 
 .cva-desc {
-  font-size: 0.85rem;
+  font-size: var(--type-small);
   color: var(--text-sub);
   margin: 0;
 }
 
 .cva-tabs {
   display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: var(--space-5);
+  margin-bottom: var(--space-8);
 }
 
 .cva-tab {
@@ -2048,15 +2016,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 12px 20px;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-8);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: var(--radius-small);
   background: var(--bg);
   color: var(--text-sub);
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
   transition: all 0.14s ease;
   min-height: 48px;
   box-sizing: border-box;
@@ -2077,15 +2045,15 @@
 .cva-auto-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--space-5);
+  margin-bottom: var(--space-7);
 }
 
 .cva-manual-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--space-5);
+  margin-bottom: var(--space-7);
 }
 
 .cva-input-wrap {
@@ -2096,7 +2064,7 @@
 }
 
 .cva-input-wrap .github-modal-input.cva-session-input {
-  padding-right: 48px !important;
+  padding-right: var(--space-13) !important;
   width: 100%;
   box-sizing: border-box;
   height: 48px;
@@ -2104,13 +2072,13 @@
   display: block;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: var(--radius-small);
   color: var(--text);
 }
 
 .cva-input-wrap:focus-within {
   border-color: var(--primary);
-  border-radius: 12px;
+  border-radius: var(--radius-small);
   box-shadow: 0 0 0 3px var(--primary-alpha);
 }
 
@@ -2142,19 +2110,19 @@
 
 .cva-btn {
   width: 100%;
-  padding: 12px 20px;
+  padding: var(--space-5) var(--space-8);
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-small);
   background: var(--primary);
   color: white;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: opacity 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-3);
   text-align: center;
   box-sizing: border-box;
   min-height: 48px;
@@ -2172,14 +2140,14 @@
 .cva-error {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px;
-  border-radius: 10px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid #ef4444;
-  margin-top: 8px;
-  font-size: 12px;
-  color: #ef4444;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-small);
+  background: rgba(var(--status-danger-rgb), 0.1);
+  border: 1px solid var(--status-danger);
+  margin-top: var(--space-3);
+  font-size: var(--type-caption);
+  color: var(--status-danger);
 }
 
 .cva-phone-input-wrapper {
@@ -2187,7 +2155,7 @@
   gap: 0;
   width: 100%;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: var(--radius-small);
   background: var(--card-bg);
   overflow: visible;
   transition: border-color 0.2s ease;
@@ -2208,20 +2176,20 @@
 .cva-country-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 12px;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-5);
   background: var(--card-bg);
   border: none;
   border-right: 1px solid var(--border-color);
   cursor: pointer;
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--type-small);
   height: 48px;
   min-width: 80px;
   transition: background 0.2s ease;
   position: relative;
   z-index: 11;
-  border-radius: 12px 0 0 12px !important;
+  border-radius: var(--radius-small) var(--radius-square) var(--radius-square) var(--radius-small) !important;
 }
 
 .cva-country-btn:hover {
@@ -2229,13 +2197,13 @@
 }
 
 .cva-country-flag {
-  font-size: 18px;
+  font-size: var(--type-medium);
   line-height: 1;
 }
 
 .cva-country-code {
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: var(--weight-medium);
+  font-size: var(--type-small);
 }
 
 .cva-country-chevron {
@@ -2256,8 +2224,8 @@
   max-height: 320px;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 8px;
+  border-radius: var(--radius-small);
+  padding: var(--space-3);
   z-index: 9999;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   display: flex;
@@ -2266,20 +2234,20 @@
 }
 
 .cva-country-search {
-  padding-bottom: 8px;
+  padding-bottom: var(--space-3);
   border-bottom: 1px solid var(--border-color);
-  margin-bottom: 8px;
+  margin-bottom: var(--space-3);
   flex-shrink: 0;
 }
 
 .cva-search-input {
   width: 100%;
-  padding: 8px 12px;
+  padding: var(--space-3) var(--space-5);
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-small);
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--type-small);
   outline: none;
   box-sizing: border-box;
   height: 36px;
@@ -2300,15 +2268,15 @@
 .cva-country-option {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5);
   width: 100%;
   background: none;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-small);
   cursor: pointer;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--type-small);
   transition: background 0.15s ease;
   text-align: left;
 }
@@ -2323,7 +2291,7 @@
 }
 
 .cva-country-option .cva-country-flag {
-  font-size: 16px;
+  font-size: var(--type-medium);
   flex-shrink: 0;
 }
 
@@ -2335,9 +2303,9 @@
 }
 
 .cva-country-option .cva-country-code-option {
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--type-caption);
   flex-shrink: 0;
 }
 
@@ -2346,26 +2314,26 @@
 }
 
 .cva-country-no-result {
-  padding: 16px;
+  padding: var(--space-7);
   text-align: center;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--type-small);
 }
 
 .cva-phone-input {
   flex: 1;
-  padding: 12px 16px;
+  padding: var(--space-5) var(--space-7);
   background: var(--card-bg) !important;
   border: none;
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--type-small);
   outline: none;
   height: 48px;
   box-sizing: border-box;
   min-width: 0;
   position: relative;
   z-index: 1;
-  border-radius: 0 12px 12px 0 !important;
+  border-radius: var(--radius-square) var(--radius-small) var(--radius-small) var(--radius-square) !important;
 }
 
 .cva-phone-input::placeholder {
@@ -2374,12 +2342,12 @@
 
 @media (max-height: 700px) and (min-width: 600px) {
   .cva-modal {
-    padding: 20px !important;
-    gap: 10px;
+    padding: var(--space-8) !important;
+    gap: var(--space-4);
   }
 
   .cva-header {
-    margin-bottom: 16px;
+    margin-bottom: var(--space-7);
   }
 
   .cva-icon-wrapper {
@@ -2388,30 +2356,30 @@
   }
 
   .cva-title {
-    font-size: 1.3rem;
-    padding-top: 12px;
-    margin: 12px 0 6px 0;
+    font-size: var(--type-large);
+    padding-top: var(--space-5);
+    margin: var(--space-5) 0 var(--space-2) 0;
   }
 
   .cva-desc {
-    font-size: 0.8rem;
+    font-size: var(--type-small);
   }
 
   .cva-tabs {
-    margin-bottom: 14px;
-    gap: 10px;
+    margin-bottom: var(--space-6);
+    gap: var(--space-4);
   }
 
   .cva-tab {
-    padding: 10px 16px;
+    padding: var(--space-4) var(--space-7);
     min-height: 42px;
-    font-size: 13px;
+    font-size: var(--type-small);
   }
 
   .cva-auto-container,
   .cva-manual-container {
-    gap: 10px;
-    margin-bottom: 12px;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
   }
 
   .cva-input-wrap .github-modal-input.cva-session-input,
@@ -2427,20 +2395,20 @@
   }
 
   .cva-country-btn {
-    padding: 10px 10px;
+    padding: var(--space-4) var(--space-4);
     min-width: 72px;
-    font-size: 13px;
+    font-size: var(--type-small);
   }
 }
 
 @media (max-height: 560px) and (min-width: 600px) {
   .cva-modal {
-    padding: 16px !important;
-    gap: 8px;
+    padding: var(--space-7) !important;
+    gap: var(--space-3);
   }
 
   .cva-header {
-    margin-bottom: 12px;
+    margin-bottom: var(--space-5);
   }
 
   .cva-icon-wrapper {
@@ -2454,38 +2422,38 @@
   }
 
   .cva-title {
-    font-size: 1.1rem;
-    padding-top: 8px;
-    margin: 8px 0 4px 0;
+    font-size: var(--type-medium);
+    padding-top: var(--space-3);
+    margin: var(--space-3) 0 var(--space-1) 0;
   }
 
   .cva-desc {
-    font-size: 0.75rem;
+    font-size: var(--type-caption);
   }
 
   .cva-tabs {
-    margin-bottom: 10px;
-    gap: 8px;
+    margin-bottom: var(--space-4);
+    gap: var(--space-3);
   }
 
   .cva-tab {
-    padding: 8px 12px;
+    padding: var(--space-3) var(--space-5);
     min-height: 38px;
-    font-size: 12px;
-    gap: 6px;
+    font-size: var(--type-caption);
+    gap: var(--space-2);
   }
 
   .cva-auto-container,
   .cva-manual-container {
-    gap: 8px;
-    margin-bottom: 8px;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
   }
 
   .cva-input-wrap .github-modal-input.cva-session-input,
   .cva-btn {
     height: 38px;
     min-height: 38px;
-    font-size: 13px;
+    font-size: var(--type-small);
   }
 
   .cva-phone-input-wrapper,
@@ -2495,29 +2463,29 @@
   }
 
   .cva-country-btn {
-    padding: 8px 8px;
+    padding: var(--space-3) var(--space-3);
     min-width: 64px;
-    font-size: 12px;
+    font-size: var(--type-caption);
   }
 
   .cva-country-flag {
-    font-size: 16px;
+    font-size: var(--type-medium);
   }
 
   .cva-error {
-    padding: 8px;
-    font-size: 11px;
+    padding: var(--space-3);
+    font-size: var(--type-caption);
   }
 }
 
 @media (max-height: 460px) and (min-width: 600px) {
   .cva-modal {
-    padding: 12px !important;
-    gap: 6px;
+    padding: var(--space-5) !important;
+    gap: var(--space-2);
   }
 
   .cva-header {
-    margin-bottom: 8px;
+    margin-bottom: var(--space-3);
   }
 
   .cva-icon-wrapper {
@@ -2531,30 +2499,30 @@
   }
 
   .cva-title {
-    font-size: 1rem;
-    padding-top: 6px;
-    margin: 6px 0 2px 0;
+    font-size: var(--type-medium);
+    padding-top: var(--space-2);
+    margin: var(--space-2) 0 2px 0;
   }
 
   .cva-desc {
-    font-size: 0.7rem;
+    font-size: var(--type-caption);
   }
 
   .cva-tabs {
-    margin-bottom: 8px;
+    margin-bottom: var(--space-3);
   }
 
   .cva-tab {
-    padding: 6px 10px;
+    padding: var(--space-2) var(--space-4);
     min-height: 34px;
-    font-size: 11px;
+    font-size: var(--type-caption);
   }
 
   .cva-input-wrap .github-modal-input.cva-session-input,
   .cva-btn {
     height: 34px;
     min-height: 34px;
-    font-size: 12px;
+    font-size: var(--type-caption);
   }
 
   .cva-phone-input-wrapper,
@@ -2564,7 +2532,7 @@
   }
 
   .cva-country-btn {
-    padding: 6px 8px;
+    padding: var(--space-2) var(--space-3);
     min-width: 56px;
   }
 }
@@ -2629,8 +2597,8 @@
 .cloudview-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 0 20px;
+  gap: var(--space-7);
+  padding: 0 var(--space-8);
   height: 60px;
   border-bottom: 1px solid var(--border-color);
   background: var(--bg);
@@ -2640,15 +2608,15 @@
 .cloudview-back-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   background: none;
   border: none;
   color: var(--text-sub);
   cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  padding: 8px 12px;
-  border-radius: 10px;
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-small);
   transition: all 0.15s ease;
 }
 
@@ -2658,29 +2626,29 @@
 }
 
 .cloudview-header h2 {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: var(--type-medium);
+  font-weight: var(--weight-medium);
   color: var(--text);
   margin: 0;
   flex: 1;
 }
 
 .cloudview-header span {
-  font-size: 0.75rem;
+  font-size: var(--type-caption);
   color: var(--text-muted);
   background: var(--bg);
-  padding: 4px 12px;
-  border-radius: 20px;
+  padding: var(--space-1) var(--space-5);
+  border-radius: var(--radius-card);
   border: 1px solid var(--border-color);
 }
 
 .cloudview-files {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 20px;
+  padding: var(--space-7) var(--space-8);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-3);
 }
 
 .cloudview-empty {
@@ -2692,22 +2660,22 @@
   min-height: 300px;
   color: var(--text-muted);
   text-align: center;
-  gap: 8px;
+  gap: var(--space-3);
 }
 
 .cloudview-empty p {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--type-medium);
 }
 
 .cloudview-file-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: var(--space-5) var(--space-7);
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: var(--radius-small);
   transition: all 0.15s ease;
   cursor: default;
 }
@@ -2718,8 +2686,8 @@
 }
 
 .cloudview-file-item span:first-child {
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2727,14 +2695,14 @@
 }
 
 .cloudview-file-item span:last-child {
-  font-size: 0.7rem;
+  font-size: var(--type-caption);
   color: var(--text-muted);
   flex-shrink: 0;
-  margin-left: 12px;
+  margin-left: var(--space-5);
 }
 
 .hf-repos-container {
-  padding: 16px;
+  padding: var(--space-7);
   overflow-y: auto;
   flex: 1;
 }
@@ -2742,14 +2710,14 @@
 .hf-repo-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  gap: var(--space-7);
 }
 
 .hf-repo-card {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: var(--radius-small);
+  padding: var(--space-7);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -2765,18 +2733,18 @@
 }
 
 .hf-repo-name {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--type-medium);
+  font-weight: var(--weight-medium);
   color: var(--text);
   word-break: break-word;
   flex: 1;
 }
 
 .hf-repo-type-badge {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 10px;
-  border-radius: 12px;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
+  padding: 2px var(--space-4);
+  border-radius: var(--radius-small);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   flex-shrink: 0;
@@ -2798,9 +2766,9 @@
 }
 
 .hf-repo-description {
-  font-size: 13px;
+  font-size: var(--type-small);
   color: var(--text-sub);
-  margin-top: 8px;
+  margin-top: var(--space-3);
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -2810,11 +2778,11 @@
 
 .hf-repo-meta {
   display: flex;
-  gap: 16px;
-  margin-top: 12px;
-  padding-top: 12px;
+  gap: var(--space-7);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
   border-top: 1px solid var(--border-color);
-  font-size: 12px;
+  font-size: var(--type-caption);
   color: var(--text-muted);
   flex-wrap: wrap;
 }
@@ -2824,7 +2792,7 @@
 }
 
 .hf-files-container {
-  padding: 16px;
+  padding: var(--space-7);
   overflow-y: auto;
   flex: 1;
 }
@@ -2832,34 +2800,34 @@
 .hf-header-toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--space-5);
+  margin-bottom: var(--space-7);
   flex-wrap: wrap;
 }
 
 .hf-header-toolbar .cloudview-back-btn {
-  padding: 6px 14px;
-  font-size: 13px;
+  padding: var(--space-2) var(--space-6);
+  font-size: var(--type-small);
 }
 
 .hf-header-toolbar .hf-repo-name-display {
-  font-weight: 600;
+  font-weight: var(--weight-medium);
   color: var(--text);
 }
 
 .hf-header-toolbar .hf-repo-type-display {
-  font-size: 12px;
+  font-size: var(--type-caption);
   color: var(--text-muted);
 }
 
 .hf-header-toolbar .hf-refresh-btn {
   margin-left: auto;
-  padding: 6px 12px;
+  padding: var(--space-2) var(--space-5);
   background: none;
   border: none;
   color: var(--text-sub);
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--radius-small);
   transition: all 0.15s ease;
 }
 
@@ -2871,21 +2839,21 @@
 .hf-breadcrumb {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   flex-wrap: wrap;
-  padding: 10px 14px;
+  padding: var(--space-4) var(--space-6);
   background: var(--bg);
-  border-radius: 8px;
-  margin-bottom: 16px;
+  border-radius: var(--radius-small);
+  margin-bottom: var(--space-7);
   border: 1px solid var(--border-color);
 }
 
 .hf-breadcrumb-item {
   cursor: pointer;
   color: var(--primary);
-  font-weight: 500;
-  padding: 2px 4px;
-  border-radius: 4px;
+  font-weight: var(--weight-medium);
+  padding: 2px var(--space-1);
+  border-radius: var(--radius-small);
   transition: background 0.15s ease;
 }
 
@@ -2895,7 +2863,7 @@
 
 .hf-breadcrumb-current {
   color: var(--text);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
 }
 
 .hf-breadcrumb-separator {
@@ -2904,9 +2872,9 @@
 
 .hf-stats {
   display: flex;
-  gap: 20px;
-  margin-bottom: 16px;
-  font-size: 13px;
+  gap: var(--space-8);
+  margin-bottom: var(--space-7);
+  font-size: var(--type-small);
   color: var(--text-sub);
   flex-wrap: wrap;
 }
@@ -2914,16 +2882,16 @@
 .hf-stats-item {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .hf-folder-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
   background: var(--bg);
-  border-radius: 8px;
+  border-radius: var(--radius-small);
   border: 1px solid var(--border-color);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -2935,11 +2903,11 @@
 }
 
 .hf-folder-icon {
-  font-size: 20px;
+  font-size: var(--type-large);
 }
 
 .hf-folder-name {
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   color: var(--text);
 }
 
@@ -2947,11 +2915,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
+  padding: var(--space-4) var(--space-6);
   background: var(--bg);
-  border-radius: 6px;
+  border-radius: var(--radius-small);
   border: 1px solid var(--border-color);
-  gap: 12px;
+  gap: var(--space-5);
   transition: background 0.15s ease;
 }
 
@@ -2962,18 +2930,18 @@
 .hf-file-name {
   color: var(--text);
   word-break: break-all;
-  font-size: 14px;
+  font-size: var(--type-small);
   flex: 1;
 }
 
 .hf-file-size {
-  font-size: 12px;
+  font-size: var(--type-caption);
   color: var(--text-muted);
   white-space: nowrap;
 }
 
 .hf-file-icon {
-  font-size: 16px;
+  font-size: var(--type-medium);
 }
 
 @keyframes spin {
@@ -2984,213 +2952,208 @@
 }
 
 @media (max-width: 599px) {
-  
-  
-  
-  
-  
-  
-  
-  
+
+
+
+
+
+
+
+
   .cloudview-header {
-    padding: 0 16px;
+    padding: 0 var(--space-7);
     height: 56px;
   }
-  
+
   .cloudview-files {
-    padding: 12px 16px;
+    padding: var(--space-5) var(--space-7);
   }
-  
+
   .cloudview-file-item {
-    padding: 10px 14px;
+    padding: var(--space-4) var(--space-6);
   }
-  
+
   .cloudview-file-item span:first-child {
-    font-size: 0.8rem;
+    font-size: var(--type-small);
   }
-  
+
   .cloudview-mobile-header {
     height: 52px;
     background: var(--bg);
   }
-  
+
   .cloudview-mobile-title {
-    font-size: 16px;
+    font-size: var(--type-medium);
   }
-  
+
   .cloudview-panel-toolbar {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-5);
   }
-  
+
   .cloudview-search-wrap {
     flex: 1;
     min-width: 100%;
     order: 1;
   }
-  
+
   .cloudview-search-input {
-    font-size: 14px;
-    padding: 10px 32px 10px 34px;
+    font-size: var(--type-small);
+    padding: var(--space-4) var(--space-11) var(--space-4) 34px;
   }
-  
+
   .cloudview-panel-count {
     order: 2;
-    font-size: 12px;
+    font-size: var(--type-caption);
   }
-  
+
   .cloudview-panel-size {
     order: 3;
-    font-size: 12px;
+    font-size: var(--type-caption);
   }
-  
+
   .cloudview-toolbar-actions {
     order: 4;
     margin-left: auto;
     display: flex;
-    gap: 4px;
+    gap: var(--space-1);
   }
-  
+
   .cloudview-mobile-panel {
     min-height: calc(100vh - 56px);
     min-height: calc(-webkit-fill-available - 56px);
   }
-  
+
   .cloudview-chats-panel, .cloudview-files-panel {
     min-height: 100%;
     flex: 1;
   }
-  
+
   .cloudview-state-box {
-    padding: 16px;
-    gap: 12px;
+    padding: var(--space-7);
+    gap: var(--space-5);
     max-width: 90%;
   }
-  
+
   .cloudview-state-box svg {
     width: 40px;
     height: 40px;
   }
-  
+
   .cloudview-empty-icon {
-    font-size: 48px;
+    font-size: var(--icon-size-large);
   }
-  
+
   .cloudview-sort-menu {
     right: -10px;
     min-width: 120px;
   }
-  
-  .cloudview-files-loading-overlay {
-    background: var(--bg);
-    backdrop-filter: none;
-  }
-  
+
   .cloudview-files-loading-inline {
-    padding: 16px 28px;
+    padding: var(--space-7) var(--space-10);
   }
 
   .cva-modal {
     max-width: 100%;
-    margin: 0 16px;
+    margin: 0 var(--space-7);
   }
-  
+
   .cva-title {
-    font-size: 1.2rem;
+    font-size: var(--type-large);
   }
-  
+
   .cva-tabs {
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-3);
   }
-  
+
   .cva-tab {
-    padding: 10px 16px;
-    font-size: 13px;
+    padding: var(--space-4) var(--space-7);
+    font-size: var(--type-small);
     min-height: 44px;
   }
-  
+
   .cva-btn {
-    padding: 14px;
-    font-size: 13px;
+    padding: var(--space-6);
+    font-size: var(--type-small);
     min-height: 44px;
   }
-  
+
   .cva-input-wrap .github-modal-input.cva-session-input {
     height: 44px;
   }
 
   .cva-country-btn {
-    padding: 10px 8px;
+    padding: var(--space-4) var(--space-3);
     min-width: 60px;
-    font-size: 13px;
+    font-size: var(--type-small);
     height: 44px;
   }
-  
+
   .cva-country-flag {
-    font-size: 16px;
+    font-size: var(--type-medium);
   }
-  
+
   .cva-country-code {
-    font-size: 12px;
+    font-size: var(--type-caption);
   }
-  
+
   .cva-phone-input {
-    padding: 10px 12px;
-    font-size: 13px;
+    padding: var(--space-4) var(--space-5);
+    font-size: var(--type-small);
     height: 44px;
   }
-  
+
   .cva-country-dropdown {
     min-width: 220px;
     max-height: 260px;
     left: -8px;
     right: -8px;
   }
-  
+
   .cva-country-option {
-    padding: 8px 10px;
-    font-size: 12px;
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--type-caption);
   }
-  
+
   .cva-country-option .cva-country-flag {
-    font-size: 14px;
+    font-size: var(--type-small);
   }
-  
+
   .cva-search-input {
-    font-size: 12px;
-    padding: 6px 10px;
+    font-size: var(--type-caption);
+    padding: var(--space-2) var(--space-4);
     height: 32px;
   }
 
   .hf-repo-grid {
     grid-template-columns: 1fr !important;
   }
-  
+
   .hf-breadcrumb {
-    font-size: 13px;
-    padding: 8px 12px;
+    font-size: var(--type-small);
+    padding: var(--space-3) var(--space-5);
   }
-  
+
   .hf-file-item {
     flex-wrap: wrap;
-    gap: 4px;
+    gap: var(--space-1);
   }
-  
+
   .hf-file-size {
-    font-size: 11px;
+    font-size: var(--type-caption);
     margin-left: auto;
   }
-  
+
   .hf-stats {
-    gap: 12px;
-    font-size: 12px;
+    gap: var(--space-5);
+    font-size: var(--type-caption);
   }
 
   .hf-header-toolbar {
-    gap: 8px;
+    gap: var(--space-3);
   }
 
   .cloudview-sidebar-resize {
@@ -3198,8 +3161,8 @@
   }
 
   .cloudview-selection-bar {
-    padding: 6px 10px;
-    gap: 8px;
+    padding: var(--space-2) var(--space-4);
+    gap: var(--space-3);
   }
 
   .cloudview-selection-bar-btn span {
@@ -3207,20 +3170,20 @@
   }
 
   .cloudview-selection-bar-btn {
-    padding: 8px;
+    padding: var(--space-3);
   }
 
   .cloudview-selection-bar-count {
-    font-size: 12px;
+    font-size: var(--type-caption);
   }
 
   .cloudview-modal {
-    padding: 20px;
-    border-radius: 16px;
+    padding: var(--space-8);
+    border-radius: var(--radius-medium);
   }
 
   .cloudview-modal-title {
-    font-size: 1rem;
+    font-size: var(--type-medium);
   }
 
   .cloudview-modal-folder-list {
@@ -3228,17 +3191,17 @@
   }
 
   .cloudview-modal-search-input {
-    font-size: 12px;
-    padding: 8px 32px 8px 30px;
+    font-size: var(--type-caption);
+    padding: var(--space-3) var(--space-11) var(--space-3) 30px;
   }
 
   .cloudview-folder-tree-row {
-    padding: 8px 6px 8px 4px;
+    padding: var(--space-3) var(--space-2) var(--space-3) var(--space-1);
     min-height: 36px;
   }
 
   .cloudview-folder-tree-name {
-    font-size: 13px;
+    font-size: var(--type-small);
   }
 
   .cloudview-transfer-source-repo {
@@ -3249,8 +3212,8 @@
     top: 64px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    font-size: 12px;
-    padding: 8px 14px;
+    font-size: var(--type-caption);
+    padding: var(--space-3) var(--space-6);
   }
 
   .cloudview-modal--move {
@@ -3263,36 +3226,36 @@
 }
 
 @media (max-width: 400px) {
-  
-  
-  
+
+
+
   .cva-country-btn {
     min-width: 50px;
-    padding: 8px 6px;
-    font-size: 12px;
+    padding: var(--space-3) var(--space-2);
+    font-size: var(--type-caption);
     height: 40px;
   }
-  
+
   .cva-phone-input {
-    padding: 8px 10px;
-    font-size: 12px;
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--type-caption);
     height: 40px;
   }
-  
+
   .cva-country-dropdown {
     min-width: 180px;
     max-height: 220px;
   }
-  
+
   .cva-country-option {
-    padding: 6px 8px;
-    font-size: 11px;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--type-caption);
   }
 
   .cva-search-input {
     height: 28px;
-    font-size: 11px;
-    padding: 4px 8px;
+    font-size: var(--type-caption);
+    padding: var(--space-1) var(--space-3);
   }
 }
 
@@ -3300,52 +3263,52 @@
   .cloudview-file-list-header {
     grid-template-columns: 1fr 90px 80px;
   }
-  
+
   .cloudview-file-list-header .cloudview-col-date {
     display: none;
   }
-  
+
   .cloudview-file-list-row {
     grid-template-columns: 1fr 90px 80px;
   }
-  
+
   .cloudview-col-date {
     display: none;
   }
-  
+
   .cloudview-col-name {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-4);
     overflow: visible;
     white-space: normal;
   }
-  
+
   .cloudview-file-list-name {
     white-space: normal;
     word-break: break-word;
     line-height: 1.4;
   }
-  
+
   .cloudview-state-box {
-    padding: 20px;
-    gap: 14px;
+    padding: var(--space-8);
+    gap: var(--space-6);
   }
-  
+
   .cloudview-file-thumbnail-grid {
     grid-template-columns: repeat(3, 1fr);
     align-content: flex-start;
   }
-  
+
   .cloudview-sidebar {
     width: 260px;
     min-width: 260px;
   }
-  
+
   .cloudview-detail-pane {
     width: 260px;
   }
-  
+
   .cloudview-titlebar-actions .cloudview-panel-count,
   .cloudview-titlebar-actions .cloudview-toolbar-btn[title="Refresh"] {
     display: none;
@@ -3358,10 +3321,10 @@
 
 @media (min-width: 1024px) {
   .cloudview-state-box {
-    padding: 28px;
-    gap: 16px;
+    padding: var(--space-10);
+    gap: var(--space-7);
   }
-  
+
   .cloudview-file-thumbnail-grid {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     align-content: flex-start;
@@ -3372,7 +3335,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-3);
 }
 
 .cva-modal-back {
@@ -3380,8 +3343,8 @@
   border: none;
   color: var(--text-sub);
   cursor: pointer;
-  padding: 8px;
-  border-radius: 10px;
+  padding: var(--space-3);
+  border-radius: var(--radius-small);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3398,8 +3361,8 @@
   border: none;
   color: var(--text);
   cursor: pointer;
-  padding: 8px;
-  border-radius: 10px;
+  padding: var(--space-3);
+  border-radius: var(--radius-small);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3407,15 +3370,15 @@
 }
 
 .cva-modal-close:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  background: rgba(var(--status-danger-rgb), 0.1);
+  color: var(--status-danger);
 }
 
 .cloudview-modal-folder-list .cloudview-folder-tree-row {
   padding: 0;
   min-height: auto;
   gap: 0;
-  border-radius: 0;
+  border-radius: var(--radius-square);
 }
 
 .cloudview-modal-folder-list .cloudview-folder-tree-main {
@@ -3423,14 +3386,14 @@
   align-items: center;
   gap: 7px;
   width: 100%;
-  padding: 6px 10px 6px 20px;
-  font-size: 13px;
+  padding: var(--space-2) var(--space-4) var(--space-2) var(--space-8);
+  font-size: var(--type-small);
   color: var(--text);
   background: none;
   border: none;
   text-align: left;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--radius-small);
   white-space: nowrap;
   overflow: hidden;
 }
@@ -3467,7 +3430,7 @@
 
 .cloudview-modal-folder-list .cloudview-folder-tree-row.active .cloudview-folder-tree-name {
   color: var(--primary);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 
 .cloudview-modal-folder-list .cloudview-folder-tree-row.disabled {
@@ -3500,10 +3463,10 @@
 
 .cloudview-modal-folder-list .cloudview-folder-tree-row.disabled .cloudview-folder-tree-name::after {
   content: " (ready move)";
-  font-size: 10px;
-  font-weight: 600;
-  color: #10b981;
-  margin-left: 6px;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
+  color: var(--status-success);
+  margin-left: var(--space-2);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   display: inline-block;
@@ -3519,7 +3482,7 @@
   padding: 0;
   background: none;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-small);
   color: var(--text);
   cursor: pointer;
   flex-shrink: 0;
@@ -3599,9 +3562,9 @@
 }
 
 .cloudview-modal-folder-list .cloudview-folder-tree-row {
-  padding: 0 8px 0 4px;
-  gap: 4px;
-  border-radius: 6px;
+  padding: 0 var(--space-3) 0 var(--space-1);
+  gap: var(--space-1);
+  border-radius: var(--radius-small);
   background: transparent;
 }
 
@@ -3625,8 +3588,8 @@
 }
 
 .cloudview-modal-folder-list .cloudview-folder-tree-main {
-  padding: 6px 4px;
-  border-radius: 0;
+  padding: var(--space-2) var(--space-1);
+  border-radius: var(--radius-square);
   background: transparent;
 }
 
@@ -3646,7 +3609,7 @@
   border: none !important;
   box-shadow: none !important;
   outline: none !important;
-  border-radius: 0;
+  border-radius: var(--radius-square);
 }
 
 .cloudview-modal-folder-list .cloudview-folder-tree-row.disabled {
@@ -3661,7 +3624,7 @@
 .cloudview-modal-folder-list .cloudview-folder-tree-name,
 .cloudview-modal-folder-list .cloudview-folder-tree-row.active .cloudview-folder-tree-main,
 .cloudview-modal-folder-list .cloudview-folder-tree-row.active .cloudview-folder-tree-name {
-  font-weight: 400 !important;
+  font-weight: var(--weight-regular) !important;
 }
 
 .cloudview-selection-bar-count {
@@ -3731,14 +3694,14 @@
 .cloudview-sort-item {
   color: var(--text) !important;
   background: transparent !important;
-  font-size: 14px !important;
-  padding: 10px 14px !important;
+  font-size: var(--type-small) !important;
+  padding: var(--space-4) var(--space-6) !important;
 }
 
 .cloudview-sort-item span,
 .cloudview-sort-item .cloudview-sort-label {
   color: var(--text) !important;
-  font-size: 14px !important;
+  font-size: var(--type-small) !important;
 }
 
 .cloudview-sort-item:hover {
@@ -3784,19 +3747,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   background: var(--bg);
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--type-small);
   outline: none;
   transition: border-color 0.15s;
   box-sizing: border-box;
   cursor: pointer;
   font-family: inherit;
-  font-weight: 400;
+  font-weight: var(--weight-regular);
   text-align: left;
 }
 
@@ -3816,7 +3779,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--text);
-  font-weight: 400;
+  font-weight: var(--weight-regular);
 }
 
 .cloudview-transfer-select-trigger span.placeholder {
@@ -3840,8 +3803,8 @@
   right: 0;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
-  padding: 4px;
+  border-radius: var(--radius-small);
+  padding: var(--space-1);
   z-index: 300;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   display: flex;
@@ -3864,17 +3827,17 @@
   display: flex;
   align-items: center;
   width: 100%;
-  padding: 10px 12px;
+  padding: var(--space-4) var(--space-5);
   border: none;
   background: transparent;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--type-small);
   cursor: pointer;
   text-align: left;
-  border-radius: 6px;
+  border-radius: var(--radius-small);
   transition: background 0.12s;
   font-family: inherit;
-  font-weight: 400;
+  font-weight: var(--weight-regular);
 }
 
 .cloudview-transfer-select-item:hover {
@@ -3884,7 +3847,7 @@
 .cloudview-transfer-select-item.active {
   background: var(--primary-alpha);
   color: var(--text);
-  font-weight: 400;
+  font-weight: var(--weight-regular);
 }
 
 .cloudview-modal--transfer .cloudview-modal-desc,
@@ -3896,8 +3859,8 @@
   .cloudview-modal--transfer:has(.cloudview-modal-folder-list) {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-    column-gap: 20px;
-    row-gap: 12px;
+    column-gap: var(--space-8);
+    row-gap: var(--space-5);
     align-content: start;
     max-width: 760px;
     transition: max-width 0.25s ease;
@@ -3927,23 +3890,23 @@
 
 @media (max-height: 560px) and (min-width: 560px) {
   .cloudview-modal-overlay {
-    padding: clamp(6px, 2dvh, 12px);
+    padding: clamp(var(--space-2), 2dvh, var(--space-5));
   }
 
   .cloudview-modal--transfer {
     --tf-pad: clamp(12px, 4.5dvh, 22px);
-    --tf-gap: clamp(6px, 2.4dvh, 12px);
+    --tf-gap: clamp(var(--space-2), 2.4dvh, var(--space-5));
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     grid-auto-rows: auto;
-    column-gap: 16px;
+    column-gap: var(--space-7);
     row-gap: var(--tf-gap);
     align-content: start;
     max-width: 440px;
     max-height: calc(100vh - 12px);
     max-height: calc(100dvh - 12px);
-    padding: var(--tf-pad) 16px;
-    border-radius: 16px;
+    padding: var(--tf-pad) var(--space-7);
+    border-radius: var(--radius-medium);
     transition: max-width 0.25s ease;
   }
   .cloudview-modal--transfer > * {
@@ -3953,35 +3916,35 @@
   }
   .cloudview-modal--transfer .cloudview-modal-title {
     text-align: left;
-    font-size: 1rem;
+    font-size: var(--type-medium);
   }
   .cloudview-modal--transfer .cloudview-modal-desc {
     text-align: left;
-    font-size: 12px;
+    font-size: var(--type-caption);
     line-height: 1.3;
   }
   .cloudview-modal--transfer .cloudview-transfer-source {
     flex-direction: row;
     align-items: center;
-    gap: 10px;
-    padding: clamp(6px, 1.8dvh, 10px) 10px;
+    gap: var(--space-4);
+    padding: clamp(var(--space-2), 1.8dvh, var(--space-4)) var(--space-4);
   }
   .cloudview-modal--transfer .cloudview-transfer-source-value {
     flex: 1;
     min-width: 0;
   }
   .cloudview-modal--transfer .cloudview-transfer-field {
-    gap: clamp(4px, 1.2dvh, 6px);
+    gap: clamp(var(--space-1), 1.2dvh, var(--space-2));
   }
   .cloudview-modal--transfer .cloudview-transfer-select-trigger {
-    padding: clamp(8px, 2.2dvh, 11px) 12px;
+    padding: clamp(var(--space-3), 2.2dvh, 11px) var(--space-5);
   }
   .cloudview-modal--transfer .cloudview-transfer-notice {
-    padding: 6px 10px;
+    padding: var(--space-2) var(--space-4);
   }
   .cloudview-modal--transfer .cloudview-modal-btn {
-    padding-top: clamp(7px, 1.8dvh, 10px);
-    padding-bottom: clamp(7px, 1.8dvh, 10px);
+    padding-top: clamp(7px, 1.8dvh, var(--space-4));
+    padding-bottom: clamp(7px, 1.8dvh, var(--space-4));
   }
   .cloudview-modal--transfer .cloudview-transfer-select-menu {
     top: auto;
@@ -4040,10 +4003,10 @@
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  padding: 1px 6px;
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 700;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-small);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-bold);
   letter-spacing: 0.3px;
   line-height: 1.5;
   white-space: nowrap;
@@ -4062,7 +4025,7 @@
 .cloudview-thumb-type-group {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   min-width: 0;
   flex-shrink: 0;
 }
@@ -4070,7 +4033,7 @@
 .cloudview-grid-card-chip-group {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   align-self: flex-start;
   flex-shrink: 0;
   margin-top: auto;
@@ -4089,7 +4052,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: var(--space-8);
   box-sizing: border-box;
 }
 
@@ -4102,7 +4065,7 @@
   display: flex;
   flex-direction: column;
   background: #000;
-  border-radius: 14px;
+  border-radius: var(--radius-button);
   overflow: hidden;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }
@@ -4138,14 +4101,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: var(--space-4);
   color: #cccccc;
-  font-size: 14px;
-  font-family: monospace;
+  font-size: var(--type-small);
+  font-family: var(--font-family-mono);
 }
 
 .cloudslideshow-status--error {
-  color: #ef4444;
+  color: var(--status-danger);
 }
 
 .cloudslideshow-spinner {
@@ -4153,7 +4116,7 @@
   height: 28px;
   border: 3px solid rgba(255, 255, 255, 0.2);
   border-top-color: #ffffff;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   animation: cloudslideshow-spin 0.8s linear infinite;
 }
 
@@ -4176,7 +4139,7 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   color: #ffffff;
   cursor: pointer;
   pointer-events: auto;
@@ -4203,7 +4166,7 @@
   z-index: 20;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   transition: opacity 0.3s ease;
 }
 
@@ -4218,7 +4181,7 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   color: #ffffff !important;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, transform 0.15s, opacity 0.15s;
@@ -4250,8 +4213,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-7);
   background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0));
   flex-shrink: 0;
   z-index: 20;
@@ -4259,31 +4222,31 @@
   left: 0;
   right: 0;
   bottom: 0;
-  padding-top: 28px;
+  padding-top: var(--space-10);
 }
 
 .cloudslideshow-meta {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-5);
   min-width: 0;
   flex: 1;
   color: #ffffff;
-  font-family: monospace;
+  font-family: var(--font-family-mono);
 }
 
 .cloudslideshow-counter {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 20px;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--radius-card);
   background: rgba(255, 255, 255, 0.15);
   color: #ffffff !important;
   flex-shrink: 0;
 }
 
 .cloudslideshow-name {
-  font-size: 13px;
+  font-size: var(--type-small);
   color: #ffffff;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4293,7 +4256,7 @@
 .cloudslideshow-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   flex-shrink: 0;
 }
 
@@ -4306,7 +4269,7 @@
   justify-content: center;
   background: transparent;
   border: none;
-  border-radius: 0;
+  border-radius: var(--radius-square);
   color: #ffffff;
   cursor: pointer;
   transition: opacity 0.15s, transform 0.15s;
@@ -4357,7 +4320,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: 16px;
+  padding: var(--space-7);
   background: rgba(0, 0, 0, 0.12);
 }
 
@@ -4368,10 +4331,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 14px;
+  padding: var(--space-6);
   box-sizing: border-box;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 14px;
+  border-radius: var(--radius-button);
   background: rgba(20, 20, 20, 0.94);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -4383,10 +4346,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
-  font-size: 14px;
-  font-weight: 700;
+  gap: var(--space-5);
+  margin-bottom: var(--space-4);
+  font-size: var(--type-small);
+  font-weight: var(--weight-bold);
 }
 
 .cloudslideshow-properties-close {
@@ -4397,7 +4360,7 @@
   height: 28px;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-small);
   background: transparent;
   color: #ffffff;
   cursor: pointer;
@@ -4406,7 +4369,7 @@
 .cloudslideshow-properties-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-3);
   min-height: 0;
   overflow-y: auto;
 }
@@ -4415,8 +4378,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 14px;
-  font-size: 12px;
+  gap: var(--space-6);
+  font-size: var(--type-caption);
   line-height: 1.35;
 }
 
@@ -4428,27 +4391,27 @@
 .cloudslideshow-properties-list strong {
   max-width: 68%;
   color: #ffffff;
-  font-weight: 600;
+  font-weight: var(--weight-medium);
   text-align: right;
   overflow-wrap: anywhere;
 }
 
 .cloudslideshow-properties-list .cloudslideshow-caption-row {
   display: block;
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 
 .cloudslideshow-properties-list .cloudslideshow-caption-row span {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: var(--space-2);
   text-align: left;
 }
 
 .cloudslideshow-properties-list .cloudslideshow-caption-row strong {
   display: block;
   max-width: none;
-  padding: 10px 14px;
-  border-radius: 8px;
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-small);
   background: rgba(255, 255, 255, 0.08);
   text-align: left;
   white-space: pre-wrap;
@@ -4468,7 +4431,7 @@
   .cloudslideshow-properties-overlay {
     align-items: flex-end;
     justify-content: center;
-    padding: 16px 16px 78px;
+    padding: var(--space-7) var(--space-7) 78px;
   }
 }
 
@@ -4480,11 +4443,11 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 6px;
+  border-radius: var(--radius-small);
+  padding: var(--space-2);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
   z-index: 50;
   min-width: 80px;
 }
@@ -4493,11 +4456,11 @@
   background: transparent;
   border: none;
   color: #cccccc;
-  font-size: 13px;
-  font-family: monospace;
-  font-weight: 600;
-  padding: 8px 12px;
-  border-radius: 8px;
+  font-size: var(--type-small);
+  font-family: var(--font-family-mono);
+  font-weight: var(--weight-medium);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-small);
   cursor: pointer;
   text-align: center;
   transition: all 0.15s ease;
@@ -4515,42 +4478,42 @@
 
 @media (max-width: 640px) {
   .cloudslideshow-overlay { padding: 0; }
-  .cloudslideshow-stage { border-radius: 0; max-width: 100%; }
-  
+  .cloudslideshow-stage { border-radius: var(--radius-square); max-width: 100%; }
+
   .cloudslideshow-nav--prev { left: 8px; }
   .cloudslideshow-nav--next { right: 8px; }
-  
-  .cloudslideshow-bar { 
-    padding: 12px 16px; 
-    gap: 8px; 
+
+  .cloudslideshow-bar {
+    padding: var(--space-5) var(--space-7);
+    gap: var(--space-3);
   }
-  
-  .cloudslideshow-name { 
-    font-size: 13px; 
+
+  .cloudslideshow-name {
+    font-size: var(--type-small);
   }
-  
-  .cloudslideshow-counter { 
-    font-size: 12px; 
+
+  .cloudslideshow-counter {
+    font-size: var(--type-caption);
   }
-  
-  .cloudslideshow-btn, 
+
+  .cloudslideshow-btn,
   .cloudslideshow-btn-close,
   .cloudslideshow-top-btn,
-  .cloudslideshow-nav { 
+  .cloudslideshow-nav {
     width: 46px;
     height: 46px;
   }
-  
-  .cloudslideshow-btn svg, 
+
+  .cloudslideshow-btn svg,
   .cloudslideshow-btn-close svg,
   .cloudslideshow-top-btn svg,
-  .cloudslideshow-nav svg { 
-    width: 24px; 
-    height: 24px; 
+  .cloudslideshow-nav svg {
+    width: 24px;
+    height: 24px;
   }
-  
+
   .cloudslideshow-actions {
-    gap: 4px;
+    gap: var(--space-1);
   }
 }
 
@@ -4577,19 +4540,19 @@
 
 /* Titlebar: sejajar dengan navbar di atas dan dengan isi (inset 20px, ikut max-width 1100px) */
 .cloudroot-bar {
-  padding-left: max(20px, calc((100% - 1100px) / 2 + 20px));
-  padding-right: max(12px, calc((100% - 1100px) / 2 + 12px));
+  padding-left: max(var(--space-8), calc((100% - 1100px) / 2 + var(--space-8)));
+  padding-right: max(var(--space-5), calc((100% - 1100px) / 2 + var(--space-5)));
 }
 .cloudroot-bar-title {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  font-weight: 700;
+  gap: var(--space-4);
+  font-weight: var(--weight-bold);
 }
 .cloudroot-bar-logo {
   width: 28px;
   height: 28px;
-  border-radius: 9px;
+  border-radius: var(--radius-small);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -4601,14 +4564,14 @@
 .cloudroot-body { flex: 1; min-height: 0; overflow-y: auto; }
 .cloudview-toolbar-btn:disabled { opacity: 0.6; cursor: default; }
 .cloudroot-caption {
-  margin: 0 0 12px;
-  font-size: 12px;
+  margin: 0 0 var(--space-5);
+  font-size: var(--type-caption);
   color: var(--text-muted);
 }
 .cloudroot-content {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 24px 20px 48px;
+  padding: var(--space-9) var(--space-8) var(--space-13);
   box-sizing: border-box;
 }
 
@@ -4616,20 +4579,20 @@
 .cloudroot-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 14px;
+  gap: var(--space-6);
 }
 .cloudroot-card {
   --src-accent: var(--primary);
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-6);
   width: 100%;
   min-width: 0;
-  padding: 16px;
+  padding: var(--space-7);
   text-align: left;
   font-family: inherit;
   cursor: pointer;
-  border-radius: 16px;
+  border-radius: var(--radius-medium);
   border: 1px solid var(--border-color);
   background:
     radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, var(--src-accent) 12%, transparent) 0%, transparent 60%),
@@ -4645,7 +4608,7 @@
 .cloudroot-card-icon {
   width: 48px;
   height: 48px;
-  border-radius: 14px;
+  border-radius: var(--radius-button);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -4662,41 +4625,41 @@
   gap: 2px;
 }
 .cloudroot-card-name {
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: var(--type-medium);
+  font-weight: var(--weight-medium);
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .cloudroot-card-platform {
-  font-size: 11px;
+  font-size: var(--type-caption);
   color: var(--text-muted);
 }
 .cloudroot-card-unread {
   align-self: flex-start;
-  margin-top: 4px;
-  padding: 1px 8px;
-  border-radius: 20px;
-  font-size: 10px;
-  font-weight: 700;
+  margin-top: var(--space-1);
+  padding: 1px var(--space-3);
+  border-radius: var(--radius-card);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-bold);
   color: #fff;
   background: var(--primary);
 }
 .cloudroot-card-side {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   flex-shrink: 0;
 }
 .cloudroot-status {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   padding: 3px 9px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
+  border-radius: var(--radius-card);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
   color: var(--text-muted);
   background: color-mix(in srgb, var(--text-muted) 10%, transparent);
   white-space: nowrap;
@@ -4704,7 +4667,7 @@
 .cloudroot-status-dot {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   display: inline-block;
 }
 .cloudroot-card-chevron {
@@ -4716,14 +4679,14 @@
 
 .cloudroot-card--add {
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-3);
   min-height: 82px;
   border-style: dashed;
   background: transparent;
   box-shadow: none;
   color: var(--text);
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: var(--type-medium);
+  font-weight: var(--weight-medium);
 }
 .cloudroot-card--add:hover { color: var(--primary); border-color: var(--primary); box-shadow: none; }
 
@@ -4733,62 +4696,62 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: var(--space-5);
   min-height: 55vh;
   text-align: center;
 }
 .cloudroot-state-icon {
   width: 72px;
   height: 72px;
-  border-radius: 22px;
+  border-radius: var(--radius-card);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--primary);
   background: var(--primary-alpha);
 }
-.cloudroot-state--error .cloudroot-state-icon { color: #ef4444; background: rgba(239, 68, 68, 0.12); }
-.cloudroot-state--error .cloudroot-state-text { color: #ef4444; }
+.cloudroot-state--error .cloudroot-state-icon { color: var(--status-danger); background: rgba(var(--status-danger-rgb), 0.12); }
+.cloudroot-state--error .cloudroot-state-text { color: var(--status-danger); }
 .cloudroot-state-title {
   margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: var(--type-large);
+  font-weight: var(--weight-bold);
   color: var(--text);
 }
 .cloudroot-state-text {
   margin: 0;
   max-width: 340px;
-  font-size: 0.9rem;
+  font-size: var(--type-medium);
   color: var(--text-muted);
 }
 .cloudroot-cta {
-  padding: 10px 24px;
+  padding: var(--space-4) var(--space-9);
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-small);
   background: var(--primary);
   color: #fff;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: var(--type-medium);
+  font-weight: var(--weight-medium);
   cursor: pointer;
 }
 .cloudroot-empty-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 10px;
-  margin-top: 8px;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
 }
 .cloudroot-provider {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 18px;
-  border-radius: 14px;
+  gap: var(--space-4);
+  padding: var(--space-5) 18px;
+  border-radius: var(--radius-button);
   border: 1px solid var(--border-color);
   background: var(--card-bg);
   color: var(--text);
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: var(--type-medium);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
@@ -4806,7 +4769,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: var(--space-7);
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -4814,9 +4777,9 @@
 .cloudroot-modal {
   width: 100%;
   max-width: 400px;
-  padding: 24px;
+  padding: var(--space-9);
   box-sizing: border-box;
-  border-radius: 24px;
+  border-radius: var(--radius-card);
   border: 1px solid var(--border-color);
   background: var(--card-bg);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3);
@@ -4825,25 +4788,25 @@
 .cloudroot-modal-title {
   margin: 0 0 18px;
   text-align: center;
-  font-size: 1.15rem;
-  font-weight: 700;
+  font-size: var(--type-large);
+  font-weight: var(--weight-bold);
   color: var(--text);
 }
 .cloudroot-modal-options {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-4);
 }
 .cloudroot-option {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-6);
   width: 100%;
-  padding: 14px 16px;
+  padding: var(--space-6) var(--space-7);
   text-align: left;
   font-family: inherit;
   cursor: pointer;
-  border-radius: 14px;
+  border-radius: var(--radius-button);
   border: 1px solid var(--border-color);
   background: var(--bg);
   transition: border-color 0.15s, transform 0.1s;
@@ -4858,7 +4821,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: var(--radius-small);
   background: var(--primary-alpha);
 }
 .cloudroot-option-text {
@@ -4868,49 +4831,49 @@
   flex-direction: column;
   gap: 1px;
 }
-.cloudroot-option-name { font-size: 0.9rem; font-weight: 600; color: var(--text); }
-.cloudroot-option-desc { font-size: 0.75rem; color: var(--text-muted); }
+.cloudroot-option-name { font-size: var(--type-medium); font-weight: var(--weight-medium); color: var(--text); }
+.cloudroot-option-desc { font-size: var(--type-caption); color: var(--text-muted); }
 .cloudroot-modal-cancel {
   display: block;
   width: 100%;
-  margin-top: 16px;
-  padding: 12px;
+  margin-top: var(--space-7);
+  padding: var(--space-5);
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-small);
   background: var(--primary);
   color: #fff;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: var(--type-medium);
+  font-weight: var(--weight-medium);
   cursor: pointer;
 }
 
 /* Tablet */
 @media (max-width: 899px) {
-  .cloudroot-content { padding: 20px 20px 40px; }
+  .cloudroot-content { padding: var(--space-8) var(--space-8) var(--space-12); }
   .cloudroot-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 }
 
 /* Mobile */
 @media (max-width: 599px) {
-  .cloudroot-content { padding: 16px 20px 32px; }
-  .cloudroot-grid { grid-template-columns: 1fr; gap: 10px; }
-  .cloudroot-card { padding: 14px; border-radius: 14px; }
-  .cloudroot-card-icon { width: 42px; height: 42px; border-radius: 12px; }
+  .cloudroot-content { padding: var(--space-7) var(--space-8) var(--space-11); }
+  .cloudroot-grid { grid-template-columns: 1fr; gap: var(--space-4); }
+  .cloudroot-card { padding: var(--space-6); border-radius: var(--radius-button); }
+  .cloudroot-card-icon { width: 42px; height: 42px; border-radius: var(--radius-small); }
   .cloudroot-state { min-height: 60vh; }
 
   .cloudroot-modal-backdrop { align-items: flex-end; padding: 0; }
   .cloudroot-modal {
     max-width: none;
-    border-radius: 22px 22px 0 0;
+    border-radius: var(--radius-card) var(--radius-card) var(--radius-square) var(--radius-square);
     border-bottom: none;
-    padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+    padding: var(--space-5) var(--space-7) calc(var(--space-7) + env(safe-area-inset-bottom, 0px));
   }
   .cloudroot-modal-grabber {
     display: block;
     width: 40px;
     height: 4px;
-    margin: 0 auto 14px;
-    border-radius: 4px;
+    margin: 0 auto var(--space-6);
+    border-radius: var(--radius-small);
     background: var(--border-color);
   }
 }
@@ -4927,7 +4890,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: var(--space-8);
   box-sizing: border-box;
 }
 
@@ -4941,7 +4904,7 @@
   flex-direction: column;
   background: #0b0b0d;
   color: #ffffff;
-  border-radius: 14px;
+  border-radius: var(--radius-button);
   overflow: hidden;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }
@@ -4950,14 +4913,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 6px 8px 6px 16px;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-7);
   flex-shrink: 0;
 }
 
 .cloudplaylist-title {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   opacity: 0.7;
@@ -4977,7 +4940,7 @@
   justify-content: center;
   background: transparent;
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   color: #ffffff;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
@@ -4998,8 +4961,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  padding: 8px 24px 28px;
+  gap: var(--space-6);
+  padding: var(--space-3) var(--space-9) var(--space-10);
   overflow: hidden;
 }
 
@@ -5007,7 +4970,7 @@
   position: relative;
   width: min(100%, 38vh, 340px);
   aspect-ratio: 1 / 1;
-  border-radius: 16px;
+  border-radius: var(--radius-medium);
   background: rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
@@ -5031,7 +4994,7 @@
   position: absolute;
   width: 34px;
   height: 34px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   border: 3px solid rgba(255, 255, 255, 0.25);
   border-top-color: #ffffff;
   animation: cloudplaylist-spin 0.8s linear infinite;
@@ -5049,8 +5012,8 @@
 
 .cloudplaylist-name {
   margin: 0;
-  font-size: 17px;
-  font-weight: 700;
+  font-size: var(--type-medium);
+  font-weight: var(--weight-bold);
   line-height: 1.3;
   color: #ffffff;
   overflow: hidden;
@@ -5062,13 +5025,13 @@
 
 .cloudplaylist-sub {
   display: block;
-  margin-top: 4px;
-  font-size: 12px;
+  margin-top: var(--space-1);
+  font-size: var(--type-caption);
   opacity: 0.6;
 }
 
 .cloudplaylist-sub--error {
-  color: #ef4444;
+  color: var(--status-danger);
   opacity: 1;
 }
 
@@ -5088,7 +5051,7 @@
 
 .cloudplaylist-seek::-webkit-slider-runnable-track {
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--radius-micro);
   background: linear-gradient(
     to right,
     #ffffff var(--progress-percent, 0%),
@@ -5101,20 +5064,20 @@
   width: 14px;
   height: 14px;
   margin-top: -5px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: #ffffff;
   border: none;
 }
 
 .cloudplaylist-seek::-moz-range-track {
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--radius-micro);
   background: rgba(255, 255, 255, 0.25);
 }
 
 .cloudplaylist-seek::-moz-range-progress {
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--radius-micro);
   background: #ffffff;
 }
 
@@ -5122,7 +5085,7 @@
   width: 14px;
   height: 14px;
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: #ffffff;
 }
 
@@ -5130,7 +5093,7 @@
   display: flex;
   justify-content: space-between;
   margin-top: 2px;
-  font-size: 11px;
+  font-size: var(--type-caption);
   opacity: 0.65;
   font-variant-numeric: tabular-nums;
 }
@@ -5139,7 +5102,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: var(--space-6);
 }
 
 .cloudplaylist-ctrl {
@@ -5151,7 +5114,7 @@
   justify-content: center;
   background: transparent;
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   color: #ffffff;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, opacity 0.15s;
@@ -5172,7 +5135,7 @@
   left: 50%;
   width: 4px;
   height: 4px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: currentColor;
   transform: translateX(-50%);
 }
@@ -5189,7 +5152,7 @@
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: #ffffff;
   color: #000000;
   cursor: pointer;
@@ -5210,7 +5173,7 @@
   flex-direction: column;
   background: #151518;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px 16px 0 0;
+  border-radius: var(--radius-medium) var(--radius-medium) var(--radius-square) var(--radius-square);
   box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.5);
   z-index: 30;
 }
@@ -5219,15 +5182,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 6px 4px 16px;
-  font-size: 13px;
-  font-weight: 600;
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-7);
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
   flex-shrink: 0;
 }
 
 .cloudplaylist-queue-list {
   overflow-y: auto;
-  padding: 0 8px 12px;
+  padding: 0 var(--space-3) var(--space-5);
   overscroll-behavior: contain;
 }
 
@@ -5235,10 +5198,10 @@
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px;
+  gap: var(--space-5);
+  padding: var(--space-3);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   background: transparent;
   color: #ffffff;
   text-align: left;
@@ -5254,14 +5217,14 @@
 }
 
 .cloudplaylist-qrow--active .cloudplaylist-qname {
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 .cloudplaylist-qnum {
   width: 22px;
   flex-shrink: 0;
   text-align: right;
-  font-size: 11px;
+  font-size: var(--type-caption);
   opacity: 0.5;
   font-variant-numeric: tabular-nums;
 }
@@ -5274,7 +5237,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: var(--radius-small);
   background: rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.5);
   overflow: hidden;
@@ -5299,7 +5262,7 @@
 .cloudplaylist-qname {
   flex: 1;
   min-width: 0;
-  font-size: 13px;
+  font-size: var(--type-small);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -5307,9 +5270,9 @@
 
 @media (max-width: 768px) {
   .cloudplaylist-overlay { padding: 0; }
-  .cloudplaylist-stage { border-radius: 0; max-width: 100%; }
+  .cloudplaylist-stage { border-radius: var(--radius-square); max-width: 100%; }
   .cloudplaylist-queue { max-height: 78%; }
-  .cloudplaylist-body { padding: 8px 20px 24px; }
+  .cloudplaylist-body { padding: var(--space-3) var(--space-8) var(--space-9); }
 }
 
 /* src/css/cloudplaylist.css */
@@ -5324,7 +5287,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: var(--space-8);
   box-sizing: border-box;
 }
 
@@ -5340,7 +5303,7 @@
   background: var(--card-bg);
   color: var(--text);
   border: 1px solid var(--border-color);
-  border-radius: 14px;
+  border-radius: var(--radius-button);
   box-shadow: 0 24px 64px var(--shadow-color);
 }
 
@@ -5348,15 +5311,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 6px 8px 6px 16px;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-7);
   flex-shrink: 0;
   border-bottom: 1px solid var(--border-color);
 }
 
 .cloudplaylist-title {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-sub);
@@ -5376,7 +5339,7 @@
   justify-content: center;
   background: transparent;
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   color: var(--text);
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
@@ -5404,8 +5367,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  padding: 8px 24px 28px;
+  gap: var(--space-6);
+  padding: var(--space-3) var(--space-9) var(--space-10);
   overflow: hidden;
 }
 
@@ -5413,7 +5376,7 @@
   position: relative;
   width: min(100%, 38vh, 340px);
   aspect-ratio: 1 / 1;
-  border-radius: 16px;
+  border-radius: var(--radius-medium);
   background: var(--primary-alpha);
   display: flex;
   align-items: center;
@@ -5436,7 +5399,7 @@
 .cloudplaylist-spinner {
   width: 34px;
   height: 34px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   border: 3px solid var(--border-color);
   border-top-color: var(--primary);
   animation: cloudplaylist-spin 0.8s linear infinite;
@@ -5445,7 +5408,7 @@
 .cloudplaylist-download-spinner {
   width: 18px;
   height: 18px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   border: 2px solid var(--border-color);
   border-top-color: var(--primary);
   animation: cloudplaylist-spin 0.8s linear infinite;
@@ -5463,8 +5426,8 @@
 
 .cloudplaylist-name {
   margin: 0;
-  font-size: 17px;
-  font-weight: 700;
+  font-size: var(--type-medium);
+  font-weight: var(--weight-bold);
   line-height: 1.3;
   color: var(--text);
   overflow: hidden;
@@ -5476,13 +5439,13 @@
 
 .cloudplaylist-sub {
   display: block;
-  margin-top: 4px;
-  font-size: 12px;
+  margin-top: var(--space-1);
+  font-size: var(--type-caption);
   color: var(--text-sub);
 }
 
 .cloudplaylist-sub--error {
-  color: #ef4444;
+  color: var(--status-danger);
 }
 
 .cloudplaylist-progress {
@@ -5501,7 +5464,7 @@
 
 .cloudplaylist-seek::-webkit-slider-runnable-track {
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--radius-micro);
   background: linear-gradient(
     to right,
     var(--primary) var(--progress-percent, 0%),
@@ -5514,20 +5477,20 @@
   width: 14px;
   height: 14px;
   margin-top: -5px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: var(--primary);
   border: none;
 }
 
 .cloudplaylist-seek::-moz-range-track {
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--radius-micro);
   background: var(--border-color);
 }
 
 .cloudplaylist-seek::-moz-range-progress {
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--radius-micro);
   background: var(--primary);
 }
 
@@ -5535,7 +5498,7 @@
   width: 14px;
   height: 14px;
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: var(--primary);
 }
 
@@ -5543,7 +5506,7 @@
   display: flex;
   justify-content: space-between;
   margin-top: 2px;
-  font-size: 11px;
+  font-size: var(--type-caption);
   color: var(--text-sub);
   font-variant-numeric: tabular-nums;
 }
@@ -5552,7 +5515,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: var(--space-6);
 }
 
 .cloudplaylist-ctrl {
@@ -5564,7 +5527,7 @@
   justify-content: center;
   background: transparent;
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   color: var(--text);
   cursor: pointer;
   transition: background 0.15s, color 0.15s, opacity 0.15s;
@@ -5605,7 +5568,7 @@
   left: 50%;
   width: 4px;
   height: 4px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: var(--primary);
   transform: translateX(-50%);
 }
@@ -5622,7 +5585,7 @@
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: var(--primary);
   color: var(--btn-text);
   cursor: pointer;
@@ -5662,16 +5625,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 6px 10px 16px;
-  font-size: 13px;
-  font-weight: 600;
+  padding: var(--space-4) var(--space-2) var(--space-4) var(--space-7);
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
   color: var(--text);
   flex-shrink: 0;
 }
 
 .cloudplaylist-queue-list {
   overflow-y: auto;
-  padding: 0 8px 12px;
+  padding: 0 var(--space-3) var(--space-5);
   overscroll-behavior: contain;
 }
 
@@ -5679,10 +5642,10 @@
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px;
+  gap: var(--space-5);
+  padding: var(--space-3);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-small);
   background: transparent;
   color: var(--text);
   text-align: left;
@@ -5699,7 +5662,7 @@
 }
 
 .cloudplaylist-qrow--active .cloudplaylist-qname {
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   color: var(--primary);
 }
 
@@ -5712,7 +5675,7 @@
   width: 22px;
   flex-shrink: 0;
   text-align: right;
-  font-size: 11px;
+  font-size: var(--type-caption);
   color: var(--text-sub);
   font-variant-numeric: tabular-nums;
 }
@@ -5725,7 +5688,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: var(--radius-small);
   background: var(--primary-alpha);
   color: var(--primary);
   overflow: hidden;
@@ -5756,7 +5719,7 @@
 .cloudplaylist-qname {
   flex: 1;
   min-width: 0;
-  font-size: 13px;
+  font-size: var(--type-small);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -5765,8 +5728,8 @@
 
 @media (max-width: 768px) {
   .cloudplaylist-overlay { padding: 0; }
-  .cloudplaylist-stage { border-radius: 0; max-width: 100%; border: none; }
-  .cloudplaylist-body { padding: 8px 20px 24px; }
+  .cloudplaylist-stage { border-radius: var(--radius-square); max-width: 100%; border: none; }
+  .cloudplaylist-body { padding: var(--space-3) var(--space-8) var(--space-9); }
   .cloudplaylist-queue-inner { max-height: 45vh; }
 }
 
@@ -5933,7 +5896,7 @@
     grid-column: 1;
     grid-row: 2 / 4;
     /* Biar cover ga getar saat resize */
-    width: 560px; 
+    width: 560px;
   }
 
   .cloudplaylist-stage .cloudplaylist-queue {
@@ -5944,7 +5907,7 @@
     height: 100%;
     border-top: none;
     border-left: 1px solid var(--border-color);
-    border-radius: 0;
+    border-radius: var(--radius-square);
     box-shadow: none;
     display: flex;
     flex-direction: column;
@@ -5982,4 +5945,26 @@
     from { opacity: 0; transform: translateY(-20px); }
     to { opacity: 1; transform: translateY(0); }
   }
+}
+
+.cloudview-error {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  padding: var(--space-8);
+  text-align: center;
+}
+
+.cloudview-error > p {
+  margin: 0;
+  line-height: var(--line-normal);
+}
+
+.cloudview-error-retry {
+  padding-inline: var(--space-8);
+  border: 1px solid var(--primary);
+  cursor: pointer;
 }

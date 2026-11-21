@@ -19,7 +19,7 @@ export const RenameRepoModal: React.FC<{
     <AnimatePresence>
       {open && (
         <motion.div
-          className="cloudview-modal-overlay"
+          className="ui-overlay-blocker cloudview-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -83,7 +83,7 @@ export const DeleteRepoModal: React.FC<{
     <AnimatePresence>
       {open && targets.length > 0 && (
         <motion.div
-          className="cloudview-modal-overlay"
+          className="ui-overlay-blocker cloudview-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -169,7 +169,7 @@ const AddRepoModalContent: React.FC<AddRepoModalProps> = ({ open, onConfirm, onC
 
   return (
         <motion.div
-          className="cloudview-modal-overlay"
+          className="ui-overlay-blocker cloudview-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -320,7 +320,7 @@ export const SquashRepoModal: React.FC<{
     <AnimatePresence>
       {open && count > 0 && (
         <motion.div
-          className="cloudview-modal-overlay"
+          className="ui-overlay-blocker cloudview-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -379,7 +379,7 @@ export const VisibilityRepoModal: React.FC<{
     <AnimatePresence>
       {open && (
         <motion.div
-          className="cloudview-modal-overlay"
+          className="ui-overlay-blocker cloudview-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

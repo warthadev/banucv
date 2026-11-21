@@ -1,66 +1,61 @@
-/* src/css/login.css */
-
+/* Login uses the shared page, type, surface, and control tokens. */
 .login-container {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
-  height: 100dvh;
+  min-height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: center;
   background: var(--bg);
-  padding: 20px;
+  padding: max(var(--space-8), env(safe-area-inset-top)) max(var(--space-8), env(safe-area-inset-right))
+    max(var(--space-8), env(safe-area-inset-bottom)) max(var(--space-8), env(safe-area-inset-left));
   -webkit-user-select: none;
   user-select: none;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .login-card {
   width: 100%;
   max-width: 360px;
   height: fit-content;
-  padding: 35px 25px;
+  padding: clamp(24px, 5vw, 35px) clamp(20px, 4vw, 25px);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 25px;
-  margin-top: -30%;
-}
-
-@media (min-width: 768px) {
-  .login-card {
-    margin-top: 0;
-  }
+  gap: var(--space-8);
+  margin: auto;
 }
 
 .login-title {
-  font-size: 1.8rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
+  font-size: var(--type-large);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.02em;
+  line-height: var(--line-tight);
   color: var(--text);
   margin: 0;
 }
 
 .login-text {
   color: var(--text-sub);
-  font-size: 0.95rem;
-  line-height: 1.5;
-  opacity: 0.8;
+  font-size: var(--type-medium);
+  line-height: var(--line-normal);
   margin: 0;
 }
 
 .login-icon-wrapper {
   display: flex;
-  gap: 20px;
+  gap: var(--space-8);
   justify-content: center;
 }
 
 .login-icon-box {
   width: 60px;
   height: 60px;
-  border-radius: var(--radius-medium);
+  border-radius: var(--radius-circle);
   background: transparent;
   border: 2px solid var(--border-color);
   cursor: pointer;
@@ -68,7 +63,7 @@
   align-items: center;
   justify-content: center;
   color: var(--text);
-  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .login-icon-box:hover {
@@ -80,8 +75,8 @@
   background: var(--primary-alpha);
   border-color: var(--primary);
   color: var(--primary);
-  box-shadow: 0 0 20px var(--primary), inset 0 0 10px rgba(0, 168, 255, 0.3);
-  transform: scale(0.92);
+  box-shadow: 0 0 20px var(--primary-alpha), inset 0 0 10px var(--primary-alpha);
+  transform: scale(0.96);
 }
 
 .login-icon-box svg {
@@ -89,4 +84,16 @@
   height: 32px;
   fill: currentColor;
   pointer-events: none;
+}
+
+.login-icon-box:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    gap: var(--space-7);
+    padding-inline: var(--space-7);
+  }
 }

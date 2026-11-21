@@ -72,7 +72,7 @@ export const CreateModal: React.FC<CreateModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div className="github-modal-overlay" variants={overlayVariants} initial="initial" animate="animate" exit="exit">
+        <motion.div className="ui-overlay-blocker github-modal-overlay" variants={overlayVariants} initial="initial" animate="animate" exit="exit">
           <motion.div className="github-modal" variants={modalVariants} initial="hidden" animate="visible" exit="exit">
             <h3 style={{ margin: "0 0 16px 0", textAlign: "center" }}>{modalTitle}</h3>
 
@@ -156,7 +156,7 @@ export const RenameModal: React.FC<RenameModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div className="github-modal-overlay" variants={overlayVariants} initial="initial" animate="animate" exit="exit">
+        <motion.div className="ui-overlay-blocker github-modal-overlay" variants={overlayVariants} initial="initial" animate="animate" exit="exit">
           <motion.div className="github-modal" variants={modalVariants} initial="hidden" animate="visible" exit="exit">
             <h3 style={{ margin: "0 0 16px 0", textAlign: "center" }}>Rename {targetType}</h3>
             <input
@@ -188,7 +188,7 @@ export const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, deleteTarget, 
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div className="github-modal-overlay" variants={overlayVariants} initial="initial" animate="animate" exit="exit">
+        <motion.div className="ui-overlay-blocker github-modal-overlay" variants={overlayVariants} initial="initial" animate="animate" exit="exit">
           <motion.div className="github-modal github-modal-danger" variants={modalVariants} initial="hidden" animate="visible" exit="exit">
             <div className="github-modal-danger-icon"><AlertTriangle size={26} /></div>
             <h3 style={{ margin: "8px 0 16px 0", textAlign: "center" }}>Delete {deleteTarget.type}</h3>
@@ -233,7 +233,7 @@ export const GithubAuthModal: React.FC<GithubAuthModalProps> = ({ isOpen, onSave
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div className="github-modal-overlay" variants={overlayVariants} initial="initial" animate="animate" exit="exit">
+        <motion.div className="ui-overlay-blocker github-modal-overlay" variants={overlayVariants} initial="initial" animate="animate" exit="exit">
           <motion.div className="github-modal" variants={modalVariants} initial="hidden" animate="visible" exit="exit">
             <div style={{ textAlign: "center", marginBottom: "24px" }}>
               <div className="github-auth-icon-wrapper"><GithubIcon /></div>

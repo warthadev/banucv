@@ -1,4 +1,4 @@
-/* Reset default margin dan padding browser */
+/* Predictable sizing and touch defaults shared by every route. */
 * {
   margin: 0;
   padding: 0;
@@ -14,7 +14,7 @@ html, body {
   -webkit-overflow-scrolling: touch;
   -webkit-user-select: none;
   -ms-user-select: none;
-  /* user-select: none; */
+  user-select: none;
 }
 
 #root {
@@ -25,7 +25,13 @@ html, body {
   overflow-x: hidden;
 }
 
-/* khusus tombol & element interaktif biar lebih clean */
+/* Restore expected text-selection behavior in editable and copyable content. */
+:where(input, textarea, select, [contenteditable="true"], pre, code, .ui-selectable, .aiagent-message-content, .github-editor-container) {
+  -webkit-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
 button, a, div, svg {
   -webkit-tap-highlight-color: transparent;
 }

@@ -1,17 +1,5 @@
-/* PATH: frontend/src/css/loading.css */
+/* Loading content styling; viewport blocker and background come from design-system.css. */
 .loading-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg);
-  z-index: 9999;
   user-select: none;
   overflow: hidden;
 }
@@ -21,7 +9,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 28px;
+  gap: var(--space-10);
 }
 
 .loading-ring {
@@ -33,27 +21,21 @@
 .loading-ring::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border: 2.5px solid rgba(255, 255, 255, 0.04);
-  border-radius: 50%;
+  inset: 0;
+  border: 2.5px solid var(--border-color);
+  border-radius: var(--radius-circle);
 }
 
 .loading-ring::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   border: 2.5px solid transparent;
   border-top: 2.5px solid var(--primary);
   border-right: 2.5px solid var(--primary);
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   animation: spin 0.5s linear infinite;
-  box-shadow: 0 0 30px rgba(0, 168, 127, 0.08);
+  box-shadow: 0 0 30px var(--primary-alpha);
 }
 
 .loading-ring-inner {
@@ -64,15 +46,9 @@
   width: 8px;
   height: 8px;
   background: var(--primary);
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   opacity: 0.15;
   animation: pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 @keyframes pulse {
@@ -88,29 +64,28 @@
 
 .loading-text-wrapper {
   display: flex;
-  gap: 3px;
-  letter-spacing: 0.3px;
+  gap: var(--space-1);
 }
 
 .loading-text {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: var(--type-medium);
+  font-weight: var(--weight-medium);
   color: var(--loading-text);
-  letter-spacing: 3.5px;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-  opacity: 0.08;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  text-shadow: 0 0 16px rgba(0, 168, 127, 0.02);
+  opacity: 0.45;
+  font-family: var(--font-family-ui);
+  text-shadow: 0 0 16px var(--primary-alpha);
   animation: glowPulse 4s ease-in-out infinite;
 }
 
 @keyframes glowPulse {
   0%, 100% {
-    text-shadow: 0 0 16px rgba(0, 168, 127, 0.01);
-    opacity: 0.06;
+    text-shadow: 0 0 16px var(--primary-alpha);
+    opacity: 0.45;
   }
   50% {
-    text-shadow: 0 0 40px rgba(0, 168, 127, 0.1);
-    opacity: 0.35;
+    text-shadow: 0 0 40px var(--primary-alpha);
+    opacity: 0.85;
   }
 }

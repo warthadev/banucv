@@ -14,53 +14,53 @@ type AiMode = 'off' | 'auto' | 'manual';
 
 const Visit: React.FC<VisitProps> = ({ onComplete }) => {
   const audioHook = useAudio();
-  
-  const { 
-    aiMode, setAiMode, 
-    selectedGenre, setSelectedGenre, 
-    setIsTutorialActive, setIsPlaying 
+
+  const {
+    aiMode, setAiMode,
+    selectedGenre, setSelectedGenre,
+    setIsTutorialActive, setIsPlaying
   } = audioHook;
-  
+
   const [step, setStep] = useState(0);
   const [isArchenaPlaying, setIsArchenaPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const genres = [
-    ...Object.keys(musicDatabase).filter(g => g !== "Hits" && g !== "Default"), 
-    "Hits", 
-    "Default", 
+    ...Object.keys(musicDatabase).filter(g => g !== "Hits" && g !== "Default"),
+    "Hits",
+    "Default",
     "Random"
   ];
 
   const slides = [
-    { 
-      title: "Welcome Setup", 
+    {
+      title: "Welcome Setup",
       desc: "Hi, welcome! I'm Archena, your AI assistant here to guide you through every detail of this CV. Developed by Herbanu Warthakusuma, I'm currently a static assistant to keep production costs efficient, meaning I can't engage in live conversations just yet. Please note that I currently only support Indonesian. If you understand, click the button below to proceed.",
       icon: "🛠️",
       audio: "/audio/instruction/1.wav?v=audio-fix-20261109"
     },
-    { 
-      title: "AI Instruction Mode", 
+    {
+      title: "AI Instruction Mode",
       desc: "Choose how you want the AI voice instructions to guide you.",
-      icon: "🎙️", 
+      icon: "🎙️",
       audio: "/audio/instruction/2.wav?v=audio-fix-20261109"
     },
-    { 
-      title: "Background Music", 
-      desc: "Pick a music genre to accompany you while exploring this CV dashboard.", 
-      icon: "🎵", 
+    {
+      title: "Background Music",
+      desc: "Pick a music genre to accompany you while exploring this CV dashboard.",
+      icon: "🎵",
       audio: "/audio/instruction/3.wav?v=audio-fix-20261109"
     },
-    { 
-      title: "Setup Almost Complete", 
-      desc: "Don't worry, you can change your AI mode and music preferences anytime via the Settings menu located inside the Open CV Dashboard at the top right corner.", 
-      icon: "⚙️", 
+    {
+      title: "Setup Almost Complete",
+      desc: "Don't worry, you can change your AI mode and music preferences anytime via the Settings menu located inside the Open CV Dashboard at the top right corner.",
+      icon: "⚙️",
       audio: "/audio/instruction/4.wav?v=audio-fix-20261109"
     },
-    { 
-      title: "Setup Complete", 
-      desc: "Everything is ready. Click the button below to enter the main Dashboard.", 
-      icon: "🚀", 
+    {
+      title: "Setup Complete",
+      desc: "Everything is ready. Click the button below to enter the main Dashboard.",
+      icon: "🚀",
       audio: "/audio/instruction/5.wav?v=audio-fix-20261109"
     }
   ];
@@ -78,8 +78,8 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
       let isCurrentStep = true;
       const playAudio = async () => {
         if (aiMode === "auto") {
-          try { 
-            await audio.play(); 
+          try {
+            await audio.play();
             if (isCurrentStep) setIsArchenaPlaying(true);
           } catch {
             if (isCurrentStep) setIsArchenaPlaying(false);
@@ -88,11 +88,11 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
       };
       if (aiMode === "auto") audio.load();
       const timer = aiMode === "auto" ? setTimeout(playAudio, 600) : undefined;
-      return () => { 
+      return () => {
         isCurrentStep = false;
         if (timer) clearTimeout(timer);
-        audio.pause(); 
-        audio.currentTime = 0; 
+        audio.pause();
+        audio.currentTime = 0;
       };
     }
   }, [step, aiMode]);
@@ -121,7 +121,7 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
   const toggleManualAudio = async () => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (audio.paused) { 
+    if (audio.paused) {
       try {
         await audio.play();
         if (audioRef.current === audio) {
@@ -132,31 +132,31 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
           setIsArchenaPlaying(false);
         }
       }
-    } else { 
-      audio.pause(); 
-      setIsArchenaPlaying(false); 
+    } else {
+      audio.pause();
+      setIsArchenaPlaying(false);
     }
   };
 
   return (
-    <div className="setting-overlay">
-      <audio 
-        ref={audioRef} 
-        key={slides[step].audio} 
-        onEnded={() => setIsArchenaPlaying(false)} 
+    <div className="ui-overlay-blocker setting-overlay">
+      <audio
+        ref={audioRef}
+        key={slides[step].audio}
+        onEnded={() => setIsArchenaPlaying(false)}
         preload="auto"
       >
         <source src={slides[step].audio} type="audio/wav" />
       </audio>
 
       <AnimatePresence mode="wait">
-        <motion.div 
-          key={step} 
-          variants={slideVariants} 
-          initial="initial" 
-          animate="animate" 
-          exit="exit" 
-          className="barcode-card"
+        <motion.div
+          key={step}
+          variants={slideVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          className="barcode-card ui-surface--card"
           role="dialog"
           aria-live="polite"
         >
@@ -167,13 +167,13 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
           {step === 1 && (
             <div className="ai-mode-container">
               {(['off', 'auto', 'manual'] as AiMode[]).map((mode) => (
-                <button 
-                  key={mode} 
-                  onClick={() => setAiMode(mode)} 
+                <button
+                  key={mode}
+                  onClick={() => setAiMode(mode)}
                   className={`mode-button ${aiMode === mode ? 'active' : ''}`}
                   aria-pressed={aiMode === mode}
-                > 
-                  {mode === 'off' ? 'Disable AI' : mode === 'auto' ? 'Automatic AI' : 'Manual'} 
+                >
+                  {mode === 'off' ? 'Disable AI' : mode === 'auto' ? 'Automatic AI' : 'Manual'}
                 </button>
               ))}
             </div>
@@ -182,13 +182,13 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
           {step === 2 && (
             <div className="ai-mode-container scrollable-music-list">
               {genres.map((genre) => (
-                <button 
-                  key={genre} 
-                  onClick={() => setSelectedGenre(genre)} 
+                <button
+                  key={genre}
+                  onClick={() => setSelectedGenre(genre)}
                   className={`mode-button ${selectedGenre === genre ? 'active' : ''}`}
                   aria-pressed={selectedGenre === genre}
-                > 
-                  {genre} 
+                >
+                  {genre}
                 </button>
               ))}
             </div>
@@ -212,7 +212,7 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
               {isArchenaPlaying ? <HiVolumeUp /> : <HiVolumeOff />}
             </div>
           )}
-          
+
           <button
             onClick={handleNext}
             className="next-button"

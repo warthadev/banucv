@@ -1,19 +1,17 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
-import { AlertCircle, Check, CheckCircle, Copy, Eye, EyeOff, KeyRound, LoaderCircle, ShieldCheck } from "lucide-react";
+import { AlertCircle, Check, CheckCircle, Copy, Eye, EyeOff, KeyRound, LoaderCircle, Save, ShieldCheck } from "lucide-react";
 import { getAuth } from "@config/firebase";
 import { loadOpenRouterCredentials, saveOpenRouterCredentials, type OpenRouterCredentials } from "@config/routerhelper";
 import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
 import AgentModelCatalog from "./agentmodelcatalog";
-import type { RegisterSettingsSaveHandler, SettingsSaveHandler, SettingsSaveResult } from "./settingssave";
+import type { SettingsSaveResult } from "./settingssave";
 
 interface SettingAgentProps {
-  registerSaveHandler: RegisterSettingsSaveHandler;
-  onSettingsChanged: () => void;
   onLoadingChange: (isLoading: boolean) => void;
 }
 
-const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSettingsChanged, onLoadingChange }) => {
+const SettingAgent: React.FC<SettingAgentProps> = ({ onLoadingChange }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [credentials, setCredentials] = useState<OpenRouterCredentials | null>(null);
@@ -24,8 +22,8 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSett
   const [saving, setSaving] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<"copied" | "error" | null>(null);
+  const [saveResult, setSaveResult] = useState<SettingsSaveResult | null>(null);
   const requestIdRef = useRef(0);
-  const saveHandlerRef = useRef<SettingsSaveHandler | null>(null);
 
   useLayoutEffect(() => {
     onLoadingChange(!authReady || loading || modelsLoading);
@@ -70,10 +68,10 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSett
     getAuth().then((firebaseAuth) => {
       if (disposed) return;
       unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
-        onSettingsChanged();
         setCurrentUser(user);
         setAuthReady(true);
         setApiKey("");
+        setSaveResult(null);
         setShowKey(false);
         setCopyStatus(null);
         void refresh(user);
@@ -88,9 +86,9 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSett
       requestIdRef.current += 1;
       unsubscribe();
     };
-  }, [refresh, onSettingsChanged]);
+  }, [refresh]);
 
-  const handleSaveAll = async (): Promise<SettingsSaveResult> => {
+  const saveOpenRouterSettings = async (): Promise<SettingsSaveResult> => {
     const sectionId = "openrouter" as const;
     const sectionName = "AI Agent · OpenRouter";
     if (!authReady || loading) {
@@ -142,16 +140,10 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSett
     }
   };
 
-  useEffect(() => {
-    saveHandlerRef.current = handleSaveAll;
-  });
-  useEffect(() => {
-    const handler: SettingsSaveHandler = () => saveHandlerRef.current
-      ? saveHandlerRef.current()
-      : Promise.resolve({ sectionId: "openrouter", sectionName: "AI Agent · OpenRouter", status: "error", message: "OpenRouter settings are unavailable." });
-    registerSaveHandler("openrouter", handler);
-    return () => registerSaveHandler("openrouter", null);
-  }, [registerSaveHandler]);
+  const handleSave = async () => {
+    setSaveResult(null);
+    setSaveResult(await saveOpenRouterSettings());
+  };
 
   const handleCopyApiKey = async () => {
     const enteredKey = apiKey;
@@ -187,7 +179,7 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSett
 
   if (!authReady || loading) {
     return (
-      <section className="settings-service-section setting-agent-card" aria-busy="true">
+      <section className="stack-item settings-service-section setting-agent-card" aria-busy="true">
         <div className="section-header">
           <KeyRound size={19} aria-hidden="true" />
           <span className="section-label">AI Agent · OpenRouter</span>
@@ -200,7 +192,7 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSett
   }
 
   return (
-    <section className="settings-service-section setting-agent-card" aria-labelledby="setting-agent-title">
+    <section className="stack-item settings-service-section setting-agent-card" aria-labelledby="setting-agent-title">
       <div className="section-header">
         <KeyRound size={19} aria-hidden="true" />
         <span className="section-label" id="setting-agent-title">AI Agent · OpenRouter</span>
@@ -240,7 +232,7 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSett
                 onChange={(event) => {
                   setApiKey(event.target.value);
                   setCopyStatus(null);
-                  onSettingsChanged();
+                  setSaveResult(null);
                 }}
                 placeholder={credentials ? "Enter a key to replace the saved key" : "Paste this account's OpenRouter API key"}
                 autoComplete="off"
@@ -276,6 +268,30 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSett
                 aria-live={copyStatus === "error" ? "assertive" : "polite"}
               >
                 {copyStatus === "copied" ? "OpenRouter API key copied to clipboard." : "Could not copy the API key. Please try again."}
+              </p>
+            )}
+          </div>
+
+          <div className="settings-section-actions">
+            <button
+              className="setting-agent-primary settings-section-save-btn"
+              type="button"
+              onClick={() => void handleSave()}
+              disabled={saving}
+            >
+              {saving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Save size={16} aria-hidden="true" />}
+              {saving ? "Saving…" : "Save"}
+            </button>
+            {saveResult && (
+              <p
+                className={`settings-save-feedback${saveResult.status === "error" ? " is-error" : ""}`}
+                role={saveResult.status === "error" ? "alert" : "status"}
+                aria-live={saveResult.status === "error" ? "assertive" : "polite"}
+              >
+                {saveResult.status === "error"
+                  ? <AlertCircle size={15} aria-hidden="true" />
+                  : <CheckCircle size={15} aria-hidden="true" />}
+                <span>{saveResult.message}</span>
               </p>
             )}
           </div>

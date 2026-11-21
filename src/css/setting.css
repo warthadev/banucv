@@ -1259,65 +1259,35 @@
   margin-bottom: 0;
 }
 
-.settings-save-all-panel {
-  display: flex;
-  flex-direction: column;
+.settings-section-actions {
+  display: grid;
   gap: 10px;
-  margin-bottom: 16px;
-  position: sticky;
-  bottom: max(12px, env(safe-area-inset-bottom));
-  z-index: 4;
-  background: var(--bg);
+  margin-top: 12px;
 }
 
-.settings-save-all-button {
+.settings-section-save-btn {
   width: 100%;
   min-height: 44px;
   font-size: 14px;
 }
 
-.settings-save-all-results {
-  display: grid;
-  gap: 6px;
-  padding: 10px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-small);
-  background: var(--bg);
-  color: var(--text-sub);
-  font-size: 12px;
-}
-
-.settings-save-all-results p {
+.settings-save-feedback {
   display: flex;
   align-items: flex-start;
   gap: 8px;
   margin: 0;
+  color: var(--text-sub);
+  font-size: 12px;
   line-height: 1.45;
 }
 
-.settings-save-all-results p.is-error {
+.settings-save-feedback.is-error {
   color: #dc2626;
 }
 
-.settings-save-all-results svg {
+.settings-save-feedback svg {
   flex: 0 0 auto;
   margin-top: 1px;
-}
-
-.settings-service-bundle {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.settings-service-section + .settings-service-section {
-  margin-top: 20px;
-  padding-top: 20px;
-}
-
-.settings-service-bundle > .settings-save-all-panel {
-  margin: 12px 0 0;
-  padding-top: 8px;
 }
 
 .setting-eye-btn,
@@ -1362,7 +1332,7 @@
   .su-empty-box, .su-list-item, .su-message-success, .su-message-error,
   .setting-sensitive-input, .setting-plain-input, .setting-agent-input,
   .setting-agent-safe-status, .setting-agent-model-list li, .setting-agent-secondary,
-  .setting-agent-danger, .settings-save-all-results, .playback-btn, .genre-chip,
+  .setting-agent-danger, .settings-save-feedback, .playback-btn, .genre-chip,
   .footer-status
 ) {
   border: none;

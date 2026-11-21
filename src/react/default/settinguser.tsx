@@ -1,18 +1,18 @@
 // src/react/default/settinguser.tsx
-import React, { useEffect, useLayoutEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useState, useCallback } from "react";
 import { auth, db } from "@config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import {
-  User as UserIcon, AlertCircle, CheckCircle,
+  User as UserIcon, AlertCircle, CheckCircle, LoaderCircle, Save,
   Mail, Calendar, MapPin, Smartphone, Globe, Clock, 
   Activity, Monitor, Phone, Cpu, Navigation, Wifi,
   Cloud, Copy, Eye, EyeOff, Check
 } from "lucide-react";
 import { GithubIcon } from "@/react/control/icon";
 import { formatTimestamp } from "@config/userstorage";
-import type { RegisterSettingsSaveHandler, SettingsSaveHandler, SettingsSaveResult } from "./settingssave";
+import type { SettingsSaveResult } from "./settingssave";
 
 interface UserProfile {
   uid: string;
@@ -59,13 +59,10 @@ const getTimeOnly = (timestamp: unknown): string => {
 };
 
 interface SettingUserProps {
-  registerSaveHandler: RegisterSettingsSaveHandler;
-  onSettingsChanged: () => void;
   onLoadingChange: (isLoading: boolean) => void;
-  children?: React.ReactNode;
 }
 
-const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettingsChanged, onLoadingChange, children }) => {
+const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +79,8 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
   
   const [authReady, setAuthReady] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const saveHandlerRef = useRef<SettingsSaveHandler | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveResult, setSaveResult] = useState<SettingsSaveResult | null>(null);
   
   const [isMobileScreen, setIsMobileScreen] = useState(window.innerWidth <= 768);
 
@@ -98,16 +96,16 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      onSettingsChanged();
       setLoading(true);
       setCurrentUser(user);
+      setSaveResult(null);
       setShowGithubToken(false);
       setShowCloudTokens({});
       setCopyFeedback({});
       setAuthReady(true);
     });
     return () => unsubscribe();
-  }, [onSettingsChanged]);
+  }, []);
 
   const copyToken = useCallback(async (tokenId: string, token: string) => {
     if (!token) return;
@@ -204,7 +202,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
     };
   }, [authReady, currentUser, fetchUserData]);
 
-  const handleSaveAll = async (): Promise<SettingsSaveResult> => {
+  const saveGithubSettings = async (): Promise<SettingsSaveResult> => {
     const sectionId = "github" as const;
     const sectionName = "GitHub";
     if (!authReady || loading) {
@@ -255,16 +253,15 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
     }
   };
 
-  useEffect(() => {
-    saveHandlerRef.current = handleSaveAll;
-  });
-  useEffect(() => {
-    const handler: SettingsSaveHandler = () => saveHandlerRef.current
-      ? saveHandlerRef.current()
-      : Promise.resolve({ sectionId: "github", sectionName: "GitHub", status: "error", message: "GitHub settings are unavailable." });
-    registerSaveHandler("github", handler);
-    return () => registerSaveHandler("github", null);
-  }, [registerSaveHandler]);
+  const handleSave = async () => {
+    setSaveResult(null);
+    setSaving(true);
+    try {
+      setSaveResult(await saveGithubSettings());
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -277,9 +274,6 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
           <div className="su-loading-container">
             <div className="status-spinner" />
           </div>
-        </section>
-        <section className="stack-item settings-service-bundle" aria-label="Connected services">
-          {children}
         </section>
       </>
     );
@@ -301,9 +295,6 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
               Retry
             </button>
           </div>
-        </section>
-        <section className="stack-item settings-service-bundle" aria-label="Connected services">
-          {children}
         </section>
       </>
     );
@@ -420,8 +411,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
         )}
       </section>
 
-    <section className="stack-item settings-service-bundle" aria-label="Connected services">
-    <section className="settings-service-section" aria-labelledby="setting-github-title">
+    <section className="stack-item settings-service-section" aria-labelledby="setting-github-title">
       <div className="section-header">
         <GithubIcon />
         <span className="section-label" id="setting-github-title">GitHub</span>
@@ -448,7 +438,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
           value={githubUser}
           onChange={(e) => {
             setGithubUser(e.target.value);
-            onSettingsChanged();
+            setSaveResult(null);
           }}
           placeholder="Username"
           className="setting-agent-input setting-plain-input"
@@ -465,7 +455,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
             value={githubToken}
             onChange={(e) => {
               setGithubToken(e.target.value);
-              onSettingsChanged();
+              setSaveResult(null);
             }}
             placeholder="Token Access"
             className="setting-agent-input setting-sensitive-input"
@@ -496,9 +486,33 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
         )}
       </div>
 
+      <div className="settings-section-actions">
+        <button
+          className="setting-agent-primary settings-section-save-btn"
+          type="button"
+          onClick={() => void handleSave()}
+          disabled={saving || loading || !currentUser}
+        >
+          {saving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Save size={16} aria-hidden="true" />}
+          {saving ? "Saving…" : "Save"}
+        </button>
+        {saveResult && (
+          <p
+            className={`settings-save-feedback${saveResult.status === "error" ? " is-error" : ""}`}
+            role={saveResult.status === "error" ? "alert" : "status"}
+            aria-live={saveResult.status === "error" ? "assertive" : "polite"}
+          >
+            {saveResult.status === "error"
+              ? <AlertCircle size={15} aria-hidden="true" />
+              : <CheckCircle size={15} aria-hidden="true" />}
+            <span>{saveResult.message}</span>
+          </p>
+        )}
+      </div>
+
     </section>
 
-    <section className="settings-service-section" aria-labelledby="setting-cloud-manager-title">
+    <section className="stack-item settings-service-section" aria-labelledby="setting-cloud-manager-title">
       <div className="section-header">
         <Cloud size={18} color="var(--primary)" />
         <span className="section-label" id="setting-cloud-manager-title">Cloud Manager</span>
@@ -640,8 +654,6 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
         )}
       </div>
 
-    </section>
-    {children}
     </section>
     </>
   );

@@ -307,49 +307,54 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
           <span className="section-label" id="setting-user-profile-title">User Profile</span>
           <span className="setting-agent-status"><CheckCircle size={14} /> Signed in</span>
         </div>
-        <div className="su-profile-header">
-          {profile?.photoURL && (
-            <img src={profile.photoURL} alt="avatar" className="su-avatar" />
-          )}
-          <div className="su-profile-info">
-            <div className="su-display-name">{profile?.displayName || currentUser?.displayName || "User"}</div>
-            <div className="su-email">
-              <Mail size={12} color="var(--text-muted)" />
-              <span>{displayEmail}</span>
-            </div>
-            <div className="su-meta-info">
-              <span>Login: {profile?.loginCount || 1}x</span>
-              <span className="su-meta-sep">•</span>
-              <span>Provider: {providerNames || "?"}</span>
-            </div>
-            <div className="su-last-login">
-              <Calendar size={10} color="var(--text-muted)" className="su-last-login-icon" />
-              Last login: {profile?.lastLoginAt ? getDateOnly(profile.lastLoginAt) : "Unknown"}
+
+        <div className="su-profile-card">
+          <div className="su-profile-header">
+            {profile?.photoURL && (
+              <img src={profile.photoURL} alt="avatar" className="su-avatar" />
+            )}
+            <div className="su-profile-info">
+              <div className="su-display-name">{profile?.displayName || currentUser?.displayName || "User"}</div>
+              <div className="su-email">
+                <Mail size={12} color="var(--text-muted)" />
+                <span>{displayEmail}</span>
+              </div>
+              <div className="su-meta-info">
+                <span>Login: {profile?.loginCount || 1}x</span>
+                <span className="su-meta-sep">•</span>
+                <span>Provider: {providerNames || "?"}</span>
+              </div>
+              <div className="su-last-login">
+                <Calendar size={10} color="var(--text-muted)" className="su-last-login-icon" />
+                Last login: {profile?.lastLoginAt ? getDateOnly(profile.lastLoginAt) : "Unknown"}
+              </div>
             </div>
           </div>
         </div>
-      </section>
 
-      <section className="stack-item settings-bundle-section" aria-label="Registered">
-        <div className="section-header">
-          <Calendar size={18} color="var(--primary)" />
-          <span className="section-label">REGISTERED</span>
+        <div className="su-stats-grid">
+          <div className="su-stat-card">
+            <div className="su-stat-header">
+              <Calendar size={16} color="var(--primary)" />
+              <span className="su-stat-label">REGISTERED</span>
+            </div>
+            <div className="su-stat-value">
+              {profile?.createdAt
+                ? getDateOnly(profile.createdAt)
+                : (profile?.lastLoginAt ? getDateOnly(profile.lastLoginAt) : "Not recorded")}
+            </div>
+          </div>
+          <div className="su-stat-card">
+            <div className="su-stat-header">
+              <Activity size={16} color="var(--primary)" />
+              <span className="su-stat-label">LAST SEEN</span>
+            </div>
+            <div className="su-stat-value">
+              {profile?.lastSeen ? getDateOnly(profile.lastSeen) : "Unknown"}
+            </div>
+          </div>
         </div>
-        <div className="su-stat-value">
-          {profile?.createdAt
-            ? getDateOnly(profile.createdAt)
-            : (profile?.lastLoginAt ? getDateOnly(profile.lastLoginAt) : "Not recorded")}
-        </div>
-      </section>
 
-      <section className="stack-item settings-bundle-section settings-last-seen-card" aria-label="Last Seen">
-        <div className="section-header">
-          <Activity size={18} color="var(--primary)" />
-          <span className="section-label">LAST SEEN</span>
-        </div>
-        <div className="su-stat-value">
-          {profile?.lastSeen ? getDateOnly(profile.lastSeen) : "Unknown"}
-        </div>
         {profile?.lastLocation && (
           <div className="su-location-card">
             <div className="su-location-header">
@@ -376,29 +381,29 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
             </div>
           </div>
         )}
-      </section>
 
-      {profile?.lastDevice && (
-        <section className="stack-item settings-bundle-section" aria-labelledby="setting-device-title">
-          <div className="section-header">
-            <Smartphone size={18} color="var(--primary)" />
-            <span className="section-label" id="setting-device-title">Device Information</span>
+        {profile?.lastDevice && (
+          <div className="su-device-card">
+            <div className="su-device-header">
+              <Smartphone size={16} color="var(--primary)" />
+              <span className="su-device-title">Device Information</span>
+            </div>
+            <div className="su-device-info">
+              <div className="su-device-type">
+                {profile.lastDevice.isMobile ? <Phone size={12} color="var(--text-muted)" className="su-device-icon" /> : <Monitor size={12} color="var(--text-muted)" className="su-device-icon" />}
+                <span>{profile.lastDevice.isMobile ? "Mobile Device" : "Desktop"}</span>
+              </div>
+              <div className="su-device-platform">
+                <Cpu size={12} color="var(--text-muted)" className="su-device-icon" />
+                <span>{profile.lastDevice.platform}</span>
+              </div>
+              <div className="su-device-ua">
+                User Agent: {profile.lastDevice.userAgent}
+              </div>
+            </div>
           </div>
-          <div className="su-device-info">
-            <div className="su-device-type">
-              {profile.lastDevice.isMobile ? <Phone size={12} color="var(--text-muted)" className="su-device-icon" /> : <Monitor size={12} color="var(--text-muted)" className="su-device-icon" />}
-              <span>{profile.lastDevice.isMobile ? "Mobile Device" : "Desktop"}</span>
-            </div>
-            <div className="su-device-platform">
-              <Cpu size={12} color="var(--text-muted)" className="su-device-icon" />
-              <span>{profile.lastDevice.platform}</span>
-            </div>
-            <div className="su-device-ua">
-              User Agent: {profile.lastDevice.userAgent}
-            </div>
-          </div>
-        </section>
-      )}
+        )}
+      </section>
 
     <section className="stack-item settings-bundle-section" aria-labelledby="setting-github-title">
       <div className="section-header">

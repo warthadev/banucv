@@ -39,20 +39,7 @@ const SettingAgent: React.FC = () => {
       return;
     }
     try {
-      let saved = await loadOpenRouterCredentials();
-      if (requestId !== requestIdRef.current) return;
-      if (saved?.migrationRequired) {
-        try {
-          saved = await saveOpenRouterCredentials("");
-        } catch (error) {
-          if (requestId === requestIdRef.current) {
-            setCredentials(saved);
-            setApiKey(saved.apiKey);
-            setSettingsError(error instanceof Error ? error.message : "The saved key could not be safely migrated.");
-          }
-          return;
-        }
-      }
+      const saved = await loadOpenRouterCredentials();
       if (requestId !== requestIdRef.current) return;
       setCredentials(saved);
       setApiKey(saved?.apiKey || "");
@@ -198,7 +185,9 @@ const SettingAgent: React.FC = () => {
               <ShieldCheck size={17} aria-hidden="true" />
               <span>
                 OpenRouter key connected for this account
-                <small>Stored as plain text in this account&apos;s existing Firestore user document.</small>
+                <small>{credentials.migrationRequired
+                  ? "An older saved key is awaiting verification and migration."
+                  : "Stored as plain text in this account's existing Firestore user document."}</small>
               </span>
             </div>
           )}
@@ -254,7 +243,7 @@ const SettingAgent: React.FC = () => {
                 {copyStatus === "copied" ? "OpenRouter API key copied to clipboard." : "Could not copy the API key. Please try again."}
               </p>
             )}
-            {credentials && <span className="setting-agent-footnote">Enter a key to replace it, or leave blank to verify the saved key.</span>}
+            {credentials && <span className="setting-agent-footnote">Edit the key to replace it, or save and verify it unchanged. A verified key is stored as plain text.</span>}
             <div className="setting-agent-actions">
               <button className="setting-agent-primary" type="submit" disabled={saving || (!apiKey.trim() && !credentials)}>
                 {saving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <ShieldCheck size={16} />}

@@ -1228,3 +1228,44 @@
 .settings-cloud-token-group .su-input-label {
   margin-bottom: 0;
 }
+
+.settings-save-all-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.settings-save-all-button {
+  width: 100%;
+  min-height: 44px;
+  font-size: 14px;
+}
+
+.settings-save-all-results {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-small);
+  background: var(--bg);
+  color: var(--text-sub);
+  font-size: 12px;
+}
+
+.settings-save-all-results p {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.settings-save-all-results p.is-error {
+  color: #dc2626;
+}
+
+.settings-save-all-results svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}

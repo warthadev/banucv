@@ -1,5 +1,5 @@
 // src/react/default/settinguser.tsx
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { auth, db } from "@config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { GithubIcon } from "@/react/control/icon";
 import { formatTimestamp } from "@config/userstorage";
+import type { RegisterSettingsSaveHandler, SettingsSaveHandler, SettingsSaveResult } from "./settingssave";
 
 interface UserProfile {
   uid: string;
@@ -23,8 +24,8 @@ interface UserProfile {
   lastLoginAt?: unknown;
   lastSeen?: unknown;
   loginCount?: number;
-  githubUsername?: string;
-  githubToken?: string;
+  githubUsername?: string | null;
+  githubToken?: string | null;
   telegramSessions?: string[];
   telegramAccountNames?: string[];
   hfUsernames?: string[];
@@ -57,12 +58,15 @@ const getTimeOnly = (timestamp: unknown): string => {
   return parts.length > 1 ? parts[1] : formatted;
 };
 
-const SettingUser: React.FC = () => {
+interface SettingUserProps {
+  registerSaveHandler: RegisterSettingsSaveHandler;
+  onSettingsChanged: () => void;
+}
+
+const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettingsChanged }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
   const [githubUser, setGithubUser] = useState("");
   const [githubToken, setGithubToken] = useState("");
@@ -76,6 +80,7 @@ const SettingUser: React.FC = () => {
   
   const [authReady, setAuthReady] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const saveHandlerRef = useRef<SettingsSaveHandler | null>(null);
   
   const [isMobileScreen, setIsMobileScreen] = useState(window.innerWidth <= 768);
   
@@ -87,6 +92,7 @@ const SettingUser: React.FC = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      onSettingsChanged();
       setCurrentUser(user);
       setShowGithubToken(false);
       setShowCloudTokens({});
@@ -94,7 +100,7 @@ const SettingUser: React.FC = () => {
       setAuthReady(true);
     });
     return () => unsubscribe();
-  }, []);
+  }, [onSettingsChanged]);
 
   const copyToken = useCallback(async (tokenId: string, token: string) => {
     if (!token) return;
@@ -191,43 +197,63 @@ const SettingUser: React.FC = () => {
     };
   }, [authReady, currentUser, fetchUserData]);
 
-  const handleSaveAll = async () => {
-    if (!currentUser) return;
-    setSaving(true);
-    setMessage(null);
+  const handleSaveAll = async (): Promise<SettingsSaveResult> => {
+    const sectionId = "github" as const;
+    const sectionName = "GitHub";
+    if (!authReady || loading) {
+      return { sectionId, sectionName, status: "error", message: "Profile settings are still loading." };
+    }
+    if (!currentUser) {
+      return { sectionId, sectionName, status: "error", message: "Sign in before saving GitHub settings." };
+    }
+    if (error || !profile) {
+      return { sectionId, sectionName, status: "error", message: error || "Profile settings are unavailable." };
+    }
+
+    const updateData: Partial<Pick<UserProfile, "githubUsername" | "githubToken">> = {};
+    const nextGithubUser = githubUser.trim();
+    const currentGithubUser = profile.githubUsername?.trim() || "";
+    const nextGithubToken = githubToken.trim();
+    const currentGithubToken = profile.githubToken?.trim() || "";
+
+    if (nextGithubUser !== currentGithubUser) updateData.githubUsername = nextGithubUser || null;
+    if (nextGithubToken !== currentGithubToken) updateData.githubToken = nextGithubToken || null;
+
+    if (Object.keys(updateData).length === 0) {
+      return { sectionId, sectionName, status: "unchanged", message: "No changes to save." };
+    }
+
     try {
       const userRef = doc(db, "users", currentUser.uid);
-      const updateData: Record<string, string | null> = {};
-
-      if (githubUser !== profile?.githubUsername) {
-        updateData.githubUsername = githubUser.trim() || null;
-      }
-      
-      if (githubToken !== profile?.githubToken) {
-        updateData.githubToken = githubToken.trim() || null;
-      }
-
-
-      
-      if (Object.keys(updateData).length > 0) {
-        await setDoc(userRef, updateData, { merge: true });
+      await setDoc(userRef, updateData, { merge: true });
+      setProfile((current) => current ? { ...current, ...updateData } : current);
+      try {
         const updatedSnap = await getDoc(userRef);
-        if (updatedSnap.exists()) {
-          const data = updatedSnap.data() as UserProfile;
-          setProfile(data);
-        }
-        setMessage({ type: "success", text: "Credentials updated successfully" });
-      } else {
-        setMessage({ type: "success", text: "No changes to save" });
+        if (updatedSnap.exists()) setProfile(updatedSnap.data() as UserProfile);
+      } catch {
+        // The write succeeded; keep the locally merged profile if refresh fails.
       }
+      return { sectionId, sectionName, status: "saved", message: "Changed credentials saved." };
     } catch (err: unknown) {
-      console.error("Error saving:", err);
-      setMessage({ type: "error", text: err instanceof Error ? err.message : "Failed to save" });
-    } finally {
-      setSaving(false);
-      setTimeout(() => setMessage(null), 3000);
+      return {
+        sectionId,
+        sectionName,
+        status: "error",
+        message: err instanceof Error ? err.message : "Failed to save GitHub credentials.",
+      };
     }
   };
+
+  useEffect(() => {
+    saveHandlerRef.current = handleSaveAll;
+  });
+  useEffect(() => {
+    const handler: SettingsSaveHandler = () => saveHandlerRef.current
+      ? saveHandlerRef.current()
+      : Promise.resolve({ sectionId: "github", sectionName: "GitHub", status: "error", message: "GitHub settings are unavailable." });
+    registerSaveHandler("github", handler);
+    return () => registerSaveHandler("github", null);
+  }, [registerSaveHandler]);
 
   if (loading) {
     return (
@@ -391,7 +417,10 @@ const SettingUser: React.FC = () => {
         <input
           type="text"
           value={githubUser}
-          onChange={(e) => setGithubUser(e.target.value)}
+          onChange={(e) => {
+            setGithubUser(e.target.value);
+            onSettingsChanged();
+          }}
           placeholder="Username"
           className="setting-agent-input setting-plain-input"
         />
@@ -405,7 +434,10 @@ const SettingUser: React.FC = () => {
           <input
             type={showGithubToken ? "text" : "password"}
             value={githubToken}
-            onChange={(e) => setGithubToken(e.target.value)}
+            onChange={(e) => {
+              setGithubToken(e.target.value);
+              onSettingsChanged();
+            }}
             placeholder="Token Access"
             className="setting-agent-input setting-sensitive-input"
           />
@@ -435,21 +467,6 @@ const SettingUser: React.FC = () => {
         )}
       </div>
 
-      {message && (
-        <div className={`su-message ${message.type === "success" ? "su-message-success" : "su-message-error"}`}>
-          {message.type === "success" ? <CheckCircle size={16} color="#10b981" /> : <AlertCircle size={16} color="#ef4444" />}
-          <span>{message.text}</span>
-        </div>
-      )}
-
-      <button
-        onClick={handleSaveAll}
-        disabled={saving}
-        className="setting-agent-primary setting-user-save-btn"
-      >
-        {saving ? <div className="status-spinner" /> : <CheckCircle size={16} aria-hidden="true" />}
-        {saving ? "Saving..." : "Save Credentials"}
-      </button>
     </section>
 
     <section className="stack-item setting-agent-card" aria-labelledby="setting-cloud-manager-title">

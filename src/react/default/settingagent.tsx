@@ -5,8 +5,14 @@ import { getAuth } from "@config/firebase";
 import { clearOpenRouterCredentials, loadOpenRouterCredentials, saveOpenRouterCredentials, type OpenRouterCredentials } from "@config/routerhelper";
 import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
 import AgentModelCatalog from "./agentmodelcatalog";
+import type { RegisterSettingsSaveHandler, SettingsSaveHandler, SettingsSaveResult } from "./settingssave";
 
-const SettingAgent: React.FC = () => {
+interface SettingAgentProps {
+  registerSaveHandler: RegisterSettingsSaveHandler;
+  onSettingsChanged: () => void;
+}
+
+const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSettingsChanged }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [credentials, setCredentials] = useState<OpenRouterCredentials | null>(null);
@@ -20,6 +26,7 @@ const SettingAgent: React.FC = () => {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [copyStatus, setCopyStatus] = useState<"copied" | "error" | null>(null);
   const requestIdRef = useRef(0);
+  const saveHandlerRef = useRef<SettingsSaveHandler | null>(null);
 
   useEffect(() => {
     if (!copyStatus) return;
@@ -60,6 +67,7 @@ const SettingAgent: React.FC = () => {
     getAuth().then((firebaseAuth) => {
       if (disposed) return;
       unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+        onSettingsChanged();
         setCurrentUser(user);
         setAuthReady(true);
         setApiKey("");
@@ -78,28 +86,73 @@ const SettingAgent: React.FC = () => {
       requestIdRef.current += 1;
       unsubscribe();
     };
-  }, [refresh]);
+  }, [refresh, onSettingsChanged]);
 
-  const handleSave = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!currentUser || (!apiKey.trim() && !credentials) || saving) return;
+  const handleSaveAll = async (): Promise<SettingsSaveResult> => {
+    const sectionId = "openrouter" as const;
+    const sectionName = "AI Agent · OpenRouter";
+    if (!authReady || loading) {
+      return { sectionId, sectionName, status: "error", message: "OpenRouter settings are still loading." };
+    }
+    if (!currentUser) {
+      return { sectionId, sectionName, status: "unchanged", message: "No signed-in OpenRouter settings to save." };
+    }
+    if (saving) {
+      return { sectionId, sectionName, status: "error", message: "OpenRouter settings are already being saved." };
+    }
+
+    const normalizedKey = apiKey.trim();
+    const savedKey = credentials?.apiKey.trim() || "";
+    const keyChanged = normalizedKey !== savedKey;
+    if (settingsError && !normalizedKey) {
+      return { sectionId, sectionName, status: "error", message: `Could not load OpenRouter settings: ${settingsError}` };
+    }
+    const submittedNewKey = keyChanged && Boolean(normalizedKey);
+    const requiresSave = keyChanged || Boolean(credentials?.migrationRequired);
+    if (!requiresSave) {
+      return { sectionId, sectionName, status: "unchanged", message: "No changes to save." };
+    }
+
     setSaving(true);
     setMessage(null);
     try {
-      await saveOpenRouterCredentials(apiKey);
+      await saveOpenRouterCredentials(submittedNewKey ? apiKey : "");
       setApiKey("");
       setShowKey(false);
       setCopyStatus(null);
       await refresh(currentUser);
       window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
-      setMessage({ type: "success", text: "OpenRouter key verified and saved as plain text in this account's user record. This account's old 9Router settings, if any, were removed." });
+      return {
+        sectionId,
+        sectionName,
+        status: "saved",
+        message: submittedNewKey
+          ? "Changed key verified and saved."
+          : "Existing key verified; its saved value was unchanged.",
+      };
     } catch (error) {
       await refresh(currentUser);
-      setMessage({ type: "error", text: error instanceof Error ? error.message : "Could not verify this account's OpenRouter key." });
+      return {
+        sectionId,
+        sectionName,
+        status: "error",
+        message: error instanceof Error ? error.message : "Could not verify this account's OpenRouter key.",
+      };
     } finally {
       setSaving(false);
     }
   };
+
+  useEffect(() => {
+    saveHandlerRef.current = handleSaveAll;
+  });
+  useEffect(() => {
+    const handler: SettingsSaveHandler = () => saveHandlerRef.current
+      ? saveHandlerRef.current()
+      : Promise.resolve({ sectionId: "openrouter", sectionName: "AI Agent · OpenRouter", status: "error", message: "OpenRouter settings are unavailable." });
+    registerSaveHandler("openrouter", handler);
+    return () => registerSaveHandler("openrouter", null);
+  }, [registerSaveHandler]);
 
   const handleCopyApiKey = async () => {
     const enteredKey = apiKey;
@@ -134,8 +187,9 @@ const SettingAgent: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!currentUser || deleting) return;
+    if (!currentUser || deleting || saving) return;
     if (!window.confirm("Remove this account's OpenRouter API key?")) return;
+    onSettingsChanged();
     setDeleting(true);
     setMessage(null);
     try {
@@ -189,7 +243,7 @@ const SettingAgent: React.FC = () => {
             </div>
           )}
 
-          <form className="setting-agent-form" onSubmit={handleSave}>
+          <div className="setting-agent-form">
             <label className="setting-agent-label" htmlFor="setting-openrouter-key">
               OpenRouter API key
             </label>
@@ -203,6 +257,8 @@ const SettingAgent: React.FC = () => {
                 onChange={(event) => {
                   setApiKey(event.target.value);
                   setCopyStatus(null);
+                  setMessage(null);
+                  onSettingsChanged();
                 }}
                 placeholder={credentials ? "Enter a key to replace the saved key" : "Paste this account's OpenRouter API key"}
                 autoComplete="off"
@@ -241,24 +297,21 @@ const SettingAgent: React.FC = () => {
               </p>
             )}
             <div className="setting-agent-actions">
-              <button className="setting-agent-primary" type="submit" disabled={saving || (!apiKey.trim() && !credentials)}>
-                {saving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <ShieldCheck size={16} />}
-                {saving ? "Saving & verifying…" : "Save & verify key"}
-              </button>
               <button className="setting-agent-secondary" type="button" onClick={() => {
+                onSettingsChanged();
                 void refresh(currentUser);
                 window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
-              }} disabled={loading || modelsLoading}>
+              }} disabled={loading || modelsLoading || saving}>
                 <RefreshCw size={15} className={loading ? "setting-agent-spinner" : ""} /> Refresh status
               </button>
               {credentials && (
-                <button className="setting-agent-danger" type="button" onClick={() => void handleDelete()} disabled={deleting}>
+                <button className="setting-agent-danger" type="button" onClick={() => void handleDelete()} disabled={deleting || saving}>
                   {deleting ? <LoaderCircle size={15} className="setting-agent-spinner" /> : <Trash2 size={15} />}
                   Delete key
                 </button>
               )}
             </div>
-          </form>
+          </div>
 
           {credentials && <AgentModelCatalog models={models} isLoading={modelsLoading} error={modelCatalogError} />}
           {message && (

@@ -419,12 +419,12 @@ export const MediaRender: React.FC<MediaRenderProps> = ({
     handleSeek(value);
   }, [handleSeek]);
 
-  const handleProgressMouseDown = useCallback((e: React.MouseEvent) => {
+  const handleProgressMouseDown = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     setIsDragging(true);
   }, []);
 
-  const handleProgressMouseUp = useCallback((e: React.MouseEvent) => {
+  const handleProgressMouseUp = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     setIsDragging(false);
   }, []);

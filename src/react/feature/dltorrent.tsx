@@ -72,7 +72,7 @@ const DlTorrent: React.FC<DlTorrentProps> = ({
   }, [isBusy, onColab, selectedIndexes, sortedFiles]);
 
   return (
-    <div className="downloader-result-card">
+    <div className="downloader-result-card global-card">
       <div className="downloader-result-body">
         <div className="downloader-torrent-header-row">
           <p className="downloader-title downloader-title--inline">

@@ -44,7 +44,7 @@ export interface TelegramFileMetadata {
   videoTracks?: unknown[];
 }
 
-export type ViewMode = 'list' | 'grid' | 'thumbnail';
+export type ViewMode = 'list' | 'grid' | 'thumbnail' | 'poster';
 export type MobileView = 'chats' | 'files' | 'player';
 
 export const STORAGE_KEYS = {

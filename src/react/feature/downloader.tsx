@@ -283,9 +283,9 @@ const Downloader: React.FC = () => {
   const showColabBtn = (isBusy || uStarting || tColabBusy || uColabBusy) && activeColabSession && activeColabUrl;
 
   return (
-    <div className="home-container">
+    <div className="home-container global-page">
       <main className="home-hero">
-        <div className="downloader-body-inner">
+        <div className="downloader-body-inner global-wrapper">
           <div className="downloader-input-row">
             <DlSave selection={saveSelection} onChange={setSaveSelection} />
             <input type="text" className="downloader-input" placeholder="Paste Magnet or Video URL here..." value={inputUrl} onChange={e => setInputUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleRun()} />
@@ -315,8 +315,8 @@ const Downloader: React.FC = () => {
             )}
 
             {detectedType === 'torrent' && hasTorrentPanel && (
-              <div className="downloader-results-wrap">
-                <div className="downloader-result-card">
+              <div className="downloader-results-wrap global-section global-section--spaced">
+                <div className="downloader-result-card global-card">
                   <div className="downloader-result-body">
                     <div className="downloader-torrent-header-row">
                       <p className="downloader-title downloader-title--inline">Torrent · {torrentInfoHash ? torrentInfoHash.slice(0, 12) + '...' : ''}</p>
@@ -350,8 +350,8 @@ const Downloader: React.FC = () => {
             )}
 
             {detectedType === 'universal' && uFormats.length > 0 && (
-              <div className="downloader-results-wrap">
-                <div className="downloader-result-card">
+              <div className="downloader-results-wrap global-section global-section--spaced">
+                <div className="downloader-result-card global-card">
                   <div className="downloader-result-body">
                     {uMeta && (uMeta.title || uMeta.thumbnail) && (
                       <div className="downloader-preview">

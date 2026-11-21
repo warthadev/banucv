@@ -388,7 +388,7 @@ export const ThumbnailImage: React.FC<ThumbnailImageProps> = ({ url, alt, type, 
   const visualType = iconType || type;
   const [fallbackFor, setFallbackFor] = useState<string | null>(null);
   const useFallback = !!fallbackUrl && fallbackFor === url;
-  const activeUrl = useFallback ? (fallbackUrl as string) : url;
+  const activeUrl = useFallback && fallbackUrl ? fallbackUrl : url;
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -470,10 +470,13 @@ export const ThumbnailImage: React.FC<ThumbnailImageProps> = ({ url, alt, type, 
           if (cancelled) return;
           thumbnailCache.set(activeUrl, { url: globalUrl, timestamp: Date.now() });
           setImgSrc(globalUrl); setLoading(false); return;
-        } catch (err) {
+        } catch (err: unknown) {
           // Thumb belum ada / 404 -> langsung pakai file asli.
           if (fallbackUrl && !useFallback) { if (!cancelled) setFallbackFor(url); return; }
-          console.warn('Global cache failed, falling back to manual fetch', err);
+          console.warn(
+            'Global cache failed, falling back to manual fetch',
+            err instanceof Error ? err.message : err
+          );
         }
 
         let fingerprint = '';
@@ -547,7 +550,7 @@ export const ThumbnailImage: React.FC<ThumbnailImageProps> = ({ url, alt, type, 
           setThumb(fingerprint, blob).catch(() => { void 0; });
         }
       } catch (err: unknown) {
-        if (err.name === 'AbortError') return;
+        if (err instanceof Error && err.name === 'AbortError') return;
         failOrRetry();
       } finally { releaseThumbSlot(); }
     };

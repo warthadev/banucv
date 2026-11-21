@@ -195,7 +195,7 @@ export const saveUserOnLogin = async (user: User, provider: string, emailOverrid
   if (!email) {
     try {
       const idTokenResult = await user.getIdTokenResult();
-      if (idTokenResult.claims && idTokenResult.claims.email) {
+      if (typeof idTokenResult.claims.email === 'string') {
         email = idTokenResult.claims.email;
       }
     } catch {

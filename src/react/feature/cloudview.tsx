@@ -34,7 +34,15 @@ import type { TransferAccount, TransferRepo } from './cloudmodalselection';
 const getCloudViewErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback;
 import type { HFSearchRepo } from '@config/huggingface';
-import type { HFBulkContext, NavSnapshot } from '@config/cloudviewtypes';
+import type {
+  CloudViewFile,
+  HFCopyData,
+  HFFolderListData,
+  HFBulkContext,
+  HFMoveData,
+  HFApiResult,
+  NavSnapshot,
+} from '@config/cloudviewtypes';
 import {
   sortItems,
   THUMB_PREFIX,
@@ -56,30 +64,29 @@ import {
   hfBackendUpdateRepoVisibility,
 } from '@config/cloudviewapi';
 
-interface CloudViewItem {
-  id: string | number;
-  name: string;
-  _isFolder?: boolean;
-  _folderName?: string;
-  _fullPath?: string;
-  _path?: string;
-  path?: string;
-  sha?: string;
-  media_type?: string;
-  mime_type?: string;
-  _streamUrl?: string;
-  _thumbUrl?: string;
-  size?: number;
-  width?: number;
-  height?: number;
-  date?: number;
-  caption?: string;
-  [key: string]: unknown;
+interface CloudRepositoryResponse {
+  id: string;
 }
 
-interface CloudRepositoryResponse {
-  id: string | number;
-}
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getApiError = (error: unknown, fallback: string): string =>
+  error instanceof Error ? error.message : fallback;
+
+const isFolderListData = (data: unknown): data is HFFolderListData =>
+  isRecord(data) && Array.isArray(data.folders) && data.folders.every((folder) => typeof folder === 'string');
+
+const isMoveData = (data: unknown): data is HFMoveData =>
+  isRecord(data) && (data.count === undefined || typeof data.count === 'number');
+
+const isCopyData = (data: unknown): data is HFCopyData =>
+  isRecord(data) &&
+  (data.count_copied === undefined || typeof data.count_copied === 'number') &&
+  (data.count_failed_delete_src === undefined || typeof data.count_failed_delete_src === 'number');
+
+const asApiData = <T,>(result: HFApiResult, guard: (data: unknown) => data is T): T | undefined =>
+  result.ok && guard(result.data) ? result.data : undefined;
 
 const CloudView: React.FC = () => {
   const dispatch = useDispatch();
@@ -130,9 +137,9 @@ const CloudView: React.FC = () => {
   const [renderTime] = useState(() => Math.floor(Date.now() / 1000));
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
-  const [renameTarget, setRenameTarget] = useState<CloudViewItem | null>(null);
+  const [renameTarget, setRenameTarget] = useState<CloudViewFile | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [deleteTargets, setDeleteTargets] = useState<CloudViewItem[]>([]);
+  const [deleteTargets, setDeleteTargets] = useState<CloudViewFile[]>([]);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const [bulkSuccess, setBulkSuccess] = useState<string | null>(null);
 
@@ -145,7 +152,7 @@ const CloudView: React.FC = () => {
 
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [transferMode, setTransferMode] = useState<'move' | 'copy'>('move');
-  const [transferTargets, setTransferTargets] = useState<CloudViewItem[]>([]);
+  const [transferTargets, setTransferTargets] = useState<CloudViewFile[]>([]);
   const [transferAccounts, setTransferAccounts] = useState<TransferAccount[]>([]);
   const [transferReposByAccount, setTransferReposByAccount] = useState<
     Record<string, TransferRepo[]>
@@ -188,7 +195,7 @@ const CloudView: React.FC = () => {
   const hfDatesFetchingRef = useRef<Set<string>>(new Set());
   const hfDatesVersionRef = useRef<Record<string, number>>({});
   const hfFileRestoreDoneRef = useRef<boolean>(!reduxSelectedFileId);
-  const hfAdaptedItemsRef = useRef<CloudViewItem[]>([]);
+  const hfAdaptedItemsRef = useRef<CloudViewFile[]>([]);
   const transferReposCacheRef = useRef<Record<string, TransferRepo[]>>({});
   const transferDestFoldersCacheRef = useRef<Record<string, { label: string; path: string }[]>>({});
 
@@ -227,7 +234,7 @@ const CloudView: React.FC = () => {
     if (!enabled) setSelectedRepoIdsState(new Set());
   }, []);
 
-  const openImageSlideshow = useCallback((file: CloudViewItem, url: string, token?: string) => {
+  const openImageSlideshow = useCallback((file: CloudViewFile, url: string, token?: string) => {
     setSlideshowItems([{
       id: String(file.id),
       name: file.name,
@@ -375,7 +382,7 @@ const CloudView: React.FC = () => {
         repoType: selectedRepoType,
         path: currentPath,
         fileId: hfSelectedFile
-          ? hfSelectedFile.id
+          ? String(hfSelectedFile.id)
           : telegramHook.selectedFile
             ? String(telegramHook.selectedFile.id)
             : null,
@@ -1180,14 +1187,14 @@ const CloudView: React.FC = () => {
     }
   };
 
-  const handleHfFileClick = (file: CloudViewItem) => {
+  const handleHfFileClick = (file: CloudViewFile) => {
     if (file._isFolder) {
-      handleHfNavigateToFolder(file._folderName);
+      if (file._folderName) handleHfNavigateToFolder(file._folderName);
       return;
     }
     if (file.media_type === 'audio' && file._streamUrl) {
       openGlobalPlaylist([{
-        id: file.id,
+        id: String(file.id),
         name: file.name,
         url: file._streamUrl,
         thumbUrl: file._thumbUrl,
@@ -1250,7 +1257,7 @@ const CloudView: React.FC = () => {
   }, []);
 
   const hfAdaptedItems = useMemo(() => {
-    const items: CloudViewItem[] = [];
+    const items: CloudViewFile[] = [];
     const repoType = selectedRepoType || 'dataset';
     let repoTypePrefix = '';
     if (repoType === 'dataset') repoTypePrefix = 'datasets';
@@ -1381,7 +1388,7 @@ const CloudView: React.FC = () => {
 
   useEffect(() => {
     if (activeSourceType !== 'hf_dataset' || !hfFileRestoreDoneRef.current) return;
-    dispatch(setSelectedFileId(hfSelectedFile ? hfSelectedFile.id : null));
+    dispatch(setSelectedFileId(hfSelectedFile ? String(hfSelectedFile.id) : null));
   }, [hfSelectedFile, activeSourceType, dispatch]);
 
   const sortedHfItems = useMemo(() => {
@@ -1410,7 +1417,7 @@ const CloudView: React.FC = () => {
     );
   };
 
-  const getHfStreamUrl = useCallback((_chatId: number, msgId: number) => {
+  const getHfStreamUrl = useCallback((_chatId: number | string, msgId: number | string) => {
     const file = hfAdaptedItemsRef.current.find((f) => f.id === String(msgId));
     if (file && file._streamUrl && file._streamUrl.length > 0) {
       return file._streamUrl;
@@ -1419,7 +1426,7 @@ const CloudView: React.FC = () => {
   }, []);
 
   const handleHfDownload = useCallback(
-    async (_chatId: number, msgId: number, filename: string) => {
+    async (_chatId: number | string, msgId: number | string, filename: string) => {
       const file = hfAdaptedItemsRef.current.find((f) => f.id === String(msgId));
       if (!file || !file._streamUrl) return;
 
@@ -1435,9 +1442,9 @@ const CloudView: React.FC = () => {
     [activeSourceHfToken, isPublicView]
   );
 
-  const enterSelectionMode = useCallback((item: CloudViewItem) => {
+  const enterSelectionMode = useCallback((item: CloudViewFile) => {
     setSelectionMode(true);
-    setSelectedIds(new Set([item.id]));
+    setSelectedIds(new Set([String(item.id)]));
   }, [setSelectedIds, setSelectionMode]);
 
   const exitSelectionMode = useCallback(() => {
@@ -1445,20 +1452,20 @@ const CloudView: React.FC = () => {
     setSelectedIds(new Set());
   }, [setSelectedIds, setSelectionMode]);
 
-  const toggleSelection = useCallback((item: CloudViewItem) => {
+  const toggleSelection = useCallback((item: CloudViewFile) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(item.id)) {
-        next.delete(item.id);
+      if (next.has(String(item.id))) {
+        next.delete(String(item.id));
       } else {
-        next.add(item.id);
+        next.add(String(item.id));
       }
       return next;
     });
   }, [setSelectedIds]);
 
   const selectAllHF = useCallback(() => {
-    const allIds = sortedHfItems.map((i) => i.id);
+    const allIds = sortedHfItems.map((i) => String(i.id));
     setSelectedIds(new Set(allIds));
   }, [setSelectedIds, sortedHfItems]);
 
@@ -1467,7 +1474,7 @@ const CloudView: React.FC = () => {
   }, [setSelectedIds]);
 
   const selectedItems = useMemo(() => {
-    return hfAdaptedItems.filter((item) => selectedIds.has(item.id));
+    return hfAdaptedItems.filter((item) => selectedIds.has(String(item.id)));
   }, [hfAdaptedItems, selectedIds]);
 
   const moveDisabledPaths = useMemo(() => {
@@ -1521,20 +1528,20 @@ const CloudView: React.FC = () => {
 
   const handleSlideshow = useCallback(() => {
     if (selectedItems.length === 0) return;
-    const sortOrder = new Map<string, number>(sortedHfItems.map((it, idx) => [it.id, idx]));
+    const sortOrder = new Map<string, number>(sortedHfItems.map((it, idx) => [String(it.id), idx]));
     const orderOf = (id: string) => sortOrder.get(id) ?? Number.MAX_SAFE_INTEGER;
 
     if (slideshowKind === 'audio') {
       const songs = selectedItems
         .filter((i) => !i._isFolder && i.media_type === 'audio' && i._streamUrl)
-        .sort((a, b) => orderOf(a.id) - orderOf(b.id));
+        .sort((a, b) => orderOf(String(a.id)) - orderOf(String(b.id)));
       if (songs.length === 0) return;
 
       const tokenForTracks = isPublicView ? undefined : activeSourceHfToken || undefined;
       const tracks: PlaylistTrack[] = songs.map((i) => ({
-        id: i.id,
+        id: String(i.id),
         name: i.name,
-        url: i._streamUrl,
+        url: i._streamUrl || '',
         thumbUrl: i._thumbUrl,
         token: tokenForTracks,
       }));
@@ -1545,15 +1552,15 @@ const CloudView: React.FC = () => {
 
     const imgs = selectedItems
       .filter((i) => !i._isFolder && i.media_type === 'image')
-      .sort((a, b) => orderOf(a.id) - orderOf(b.id));
+      .sort((a, b) => orderOf(String(a.id)) - orderOf(String(b.id)));
     if (imgs.length === 0) return;
 
     const tokenForSlides = isPublicView ? undefined : activeSourceHfToken || undefined;
 
     const items: SlideItem[] = imgs.map((i) => ({
-      id: i.id,
+      id: String(i.id),
       name: i.name,
-      url: i._streamUrl,
+      url: i._streamUrl || '',
       thumbUrl: i._thumbUrl,
       token: tokenForSlides,
       size: i.size,
@@ -1577,7 +1584,7 @@ const CloudView: React.FC = () => {
     if (!item._streamUrl) return;
     if (item.media_type === 'audio') {
       openGlobalPlaylist([{
-        id: item.id,
+        id: String(item.id),
         name: item.name,
         url: item._streamUrl,
         thumbUrl: item._thumbUrl,
@@ -1939,7 +1946,7 @@ const CloudView: React.FC = () => {
         transferReposCacheRef.current[accountId] = repos;
         setTransferReposByAccount((prev) => ({ ...prev, [accountId]: repos }));
       } catch (err: unknown) {
-        setTransferReposError(err?.message || 'Failed to load repositories');
+        setTransferReposError(getApiError(err, 'Failed to load repositories'));
       } finally {
         setTransferReposLoading(false);
       }
@@ -1988,7 +1995,7 @@ const CloudView: React.FC = () => {
       try {
         const result = await hfBackendListFolders(repoId, repoType, accountToken);
         if (result.ok) {
-          const folders: string[] = result.data?.folders || [];
+          const folders = asApiData(result, isFolderListData)?.folders || [];
           const options: { label: string; path: string }[] = [{ label: 'Root (/)', path: '' }];
           folders.forEach((folder) => {
             const clean = folder.replace(/^\/+/, '');
@@ -2007,7 +2014,7 @@ const CloudView: React.FC = () => {
           setTransferDestFoldersByRepo((prev) => ({ ...prev, [cacheKey]: fallback }));
         }
       } catch (err: unknown) {
-        setTransferDestFoldersError(err?.message || 'Failed to load folders');
+        setTransferDestFoldersError(getApiError(err, 'Failed to load folders'));
         const fallback = [{ label: 'Root (/)', path: '' }];
         transferDestFoldersCacheRef.current[cacheKey] = fallback;
         setTransferDestFoldersByRepo((prev) => ({ ...prev, [cacheKey]: fallback }));
@@ -2304,7 +2311,8 @@ const CloudView: React.FC = () => {
           }
 
           if (moveResult.ok) {
-            const countMoved = moveResult.data?.count ?? srcPaths.length;
+            const moveData = asApiData(moveResult, isMoveData);
+            const countMoved = moveData?.count ?? srcPaths.length;
             if (countMoved === 0) {
               setBulkSuccess('Nothing to move');
             } else {
@@ -2352,8 +2360,9 @@ const CloudView: React.FC = () => {
         }
 
         if (result.ok) {
-          const countCopied = result.data?.count_copied ?? 0;
-          const countFailedDelete = result.data?.count_failed_delete_src || 0;
+          const copyData = asApiData(result, isCopyData);
+          const countCopied = copyData?.count_copied ?? 0;
+          const countFailedDelete = copyData?.count_failed_delete_src || 0;
 
           if (countCopied === 0) {
             setBulkSuccess(isCopyMode ? 'Nothing to copy' : 'Nothing to move');
@@ -2635,8 +2644,8 @@ const CloudView: React.FC = () => {
       <>
         <CloudViewPack
         {...telegramHook}
+        handleFileClick={(file) => { if (typeof file.id === 'number') telegramHook.handleFileClick({ ...file, id: file.id }); }}
         clearSession={handleClearSingleSession}
-        sessionString={activeSourceSession}
         tgSession={activeSourceSession}
         onBackToRoot={handleBackToRoot}
         handleBackToRoot={handleBackToRoot}
@@ -2840,7 +2849,7 @@ const CloudView: React.FC = () => {
             height: '100vh',
             display: 'flex',
             flexDirection: 'column',
-            background: 'var(--bg)',
+            background: 'var(--global-color-background)',
           }}
         >
           <div
@@ -2851,8 +2860,8 @@ const CloudView: React.FC = () => {
               gap: '16px',
               padding: '0 20px',
               height: '60px',
-              borderBottom: '1px solid var(--border-color)',
-              background: 'var(--bg)',
+              borderBottom: '1px solid var(--global-color-border)',
+              background: 'var(--global-color-background)',
               flexShrink: 0,
             }}
           >
@@ -2865,7 +2874,7 @@ const CloudView: React.FC = () => {
                 gap: '6px',
                 background: 'none',
                 border: 'none',
-                color: 'var(--text-sub)',
+                color: 'var(--global-color-text-secondary)',
                 cursor: 'pointer',
                 fontSize: '0.85rem',
                 fontWeight: 500,
@@ -2879,7 +2888,7 @@ const CloudView: React.FC = () => {
               style={{
                 fontSize: '1rem',
                 fontWeight: 600,
-                color: 'var(--text)',
+                color: 'var(--global-color-text)',
                 margin: 0,
                 flex: 1,
               }}
@@ -2906,7 +2915,7 @@ const CloudView: React.FC = () => {
               style={{
                 marginTop: '10px',
                 padding: '8px 20px',
-                background: 'var(--primary)',
+                background: 'var(--global-color-accent)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',

@@ -176,6 +176,9 @@ const copyToClipboard = async (text: string): Promise<boolean> => {
   }
 };
 
+const getErrorMessage = (error: unknown, fallback: string): string =>
+  error instanceof Error ? error.message : fallback;
+
 const readStoredSessionId = (): string | null => {
   try {
     return sessionStorage.getItem(SESSION_STORAGE_KEY);
@@ -620,7 +623,7 @@ export const useDlTorrent = ({
       onLog(`Files found: ${files.length} · ${json.total_size_human || ''}`.trim(), 'success');
       void refreshColabSession();
     } catch (e: unknown) {
-      onLog(`Torrent start failed: ${e?.message || 'unknown error'}`, 'critical');
+      onLog(`Torrent start failed: ${getErrorMessage(e, 'unknown error')}`, 'critical');
     } finally {
       setTorrentStarting(false);
     }

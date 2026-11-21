@@ -25,8 +25,8 @@
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background: var(--global-color-surface);
+  border: 1px solid var(--global-color-border);
   border-radius: 24px;
   padding: 32px 28px;
   display: flex;
@@ -34,7 +34,7 @@
   align-items: center;
   text-align: center;
   gap: 20px;
-  box-shadow: 0 20px 40px var(--shadow-color);
+  box-shadow: 0 20px 40px var(--global-color-shadow);
   animation: fadeInUp 0.4s ease-out;
   margin: 0 auto;
   position: relative;
@@ -64,7 +64,7 @@
 
 .setting-icon {
   font-size: 56px;
-  background: radial-gradient(circle at 30% 30%, var(--primary-alpha), transparent 70%), var(--primary-alpha);
+  background: radial-gradient(circle at 30% 30%, var(--global-color-accent-alpha), transparent 70%), var(--global-color-accent-alpha);
   width: 80px;
   height: 80px;
   min-width: 80px;
@@ -76,7 +76,7 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 4px;
-  box-shadow: 0 0 0 6px var(--primary-alpha);
+  box-shadow: 0 0 0 6px var(--global-color-accent-alpha);
   animation: iconPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -84,14 +84,14 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
-  color: var(--text);
+  color: var(--global-color-text);
   letter-spacing: -0.02em;
 }
 
 .setting-desc {
   font-size: 0.9rem;
   line-height: 1.5;
-  color: var(--text-sub);
+  color: var(--global-color-text-secondary);
   margin: 0 0 8px 0;
 }
 
@@ -122,22 +122,22 @@
 }
 
 .mode-button {
-  border: 1px solid var(--border-color);
-  background: var(--bg);
-  color: var(--text);
+  border: 1px solid var(--global-color-border);
+  background: var(--global-color-background);
+  color: var(--global-color-text);
 }
 
 .mode-button:hover {
-  border-color: var(--primary);
-  background: var(--primary-alpha);
+  border-color: var(--global-color-accent);
+  background: var(--global-color-accent-alpha);
   transform: translateY(-1px);
 }
 
 .mode-button.active {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: var(--color-accent-foreground);
-  box-shadow: 0 4px 12px var(--shadow-color);
+  background: var(--global-color-accent);
+  border-color: var(--global-color-accent);
+  color: var(--global-color-on-accent);
+  box-shadow: 0 4px 12px var(--global-color-shadow);
 }
 
 .mode-button.active:hover {
@@ -146,9 +146,9 @@
 }
 
 .next-button {
-  background: var(--primary);
+  background: var(--global-color-accent);
   border: none;
-  color: var(--color-accent-foreground);
+  color: var(--global-color-on-accent);
   margin-top: 12px;
 }
 
@@ -171,15 +171,15 @@
   transition: all 0.2s ease;
   font-family: inherit;
   text-align: center;
-  background: var(--primary-alpha);
-  border: 1px solid var(--primary);
-  color: var(--primary);
+  background: var(--global-color-accent-alpha);
+  border: 1px solid var(--global-color-accent);
+  color: var(--global-color-accent);
   margin: 8px 0 4px 0;
 }
 
 .audio-manual-trigger:hover {
-  background: var(--primary);
-  color: var(--color-accent-foreground);
+  background: var(--global-color-accent);
+  color: var(--global-color-on-accent);
   transform: translateY(-1px);
 }
 

@@ -1,7 +1,8 @@
 // src/react/animation/quick.ts
+import type { Variants } from "framer-motion";
 
 // path quickMenuVariants: animasi untuk dropdown menu quick access
-export const quickMenuVariants = {
+export const quickMenuVariants: Variants = {
   initial: { opacity: 0, y: 10, scale: 0.95 },
   animate: { 
     opacity: 1, 
@@ -24,12 +25,12 @@ export const quickMenuVariants = {
 };
 
 // path quickToggleVariants: animasi untuk tombol toggle quick access
-export const quickToggleVariants = {
+export const quickToggleVariants: Variants = {
   idle: { 
     scale: 1,
     rotate: 0,
-    backgroundColor: "var(--bg-alpha)",
-    color: "var(--text)"
+    backgroundColor: "var(--global-color-background-alpha)",
+    color: "var(--global-color-text)"
   },
   tap: { 
     scale: 0.95,
@@ -39,7 +40,7 @@ export const quickToggleVariants = {
   },
   open: { 
     rotate: 90,
-    backgroundColor: "var(--primary)",
+    backgroundColor: "var(--global-color-accent)",
     color: "#ffffff",
     transition: { 
       duration: 0.15,
@@ -49,7 +50,7 @@ export const quickToggleVariants = {
 };
 
 // path quickItemVariants: animasi untuk setiap item dalam dropdown
-export const quickItemVariants = {
+export const quickItemVariants: Variants = {
   hidden: { opacity: 0, x: -5 },
   visible: (custom: number) => ({
     opacity: 1,
@@ -71,7 +72,7 @@ export const quickItemVariants = {
 };
 
 // path quickWrapperVariants: animasi untuk posisi wrapper (responsif terhadap player)
-export const quickWrapperVariants = {
+export const quickWrapperVariants: Variants = {
   withPlayer: { 
     bottom: 110,
     right: '5%',
@@ -91,7 +92,7 @@ export const quickWrapperVariants = {
 };
 
 // path quickOverlayVariants: animasi untuk overlay
-export const quickOverlayVariants = {
+export const quickOverlayVariants: Variants = {
   initial: { opacity: 0 },
   animate: { 
     opacity: 1,

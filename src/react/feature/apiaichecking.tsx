@@ -1,12 +1,13 @@
 // src/react/feature/apiaichecking.tsx
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import type { Variants } from "framer-motion";
 import { heroVariants } from "@/react/animation/home";
 import { Play, AlertCircle, Loader2, Cpu, Copy, Check, Terminal } from "lucide-react";
 import { getAuth } from "@config/firebase";
 import { AI_AGENT_API_BASE } from "@config/api";
 
-const listContainerVariants = {
+const listContainerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -14,7 +15,7 @@ const listContainerVariants = {
   }
 };
 
-const listItemVariants = {
+const listItemVariants: Variants = {
   hidden: { opacity: 0, y: 10 },
   visible: { 
     opacity: 1, y: 0,
@@ -80,7 +81,7 @@ const AICheck: React.FC = () => {
   };
 
   return (
-    <div className="home-container">
+    <div className="home-container global-page">
       <main className="home-hero">
         <motion.div
           variants={heroVariants}
@@ -152,7 +153,7 @@ const AICheck: React.FC = () => {
                 initial={{ opacity: 0, y: 10 }} 
                 animate={{ opacity: 1, y: 0 }} 
                 exit={{ opacity: 0, scale: 0.95 }} 
-                className="home-card aic-error-card"
+                className="home-card aic-error-card global-card global-card--padded"
               >
                 <div className="card-header">
                   <AlertCircle color="#ff4d4d" size={20} />
@@ -171,7 +172,7 @@ const AICheck: React.FC = () => {
                 className="home-grid"
               >
                 {currentModels.map((model) => (
-                  <motion.div key={model.name} variants={listItemVariants} className="home-card">
+                  <motion.div key={model.name} variants={listItemVariants} className="home-card global-card global-card--padded">
                     <div className="card-header">
                       <div className="card-icon-wrapper"><Cpu size={20} /></div>
                       <h3 className="home-card-title">{model.name?.replace('models/', '') || ''}</h3>

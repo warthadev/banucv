@@ -387,7 +387,7 @@ const MediaImage: React.FC<MediaImageProps> = ({
   return (
     <AnimatePresence>
       <motion.div
-        className="cloudslideshow-overlay"
+        className="cloudslideshow-overlay global-modal-overlay global-modal-overlay--media"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -523,7 +523,7 @@ const MediaImage: React.FC<MediaImageProps> = ({
                 <AnimatePresence>
                   {showSpeedMenu && (
                     <motion.div
-                      className="cloudslideshow-speed-menu"
+                      className="cloudslideshow-speed-menu global-popover global-popover--glass"
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}

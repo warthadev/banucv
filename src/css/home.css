@@ -7,7 +7,7 @@
   flex-direction: column;
   overflow-x: hidden;
   overflow-y: auto;
-  background: var(--bg);
+  background: var(--global-color-background);
 }
 
 .home-hero {
@@ -26,7 +26,7 @@
   margin-bottom: 20px;
   letter-spacing: -2px;
   width: 100%;
-  color: var(--text);
+  color: var(--global-color-text);
 }
 
 .home-subtitle {
@@ -34,7 +34,7 @@
   max-width: 600px;
   line-height: 1.6;
   margin-bottom: 40px;
-  color: var(--text-sub);
+  color: var(--global-color-text-secondary);
 }
 
 .home-subtitle1 {
@@ -42,7 +42,7 @@
   max-width: 600px;
   line-height: 1.6;
   margin-bottom: 40px;
-  color: var(--text);
+  color: var(--global-color-text);
 }
 
 .home-grid {
@@ -59,7 +59,7 @@
   padding: 25px;
   text-align: left;
   width: 100%;
-  background: var(--card-bg);
+  background: var(--global-color-surface);
 }
 
 .card-header {
@@ -74,19 +74,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary);
+  color: var(--global-color-accent);
 }
 
 .home-card-title {
   font-size: 1.2rem;
   margin: 0;
-  color: var(--text);
+  color: var(--global-color-text);
 }
 
 .home-card-text {
   font-size: 0.9rem;
   line-height: 1.5;
-  color: var(--text-sub);
+  color: var(--global-color-text-secondary);
 }
 
 .social-wrapper {
@@ -102,20 +102,20 @@
   text-align: center;
   font-size: 0.8rem;
   margin-top: auto;
-  color: var(--text-sub);
+  color: var(--global-color-text-secondary);
 }
 
 
 /* Dashboard Profile Card */
 .dashboard-profile-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-card);
+  background: var(--global-color-surface);
+  border: 1px solid var(--global-color-border);
+  border-radius: var(--global-radius-card);
   padding: 24px;
   width: 100%;
   max-width: 500px;
   margin-bottom: 40px;
-  box-shadow: 0 4px 20px var(--shadow-color);
+  box-shadow: 0 4px 20px var(--global-color-shadow);
 }
 
 .profile-header {
@@ -134,20 +134,20 @@
   height: 80px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid var(--primary);
-  background: var(--bg);
+  border: 3px solid var(--global-color-accent);
+  background: var(--global-color-background);
 }
 
 .avatar-placeholder {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: var(--primary-alpha);
+  background: var(--global-color-accent-alpha);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary);
-  border: 2px solid var(--border-color);
+  color: var(--global-color-accent);
+  border: 2px solid var(--global-color-border);
 }
 
 .profile-info {
@@ -158,12 +158,12 @@
   font-size: 1.3rem;
   font-weight: 700;
   margin: 0 0 4px 0;
-  color: var(--text);
+  color: var(--global-color-text);
 }
 
 .profile-status {
   font-size: 0.75rem;
-  color: var(--text-sub);
+  color: var(--global-color-text-secondary);
   margin: 0;
   opacity: 0.8;
 }
@@ -175,7 +175,7 @@
   flex-wrap: wrap;
   gap: 12px;
   padding-top: 16px;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--global-color-border);
   margin-top: 8px;
 }
 
@@ -183,12 +183,12 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--primary-alpha);
+  background: var(--global-color-accent-alpha);
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 0.7rem;
   font-weight: 600;
-  color: var(--primary);
+  color: var(--global-color-accent);
 }
 
 .selfie-timestamp {
@@ -196,7 +196,7 @@
   align-items: center;
   gap: 6px;
   font-size: 0.7rem;
-  color: var(--text-sub);
+  color: var(--global-color-text-secondary);
 }
 
 /* Dashboard Content */
@@ -218,9 +218,9 @@
 }
 
 .stat-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-button);
+  background: var(--global-color-surface);
+  border: 1px solid var(--global-color-border);
+  border-radius: var(--global-radius-control);
   padding: 16px 24px;
   text-align: center;
   min-width: 100px;
@@ -231,13 +231,13 @@
   display: block;
   font-size: 1.1rem;
   font-weight: 800;
-  color: var(--primary);
+  color: var(--global-color-accent);
   margin-bottom: 4px;
 }
 
 .stat-label {
   font-size: 0.7rem;
-  color: var(--text-sub);
+  color: var(--global-color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }

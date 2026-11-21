@@ -10,7 +10,7 @@
 }
 
 .quick-dropdown-menu {
-  background-color: var(--bg-alpha);
+  background-color: var(--global-color-background-alpha);
   -webkit-backdrop-filter: blur(15px);
   backdrop-filter: blur(15px);
   border: none;
@@ -33,7 +33,7 @@
 
 .quick-menu-header {
   padding: 12px 16px 6px;
-  color: var(--text-muted);
+  color: var(--global-color-text-muted);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1px;
@@ -42,7 +42,7 @@
 }
 
 .quick-dropdown-menu--dashboard .quick-menu-header {
-  color: var(--text);
+  color: var(--global-color-text);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
@@ -82,20 +82,20 @@
   background: transparent !important;
   border: none;
   border-radius: 18px;
-  color: var(--text);
+  color: var(--global-color-text);
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
 .dropdown-item-btn:hover {
-  background-color: var(--primary-alpha) !important;
+  background-color: var(--global-color-accent-alpha) !important;
   transform: translateX(-4px);
 }
 
 .item-icon-wrapper {
-  background-color: var(--primary-alpha);
-  color: var(--primary);
+  background-color: var(--global-color-accent-alpha);
+  color: var(--global-color-accent);
   padding: 8px;
   border-radius: 14px;
   display: flex;
@@ -113,30 +113,30 @@
 .item-name {
   font-size: 13px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--global-color-text);
 }
 
 .item-desc {
   font-size: 10px;
-  color: var(--text-sub);
+  color: var(--global-color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .quick-dropdown-menu--dashboard .item-desc {
-  color: var(--text);
+  color: var(--global-color-text);
 }
 
 .quick-toggle-btn {
   width: 54px;
   height: 54px;
-  background-color: var(--bg-alpha);
+  background-color: var(--global-color-background-alpha);
   -webkit-backdrop-filter: blur(15px);
   backdrop-filter: blur(15px);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--global-color-border);
   border-radius: 50%;
-  color: var(--text);
+  color: var(--global-color-text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -159,8 +159,8 @@
 .quick-toggle-btn.active {
   width: 45px;
   height: 45px;
-  background-color: var(--primary) !important;
-  border-color: var(--primary);
+  background-color: var(--global-color-accent) !important;
+  border-color: var(--global-color-accent);
   color: #ffffff;
   border-radius: 50%;
   -webkit-backdrop-filter: none;
@@ -169,16 +169,16 @@
 }
 
 .quick-toggle-btn:not(.active):hover {
-  border-color: var(--primary);
+  border-color: var(--global-color-accent);
   background-color: rgba(0, 168, 255, 0.05);
-  color: var(--primary);
+  color: var(--global-color-accent);
   transform: translateY(-3px);
 }
 
 .quick-dropdown-menu--dashboard + .quick-toggle-btn,
 .quick-toggle-btn.dashboard-active {
-  background-color: var(--bg-alpha) !important;
-  color: var(--text) !important;
+  background-color: var(--global-color-background-alpha) !important;
+  color: var(--global-color-text) !important;
   border: none !important;
   outline: none !important;
   -webkit-tap-highlight-color: transparent !important;
@@ -189,8 +189,8 @@
 .quick-toggle-btn.dashboard-active:active,
 .quick-toggle-btn.dashboard-active:focus-visible,
 .quick-toggle-btn.dashboard-active:hover {
-  background-color: var(--bg-alpha) !important;
-  color: var(--text) !important;
+  background-color: var(--global-color-background-alpha) !important;
+  color: var(--global-color-text) !important;
   outline: none !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
   border: none !important;
@@ -199,8 +199,8 @@
 .quick-toggle-btn.dashboard-active.active {
   width: 45px !important;
   height: 45px !important;
-  background-color: var(--bg-alpha) !important;
-  color: var(--text) !important;
+  background-color: var(--global-color-background-alpha) !important;
+  color: var(--global-color-text) !important;
   border-radius: 50% !important;
   -webkit-backdrop-filter: blur(15px) !important;
   backdrop-filter: blur(15px) !important;
@@ -211,8 +211,8 @@
 .quick-toggle-btn.dashboard-active.active:active,
 .quick-toggle-btn.dashboard-active.active:focus-visible,
 .quick-toggle-btn.dashboard-active.active:hover {
-  background-color: var(--bg-alpha) !important;
-  color: var(--text) !important;
+  background-color: var(--global-color-background-alpha) !important;
+  color: var(--global-color-text) !important;
   outline: none !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
   border: none !important;

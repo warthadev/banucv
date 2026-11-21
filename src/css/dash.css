@@ -85,7 +85,7 @@
 .dash-ecosystem-title {
   font-size: 32px;
   font-weight: 800;
-  color: var(--text);
+  color: var(--global-color-text);
   line-height: 1.2;
   margin: 0;
   letter-spacing: -0.02em;
@@ -95,7 +95,7 @@
 .dash-ecosystem-subtitle {
   font-size: 16px;
   font-weight: 400;
-  color: var(--text);
+  color: var(--global-color-text);
   line-height: 1.6;
   margin: 0;
   max-width: 720px;
@@ -145,7 +145,7 @@
   backdrop-filter: blur(15px);
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
-  color: var(--primary);
+  color: var(--global-color-accent);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
 }
@@ -155,14 +155,14 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--primary);
+  color: var(--global-color-accent);
   opacity: 0.85;
 }
 
 .dash-ecosystem-item-name {
   font-size: 28px;
   font-weight: 800;
-  color: var(--text);
+  color: var(--global-color-text);
   line-height: 1.2;
   margin: 0;
   letter-spacing: -0.02em;
@@ -171,7 +171,7 @@
 .dash-ecosystem-item-desc {
   font-size: 15px;
   font-weight: 400;
-  color: var(--text);
+  color: var(--global-color-text);
   line-height: 1.6;
   margin: 0;
   opacity: 0.78;
@@ -197,7 +197,7 @@
 .dash-projects-title {
   font-size: 32px;
   font-weight: 800;
-  color: var(--text);
+  color: var(--global-color-text);
   line-height: 1.2;
   margin: 0;
   letter-spacing: -0.02em;
@@ -207,7 +207,7 @@
 .dash-projects-subtitle {
   font-size: 16px;
   font-weight: 400;
-  color: var(--text);
+  color: var(--global-color-text);
   line-height: 1.6;
   margin: 0;
   max-width: 720px;
@@ -255,8 +255,8 @@
   height: 56px;
   min-width: 56px;
   border-radius: 16px;
-  background: var(--primary-alpha);
-  color: var(--primary);
+  background: var(--global-color-accent-alpha);
+  color: var(--global-color-accent);
   flex-shrink: 0;
 }
 
@@ -277,7 +277,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--primary);
+  color: var(--global-color-accent);
   opacity: 0.85;
   text-align: left;
 }
@@ -285,7 +285,7 @@
 .dash-content-title {
   font-size: 22px;
   font-weight: 800;
-  color: var(--text);
+  color: var(--global-color-text);
   line-height: 1.2;
   margin: 0;
   letter-spacing: -0.02em;
@@ -295,7 +295,7 @@
 .dash-content-desc {
   font-size: 14px;
   font-weight: 400;
-  color: var(--text);
+  color: var(--global-color-text);
   line-height: 1.6;
   margin: 6px 0 0 0;
   max-width: 100%;
@@ -309,8 +309,8 @@
   align-items: center;
   justify-content: center;
   padding: 11px 20px;
-  background: var(--primary);
-  color: var(--btn-text);
+  background: var(--global-color-accent);
+  color: var(--global-color-on-accent);
   border: none;
   border-radius: 12px;
   font-family: inherit;
@@ -332,7 +332,7 @@
 }
 
 .dash-content-btn:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--global-color-accent);
   outline-offset: 3px;
 }
 
@@ -372,7 +372,7 @@
 .dash-tech-category {
   font-size: 13px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--global-color-text);
   margin: 0;
   letter-spacing: -0.01em;
 }
@@ -389,8 +389,8 @@
 .dash-tech-item {
   font-size: 12px;
   font-weight: 500;
-  color: var(--text);
-  background: var(--primary-alpha);
+  color: var(--global-color-text);
+  background: var(--global-color-accent-alpha);
   padding: 5px 10px;
   border-radius: 8px;
   opacity: 0.9;

@@ -72,8 +72,8 @@ export const CreateModal: React.FC<CreateModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div className="github-modal-overlay" variants={overlayVariants} initial="initial" animate="animate" exit="exit">
-          <motion.div className="github-modal" variants={modalVariants} initial="hidden" animate="visible" exit="exit">
+        <motion.div className="github-modal-overlay global-modal-overlay" variants={overlayVariants} initial="initial" animate="animate" exit="exit">
+          <motion.div className="github-modal global-modal" variants={modalVariants} initial="hidden" animate="visible" exit="exit">
             <h3 style={{ margin: "0 0 16px 0", textAlign: "center" }}>{modalTitle}</h3>
 
             {!selectedRepo ? (
@@ -156,8 +156,8 @@ export const RenameModal: React.FC<RenameModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div className="github-modal-overlay" variants={overlayVariants} initial="initial" animate="animate" exit="exit">
-          <motion.div className="github-modal" variants={modalVariants} initial="hidden" animate="visible" exit="exit">
+        <motion.div className="github-modal-overlay global-modal-overlay" variants={overlayVariants} initial="initial" animate="animate" exit="exit">
+          <motion.div className="github-modal global-modal" variants={modalVariants} initial="hidden" animate="visible" exit="exit">
             <h3 style={{ margin: "0 0 16px 0", textAlign: "center" }}>Rename {targetType}</h3>
             <input
               autoFocus
@@ -188,8 +188,8 @@ export const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, deleteTarget, 
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div className="github-modal-overlay" variants={overlayVariants} initial="initial" animate="animate" exit="exit">
-          <motion.div className="github-modal github-modal-danger" variants={modalVariants} initial="hidden" animate="visible" exit="exit">
+        <motion.div className="github-modal-overlay global-modal-overlay" variants={overlayVariants} initial="initial" animate="animate" exit="exit">
+          <motion.div className="github-modal github-modal-danger global-modal" variants={modalVariants} initial="hidden" animate="visible" exit="exit">
             <div className="github-modal-danger-icon"><AlertTriangle size={26} /></div>
             <h3 style={{ margin: "8px 0 16px 0", textAlign: "center" }}>Delete {deleteTarget.type}</h3>
             <p style={{ textAlign: "center", marginBottom: 20 }}>Delete <strong>{deleteTarget.name}</strong>? {warningMsg}</p>
@@ -233,12 +233,12 @@ export const GithubAuthModal: React.FC<GithubAuthModalProps> = ({ isOpen, onSave
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div className="github-modal-overlay" variants={overlayVariants} initial="initial" animate="animate" exit="exit">
-          <motion.div className="github-modal" variants={modalVariants} initial="hidden" animate="visible" exit="exit">
+        <motion.div className="github-modal-overlay global-modal-overlay" variants={overlayVariants} initial="initial" animate="animate" exit="exit">
+          <motion.div className="github-modal global-modal" variants={modalVariants} initial="hidden" animate="visible" exit="exit">
             <div style={{ textAlign: "center", marginBottom: "24px" }}>
               <div className="github-auth-icon-wrapper"><GithubIcon /></div>
               <h3 style={{ margin: "16px 0 8px 0", fontSize: "1.5rem" }}>GitHub Setup</h3>
-              <p style={{ fontSize: "0.85rem", color: "var(--text-sub)", margin: 0 }}>Enter your GitHub credentials to access the repository editor</p>
+              <p style={{ fontSize: "0.85rem", color: "var(--global-color-text-secondary)", margin: 0 }}>Enter your GitHub credentials to access the repository editor</p>
             </div>
 
             <form onSubmit={handleSubmit}>

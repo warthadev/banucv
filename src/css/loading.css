@@ -10,7 +10,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg);
+  background: var(--global-color-background);
   z-index: 9999;
   user-select: none;
   overflow: hidden;
@@ -49,8 +49,8 @@
   width: 100%;
   height: 100%;
   border: 2.5px solid transparent;
-  border-top: 2.5px solid var(--primary);
-  border-right: 2.5px solid var(--primary);
+  border-top: 2.5px solid var(--global-color-accent);
+  border-right: 2.5px solid var(--global-color-accent);
   border-radius: 50%;
   animation: spin 0.5s linear infinite;
   box-shadow: 0 0 30px rgba(0, 168, 127, 0.08);
@@ -63,7 +63,7 @@
   transform: translate(-50%, -50%);
   width: 8px;
   height: 8px;
-  background: var(--primary);
+  background: var(--global-color-accent);
   border-radius: 50%;
   opacity: 0.15;
   animation: pulse 1.2s ease-in-out infinite;
@@ -95,7 +95,7 @@
 .loading-text {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--loading-text);
+  color: var(--global-color-loading-text);
   letter-spacing: 3.5px;
   text-transform: uppercase;
   opacity: 0.08;

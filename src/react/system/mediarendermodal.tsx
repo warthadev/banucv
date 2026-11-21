@@ -193,8 +193,8 @@ export const MediaRenderModal: React.FC<MediaRenderModalProps> = ({
   }
 
   return (
-    <div className="mediarender-ext-overlay" onClick={onClose}>
-      <div className="mediarender-ext-panel" onClick={(e) => e.stopPropagation()}>
+    <div className="mediarender-ext-overlay global-modal-overlay" onClick={onClose}>
+      <div className="mediarender-ext-panel global-modal" onClick={(e) => e.stopPropagation()}>
         <div className="mediarender-ext-header">
           <span>Watch in another app</span>
           <button className="mediarender-ext-close" onClick={onClose} aria-label="Close">

@@ -60,17 +60,17 @@ const BarcodePage: React.FC = () => {
   };
 
   return (
-    <div className="barcode-container">
+    <div className="barcode-container global-page">
       <Toaster position="top-center" richColors />
       <motion.div 
         layout 
-        className="barcode-card"
+        className="barcode-card global-card global-card--padded"
         variants={cardVariants}
         initial="initial"
         animate="animate"
       >
         <motion.div layout className="barcode-header">
-          <QrCode size={24} color="var(--primary-blue)" />
+          <QrCode size={24} color="var(--global-color-accent)" />
           <h1 className="barcode-title">QR Generator</h1>
         </motion.div>
         

@@ -50,18 +50,18 @@ const SettingAudio: React.FC = () => {
 
   const genres = [
     'City Pop', 'Jazz', 'Hip-Hop', 'Type Beat',
-    'Hits', 'Electro Dance', 'Phonk House', 
-    'Brazilian Phonk', 'Synthwave', 'Ambient', 
-    'Vaporwave', 'Lofi', 'Future Funk', 
-    'Kawaii Future Bass', 'Progressive Bass', 
+    'Hits', 'Electro Dance', 'Phonk House',
+    'Brazilian Phonk', 'Synthwave', 'Ambient',
+    'Vaporwave', 'Lofi', 'Future Funk',
+    'Kawaii Future Bass', 'Progressive Bass',
     'Up Beat', 'Default', 'Random'
   ];
 
   return (
     <>
-      <section className="stack-item settings-bundle-section">
+      <section className="stack-item settings-bundle-section global-card global-section global-card--padded">
         <div className="section-header">
-          <Volume2 size={18} color="var(--primary)" />
+          <Volume2 size={18} color="var(--global-color-accent)" />
           <span className="section-label"><span>Music Output</span></span>
           <span className="section-value" translate="no">{volume}%</span>
         </div>
@@ -76,9 +76,9 @@ const SettingAudio: React.FC = () => {
         />
       </section>
 
-      <section className="stack-item settings-bundle-section">
+      <section className="stack-item settings-bundle-section global-card global-section global-card--padded">
         <div className="section-header">
-          <Play size={18} color="var(--primary)" />
+          <Play size={18} color="var(--global-color-accent)" />
           <span className="section-label"><span>Playback BGM</span></span>
         </div>
         <div className="playback-controls">
@@ -101,27 +101,27 @@ const SettingAudio: React.FC = () => {
         </div>
       </section>
 
-      <section className="stack-item settings-bundle-section">
+      <section className="stack-item settings-bundle-section global-card global-section global-card--padded">
         <div className="section-header">
-          <Cpu size={18} color="var(--primary)" />
+          <Cpu size={18} color="var(--global-color-accent)" />
           <span className="section-label"><span>AI Intelligence</span></span>
           <span className="section-value" translate="no">{(aiMode as AiMode).toUpperCase()}</span>
         </div>
-        <div style={{ display: 'flex', backgroundColor: 'var(--bg)', padding: '4px', borderRadius: '12px', marginTop: '8px' }}>
+        <div style={{ display: 'flex', backgroundColor: 'var(--global-color-background)', padding: '4px', borderRadius: '12px', marginTop: '8px' }}>
           {(['off', 'auto', 'manual'] as AiMode[]).map((m) => (
             <button
               key={m}
               type="button"
               className={`mode-button ${aiMode === m ? 'active' : ''}`}
               onClick={() => setAiMode(m)}
-              style={{ 
-                flex: 1, 
-                padding: '12px 20px', 
-                borderRadius: '8px', 
-                position: 'relative', 
-                cursor: 'pointer', 
-                border: 'none', 
-                background: 'none', 
+              style={{
+                flex: 1,
+                padding: '12px 20px',
+                borderRadius: '8px',
+                position: 'relative',
+                cursor: 'pointer',
+                border: 'none',
+                background: 'none',
                 minHeight: '44px',
                 fontSize: '14px',
                 fontWeight: 600,
@@ -132,9 +132,9 @@ const SettingAudio: React.FC = () => {
               aria-label={`Set AI mode to ${m}`}
             >
               {aiMode === m && (
-                <motion.div 
-                  layoutId="activeAiTab" 
-                  style={{ position: 'absolute', inset: 0, backgroundColor: 'var(--primary)', borderRadius: '8px', zIndex: 0 }} 
+                <motion.div
+                  layoutId="activeAiTab"
+                  style={{ position: 'absolute', inset: 0, backgroundColor: 'var(--global-color-accent)', borderRadius: '8px', zIndex: 0 }}
                 />
               )}
               <span style={{ position: 'relative', zIndex: 1, fontSize: '14px', fontWeight: 600 }}>{m.toUpperCase()}</span>
@@ -143,9 +143,9 @@ const SettingAudio: React.FC = () => {
         </div>
       </section>
 
-      <section className="stack-item settings-bundle-section">
+      <section className="stack-item settings-bundle-section global-card global-section global-card--padded">
         <div className="section-header">
-          <Music size={18} color="var(--primary)" />
+          <Music size={18} color="var(--global-color-accent)" />
           <span className="section-label"><span>Music Palette</span></span>
           <span className="section-value" translate="no">
             {selectedGenre || 'Default'}
@@ -166,25 +166,25 @@ const SettingAudio: React.FC = () => {
         </div>
       </section>
 
-      <section className="stack-item settings-bundle-section">
+      <section className="stack-item settings-bundle-section global-card global-section global-card--padded">
         <div className="section-header">
-          <LayoutGrid size={18} color="var(--primary)" />
+          <LayoutGrid size={18} color="var(--global-color-accent)" />
           <span className="section-label"><span>Quick Menu Access</span></span>
           <span className="section-value" translate="no">{isQuickVisible ? 'ON' : 'OFF'}</span>
         </div>
-        <div style={{ display: 'flex', backgroundColor: 'var(--bg)', padding: '4px', borderRadius: '12px', marginTop: '8px' }}>
+        <div style={{ display: 'flex', backgroundColor: 'var(--global-color-background)', padding: '4px', borderRadius: '12px', marginTop: '8px' }}>
           <button
             type="button"
             className={`quick-toggle-btn ${isQuickVisible ? 'active' : ''}`}
             onClick={() => dispatch(toggleQuickVisible())}
-            style={{ 
-              flex: 1, 
-              padding: '12px 20px', 
-              borderRadius: '8px', 
-              position: 'relative', 
-              cursor: 'pointer', 
-              border: 'none', 
-              background: 'none', 
+            style={{
+              flex: 1,
+              padding: '12px 20px',
+              borderRadius: '8px',
+              position: 'relative',
+              cursor: 'pointer',
+              border: 'none',
+              background: 'none',
               minHeight: '44px',
               fontSize: '14px',
               fontWeight: 600,
@@ -195,9 +195,9 @@ const SettingAudio: React.FC = () => {
             aria-label="Toggle Quick Menu"
           >
             {isQuickVisible && (
-              <motion.div 
-                layoutId="activeQuickTab" 
-                style={{ position: 'absolute', inset: 0, backgroundColor: 'var(--primary)', borderRadius: '8px', zIndex: 0 }} 
+              <motion.div
+                layoutId="activeQuickTab"
+                style={{ position: 'absolute', inset: 0, backgroundColor: 'var(--global-color-accent)', borderRadius: '8px', zIndex: 0 }}
               />
             )}
             <span style={{ position: 'relative', zIndex: 1, fontSize: '14px', fontWeight: 600 }}>SHOW QUICK MENU</span>

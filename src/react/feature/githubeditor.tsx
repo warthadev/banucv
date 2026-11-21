@@ -5,12 +5,12 @@ import { useNavigate } from "react-router-dom";
 import GithubEditorPack from "./githubeditorpack";
 import { CreateModal, RenameModal, DeleteModal, GithubAuthModal } from "./githubeditormodal";
 
-import { useGithubEditor, type ItemTarget } from "@hook/usegithubeditor";
+import { useGithubEditor, type GithubEditingFile, type ItemTarget } from "@hook/usegithubeditor";
 
 const GithubEditor: React.FC = () => {
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null!);
+  const folderInputRef = useRef<HTMLInputElement>(null!);
 
   const {
     isAuthLoading,
@@ -95,12 +95,12 @@ const GithubEditor: React.FC = () => {
     if (!editingFile || !selectedRepo) return;
     const result = await handleSave(selectedRepo, editingFile.path, editingFile.content, editingFile.sha);
     if (result && result.success) {
-      setEditingFile((prev: unknown) => prev !== null && typeof prev === "object" ? { ...prev, content: result.newContent, sha: result.newSha } : null);
+      setEditingFile((prev: GithubEditingFile | null) => prev ? { ...prev, content: result.newContent, sha: result.newSha } : null);
     }
   };
 
   const handleClearWrapper = () => {
-    handleClear(() => setEditingFile((prev: unknown) => prev !== null && typeof prev === "object" ? { ...prev, content: "" } : null));
+    handleClear(() => setEditingFile((prev: GithubEditingFile | null) => prev ? { ...prev, content: "" } : null));
   };
 
   const handleCopy = () => {
@@ -218,7 +218,7 @@ const GithubEditor: React.FC = () => {
       />
 
       {isConfigured && (
-        <div className="github-editor-container">
+        <div className="github-editor-container global-page">
           <GithubEditorPack
             repos={repos}
             selectedRepo={selectedRepo}
@@ -250,7 +250,7 @@ const GithubEditor: React.FC = () => {
             onCreateClick={openCreateModal}
             onUploadClick={handleUploadClick}
             onRenameClick={openRenameModal}
-            onEditingFileChange={(content) => setEditingFile((prev: unknown) => prev !== null && typeof prev === "object" ? { ...prev, content } : null)}
+            onEditingFileChange={(content) => setEditingFile((prev: GithubEditingFile | null) => prev ? { ...prev, content } : null)}
             onLogoutGitHub={handleLogoutGitHub}
           />
 
@@ -305,8 +305,7 @@ const GithubEditor: React.FC = () => {
             style={{ display: "none" }}
             onChange={handleFolderInputChange}
             multiple
-            webkitdirectory=""
-            directory=""
+            {...({ webkitdirectory: "", directory: "" } as React.InputHTMLAttributes<HTMLInputElement>)}
           />
         </div>
       )}

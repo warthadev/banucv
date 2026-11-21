@@ -114,7 +114,7 @@ const extractEmbeddedCover = async (url: string, token?: string): Promise<Blob |
     const metadata = await parseBlob(blob);
     const picture = metadata.common.picture?.[0];
     if (!picture) return null;
-    return new Blob([picture.data], { type: picture.format });
+    return new Blob([new Uint8Array(picture.data)], { type: picture.format });
   } catch {
     return null;
   }
@@ -593,7 +593,7 @@ const MediaAudio: React.FC<MediaAudioProps> = ({ isOpen, showUI = true, tracks, 
   return (
     <AnimatePresence>
       <motion.div
-        className="cloudplaylist-overlay"
+        className="cloudplaylist-overlay global-modal-overlay global-modal-overlay--media"
         style={!showUI ? { display: 'none' } : minimized ? {
           background: 'transparent',
           backdropFilter: 'none',

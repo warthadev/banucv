@@ -20,7 +20,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, chi
   <motion.div 
     variants={cardVariants}
     whileHover={{ y: -5, transition: { duration: 0.2 } }}
-    className="home-card"
+    className="home-card global-card global-card--padded"
   >
     <div className="card-header">
       <div className="card-icon-wrapper">{icon}</div>
@@ -46,7 +46,7 @@ const Home: React.FC = () => {
   ];
 
   return (
-    <div className="home-container">
+    <div className="home-container global-page">
       <main className="home-hero">
         <motion.div
           variants={heroVariants}

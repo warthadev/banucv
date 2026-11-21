@@ -4,10 +4,23 @@ import type { HFRepo, HFSearchRepo } from '@config/huggingface';
 import type { SortDir, SortField, TelegramChat, TelegramFile, TelegramFileMetadata, ViewMode } from '@config/telegram';
 import type { TransferAccount, TransferRepo } from '@feature/cloudmodalselection';
 
-export type CloudViewFile = TelegramFile & {
+export type CloudViewFile = Omit<TelegramFile, 'id'> & {
+  id: string | number;
   _isFolder?: boolean;
+  _folderName?: string;
   _folderSize?: number;
   _fullPath?: string;
+  _path?: string;
+  _url?: string;
+  _streamUrl?: string;
+  _thumbUrl?: string;
+  _coverThumbUrl?: string;
+  _coverType?: string;
+  _coverSize?: number;
+  _coverName?: string;
+  _coverStreamUrl?: string;
+  path?: string;
+  sha?: string;
 };
 
 export interface HFBulkContext {
@@ -16,10 +29,23 @@ export interface HFBulkContext {
   token: string;
 }
 
-export interface HFApiResult {
+export interface HFApiResult<TData = unknown> {
   ok: boolean;
   error?: string;
-  data?: unknown;
+  data?: TData;
+}
+
+export interface HFFolderListData {
+  folders: string[];
+}
+
+export interface HFMoveData {
+  count?: number;
+}
+
+export interface HFCopyData {
+  count_copied?: number;
+  count_failed_delete_src?: number;
 }
 
 export interface NavSnapshot {
@@ -57,7 +83,7 @@ export interface CloudViewPackProps {
   mobileView: 'chats' | 'files' | 'player';
   totalSize: number;
   fileMetadata: TelegramFileMetadata | null;
-  sortMenuRef: React.RefObject<HTMLDivElement>;
+  sortMenuRef: React.RefObject<HTMLDivElement | null>;
   sourceName?: string;
   showBackButton?: boolean;
   sourceType?: 'telegram' | 'hf_dataset';
@@ -78,7 +104,7 @@ export interface CloudViewPackProps {
   handleFileGone: (fileId: number) => void;
   handleImageError: (fileId: number) => void;
   handleMediaLoaded: (fileId: number) => void;
-  getStreamUrl: (chatId: number, msgId: number) => string;
+  getStreamUrl: (chatId: number | string, msgId: number | string) => string;
   handleDownload: (chatId: number, msgId: number, filename: string) => void;
   hfToken?: string;
   toggleSort: (field: SortField) => void;

@@ -104,14 +104,14 @@ export const CloudModalHF: React.FC<CloudModalHFProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="github-modal-overlay"
+          className="github-modal-overlay global-modal-overlay"
           variants={overlayVariants}
           initial="initial"
           animate="animate"
           exit="exit"
         >
           <motion.div
-            className="github-modal cva-modal"
+            className="github-modal cva-modal global-modal"
             variants={modalVariants}
             initial="hidden"
             animate="visible"
@@ -153,7 +153,7 @@ export const CloudModalHF: React.FC<CloudModalHFProps> = ({
 
             <div className="cva-manual-container">
               <div className="cva-input-wrap">
-                <User size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 1 }} />
+                <User size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--global-color-text-muted)', zIndex: 1 }} />
                 <input
                   type="text"
                   placeholder="Username"
@@ -166,7 +166,7 @@ export const CloudModalHF: React.FC<CloudModalHFProps> = ({
               </div>
 
               <div className="cva-input-wrap">
-                <Key size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 1 }} />
+                <Key size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--global-color-text-muted)', zIndex: 1 }} />
                 <input
                   type={showToken ? "text" : "password"}
                   placeholder="API Token"
@@ -197,7 +197,7 @@ export const CloudModalHF: React.FC<CloudModalHFProps> = ({
                 marginTop: '16px',
                 textAlign: 'center',
                 fontSize: '13px',
-                color: 'var(--text-sub)'
+                color: 'var(--global-color-text-secondary)'
               }}>
                 <span>Don't have an API token? </span>
                 <a
@@ -205,7 +205,7 @@ export const CloudModalHF: React.FC<CloudModalHFProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
-                    color: 'var(--primary)',
+                    color: 'var(--global-color-accent)',
                     textDecoration: 'none',
                     fontWeight: 600,
                     cursor: 'pointer'

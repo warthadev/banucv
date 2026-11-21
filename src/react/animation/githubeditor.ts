@@ -1,17 +1,18 @@
 // src/react/animation/githubeditor.ts
+import type { Variants } from "framer-motion";
 
 // ============================================
 // LIST & ITEM ANIMATIONS
 // ============================================
 
-export const listVariants = {
+export const listVariants: Variants = {
   hidden: {},
   visible: {
     transition: { staggerChildren: 0.035 },
   },
 };
 
-export const itemVariants = {
+export const itemVariants: Variants = {
   hidden: { opacity: 0, x: -8 },
   visible: {
     opacity: 1,
@@ -29,7 +30,7 @@ export const itemVariants = {
 // SIDEBAR ANIMATIONS
 // ============================================
 
-export const sidebarDesktopVariants = {
+export const sidebarDesktopVariants: Variants = {
   open: {
     width: 290,
     opacity: 1,
@@ -52,7 +53,7 @@ export const sidebarDesktopVariants = {
 // MODAL ANIMATIONS
 // ============================================
 
-export const modalVariants = {
+export const modalVariants: Variants = {
   hidden: {
     opacity: 0,
     scale: 0.96,
@@ -81,7 +82,7 @@ export const modalVariants = {
 // OVERLAY ANIMATIONS
 // ============================================
 
-export const overlayVariants = {
+export const overlayVariants: Variants = {
   initial: {
     opacity: 0,
   },
@@ -99,7 +100,7 @@ export const overlayVariants = {
 // TOGGLE BUTTON ANIMATIONS
 // ============================================
 
-export const toggleButtonVariants = {
+export const toggleButtonVariants: Variants = {
   initial: {
     opacity: 0,
     x: -6,
@@ -120,7 +121,7 @@ export const toggleButtonVariants = {
 // EMPTY STATE ANIMATIONS
 // ============================================
 
-export const emptyStateVariants = {
+export const emptyStateVariants: Variants = {
   initial: {
     opacity: 0,
   },

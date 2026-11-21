@@ -14,8 +14,8 @@ const SettingsPage: React.FC = () => {
   const isSettingsLoading = isProfileLoading || isOpenRouterLoading;
 
   return (
-    <div className="settings-page-container">
-      <main className="content-wrapper" aria-busy={isSettingsLoading}>
+    <div className="settings-page-container global-page">
+      <main className="content-wrapper global-wrapper" aria-busy={isSettingsLoading}>
         <header className="settings-header">
           <div className="header-left">
             <h1 className="header-title"><span>Control Center</span></h1>
@@ -32,7 +32,7 @@ const SettingsPage: React.FC = () => {
         </header>
 
         {isSettingsLoading && (
-          <div className="stack-item settings-page-loading" role="status" aria-label="Loading" aria-live="polite" aria-busy="true">
+          <div className="stack-item settings-page-loading global-card global-card--padded" role="status" aria-label="Loading" aria-live="polite" aria-busy="true">
             <div className="su-loading-container">
               <div className="status-spinner" aria-hidden="true" />
             </div>

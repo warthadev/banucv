@@ -31,7 +31,7 @@ button, .btn {
   padding: 15px;
   border-radius: 12px;
   border: none;
-  color: var(--color-text);
+  color: var(--global-color-text);
   font-weight: 700;
 }
 
@@ -45,28 +45,28 @@ input, select, textarea {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-background);
+  background: var(--global-color-background);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border);
+  background: var(--global-color-border);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-muted);
+  background: var(--global-color-text-muted);
 }
 
 /* Scrollbar - Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-border) var(--color-background);
+  scrollbar-color: var(--global-color-border) var(--global-color-background);
 }
 
 /* Selection Color */
 ::selection {
-  background-color: var(--color-accent);
-  color: var(--color-accent-foreground);
+  background-color: var(--global-color-accent);
+  color: var(--global-color-on-accent);
 }
 
 /* Animasi spin untuk Loader */

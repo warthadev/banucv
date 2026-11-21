@@ -137,6 +137,9 @@ const copyToClipboard = async (text: string): Promise<boolean> => {
   } catch { return false; }
 };
 
+const getErrorMessage = (error: unknown, fallback: string): string =>
+  error instanceof Error ? error.message : fallback;
+
 const readStoredSessionId = (): string | null => {
   try { return sessionStorage.getItem(SESSION_STORAGE_KEY); } catch { return null; }
 };
@@ -404,7 +407,7 @@ export const useDlUniversal = ({
         pollFailRef.current += 1;
         if (pollFailRef.current < POLL_MAX_FAILS) return;
         finishAll();
-        onLog(`${fallbackFileName} progress error: ${e?.message || 'unknown'}`, 'critical');
+        onLog(`${fallbackFileName} progress error: ${getErrorMessage(e, 'unknown')}`, 'critical');
       }
     };
 
@@ -459,7 +462,7 @@ export const useDlUniversal = ({
     } catch (e: unknown) {
       setColabBusy(false);
       setStarting(false);
-      onLog(`[universal]\nFailed to start resolve: ${e?.message || 'unknown error'}`, 'critical');
+      onLog(`[universal]\nFailed to start resolve: ${getErrorMessage(e, 'unknown error')}`, 'critical');
     }
   }, [onLog, pollProgress, refreshColabSession, ensureLiveSession]);
 
@@ -547,7 +550,7 @@ export const useDlUniversal = ({
     } catch (e: unknown) {
       setColabBusy(false);
       setStarting(false);
-      onLog(`[universal]\nFailed to start: ${e?.message || 'unknown error'}`, 'critical');
+      onLog(`[universal]\nFailed to start: ${getErrorMessage(e, 'unknown error')}`, 'critical');
     }
   }, [onLog, onResetLogs, pollProgress, refreshColabSession, ensureLiveSession]);
 
@@ -584,7 +587,7 @@ export const useDlUniversal = ({
     } catch (e: unknown) {
       setColabBusy(false);
       setStarting(false);
-      onLog(`[universal]\nFailed to resume download: ${e?.message || 'unknown error'}`, 'critical');
+      onLog(`[universal]\nFailed to resume download: ${getErrorMessage(e, 'unknown error')}`, 'critical');
     }
   }, [onLog, onResetLogs, pollProgress, startColabWithSelection]);
 

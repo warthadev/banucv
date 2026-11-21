@@ -319,9 +319,9 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
         cursor: "pointer",
         textAlign: "left",
         transition: "background 0.12s",
-        color: "var(--text)",
+        color: "var(--global-color-text)",
       }}
-      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--primary-alpha)"; }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--global-color-accent-alpha)"; }}
       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}
     >
       <div
@@ -329,8 +329,8 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
           width: "40px",
           height: "40px",
           borderRadius: "50%",
-          background: "var(--primary-alpha)",
-          color: "var(--primary)",
+          background: "var(--global-color-accent-alpha)",
+          color: "var(--global-color-accent)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -355,7 +355,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
             display: "block",
             fontSize: "14px",
             fontWeight: 500,
-            color: "var(--text)",
+            color: "var(--global-color-text)",
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -368,7 +368,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
             style={{
               display: "block",
               fontSize: "11px",
-              color: "var(--text-muted)",
+              color: "var(--global-color-text-muted)",
               marginTop: "1px",
               whiteSpace: "nowrap",
               overflow: "hidden",
@@ -379,7 +379,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
           </span>
         )}
       </div>
-      <ChevronRight size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+      <ChevronRight size={16} style={{ color: "var(--global-color-text-muted)", flexShrink: 0 }} />
     </button>
   );
 
@@ -402,9 +402,9 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
           cursor: "pointer",
           textAlign: "left",
           transition: "background 0.12s",
-          color: "var(--text)",
+          color: "var(--global-color-text)",
         }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--primary-alpha)"; }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--global-color-accent-alpha)"; }}
         onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}
       >
         <div
@@ -412,8 +412,8 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
             width: "40px",
             height: "40px",
             borderRadius: "10px",
-            background: "var(--primary-alpha)",
-            color: "var(--primary)",
+            background: "var(--global-color-accent-alpha)",
+            color: "var(--global-color-accent)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -428,7 +428,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
               display: "block",
               fontSize: "14px",
               fontWeight: 500,
-              color: "var(--text)",
+              color: "var(--global-color-text)",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -440,15 +440,15 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
             style={{
               display: "block",
               fontSize: "11px",
-              color: "var(--text-muted)",
+              color: "var(--global-color-text-muted)",
               marginTop: "1px",
             }}
           >
             {typeLabel}
           </span>
         </div>
-        {repo.private && <Lock size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
-        <ChevronRight size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+        {repo.private && <Lock size={14} style={{ color: "var(--global-color-text-muted)", flexShrink: 0 }} />}
+        <ChevronRight size={16} style={{ color: "var(--global-color-text-muted)", flexShrink: 0 }} />
       </button>
     );
   };
@@ -474,8 +474,8 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
                 width: "36px",
                 height: "36px",
                 borderRadius: "50%",
-                background: "var(--primary-alpha)",
-                color: "var(--primary)",
+                background: "var(--global-color-accent-alpha)",
+                color: "var(--global-color-accent)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -502,7 +502,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
                 style={{
                   fontSize: "14px",
                   fontWeight: 600,
-                  color: "var(--text)",
+                  color: "var(--global-color-text)",
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -510,7 +510,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
               >
                 {sanitizeText(selectedUser.username)}
               </div>
-              <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+              <div style={{ fontSize: "11px", color: "var(--global-color-text-muted)" }}>
                 {userRepos.length} repositor{userRepos.length === 1 ? "y" : "ies"}
               </div>
             </div>
@@ -527,15 +527,15 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
                 background: "transparent",
                 border: "none",
                 borderRadius: "50%",
-                color: "var(--text)",
+                color: "var(--global-color-text)",
                 cursor: "pointer",
                 padding: 0,
                 flexShrink: 0,
               }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--primary-alpha)"; }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--global-color-accent-alpha)"; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
             >
-              <X size={18} style={{ color: "var(--text)" }} />
+              <X size={18} style={{ color: "var(--global-color-text)" }} />
             </button>
           </div>
 
@@ -550,7 +550,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
                   gap: "12px",
                   minHeight: "100%",
                   padding: "40px 20px",
-                  color: "var(--text-muted)",
+                  color: "var(--global-color-text-muted)",
                   fontSize: "13px",
                   boxSizing: "border-box",
                 }}
@@ -568,7 +568,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
                   gap: "8px",
                   minHeight: "100%",
                   padding: "40px 20px",
-                  color: "var(--text-muted)",
+                  color: "var(--global-color-text-muted)",
                   fontSize: "13px",
                   textAlign: "center",
                   boxSizing: "border-box",
@@ -600,7 +600,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
                 left: "14px",
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: "var(--text-muted)",
+                color: "var(--global-color-text-muted)",
                 pointerEvents: "none",
                 zIndex: 1,
               }}
@@ -628,7 +628,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
                 title="Clear"
                 aria-label="Clear search"
               >
-                <X size={16} style={{ color: "var(--text)" }} />
+                <X size={16} style={{ color: "var(--global-color-text)" }} />
               </button>
             )}
             {!query && (
@@ -649,14 +649,14 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
                   background: "transparent",
                   border: "none",
                   borderRadius: "50%",
-                  color: "var(--text)",
+                  color: "var(--global-color-text)",
                   cursor: "pointer",
                   padding: 0,
                 }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--primary-alpha)"; }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--global-color-accent-alpha)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
               >
-                <X size={16} style={{ color: "var(--text)" }} />
+                <X size={16} style={{ color: "var(--global-color-text)" }} />
               </button>
             )}
           </div>
@@ -692,7 +692,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
                 gap: "12px",
                 flex: 1,
                 padding: "40px 20px",
-                color: "var(--text-muted)",
+                color: "var(--global-color-text-muted)",
                 fontSize: "13px",
               }}
             >
@@ -727,7 +727,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
                 gap: "8px",
                 flex: 1,
                 padding: "40px 20px",
-                color: "var(--text-muted)",
+                color: "var(--global-color-text-muted)",
                 fontSize: "13px",
                 textAlign: "center",
               }}
@@ -745,7 +745,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
                 gap: "8px",
                 flex: 1,
                 padding: "40px 20px",
-                color: "var(--text-muted)",
+                color: "var(--global-color-text-muted)",
                 fontSize: "13px",
                 textAlign: "center",
               }}
@@ -767,7 +767,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="github-modal-overlay"
+          className="github-modal-overlay global-modal-overlay"
           variants={overlayVariants}
           initial="initial"
           animate="animate"
@@ -775,7 +775,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
           onClick={handleClose}
         >
           <motion.div
-            className="cloudview-modal"
+            className="cloudview-modal global-modal"
             variants={modalVariants}
             initial="hidden"
             animate="visible"

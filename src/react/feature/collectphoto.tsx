@@ -185,7 +185,7 @@ const CollectPhoto: React.FC = () => {
   if (!isAdmin) return <div className="collectphoto-error"><Shield size={48} /><h2>Access Denied</h2><p>You don't have permission to view this page.</p></div>;
 
   return (
-    <div className="collectphoto-container">
+    <div className="collectphoto-container global-page">
       <header className="collectphoto-header">
         <h1>Selfie Collection</h1>
         <p>{filteredUsers.length} users • {users.filter(u => u.firstSelfie).length} first • {users.filter(u => u.latestSelfie).length} latest</p>
@@ -213,7 +213,7 @@ const CollectPhoto: React.FC = () => {
             const sanitizedName = sanitizeText(user.displayName || "Anonymous");
             const sanitizedEmail = sanitizeText(user.email || "No email");
             return (
-              <motion.div key={`${user.uid}-${viewMode}`} className="collectphoto-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} whileHover={{ y: -4 }} onClick={() => setSelectedUser(user)}>
+              <motion.div key={`${user.uid}-${viewMode}`} className="collectphoto-card global-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} whileHover={{ y: -4 }} onClick={() => setSelectedUser(user)}>
                 <div className="collectphoto-card-image">
                   {current ? <img src={current.image} alt={sanitizedName} /> : <div className="no-selfie"><User size={48} /><span>No {viewMode} selfie</span></div>}
                 </div>
@@ -234,8 +234,8 @@ const CollectPhoto: React.FC = () => {
 
       <AnimatePresence>
         {selectedUser && (
-          <motion.div className="collectphoto-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedUser(null)}>
-            <motion.div className="collectphoto-modal" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()}>
+          <motion.div className="collectphoto-modal-overlay global-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedUser(null)}>
+            <motion.div className="collectphoto-modal global-modal global-modal--wide" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()}>
               <button className="modal-close" onClick={() => setSelectedUser(null)}><ArrowLeft size={20} /></button>
               <div className="modal-content">
                 <div className="modal-photo-section">
@@ -335,7 +335,7 @@ const CollectPhoto: React.FC = () => {
 
       <AnimatePresence>
         {fullscreenImage && (
-          <motion.div className="fullscreen-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setFullscreenImage(null)}>
+          <motion.div className="fullscreen-overlay global-modal-overlay global-modal-overlay--media" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setFullscreenImage(null)}>
             <button className="fullscreen-close" onClick={() => setFullscreenImage(null)}><X size={24} /></button>
             <img src={fullscreenImage} alt="Fullscreen selfie" />
           </motion.div>

@@ -4,7 +4,7 @@
 
 .collectphoto-container {
   min-height: 100vh;
-  background: var(--bg);
+  background: var(--global-color-background);
   padding: 80px 5% 40px;
 }
 
@@ -18,7 +18,7 @@
 .collectphoto-header h1 {
   font-size: 2.5rem;
   font-weight: 800;
-  background: linear-gradient(135deg, var(--text) 0%, var(--primary) 100%);
+  background: linear-gradient(135deg, var(--global-color-text) 0%, var(--global-color-accent) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -27,7 +27,7 @@
 }
 
 .collectphoto-header > p {
-  color: var(--text-sub);
+  color: var(--global-color-text-secondary);
   font-size: 0.95rem;
   margin-bottom: 32px;
 }
@@ -48,20 +48,20 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background: var(--global-color-surface);
+  border: 1px solid var(--global-color-border);
   border-radius: 60px;
   padding: 12px 24px;
   transition: all 0.2s ease;
 }
 
 .collectphoto-search:focus-within {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-alpha);
+  border-color: var(--global-color-accent);
+  box-shadow: 0 0 0 3px var(--global-color-accent-alpha);
 }
 
 .collectphoto-search svg {
-  color: var(--text-sub);
+  color: var(--global-color-text-secondary);
 }
 
 .collectphoto-search input {
@@ -69,21 +69,21 @@
   background: transparent;
   border: none;
   outline: none;
-  color: var(--text);
+  color: var(--global-color-text);
   font-size: 0.9rem;
 }
 
 .collectphoto-search input::placeholder {
-  color: var(--text-muted);
+  color: var(--global-color-text-muted);
 }
 
 /* Toggle Switch Modern */
 .collectphoto-toggle {
   display: flex;
-  background: var(--card-bg);
+  background: var(--global-color-surface);
   padding: 4px;
   border-radius: 60px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--global-color-border);
   position: relative;
   gap: 4px;
   flex-shrink: 0;
@@ -95,7 +95,7 @@
   border-radius: 60px;
   border: none;
   background: transparent;
-  color: var(--text-sub);
+  color: var(--global-color-text-secondary);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
@@ -119,7 +119,7 @@
   position: absolute;
   top: 4px;
   bottom: 4px;
-  background: var(--primary);
+  background: var(--global-color-accent);
   border-radius: 60px;
   z-index: 0;
   transition: left 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), width 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
@@ -135,24 +135,24 @@
 }
 
 .collectphoto-card {
-  background: var(--card-bg);
+  background: var(--global-color-surface);
   border-radius: 24px;
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--global-color-border);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .collectphoto-card:hover {
   transform: translateY(-6px);
   box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.2);
-  border-color: var(--primary-alpha);
+  border-color: var(--global-color-accent-alpha);
 }
 
 .collectphoto-card-image {
   aspect-ratio: 1;
-  background: var(--bg);
+  background: var(--global-color-background);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -175,7 +175,7 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  color: var(--text-muted);
+  color: var(--global-color-text-muted);
 }
 
 .no-selfie svg {
@@ -192,12 +192,12 @@
   font-size: 1.15rem;
   font-weight: 700;
   margin-bottom: 6px;
-  color: var(--text);
+  color: var(--global-color-text);
 }
 
 .collectphoto-card-info p {
   font-size: 0.8rem;
-  color: var(--text-sub);
+  color: var(--global-color-text-secondary);
   margin-bottom: 12px;
   word-break: break-all;
 }
@@ -206,7 +206,7 @@
   display: flex;
   gap: 16px;
   font-size: 0.7rem;
-  color: var(--text-muted);
+  color: var(--global-color-text-muted);
 }
 
 .collectphoto-card-meta span {
@@ -230,7 +230,7 @@
 .collectphoto-error button {
   margin-top: 8px;
   padding: 10px 24px;
-  background: var(--primary);
+  background: var(--global-color-accent);
   color: white;
   border: none;
   border-radius: 40px;
@@ -256,7 +256,7 @@
   grid-column: 1 / -1;
   text-align: center;
   padding: 80px 20px;
-  color: var(--text-muted);
+  color: var(--global-color-text-muted);
 }
 
 .collectphoto-empty svg {
@@ -294,7 +294,7 @@
 }
 
 .collectphoto-modal {
-  background: var(--card-bg);
+  background: var(--global-color-surface);
   border-radius: 0;
   width: 100%;
   max-width: 1000px;
@@ -310,11 +310,11 @@
   width: 5px;
 }
 .collectphoto-modal::-webkit-scrollbar-track {
-  background: var(--border-color);
+  background: var(--global-color-border);
   border-radius: 10px;
 }
 .collectphoto-modal::-webkit-scrollbar-thumb {
-  background: var(--primary);
+  background: var(--global-color-accent);
   border-radius: 10px;
 }
 
@@ -323,8 +323,8 @@
   position: absolute;
   top: 30px;
   right: 30px;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background: var(--global-color-surface);
+  border: 1px solid var(--global-color-border);
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -332,16 +332,16 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: var(--text);
+  color: var(--global-color-text);
   z-index: 10;
   transition: all 0.2s;
   /* box-shadow: 0 2px 8px rgba(0,0,0,0.1); */
 }
 
 .modal-close:hover {
-  background: var(--primary);
+  background: var(--global-color-accent);
   color: white;
-  border-color: var(--primary);
+  border-color: var(--global-color-accent);
 }
 
 /* Modal Content Layout */
@@ -372,7 +372,7 @@
 
 .carousel-frame {
   aspect-ratio: 1;
-  background: var(--bg);
+  background: var(--global-color-background);
   border-radius: 20px;
   overflow: hidden;
   position: relative;
@@ -427,7 +427,7 @@
   transition: background 0.2s;
 }
 .carousel-fullscreen-btn:hover {
-  background: var(--primary);
+  background: var(--global-color-accent);
 }
 
 .carousel-overlay-bottom {
@@ -453,7 +453,7 @@
 }
 
 .carousel-download-btn {
-  background: var(--primary);
+  background: var(--global-color-accent);
   border: none;
   border-radius: 40px;
   padding: 6px 14px;
@@ -478,7 +478,7 @@
   justify-content: center;
   gap: 12px;
   height: 100%;
-  color: var(--text-muted);
+  color: var(--global-color-text-muted);
 }
 
 /* ============================================= */
@@ -507,7 +507,7 @@
 
 /* Gaya dot */
 .carousel .control-dots .dot {
-  background: var(--text-muted) !important;
+  background: var(--global-color-text-muted) !important;
   box-shadow: none !important;
   width: 8px !important;
   height: 8px !important;
@@ -520,7 +520,7 @@
 }
 
 .carousel .control-dots .dot.selected {
-  background: var(--primary) !important;
+  background: var(--global-color-accent) !important;
   width: 24px !important;
   border-radius: 10px !important;
   opacity: 1 !important;
@@ -528,25 +528,25 @@
 
 /* Data Container */
 .modal-details-container {
-  background: var(--bg);
+  background: var(--global-color-background);
   border-radius: 20px;
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--global-color-border);
 }
 
 .modal-user-header h2 {
   font-size: 1.4rem;
   font-weight: 700;
   margin: 0 0 4px 0;
-  color: var(--text);
+  color: var(--global-color-text);
 }
 
 .modal-email {
   font-size: 0.8rem;
-  color: var(--text-sub);
+  color: var(--global-color-text-secondary);
   word-break: break-all;
 }
 
@@ -559,7 +559,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: var(--primary);
+  color: var(--global-color-accent);
   margin-bottom: 12px;
 }
 
@@ -568,13 +568,13 @@
   justify-content: space-between;
   align-items: flex-start;
   padding: 10px 0;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--global-color-border);
   font-size: 0.8rem;
   flex-wrap: wrap;
   gap: 12px;
 }
 .detail-row span:first-child {
-  color: var(--text-sub);
+  color: var(--global-color-text-secondary);
   font-weight: 500;
   flex-shrink: 0;
   min-width: 90px;
@@ -587,7 +587,7 @@
   flex: 1;
 }
 .detail-row code {
-  background: var(--primary-alpha);
+  background: var(--global-color-accent-alpha);
   padding: 2px 8px;
   border-radius: 20px;
   font-size: 0.7rem;
@@ -633,7 +633,7 @@
   transition: background 0.2s;
 }
 .fullscreen-close:hover {
-  background: var(--primary);
+  background: var(--global-color-accent);
 }
 
 /* Responsive */
@@ -776,7 +776,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--text-muted);
+  background: var(--global-color-text-muted);
   border: none;
   cursor: pointer;
   padding: 0;
@@ -787,7 +787,7 @@
 .custom-dot.active {
   width: 24px;
   border-radius: 10px;
-  background: var(--primary);
+  background: var(--global-color-accent);
   opacity: 1;
 }
 

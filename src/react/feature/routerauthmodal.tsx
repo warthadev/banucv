@@ -56,14 +56,14 @@ export const RouterAuthModal: React.FC<RouterAuthModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="github-modal-overlay"
+          className="github-modal-overlay global-modal-overlay"
           variants={overlayVariants}
           initial="initial"
           animate="animate"
           exit="exit"
         >
           <motion.div
-            className="github-modal"
+            className="github-modal global-modal"
             variants={modalVariants}
             initial="hidden"
             animate="visible"
@@ -77,7 +77,7 @@ export const RouterAuthModal: React.FC<RouterAuthModalProps> = ({
               <h3 id="aiagent-openrouter-key-title" style={{ margin: "16px 0 8px 0", fontSize: "1.5rem" }}>
                 Connect OpenRouter
               </h3>
-              <p style={{ fontSize: "0.85rem", color: "var(--text-sub)", margin: 0 }}>
+              <p style={{ fontSize: "0.85rem", color: "var(--global-color-text-secondary)", margin: 0 }}>
                 Add this account&apos;s key to discover its available free models.
               </p>
             </div>

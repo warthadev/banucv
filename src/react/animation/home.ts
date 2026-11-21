@@ -1,5 +1,7 @@
+import type { Variants } from "framer-motion";
+
 // Variants untuk Judul & Subtitle (Hero)
-export const heroVariants = {
+export const heroVariants: Variants = {
   initial: { opacity: 0, y: -30 },
   animate: { 
     opacity: 1, 
@@ -9,10 +11,10 @@ export const heroVariants = {
       ease: [0.19, 1, 0.22, 1] 
     }
   }
-} as const; // 🔥 Tambah as const di sini
+};
 
 // Variants untuk Grid Container (Stagger logic)
-export const gridVariants = {
+export const gridVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -21,10 +23,10 @@ export const gridVariants = {
       delayChildren: 0.2
     }
   }
-} as const; // 🔥 Tambah as const di sini
+};
 
 // Variants untuk Feature Card
-export const cardVariants = {
+export const cardVariants: Variants = {
   hidden: { opacity: 0, scale: 0.9, y: 20 },
   visible: { 
     opacity: 1, 
@@ -36,10 +38,10 @@ export const cardVariants = {
       damping: 20 
     }
   }
-} as const; // 🔥 Tambah as const di sini
+};
 
 // Variants untuk Social Icons (Quick Connect)
-export const socialIconVariants = {
+export const socialIconVariants: Variants = {
   hover: { scale: 1.2 },
   tap: { scale: 0.9 }
-} as const; // 🔥 Tambah as const di sini
+};

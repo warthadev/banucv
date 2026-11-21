@@ -19,6 +19,8 @@ import {
 } from './cloudviewuimodal';
 import { CHAT_ACCENT, sanitizeText } from '@config/cloudviewuiconfig';
 
+const toTelegramId = (id: string | number): number => (typeof id === 'number' ? id : Number(id));
+
 const MOBILE_FADE = {
   initial: { opacity: 0, scale: 0.985 },
   animate: { opacity: 1, scale: 1 },
@@ -210,7 +212,7 @@ export const CloudViewPack: React.FC<CloudViewPackProps> = (props) => {
   const renderBreadcrumb = useCallback((isMobileView: boolean = false) => (
     <Breadcrumb
       key={sourceType === 'hf_dataset' ? `breadcrumb-${currentPath}-${mobileView}` : 'breadcrumb-telegram'}
-      chat={selectedChat} file={selectedFile} onRoot={handleRootClick} onChat={handleBackToFiles} onChats={handleBackToChats}
+      chat={selectedChat} file={sourceType === 'telegram' && selectedFile && typeof selectedFile.id === 'number' ? { ...selectedFile, id: selectedFile.id } : null} onRoot={handleRootClick} onChat={handleBackToFiles} onChats={handleBackToChats}
       onClosePreview={onClosePreview} onBackToRepos={onBackToRepos} onBackToRepoRoot={onBackToRepoRoot} sourceName={sourceName}
       showBackButton={showBackButton} sourceType={sourceType} repoName={sourceType === 'hf_dataset' ? hfRepoName : undefined}
       currentPath={sourceType === 'hf_dataset' ? currentPath : ''} onNavigateToPath={onNavigateToPath} isMobile={isMobileView} onGoBack={onGoBack}
@@ -241,7 +243,7 @@ export const CloudViewPack: React.FC<CloudViewPackProps> = (props) => {
     return (
       <>
         <CloudModalSelection
-          renameOpen={renameModalOpen} renameValue={renameValue} renameTarget={renameTarget} setRenameValue={setRenameValue}
+          renameOpen={renameModalOpen} renameValue={renameValue} renameTarget={renameTarget || {}} setRenameValue={setRenameValue}
           onRenameConfirm={onRenameConfirm} onRenameClose={onRenameClose} deleteOpen={deleteModalOpen} deleteTargets={deleteTargets}
           onDeleteConfirm={onDeleteConfirm} onDeleteClose={onDeleteClose} createFolderOpen={createFolderModalOpen}
           createFolderValue={createFolderValue} createFolderCurrentPath={currentPath} setCreateFolderValue={setCreateFolderValue}
@@ -270,23 +272,23 @@ export const CloudViewPack: React.FC<CloudViewPackProps> = (props) => {
     const isInsideRepo = sourceType === 'hf_dataset' && !!hfSelectedRepo;
 
     return (
-      <div className="cloudview-root cloudview-root--mobile" style={{ height: '100vh', height: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', overflow: 'hidden' }}>
-        <header className="cloudview-mobile-header" style={{ position: 'sticky', top: 0, height: '56px', background: 'var(--bg)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px', zIndex: 100, flexShrink: 0 }}>
+      <div className="cloudview-root cloudview-root--mobile global-page" style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--global-color-background)', overflow: 'hidden' }}>
+        <header className="cloudview-mobile-header" style={{ position: 'sticky', top: 0, height: '56px', background: 'var(--global-color-background)', borderBottom: '1px solid var(--global-color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px', zIndex: 100, flexShrink: 0 }}>
           <div className="cloudview-mobile-header-left" style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, overflow: 'hidden' }}>{renderBreadcrumb(true)}</div>
           </div>
           <div className="cloudview-mobile-header-right" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            <span className="cloudview-mobile-count" style={{ fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+            <span className="cloudview-mobile-count" style={{ fontSize: '12px', color: 'var(--global-color-text-muted)', whiteSpace: 'nowrap' }}>
               {sourceType === 'telegram' ? (mobileView === 'chats' ? `${dialogs.length} chats` : '') : (mobileView === 'chats' ? `${hfRepos.length} repos` : '')}
             </span>
-            <button className="cloudview-toolbar-btn" onClick={handleBackToRoot} title="Home" style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '6px', color: 'var(--text-sub)', cursor: 'pointer' }}><Home size={18} /></button>
+            <button className="cloudview-toolbar-btn" onClick={handleBackToRoot} title="Home" style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '6px', color: 'var(--global-color-text-secondary)', cursor: 'pointer' }}><Home size={18} /></button>
             {sourceType === 'hf_dataset' && !isPublicView && !isInsideRepo ? (
-              <button className="cloudview-toolbar-btn" onClick={onAddRepo} title="Add repository" style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '6px', color: 'var(--text-sub)', cursor: 'pointer' }}><Plus size={18} /></button>
+              <button className="cloudview-toolbar-btn" onClick={onAddRepo} title="Add repository" style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '6px', color: 'var(--global-color-text-secondary)', cursor: 'pointer' }}><Plus size={18} /></button>
             ) : sourceType === 'telegram' ? (
-              <button className="cloudview-toolbar-btn" onClick={fetchDialogs} style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '6px', color: 'var(--text-sub)', cursor: 'pointer' }}><RefreshCw size={16} /></button>
+              <button className="cloudview-toolbar-btn" onClick={fetchDialogs} style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '6px', color: 'var(--global-color-text-secondary)', cursor: 'pointer' }}><RefreshCw size={16} /></button>
             ) : null}
-            {showHFSearchBtn && <button className="cloudview-toolbar-btn" onClick={handleOpenHFSearch} title="Search Hugging Face" style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '6px', color: 'var(--text-sub)', cursor: 'pointer' }}><Search size={18} /></button>}
-            {clearSession && !isPublicView && <button className="cloudview-toolbar-btn" onClick={handleLogout} style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '6px', color: 'var(--text-sub)', cursor: 'pointer' }}><LogOut size={16} /></button>}
+            {showHFSearchBtn && <button className="cloudview-toolbar-btn" onClick={handleOpenHFSearch} title="Search Hugging Face" style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '6px', color: 'var(--global-color-text-secondary)', cursor: 'pointer' }}><Search size={18} /></button>}
+            {clearSession && !isPublicView && <button className="cloudview-toolbar-btn" onClick={handleLogout} style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '6px', color: 'var(--global-color-text-secondary)', cursor: 'pointer' }}><LogOut size={16} /></button>}
           </div>
         </header>
 
@@ -313,7 +315,7 @@ export const CloudViewPack: React.FC<CloudViewPackProps> = (props) => {
                           role="button"
                           tabIndex={0}
                           className={`cloudview-frow ${selectedChat?.id === chat.id ? 'cloudview-frow--active' : ''}`}
-                          style={{ '--row-accent': CHAT_ACCENT[chat.type] || 'var(--primary)' } as React.CSSProperties}
+                          style={{ '--row-accent': CHAT_ACCENT[chat.type] || 'var(--global-color-accent)' } as React.CSSProperties}
                           onClick={() => handleChatClick(chat)}
                           onKeyDown={(e) => { if (e.key === 'Enter') handleChatClick(chat); }}
                         >
@@ -355,7 +357,7 @@ export const CloudViewPack: React.FC<CloudViewPackProps> = (props) => {
                   searchQuery={searchQuery} viewMode={viewMode} sortField={sortField} sortDir={sortDir} showSortMenu={showSortMenu} totalSize={totalSize}
                   sortMenuRef={sortMenuRef} screenSize={screenSize} onSearchChange={setSearchQuery} onRefresh={refreshCurrentChatFiles} onCreateFolder={onCreateFolder}
                   onToggleSortMenu={() => setShowSortMenu(!showSortMenu)} onSort={toggleSort} onCycleViewMode={cycleViewMode} onFileClick={handleFileClick}
-                  getStreamUrl={getStreamUrl} sourceType={sourceType} hfToken={hfToken} selectionMode={selectionMode} selectedIds={selectedIds}
+                  getStreamUrl={sourceType === 'telegram' ? (chatId, msgId) => getStreamUrl(toTelegramId(chatId), toTelegramId(msgId)) : getStreamUrl} sourceType={sourceType} hfToken={hfToken} selectionMode={selectionMode} selectedIds={selectedIds}
                   onEnterSelection={onEnterSelection} onToggleSelection={onToggleSelection} onExitSelection={onExitSelection} onSelectAll={onSelectAll}
                   onDeselectAll={onDeselectAll} allSelected={allSelected} selectedItemsCount={selectedItemsCount} onBulkRename={onBulkRename} onBulkMove={onBulkMove}
                   onBulkDelete={onBulkDelete} canBulkRename={canBulkRename} canBulkMove={canBulkMove} canBulkDelete={canBulkDelete} canSlideshow={canSlideshow} slideshowKind={slideshowKind}
@@ -365,7 +367,7 @@ export const CloudViewPack: React.FC<CloudViewPackProps> = (props) => {
             )}
             {mobileView === 'player' && (
               <motion.div key="player" className="cloudview-mobile-panel" {...MOBILE_FADE} style={{ height: '100%', overflow: 'hidden', position: 'relative' }}>
-                <PlayerPanel key={selectedFile?.id} selectedFile={selectedFile} selectedChat={selectedChat} sourceType={sourceType} hfToken={hfToken} fileMetadata={fileMetadata} onDownload={handleDownload} onFileGone={handleFileGone} onImageError={handleImageError} onMediaLoaded={handleMediaLoaded} getStreamUrl={getStreamUrl} />
+                <PlayerPanel key={selectedFile?.id} selectedFile={selectedFile} selectedChat={selectedChat} sourceType={sourceType} hfToken={hfToken} fileMetadata={fileMetadata} onDownload={handleDownload} onFileGone={handleFileGone} onImageError={handleImageError} onMediaLoaded={handleMediaLoaded} getStreamUrl={sourceType === 'telegram' ? (chatId, msgId) => getStreamUrl(toTelegramId(chatId), toTelegramId(msgId)) : getStreamUrl} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -382,33 +384,33 @@ export const CloudViewPack: React.FC<CloudViewPackProps> = (props) => {
   const sidebarWidthToUse = isTablet ? tabletSidebarWidth : internalSidebarWidth;
 
   return (
-    <div className={`cloudview-root ${isTablet ? 'cloudview-root--tablet' : 'cloudview-root--desktop'}`} style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', overflow: 'hidden' }}>
-      <div className="cloudview-titlebar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '0 12px', height: '44px', background: 'var(--bg)', borderBottom: '1px solid var(--border-color)', flexShrink: 0 }}>
+    <div className={`cloudview-root global-page ${isTablet ? 'cloudview-root--tablet' : 'cloudview-root--desktop'}`} style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--global-color-background)', overflow: 'hidden' }}>
+      <div className="cloudview-titlebar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '0 12px', height: '44px', background: 'var(--global-color-background)', borderBottom: '1px solid var(--global-color-border)', flexShrink: 0 }}>
         <div className="cloudview-titlebar-left" style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0, overflow: 'hidden' }}>
-          {!isTablet && <button className="cloudview-sidebar-toggle" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} style={{ background: 'none', border: 'none', borderRadius: '6px', padding: '6px', color: 'var(--text-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}</button>}
+          {!isTablet && <button className="cloudview-sidebar-toggle" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} style={{ background: 'none', border: 'none', borderRadius: '6px', padding: '6px', color: 'var(--global-color-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}</button>}
           {renderBreadcrumb(false)}
         </div>
         <div className="cloudview-titlebar-actions" style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-          {showHFSearchBtn && <button className="cloudview-toolbar-btn" onClick={handleOpenHFSearch} title="Search Hugging Face" style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '6px', color: 'var(--text-sub)', cursor: 'pointer' }}><Search size={16} /></button>}
-          {selectedFile && <button className={`cloudview-toolbar-btn ${showDetail ? 'cloudview-toolbar-btn--active' : ''}`} onClick={() => setShowDetail(!showDetail)} style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '6px', color: 'var(--text-sub)', cursor: 'pointer' }}><Info size={16} /></button>}
-          {clearSession && !isPublicView && <button className="cloudview-toolbar-btn" onClick={handleLogout} style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '6px', color: 'var(--text-sub)', cursor: 'pointer' }}><LogOut size={16} /></button>}
+          {showHFSearchBtn && <button className="cloudview-toolbar-btn" onClick={handleOpenHFSearch} title="Search Hugging Face" style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '6px', color: 'var(--global-color-text-secondary)', cursor: 'pointer' }}><Search size={16} /></button>}
+          {selectedFile && <button className={`cloudview-toolbar-btn ${showDetail ? 'cloudview-toolbar-btn--active' : ''}`} onClick={() => setShowDetail(!showDetail)} style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '6px', color: 'var(--global-color-text-secondary)', cursor: 'pointer' }}><Info size={16} /></button>}
+          {clearSession && !isPublicView && <button className="cloudview-toolbar-btn" onClick={handleLogout} style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '6px', color: 'var(--global-color-text-secondary)', cursor: 'pointer' }}><LogOut size={16} /></button>}
         </div>
       </div>
       <div className="cloudview-desktop-body" style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
         <Sidebar dialogs={dialogs} selectedChat={selectedChat} loading={loading} onChatClick={handleChatClick} onRefresh={fetchDialogs} onAddRepo={onAddRepo} collapsed={isTablet ? false : sidebarCollapsed} width={sidebarWidthToUse} onWidthChange={isTablet ? () => {} : handleWidthChange} sourceType={sourceType} hfRepos={hfRepos} onRepoClick={onRepoClick} selectedRepo={hfSelectedRepo} repoSelectionMode={repoSelectionMode} selectedRepoIds={selectedRepoIds} onEnterRepoSelection={onEnterRepoSelection} onToggleRepoSelection={onToggleRepoSelection} hideAddRepo={isPublicView} />
-        <main className="cloudview-main-panel" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0, background: 'var(--bg)' }}>
+        <main className="cloudview-main-panel" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0, background: 'var(--global-color-background)' }}>
           {sourceType === 'hf_dataset' && repoSelectionMode && !isPublicView && (
             <RepoSelectionActionBar count={selectedReposCount} allSelected={allReposSelected} canRename={canRenameRepo} canDelete={canDeleteRepo} canUpdateVisibility={canUpdateRepoVisibility} canSquash={canSquashRepo} selectedRepoPrivate={selectedRepoPrivate} onSelectAll={onSelectAllRepos} onDeselectAll={onDeselectAllRepos} onRename={onRenameRepo} onDelete={onDeleteRepo} onUpdateVisibility={onUpdateRepoVisibility} onSquash={onSquashRepo} onCancel={onExitRepoSelection} />
           )}
           {!selectedFile ? (
-            <FilesPanel selectedChat={selectedChat} selectedRepo={hfSelectedRepo} files={sortedFiles} selectedFile={selectedFile} loadingFiles={loadingFiles} error={error} searchQuery={searchQuery} viewMode={viewMode} sortField={sortField} sortDir={sortDir} showSortMenu={showSortMenu} totalSize={totalSize} sortMenuRef={sortMenuRef} screenSize={screenSize} onSearchChange={setSearchQuery} onRefresh={refreshCurrentChatFiles} onCreateFolder={onCreateFolder} onToggleSortMenu={() => setShowSortMenu(!showSortMenu)} onSort={toggleSort} onCycleViewMode={cycleViewMode} onFileClick={handleFileClick} getStreamUrl={getStreamUrl} sourceType={sourceType} hfToken={hfToken} selectionMode={selectionMode} selectedIds={selectedIds} onEnterSelection={onEnterSelection} onToggleSelection={onToggleSelection} onExitSelection={onExitSelection} onSelectAll={onSelectAll} onDeselectAll={onDeselectAll} allSelected={allSelected} selectedItemsCount={selectedItemsCount} onBulkRename={onBulkRename} onBulkMove={onBulkMove} onBulkDelete={onBulkDelete} canBulkRename={canBulkRename} canBulkMove={canBulkMove} canBulkDelete={canBulkDelete} canSlideshow={canSlideshow} slideshowKind={slideshowKind} onSlideshow={onSlideshow} onCopy={onCopy} canCopy={canCopy} showCopy={showCopy} onWatchExternal={onWatchExternal} canWatchExternal={canWatchExternal} isPublicView={isPublicView} />
+            <FilesPanel selectedChat={selectedChat} selectedRepo={hfSelectedRepo} files={sortedFiles} selectedFile={selectedFile} loadingFiles={loadingFiles} error={error} searchQuery={searchQuery} viewMode={viewMode} sortField={sortField} sortDir={sortDir} showSortMenu={showSortMenu} totalSize={totalSize} sortMenuRef={sortMenuRef} screenSize={screenSize} onSearchChange={setSearchQuery} onRefresh={refreshCurrentChatFiles} onCreateFolder={onCreateFolder} onToggleSortMenu={() => setShowSortMenu(!showSortMenu)} onSort={toggleSort} onCycleViewMode={cycleViewMode} onFileClick={handleFileClick} getStreamUrl={sourceType === 'telegram' ? (chatId, msgId) => getStreamUrl(toTelegramId(chatId), toTelegramId(msgId)) : getStreamUrl} sourceType={sourceType} hfToken={hfToken} selectionMode={selectionMode} selectedIds={selectedIds} onEnterSelection={onEnterSelection} onToggleSelection={onToggleSelection} onExitSelection={onExitSelection} onSelectAll={onSelectAll} onDeselectAll={onDeselectAll} allSelected={allSelected} selectedItemsCount={selectedItemsCount} onBulkRename={onBulkRename} onBulkMove={onBulkMove} onBulkDelete={onBulkDelete} canBulkRename={canBulkRename} canBulkMove={canBulkMove} canBulkDelete={canBulkDelete} canSlideshow={canSlideshow} slideshowKind={slideshowKind} onSlideshow={onSlideshow} onCopy={onCopy} canCopy={canCopy} showCopy={showCopy} onWatchExternal={onWatchExternal} canWatchExternal={canWatchExternal} isPublicView={isPublicView} />
           ) : (
-            <PlayerPanel key={selectedFile?.id} selectedFile={selectedFile} selectedChat={selectedChat} sourceType={sourceType} hfToken={hfToken} fileMetadata={fileMetadata} onDownload={handleDownload} onFileGone={handleFileGone} onImageError={handleImageError} onMediaLoaded={handleMediaLoaded} getStreamUrl={getStreamUrl} />
+            <PlayerPanel key={selectedFile?.id} selectedFile={selectedFile} selectedChat={selectedChat} sourceType={sourceType} hfToken={hfToken} fileMetadata={fileMetadata} onDownload={handleDownload} onFileGone={handleFileGone} onImageError={handleImageError} onMediaLoaded={handleMediaLoaded} getStreamUrl={sourceType === 'telegram' ? (chatId, msgId) => getStreamUrl(toTelegramId(chatId), toTelegramId(msgId)) : getStreamUrl} />
           )}
         </main>
         <AnimatePresence>
           {showDetail && selectedFile && (
-            <motion.aside className="cloudview-detail-pane" initial={{ width: 0, opacity: 0 }} animate={{ width: isTablet ? 220 : 260, opacity: 1 }} exit={{ width: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ borderLeft: '1px solid var(--border-color)', background: 'var(--bg)', overflow: 'hidden', flexShrink: 0 }}>
+            <motion.aside className="cloudview-detail-pane" initial={{ width: 0, opacity: 0 }} animate={{ width: isTablet ? 220 : 260, opacity: 1 }} exit={{ width: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ borderLeft: '1px solid var(--global-color-border)', background: 'var(--global-color-background)', overflow: 'hidden', flexShrink: 0 }}>
               <DetailPanel file={selectedFile} metadata={fileMetadata} />
             </motion.aside>
           )}

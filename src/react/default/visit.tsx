@@ -67,7 +67,9 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
 
   useEffect(() => {
     setIsTutorialActive(true);
-    return () => setIsTutorialActive(false);
+    return () => {
+      setIsTutorialActive(false);
+    };
   }, [setIsTutorialActive]);
 
   useEffect(() => {
@@ -139,7 +141,7 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
   };
 
   return (
-    <div className="setting-overlay">
+    <div className="setting-overlay global-modal-overlay">
       <audio 
         ref={audioRef} 
         key={slides[step].audio} 
@@ -156,7 +158,7 @@ const Visit: React.FC<VisitProps> = ({ onComplete }) => {
           initial="initial" 
           animate="animate" 
           exit="exit" 
-          className="barcode-card"
+          className="barcode-card global-card global-card--padded"
           role="dialog"
           aria-live="polite"
         >

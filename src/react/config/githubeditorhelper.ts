@@ -11,6 +11,22 @@ export interface GithubCredentials {
   uid?: string;
 }
 
+export interface GithubRepo {
+  name: string;
+  full_name?: string;
+  description?: string;
+  private?: boolean;
+  id: number;
+  _isTemp?: boolean;
+  [key: string]: unknown;
+}
+
+export interface GithubEditingFile {
+  path: string;
+  content: string;
+  sha: string;
+}
+
 export const GITHUB_KEY_UPDATED_EVENT = "githubKeyUpdated";
 
 export const saveGithubCredentials = async (username: string, token: string) => {
@@ -97,6 +113,7 @@ export interface GithubItem {
   sha: string;
   type: "dir" | "file";
   size?: number;
+  _isTemp?: boolean;
 }
 
 export interface ItemTarget {
@@ -152,7 +169,7 @@ export const getLanguage = (filename: string): string => {
   return map[ext] || "text";
 };
 
-export const fetchReposAPI = async () => {
+export const fetchReposAPI = async (): Promise<GithubRepo[]> => {
   const octokit = getOctokit();
   const res = await octokit.request("GET /user/repos", {
     sort: "updated",
@@ -160,7 +177,7 @@ export const fetchReposAPI = async () => {
     direction: "desc",
     timestamp: Date.now(),
   } as Parameters<typeof octokit.request>[1]);
-  return res.data;
+  return res.data as GithubRepo[];
 };
 
 export const fetchContentsAPI = async (repo: string, path: string) => {
@@ -376,14 +393,14 @@ export const updateFileAPI = async (repo: string, path: string, content: string,
   });
 };
 
-export const renameRepoAPI = async (oldName: string, newName: string) => {
+export const renameRepoAPI = async (oldName: string, newName: string): Promise<GithubRepo> => {
   const octokit = getOctokit();
   const res = await octokit.request("PATCH /repos/{owner}/{repo}", {
     owner: currentUsername,
     repo: oldName,
     name: newName,
   });
-  return res.data;
+  return res.data as GithubRepo;
 };
 
 export const deleteRepoAPI = async (repoName: string) => {
@@ -394,14 +411,14 @@ export const deleteRepoAPI = async (repoName: string) => {
   });
 };
 
-export const createRepoAPI = async (name: string, description: string) => {
+export const createRepoAPI = async (name: string, description: string): Promise<GithubRepo> => {
   const octokit = getOctokit();
   const res = await octokit.request("POST /user/repos", {
     name,
     description,
     private: false,
   });
-  return res.data;
+  return res.data as GithubRepo;
 };
 
 export const uploadFolderToGitHub = async (

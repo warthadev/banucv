@@ -25,6 +25,8 @@ type CloudViewPanelFile = CloudViewFile & {
   _coverStreamUrl?: string;
 };
 
+const toTelegramId = (id: string | number): number => (typeof id === 'number' ? id : Number(id));
+
 const ViewIcon: React.FC<{ mode: ViewMode; size?: number }> = ({ mode, size = 15 }) => {
   if (mode === 'list') return <List size={size} />;
   if (mode === 'grid') return <LayoutGrid size={size} />;
@@ -108,7 +110,7 @@ export const FilesPanel: React.FC<{
   sortDir: SortDir;
   showSortMenu: boolean;
   totalSize: number;
-  sortMenuRef: React.RefObject<HTMLDivElement>;
+  sortMenuRef: React.RefObject<HTMLDivElement | null>;
   screenSize: 'mobile' | 'tablet' | 'desktop';
   onSearchChange: (q: string) => void;
   onRefresh: () => void;
@@ -117,7 +119,7 @@ export const FilesPanel: React.FC<{
   onSort: (field: SortField) => void;
   onCycleViewMode: () => void;
   onFileClick: (file: CloudViewPanelFile) => void;
-  getStreamUrl: (chatId: number, msgId: number) => string;
+  getStreamUrl: (chatId: number | string, msgId: number | string) => string;
   sourceType?: 'telegram' | 'hf_dataset';
   hfToken?: string;
   selectionMode: boolean;
@@ -166,7 +168,7 @@ export const FilesPanel: React.FC<{
   const getFileLabel = useCallback((file: CloudViewPanelFile) => isFolder(file) ? 'Folder' : getLabel(file.media_type), [isFolder]);
   const renderResBadge = (file: CloudViewPanelFile, style?: React.CSSProperties) => {
     if (sourceType !== 'hf_dataset' || file.media_type !== 'video' || isFolder(file)) return null;
-    const url = getStreamUrl(selectedChat?.id ?? 0, file.id);
+    const url = getStreamUrl(selectedChat?.id ?? 0, toTelegramId(file.id));
     return <VideoResBadge url={url} token={hfToken} fileSize={file.size || 0} enabled={!!url} style={style} />;
   };
   const getFileSize = useCallback((file: CloudViewPanelFile) => isFolder(file) ? (file._folderSize ? formatBytes(file._folderSize) : '—') : formatBytes(file.size), [isFolder]);
@@ -301,7 +303,7 @@ export const FilesPanel: React.FC<{
             <button className={`cloudview-toolbar-btn ${showSortMenu ? 'cloudview-toolbar-btn--active' : ''}`} onClick={onToggleSortMenu}><ArrowUpDown size={isMobile ? 14 : 15} /></button>
             <AnimatePresence>
               {showSortMenu && (
-                <motion.div className="cloudview-sort-menu" initial={{ opacity: 0, y: -4, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4, scale: 0.95 }}>
+                <motion.div className="cloudview-sort-menu global-popover" initial={{ opacity: 0, y: -4, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4, scale: 0.95 }}>
                   {(['name', 'date', 'size', 'type'] as SortField[]).map(field => (
                     <button key={field} className={`cloudview-sort-item ${sortField === field ? 'cloudview-sort-item--active' : ''}`} onClick={() => onSort(field)}>
                       <span className="cloudview-sort-label">{field}</span>
@@ -397,13 +399,13 @@ export const FilesPanel: React.FC<{
         const isImage = file.media_type === 'image' && !isFolderItem;
         const isVideo = file.media_type === 'video' && !isFolderItem && sourceType === 'hf_dataset';
         const canShowThumb = isImage || isVideo;
-        const thumbUrl = canShowThumb && (selectedChat || sourceType === 'hf_dataset') ? (sourceType === 'hf_dataset' && file._thumbUrl ? file._thumbUrl : getStreamUrl(selectedChat?.id ?? 0, file.id)) : null;
+        const thumbUrl = canShowThumb && (selectedChat || sourceType === 'hf_dataset') ? (sourceType === 'hf_dataset' && file._thumbUrl ? file._thumbUrl : getStreamUrl(selectedChat?.id ?? 0, toTelegramId(file.id))) : null;
         const sanitizedName = sanitizeText(file.name);
         const isSelected = selectedIds.has(String(file.id));
         return (
           <motion.div
             key={file.id}
-            style={{ '--card-accent': fileColor } as React.CSSProperties}
+            style={{ '--global-color-card-accent': fileColor } as React.CSSProperties}
             className={`cloudview-file-poster-card ${isSelected ? 'cloudview-item--selected' : ''} ${!isSelected && selectedFile?.id === file.id ? 'cloudview-file-poster-card--active' : ''}`}
             onClick={() => handleItemClick(file)}
             onPointerDown={(e) => handleItemPointerDown(e, file)}
@@ -465,7 +467,7 @@ export const FilesPanel: React.FC<{
               return (
                 <motion.div
                   key={file.id}
-                  style={{ '--card-accent': fileColor } as React.CSSProperties}
+                  style={{ '--global-color-card-accent': fileColor } as React.CSSProperties}
                   className={`cloudview-file-grid-card ${isSelected ? 'cloudview-item--selected' : ''} ${!isSelected && selectedFile?.id === file.id ? 'cloudview-file-grid-card--active' : ''}`}
                   onClick={() => handleItemClick(file)}
                   onPointerDown={(e) => handleItemPointerDown(e, file)}
@@ -500,7 +502,7 @@ export const FilesPanel: React.FC<{
               const isImage = file.media_type === 'image' && !isFolderItem;
               const isVideo = file.media_type === 'video' && !isFolderItem && sourceType === 'hf_dataset';
               const canShowThumb = isImage || isVideo;
-              const thumbUrl = canShowThumb && (selectedChat || sourceType === 'hf_dataset') ? (sourceType === 'hf_dataset' && file._thumbUrl ? file._thumbUrl : getStreamUrl(selectedChat?.id ?? 0, file.id)) : null;
+              const thumbUrl = canShowThumb && (selectedChat || sourceType === 'hf_dataset') ? (sourceType === 'hf_dataset' && file._thumbUrl ? file._thumbUrl : getStreamUrl(selectedChat?.id ?? 0, toTelegramId(file.id))) : null;
               const sanitizedName = sanitizeText(file.name);
               const isSelected = selectedIds.has(String(file.id));
               return (
@@ -579,7 +581,7 @@ export const FilesPanel: React.FC<{
               return (
                 <motion.div
                   key={file.id}
-                  style={{ '--card-accent': fileColor } as React.CSSProperties}
+                  style={{ '--global-color-card-accent': fileColor } as React.CSSProperties}
                   className={`cloudview-file-grid-card ${isSelected ? 'cloudview-item--selected' : ''} ${!isSelected && selectedFile?.id === file.id ? 'cloudview-file-grid-card--active' : ''}`}
                   onClick={() => handleItemClick(file)}
                   onPointerDown={(e) => handleItemPointerDown(e, file)}
@@ -614,7 +616,7 @@ export const FilesPanel: React.FC<{
               const isImage = file.media_type === 'image' && !isFolderItem;
               const isVideo = file.media_type === 'video' && !isFolderItem && sourceType === 'hf_dataset';
               const canShowThumb = isImage || isVideo;
-              const thumbUrl = canShowThumb && (selectedChat || sourceType === 'hf_dataset') ? (sourceType === 'hf_dataset' && file._thumbUrl ? file._thumbUrl : getStreamUrl(selectedChat?.id ?? 0, file.id)) : null;
+              const thumbUrl = canShowThumb && (selectedChat || sourceType === 'hf_dataset') ? (sourceType === 'hf_dataset' && file._thumbUrl ? file._thumbUrl : getStreamUrl(selectedChat?.id ?? 0, toTelegramId(file.id))) : null;
               const sanitizedName = sanitizeText(file.name);
               const isSelected = selectedIds.has(String(file.id));
               return (
@@ -675,7 +677,7 @@ export const PlayerPanel: React.FC<{
   onFileGone: (fileId: number) => void;
   onImageError: (fileId: number) => void;
   onMediaLoaded: (fileId: number) => void;
-  getStreamUrl: (chatId: number, msgId: number) => string;
+  getStreamUrl: (chatId: number | string, msgId: number | string) => string;
 }> = ({
   selectedFile,
   selectedChat,
@@ -690,7 +692,7 @@ export const PlayerPanel: React.FC<{
 }) => {
   const isFolder = selectedFile?._isFolder === true;
   const isMedia = !!selectedFile && !isFolder && ['video', 'gif'].includes(selectedFile.media_type);
-  const rawStreamUrl = selectedFile && !isFolder ? getStreamUrl(selectedChat?.id ?? 0, selectedFile.id) : '';
+  const rawStreamUrl = selectedFile && !isFolder ? getStreamUrl(selectedChat?.id ?? 0, sourceType === 'telegram' ? toTelegramId(selectedFile.id) : selectedFile.id) : '';
 
   if (!selectedFile || (sourceType === 'telegram' && !selectedChat)) return <div className="cloudview-state-box"><Play size={48} className="cloudview-state-icon" /><p>Select a file</p></div>;
 
@@ -719,7 +721,7 @@ export const PlayerPanel: React.FC<{
           </div>
           <p>No stream URL available</p>
           <span>{getLabel(selectedFile.media_type)}</span>
-          <button className="cloudview-player-download" onClick={() => onDownload(selectedChat?.id ?? 0, selectedFile.id, selectedFile.name)}>
+          <button className="cloudview-player-download" onClick={() => onDownload(selectedChat?.id ?? 0, toTelegramId(selectedFile.id), selectedFile.name)}>
             <Download size={16} /> Download
           </button>
         </div>
@@ -743,20 +745,20 @@ export const PlayerPanel: React.FC<{
 
   const handleMediaError = async () => {
     if (selectedFile.media_type === 'image') {
-      onImageError(selectedFile.id);
-      onFileGone(selectedFile.id);
+      onImageError(toTelegramId(selectedFile.id));
+      onFileGone(toTelegramId(selectedFile.id));
     } else {
       try {
         const res = await fetch(streamUrl, {
           method: 'HEAD',
           headers: sourceType === 'hf_dataset' && hfToken ? { Authorization: `Bearer ${hfToken}` } : undefined,
         });
-        if (res.status === 410) onFileGone(selectedFile.id);
+        if (res.status === 410) onFileGone(toTelegramId(selectedFile.id));
       } catch {
-        onFileGone(selectedFile.id);
+        onFileGone(toTelegramId(selectedFile.id));
       }
     }
-    onMediaLoaded(selectedFile.id);
+    onMediaLoaded(toTelegramId(selectedFile.id));
   };
 
   const videoItem: VideoMediaItem = {
@@ -780,11 +782,11 @@ export const PlayerPanel: React.FC<{
         <p>Preview not available</p>
         <span>{getLabel(selectedFile.media_type)}</span>
         {fileMetadata?.subtitleTracks && fileMetadata.subtitleTracks.length > 0 && (
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+          <span style={{ fontSize: '12px', color: 'var(--global-color-text-muted)' }}>
             Subtitles: {fileMetadata.subtitleTracks.map(t => sanitizeText(t.language)).join(', ')}
           </span>
         )}
-        <button className="cloudview-player-download" onClick={() => onDownload(selectedChat?.id ?? 0, selectedFile.id, selectedFile.name)}>
+        <button className="cloudview-player-download" onClick={() => onDownload(selectedChat?.id ?? 0, toTelegramId(selectedFile.id), selectedFile.name)}>
           <Download size={16} /> Download
         </button>
       </div>
@@ -800,7 +802,7 @@ export const PlayerPanel: React.FC<{
         showMeta
         showDownload
         token={sourceType === 'hf_dataset' ? hfToken : undefined}
-        onDownload={() => onDownload(selectedChat?.id ?? 0, selectedFile.id, selectedFile.name)}
+        onDownload={() => onDownload(selectedChat?.id ?? 0, toTelegramId(selectedFile.id), selectedFile.name)}
         onError={handleMediaError}
       />
     </div>

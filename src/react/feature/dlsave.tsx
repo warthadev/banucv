@@ -445,7 +445,7 @@ const DlSave: React.FC<DlSaveProps> = ({ selection, onChange }) => {
       <AnimatePresence initial={false}>
         {dropdownOpen && (
           <motion.div
-            className="cloudview-transfer-select-menu downloader-save-menu"
+            className="cloudview-transfer-select-menu downloader-save-menu global-popover"
             variants={autoHeightMotion}
             initial="initial"
             animate="animate"
@@ -493,7 +493,7 @@ const DlSave: React.FC<DlSaveProps> = ({ selection, onChange }) => {
                         <AnimatePresence initial={false}>
                           {accountDropdownOpen && (
                             <motion.div
-                              className="cloudview-transfer-select-menu"
+                              className="cloudview-transfer-select-menu global-popover"
                               variants={autoHeightMotion}
                               initial="initial"
                               animate="animate"
@@ -558,7 +558,7 @@ const DlSave: React.FC<DlSaveProps> = ({ selection, onChange }) => {
                               <AnimatePresence initial={false}>
                                 {repoDropdownOpen && (
                                   <motion.div
-                                    className="cloudview-transfer-select-menu"
+                                    className="cloudview-transfer-select-menu global-popover"
                                     variants={autoHeightMotion}
                                     initial="initial"
                                     animate="animate"

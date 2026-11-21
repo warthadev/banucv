@@ -2,6 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import type { Variants } from "framer-motion";
 import {
   Bot,
   MessageSquareText,
@@ -438,7 +439,7 @@ const featureItems: FeatureItem[] = [
   },
 ];
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -449,7 +450,7 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 28 },
   visible: {
     opacity: 1,
@@ -458,7 +459,7 @@ const itemVariants = {
   },
 };
 
-const titleVariants = {
+const titleVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
@@ -467,7 +468,7 @@ const titleVariants = {
   },
 };
 
-const subtitleVariants = {
+const subtitleVariants: Variants = {
   hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,
@@ -489,7 +490,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
       animate={animationState}
     >
       <motion.section
-        className="dash-ecosystem"
+        className="dash-ecosystem global-section global-section--spaced"
         variants={itemVariants}
       >
         <header className="dash-ecosystem-header">
@@ -534,7 +535,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
       </motion.section>
 
       <motion.section
-        className="dash-tech"
+        className="dash-tech global-section global-section--spaced"
         variants={itemVariants}
       >
         <header className="dash-projects-header">
@@ -548,7 +549,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
         <div className="dash-profile-sections">
           <motion.section
             variants={itemVariants}
-            className="dash-content-section"
+            className="dash-content-section global-card global-card--glass global-card--padded"
           >
             <div className="dash-content-section-body">
               <p className="dash-content-desc">{profileIntro}</p>
@@ -572,7 +573,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
       </motion.section>
 
       <motion.section
-        className="dash-projects"
+        className="dash-projects global-section global-section--spaced"
         variants={itemVariants}
       >
         <header className="dash-projects-header">
@@ -598,7 +599,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
               <motion.section
                 key={item.name}
                 variants={itemVariants}
-                className="dash-content-section"
+                className="dash-content-section global-card global-card--glass global-card--padded"
               >
                 <div className="dash-content-section-icon">
                   <Icon size={30} strokeWidth={1.75} />
@@ -629,7 +630,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
       </motion.section>
 
       <motion.section
-        className="dash-tech"
+        className="dash-tech global-section global-section--spaced"
         variants={itemVariants}
       >
         <header className="dash-projects-header">
@@ -655,7 +656,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
               <motion.section
                 key={item.name}
                 variants={itemVariants}
-                className="dash-content-section"
+                className="dash-content-section global-card global-card--glass global-card--padded"
               >
                 <div className="dash-content-section-icon">
                   <Icon size={30} strokeWidth={1.75} />
@@ -677,7 +678,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
       </motion.section>
 
       <motion.section
-        className="dash-tech"
+        className="dash-tech global-section global-section--spaced"
         variants={itemVariants}
       >
         <header className="dash-projects-header">
@@ -697,7 +698,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
         </header>
         <div className="dash-tech-grid">
           {techItems.map((tech) => (
-            <div key={tech.category} className="dash-tech-card">
+            <div key={tech.category} className="dash-tech-card global-card global-card--glass global-card--padded">
               <h3 className="dash-tech-category">{tech.category}</h3>
               <ul className="dash-tech-list">
                 {tech.items.map((item) => (
@@ -712,7 +713,7 @@ const DashContent: React.FC<DashContentProps> = ({ ready = false }) => {
       </motion.section>
 
       <motion.section
-        className="dash-tech"
+        className="dash-tech global-section global-section--spaced"
         variants={itemVariants}
       >
         <header className="dash-projects-header">

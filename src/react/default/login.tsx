@@ -183,9 +183,9 @@ const Login: React.FC = () => {
       <video ref={videoRef} style={{ display: 'none' }} autoPlay playsInline muted />
       <canvas ref={canvasRef} style={{ display: 'none' }} />
       
-      <div className="login-container">
+      <div className="login-container global-page">
         <motion.div 
-          className="login-card"
+          className="login-card global-card global-card--padded"
           variants={cardVariants}
           initial="initial"
           animate="animate"

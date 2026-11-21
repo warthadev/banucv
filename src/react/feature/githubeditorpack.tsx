@@ -1,6 +1,7 @@
 // src/react/feature/githubeditorpack.tsx
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import type { Variants } from "framer-motion";
 import {
   Folder,
   FileText,
@@ -26,24 +27,24 @@ const SIDEBAR_MIN_WIDTH = 200;
 const SIDEBAR_MAX_WIDTH = 500;
 const SIDEBAR_DEFAULT_WIDTH = 290;
 
-const listVariants = {
+const listVariants: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.035 } },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, x: -8 },
   visible: { opacity: 1, x: 0, transition: { duration: 0.16, ease: "easeOut" } },
   exit: { opacity: 0, x: -8, transition: { duration: 0.12 } },
 };
 
-const toggleButtonVariants = {
+const toggleButtonVariants: Variants = {
   initial: { opacity: 0, x: -6 },
   animate: { opacity: 1, x: 0, transition: { duration: 0.15 } },
   exit: { opacity: 0, x: -6, transition: { duration: 0.15 } },
 };
 
-const emptyStateVariants = {
+const emptyStateVariants: Variants = {
   initial: { opacity: 0 },
   animate: { opacity: 1, transition: { duration: 0.14 } },
   exit: { opacity: 0, transition: { duration: 0.14 } },
@@ -328,7 +329,7 @@ const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
                           onClick={() => onCreateClick("file")}
                           className="github-create-btn-center"
                         >
-                          <Plus size={12} /> <span style={{ color: 'var(--text-sub)' }}>Create</span>
+                          <Plus size={12} /> <span style={{ color: 'var(--global-color-text-secondary)' }}>Create</span>
                         </button>
                       </div>
                     </motion.div>
@@ -439,13 +440,13 @@ const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
                       onClick={() => onCreateClick("file")}
                       className="github-create-btn-center"
                     >
-                      <Plus size={12} /> <span style={{ color: 'var(--text-sub)' }}>Create</span>
+                      <Plus size={12} /> <span style={{ color: 'var(--global-color-text-secondary)' }}>Create</span>
                     </button>
                     <button
                       onClick={() => onUploadClick("file")}
                       className="github-create-btn-center"
                     >
-                      <Upload size={12} /> <span style={{ color: 'var(--text-sub)' }}>Upload</span>
+                      <Upload size={12} /> <span style={{ color: 'var(--global-color-text-secondary)' }}>Upload</span>
                     </button>
                   </div>
                 </motion.div>
@@ -584,13 +585,13 @@ const GithubEditorPack: React.FC<GithubEditorPackProps> = ({
                       onClick={() => onCreateClick("file")}
                       className="github-create-btn-center"
                     >
-                      <Plus size={13} /> <span style={{ color: 'var(--text-sub)' }}>Create</span>
+                      <Plus size={13} /> <span style={{ color: 'var(--global-color-text-secondary)' }}>Create</span>
                     </button>
                     <button
                       onClick={() => onUploadClick("file")}
                       className="github-create-btn-center"
                     >
-                      <Upload size={13} /> <span style={{ color: 'var(--text-sub)' }}>Upload</span>
+                      <Upload size={13} /> <span style={{ color: 'var(--global-color-text-secondary)' }}>Upload</span>
                     </button>
                   </div>
                 )}

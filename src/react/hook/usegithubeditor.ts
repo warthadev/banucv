@@ -26,22 +26,15 @@ import {
   renameRepoAPI,
   sortItems,
   type GithubItem,
+  type GithubRepo,
+  type GithubEditingFile,
   type ItemTarget
 } from "@config/githubeditorhelper";
 
-type GithubRepo = {
-  name: string;
-  full_name?: string;
-  description?: string;
-  private?: boolean;
-  id?: string | number;
-  _isTemp?: boolean;
-};
-
-type GithubEditingFile = {
-  path: string;
-  content: string;
-  sha: string;
+const getErrorStatus = (error: unknown): number | undefined => {
+  if (typeof error !== "object" || error === null || !("status" in error)) return undefined;
+  const status = error.status;
+  return typeof status === "number" ? status : undefined;
 };
 
 const updateChildrenPaths = (items: GithubItem[], oldPrefix: string, newPrefix: string): GithubItem[] => {
@@ -190,12 +183,13 @@ export const useGithubEditor = () => {
       setFiles(data);
       setStatus("ready");
     } catch (err: unknown) {
-      if (err.status === 404) {
+      const errorStatus = getErrorStatus(err);
+      if (errorStatus === 404) {
         setFiles([]);
         setStatus("empty");
       } else {
         setStatus("error");
-        if (err.status === 401) {
+        if (errorStatus === 401) {
           setShowAuthModal(true);
           setIsConfigured(false);
         }
@@ -245,7 +239,7 @@ export const useGithubEditor = () => {
     }
   }, [isConfigured, navigateToPath]);
 
-  const handleSave = useCallback(async (repo: string, path: string, content: string, sha: string) => {
+  const handleSave = useCallback(async (repo: string, path: string, content: string, sha: string): Promise<{ success: false } | { success: true; newContent: string; newSha: string }> => {
     if (!isConfigured) return { success: false };
     setIsLoading(true);
     setStatus("saving");
@@ -253,7 +247,7 @@ export const useGithubEditor = () => {
       await saveFileAPI(repo, path, content, sha);
       const { sha: newSha } = await fetchFileContentAPI(repo, path);
       setFiles(prev => prev.map(f => f.path === path ? { ...f, sha: newSha } : f));
-      if (editingFile) setEditingFile((prev: GithubEditingFile | null) => ({ ...prev, sha: newSha }));
+      if (editingFile) setEditingFile(prev => prev ? { ...prev, sha: newSha } : null);
       setStatus("saved");
       setTimeout(() => setStatus("ready"), 1500);
       return { success: true, newContent: content, newSha };
@@ -284,7 +278,7 @@ export const useGithubEditor = () => {
     setIsCreating(true);
     setStatus("creating");
     const repoName = name.toLowerCase().replace(/\s/g, "-");
-    const tempRepo = { id: `temp-${Date.now()}`, name: repoName, description, full_name: `temp/${repoName}`, private: false, _isTemp: true };
+    const tempRepo = { id: Date.now(), name: repoName, description, full_name: `temp/${repoName}`, private: false, _isTemp: true };
     setRepos(prev => [tempRepo, ...prev]);
     try {
       const data = await createRepoAPI(repoName, description);
@@ -306,12 +300,12 @@ export const useGithubEditor = () => {
     setIsCreating(true);
     const fullPath = path ? `${path}/${name}` : name;
     const tempSha = `temp-${Date.now()}-${Math.random()}`;
-    const newItem = { 
-      name, 
-      path: fullPath, 
-      sha: tempSha, 
-      type: type === "folder" ? "dir" : "file", 
-      _isTemp: true 
+    const newItem: GithubItem = {
+      name,
+      path: fullPath,
+      sha: tempSha,
+      type: type === "folder" ? "dir" : "file",
+      _isTemp: true,
     };
     
     setFiles(prev => sortItems([...prev, newItem]));
@@ -477,7 +471,7 @@ export const useGithubEditor = () => {
             prev.map(f => f.path === newPath ? { ...f, sha: newSha } : f)
           );
           if (editingFile?.path === newPath) {
-            setEditingFile((prev: GithubEditingFile | null) => prev ? { ...prev, sha: newSha } : null);
+            setEditingFile(prev => prev ? { ...prev, sha: newSha } : null);
           }
         } catch { void 0; }
       }
@@ -647,4 +641,4 @@ export const useGithubEditor = () => {
   };
 };
 
-export type { GithubItem, ItemTarget };
+export type { GithubRepo, GithubItem, GithubEditingFile, ItemTarget };

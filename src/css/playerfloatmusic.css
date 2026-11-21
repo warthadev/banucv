@@ -12,7 +12,7 @@
 
 .dashboard-floating-player {
   position: relative;
-  background-color: var(--bg-alpha);
+  background-color: var(--global-color-background-alpha);
   -webkit-backdrop-filter: blur(15px) saturate(1.4);
   backdrop-filter: blur(15px) saturate(1.4);
   border: none;
@@ -36,11 +36,11 @@
   bottom: 24px;
   width: 14px;
   height: 58px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--global-color-border);
   border-right: none;
   border-radius: 18px 0 0 18px;
-  background-color: var(--bg-alpha);
-  color: var(--primary);
+  background-color: var(--global-color-background-alpha);
+  color: var(--global-color-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -61,7 +61,7 @@
 .floating-player-restore.has-cover {
   width: 58px;
   border-radius: 18px 0 0 18px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--global-color-border);
 }
 
 .floating-player-restore.has-cover:hover {
@@ -76,7 +76,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--border-color);
+  border: 2px solid var(--global-color-border);
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
@@ -88,7 +88,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle, rgba(var(--primary-rgb), 0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--global-color-accent-rgb), 0.15) 0%, transparent 70%);
   transition: all 0.3s ease;
 }
 
@@ -104,7 +104,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary);
+  color: var(--global-color-accent);
   z-index: 2;
 }
 
@@ -117,7 +117,7 @@
 .player-genre-display {
   font-size: 14px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--global-color-text);
   line-height: 1.2;
 }
 
@@ -127,12 +127,12 @@
   gap: 4px;
   font-size: 8px;
   font-weight: 800;
-  color: var(--text-muted);
+  color: var(--global-color-text-muted);
   margin-top: 2px;
 }
 
 .player-action-btn {
-  background-color: var(--primary);
+  background-color: var(--global-color-accent);
   color: #ffffff;
   border: none;
   width: 45px;
@@ -168,7 +168,7 @@
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   border-radius: 50%;
-  border: 2px solid var(--primary);
+  border: 2px solid var(--global-color-accent);
   animation: ripple-out 1.2s infinite;
   opacity: 0;
   pointer-events: none;

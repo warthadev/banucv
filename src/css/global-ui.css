@@ -1,0 +1,186 @@
+.global-page {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  background: var(--global-color-background);
+  color: var(--global-color-text);
+}
+
+.global-wrapper {
+  box-sizing: border-box;
+  width: min(100%, var(--global-layout-content-width));
+  min-width: 0;
+  margin-inline: auto;
+  padding-inline: var(--global-layout-gutter);
+}
+
+.global-section {
+  min-width: 0;
+}
+
+.global-section--spaced {
+  gap: var(--global-section-gap);
+}
+
+.global-stack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--global-layout-gap);
+}
+
+.global-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  gap: var(--global-layout-gap);
+}
+
+.global-grid {
+  display: grid;
+  min-width: 0;
+  gap: var(--global-layout-gap);
+}
+
+.global-page .global-card {
+  box-sizing: border-box;
+  min-width: 0;
+  color: var(--global-color-text);
+  background: var(--global-color-surface);
+  border: 1px solid var(--global-color-border);
+  border-radius: var(--global-radius-card);
+  box-shadow: var(--global-shadow-card);
+}
+
+.global-page .global-card--padded {
+  padding: var(--global-card-padding);
+}
+
+.global-page .global-card--flat {
+  box-shadow: none;
+}
+
+.global-page .global-card--glass {
+  background: var(--global-color-glass-surface);
+  border-color: var(--global-color-glass-border);
+  box-shadow: var(--global-shadow-glass);
+  -webkit-backdrop-filter: blur(var(--global-glass-blur));
+  backdrop-filter: blur(var(--global-glass-blur));
+}
+
+.global-control {
+  box-sizing: border-box;
+  border: 1px solid var(--global-color-border);
+  border-radius: var(--global-radius-control);
+  background: var(--global-color-surface);
+  color: var(--global-color-text);
+}
+
+.global-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: var(--global-space-4);
+  overflow: auto;
+  background: var(--global-color-overlay);
+}
+
+.global-modal-overlay--media {
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.9);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.global-modal {
+  box-sizing: border-box;
+  width: min(100%, var(--global-modal-max-width));
+  max-height: calc(100dvh - 2 * var(--global-space-4));
+  overflow: auto;
+  color: var(--global-color-text);
+  background: var(--global-color-surface);
+  border: 1px solid var(--global-color-border);
+  border-radius: var(--global-radius-card);
+  box-shadow: var(--global-shadow-popover);
+}
+
+.global-modal--wide {
+  width: min(100%, 960px);
+}
+
+.global-popover {
+  box-sizing: border-box;
+  max-width: min(var(--global-popover-max-width), calc(100vw - 2 * var(--global-space-3)));
+  max-height: min(85dvh, 680px);
+  overflow: auto;
+  color: var(--global-color-text);
+  background: var(--global-color-surface);
+  border: 1px solid var(--global-color-border);
+  border-radius: var(--global-radius-medium);
+  box-shadow: var(--global-shadow-popover);
+}
+
+.global-popover--glass {
+  background: var(--global-color-glass-surface);
+  border-color: var(--global-color-glass-border);
+  box-shadow: var(--global-shadow-glass);
+  -webkit-backdrop-filter: blur(var(--global-glass-blur));
+  backdrop-filter: blur(var(--global-glass-blur));
+}
+
+.global-popup {
+  box-sizing: border-box;
+  color: var(--global-color-text);
+  background: var(--global-color-surface);
+  border: 1px solid var(--global-color-border);
+  border-radius: var(--global-radius-medium);
+  box-shadow: var(--global-shadow-popover);
+}
+
+.global-text {
+  color: var(--global-color-text);
+}
+
+.global-text-secondary {
+  color: var(--global-color-text-secondary);
+}
+
+.global-text-muted {
+  color: var(--global-color-text-muted);
+}
+
+.global-accent {
+  color: var(--global-color-accent);
+}
+
+.global-on-accent {
+  color: var(--global-color-on-accent);
+}
+
+.global-theme-transition {
+  transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.global-icon-button {
+  color: var(--global-color-icon);
+}
+
+.global-icon-button:hover:not(:disabled),
+.global-icon-button:focus-visible {
+  color: var(--global-color-icon);
+}
+
+.global-icon-button:disabled {
+  color: var(--global-color-text-secondary);
+}
+
+@media (max-width: 767px) {
+  .global-page .global-card--padded {
+    padding: var(--global-space-4);
+  }
+}

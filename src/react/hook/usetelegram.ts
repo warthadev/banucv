@@ -72,7 +72,7 @@ export const useTelegram = (sessionString: string | null, onImageClick?: (file: 
     return res;
   }, []);
 
-  const getStreamUrl = useCallback((chatId: number, msgId: number) => {
+  const getStreamUrl = useCallback((chatId: number | string, msgId: number | string) => {
     const API_BASE = getActiveBase();
     let url = `${API_BASE}/telegram/stream/${chatId}/${msgId}`;
     const session = sessionRef.current;

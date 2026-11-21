@@ -73,7 +73,7 @@ export const Breadcrumb: React.FC<{
         <button
           className="cloudview-bc-item cloudview-bc-link"
           onClick={onBack}
-          style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, padding: '2px 4px', background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, padding: '2px 4px', background: 'none', border: 'none', color: 'var(--global-color-text)', cursor: 'pointer' }}
         >
           <ChevronLeft size={20} />
         </button>
@@ -331,7 +331,7 @@ export const Sidebar: React.FC<{
             {sourceType === 'telegram' ? (
               dialogs.map((chat) => (
                 <li key={chat.id}>
-                  <button className={`cloudview-tree-item ${selectedChat?.id === chat.id ? 'cloudview-tree-item--active' : ''}`} style={{ '--row-accent': CHAT_ACCENT[chat.type] || 'var(--primary)' } as React.CSSProperties} onClick={() => onChatClick(chat)} title={sanitizeText(chat.name)}>
+                  <button className={`cloudview-tree-item ${selectedChat?.id === chat.id ? 'cloudview-tree-item--active' : ''}`} style={{ '--row-accent': CHAT_ACCENT[chat.type] || 'var(--global-color-accent)' } as React.CSSProperties} onClick={() => onChatClick(chat)} title={sanitizeText(chat.name)}>
                     <span className="cloudview-tree-icon">{chat.type === 'channel' ? <Hash size={15} /> : <Users size={15} />}</span>
                     {!collapsed && (
                       <>
@@ -374,7 +374,7 @@ export const Sidebar: React.FC<{
                           {repo.size !== undefined && repo.size > 0 && (
                             <span className="cloudview-tree-size">{formatBytes(repo.size)}</span>
                           )}
-                          {repo.private && <Lock size={14} style={{ color: 'var(--text-muted)' }} />}
+                          {repo.private && <Lock size={14} style={{ color: 'var(--global-color-text-muted)' }} />}
                         </>
                       )}
                     </button>
@@ -481,7 +481,7 @@ export const RepoRow: React.FC<{
         </span>
       </span>
       <span className="cloudview-frow-end">
-        {repo.private && <Lock size={14} style={{ color: 'var(--text-muted)' }} />}
+        {repo.private && <Lock size={14} style={{ color: 'var(--global-color-text-muted)' }} />}
         {!selectionMode && <ChevronRight size={16} className="cloudview-frow-chevron" />}
       </span>
     </div>

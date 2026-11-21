@@ -60,7 +60,7 @@ const Dash: React.FC = () => {
   }, [mode]);
 
   return (
-    <div className="home-container home-container--dash">
+    <div className="home-container home-container--dash global-page">
       <img
         className="dash-framescroll-fallback"
         src="/image/motion/frame_0001.webp"

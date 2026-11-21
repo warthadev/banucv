@@ -11,7 +11,7 @@ import { AI_AGENT_API_BASE } from "@config/api";
 import { saveOpenRouterCredentials } from "@config/routerhelper";
 import { canSendAgentModel, shouldShowRouterAuthModal } from "@config/agentauthflow";
 import { isLocalAgentModel, isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
-import { buildModelScopedHistory, formatAgentFileContext, getAgentModelClassification, getAgentModelsForMode, getAgentRequestModels, getAgentMessagesStorageKey, getAgentPreferencesStorageKey, parseAgentModeSettings, type AgentMode } from "@config/agentmodes";
+import { buildModelScopedHistory, formatAgentFileContext, getAgentRequestModels, getAgentMessagesStorageKey, getAgentPreferencesStorageKey, parseAgentModeSettings, type AgentMode } from "@config/agentmodes";
 import { parseAgentFile } from "@config/agentfileparser";
 import { useAudio } from "@hook/useaudio";
 import Loading from "@control/loading";
@@ -189,39 +189,39 @@ const AIAgentPopover: React.FC<AIAgentPopoverProps> = ({
 
 const TableBlock = ({ content }: { content: string }) => {
   const [copied, setCopied] = useState(false);
-  
+
   const handleCopy = () => {
     navigator.clipboard.writeText(content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-  
+
   const handleDownload = () => {
     const lines = content.split('\n').filter(line => line.trim());
     const csvLines: string[] = [];
     let headerRow: string[] | null = null;
     const dataRows: string[][] = [];
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       if (line.match(/^\s*\|[\s\-:|]+\|\s*$/)) continue;
       const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell);
       if (cells.length === 0) continue;
-      
+
       if (headerRow === null) {
         headerRow = cells;
       } else {
         dataRows.push(cells);
       }
     }
-    
+
     if (headerRow) {
       csvLines.push(headerRow.join(','));
       for (const row of dataRows) {
         csvLines.push(row.join(','));
       }
     }
-    
+
     const csv = csvLines.join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -231,17 +231,17 @@ const TableBlock = ({ content }: { content: string }) => {
     a.click();
     URL.revokeObjectURL(url);
   };
-  
+
   const parseTable = (markdown: string) => {
     const lines = markdown.split('\n').filter(line => line.trim());
     if (lines.length < 2) return null;
-    
+
     const separatorIndex = lines.findIndex(line => line.match(/^\s*\|[\s\-:|]+\|\s*$/));
     if (separatorIndex === -1) return null;
-    
+
     const headerCells = lines[0].split('|').map(cell => cell.trim()).filter(cell => cell);
     const bodyLines = lines.slice(separatorIndex + 1);
-    
+
     return (
       <>
         <thead>
@@ -266,10 +266,10 @@ const TableBlock = ({ content }: { content: string }) => {
       </>
     );
   };
-  
+
   const tableContent = parseTable(content);
   if (!tableContent) return null;
-  
+
   return (
     <div className="aiagent-table-block-wrapper">
       <div className="aiagent-table-header">
@@ -399,9 +399,9 @@ const detectLanguage = (text: string): "id" | "en" => {
     .replace(/[^a-zA-Z ]/g, " ")
     .toLowerCase()
     .trim();
-  
+
   if (!cleanText) return "en";
-  
+
   const idWords = [
     "yang", "dan", "atau", "ini", "itu", "saya", "kamu", "kita", "mereka", "dia",
     "aku", "anda", "kami", "kalian", "adalah", "untuk", "dari", "dengan", "pada",
@@ -411,7 +411,7 @@ const detectLanguage = (text: string): "id" | "en" => {
     "atau", "seperti", "begitu", "begini", "begitu", "sehingga", "karena", "agar",
     "supaya", "tanpa", "per", "terlalu", "apa", "siapa", "mana", "bagaimana", "kenapa"
   ];
-  
+
   const enWords = [
     "the", "be", "to", "of", "and", "a", "in", "that", "have", "i",
     "it", "for", "not", "on", "with", "he", "as", "you", "do", "at",
@@ -424,25 +424,25 @@ const detectLanguage = (text: string): "id" | "en" => {
     "back", "after", "use", "two", "how", "our", "work", "first", "well", "way",
     "even", "new", "want", "because", "any", "these", "give", "day", "most", "us"
   ];
-  
+
   const words = cleanText.split(/\s+/).filter(w => w.length > 2);
   if (words.length === 0) return "en";
-  
+
   let idScore = 0;
   let enScore = 0;
-  
+
   for (const word of words) {
     if (idWords.includes(word)) idScore++;
     if (enWords.includes(word)) enScore++;
   }
-  
+
   const idPercentage = idScore / words.length;
   const enPercentage = enScore / words.length;
-  
+
   if (idPercentage > 0.12 && idPercentage > enPercentage * 1.5) {
     return "id";
   }
-  
+
   return "en";
 };
 
@@ -470,13 +470,13 @@ const getCatalogStatusMessage = (error: string | null): string => {
 
 const getErrorMessage = (error: unknown): string => {
   if (!error) return "Unknown error occurred";
-  
+
   const message = getErrorText(error);
-  
+
   if (message.includes("503") || message.includes("high demand") || message.includes("service unavailable")) {
     return "Error: This model is currently experiencing high demand. Please try again later or switch to another model.";
   }
-  
+
   if (message.includes("API key")) {
     return "Error: Invalid or expired API key. Please update your API Key in settings.";
   }
@@ -562,7 +562,7 @@ const splitTextAndTables = (text: string) => {
   const tableRegex = /((?:^\|.*\|$\n?)+)/gm;
   let lastIndex = 0;
   let match;
-  
+
   while ((match = tableRegex.exec(text)) !== null) {
     if (match.index > lastIndex) {
       parts.push({
@@ -576,14 +576,14 @@ const splitTextAndTables = (text: string) => {
     });
     lastIndex = match.index + match[0].length;
   }
-  
+
   if (lastIndex < text.length) {
     parts.push({
       type: 'text',
       content: text.substring(lastIndex)
     });
   }
-  
+
   return parts;
 };
 
@@ -592,7 +592,7 @@ const splitMarkdown = (content: string) => {
   const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
   let lastIndex = 0;
   let match;
-  
+
   while ((match = codeBlockRegex.exec(content)) !== null) {
     if (match.index > lastIndex) {
       const textContent = content.substring(lastIndex, match.index);
@@ -606,13 +606,13 @@ const splitMarkdown = (content: string) => {
     });
     lastIndex = match.index + match[0].length;
   }
-  
+
   if (lastIndex < content.length) {
     const textContent = content.substring(lastIndex);
     const tableParts = splitTextAndTables(textContent);
     parts.push(...tableParts);
   }
-  
+
   return parts;
 };
 
@@ -689,25 +689,23 @@ const AIAgent: React.FC = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [preferredModel, setPreferredModel] = useState("");
-  const [agentMode, setAgentMode] = useState<AgentMode>("auto");
+  const [modelSource, setModelSource] = useState<"cloud" | "local">("cloud");
   const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
-  const effectiveAgentMode: AgentMode = agentMode;
-  const modelOptions = getAgentModelsForMode(routerModels, effectiveAgentMode, routerModelCatalog);
+  const effectiveAgentMode: AgentMode = "auto";
+  const cloudModelOptions = routerModels.filter((model) => !isLocalAgentModel(model));
+  const modelOptions = modelSource === "cloud" ? cloudModelOptions : [];
   const selectedModel = modelOptions.includes(preferredModel) ? preferredModel : modelOptions[0] || "";
-  const hasPreferredAutoModel = effectiveAgentMode === "auto" && modelOptions.includes(preferredModel);
-  const requestModelOptions = getAgentRequestModels(routerModels, effectiveAgentMode, selectedModel, "", hasPreferredAutoModel, routerModelCatalog);
-  const autoRecommendedModel = effectiveAgentMode === "auto" ? getAgentRequestModels(routerModels, "auto", "", input, false, routerModelCatalog)[0] || "" : "";
+  const hasPreferredAutoModel = modelOptions.includes(preferredModel);
+  const requestModelOptions = modelSource === "cloud"
+    ? getAgentRequestModels(cloudModelOptions, effectiveAgentMode, selectedModel, "", hasPreferredAutoModel, routerModelCatalog)
+    : [];
+  const autoRecommendedModel = getAgentRequestModels(cloudModelOptions, "auto", "", input, false, routerModelCatalog)[0] || "";
   const isRouterAuthModalOpen = shouldShowRouterAuthModal({
     isLoading: authLoading,
     userUid: currentUserUid,
     isConfigured,
     configurationError,
   });
-  const selectAgentMode = (mode: AgentMode) => {
-    const candidates = getAgentModelsForMode(routerModels, mode, routerModelCatalog);
-    setAgentMode(mode);
-    setPreferredModel(mode === "auto" ? "" : candidates[0] || "");
-  };
   useEffect(() => {
     if (!isModelPickerOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -736,7 +734,7 @@ const AIAgent: React.FC = () => {
   const [hostActionError, setHostActionError] = useState("");
   const [confirmLabelChoice, setConfirmLabelChoice] = useState<"A" | "B" | "C" | "custom">("A");
   const [customConfirmLabel, setCustomConfirmLabel] = useState("");
-  
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const speechSynthRef = useRef<SpeechSynthesis | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -749,15 +747,15 @@ const AIAgent: React.FC = () => {
   const currentUserUidRef = useRef<string | null>(null);
   const requestSequenceRef = useRef(0);
   const activeRequestIdRef = useRef<number | null>(null);
-  
+
   useEffect(() => { messagesRef.current = messages; }, [messages]);
-  
+
   useEffect(() => {
     if (!currentUserUid) {
       setMessagesOwnerUid(null);
       setMessages([]);
       setPreferredModel("");
-      setAgentMode("auto");
+      setModelSource("cloud");
       setPreferencesOwnerUid(null);
       return;
     }
@@ -771,7 +769,7 @@ const AIAgent: React.FC = () => {
     } catch (error) {
       console.warn("Failed to load this account's AI preferences:", error);
     }
-    setAgentMode(savedPreferences.mode);
+    setModelSource("cloud");
     setPreferredModel(savedPreferences.model);
     setMessagesOwnerUid(uid);
     setPreferencesOwnerUid(uid);
@@ -784,13 +782,13 @@ const AIAgent: React.FC = () => {
   useEffect(() => {
     if (currentUserUid && preferencesOwnerUid === currentUserUid) {
       try {
-        localStorage.setItem(getAgentPreferencesStorageKey(currentUserUid), JSON.stringify({ mode: agentMode, model: preferredModel }));
+        localStorage.setItem(getAgentPreferencesStorageKey(currentUserUid), JSON.stringify({ mode: "auto", model: preferredModel }));
       } catch (error) {
         console.warn("Failed to save this account's AI preferences:", error);
       }
     }
-  }, [currentUserUid, preferencesOwnerUid, agentMode, preferredModel]);
-  
+  }, [currentUserUid, preferencesOwnerUid, preferredModel]);
+
   useEffect(() => {
     let disposed = false;
     let unsubscribe = () => {};
@@ -809,7 +807,7 @@ const AIAgent: React.FC = () => {
           setMessages([]);
           setPreferencesOwnerUid(null);
           setPreferredModel("");
-          setAgentMode("auto");
+          setModelSource("cloud");
           setUploadedImages([]);
           setUploadedFiles([]);
           setUploadNotice(null);
@@ -844,14 +842,14 @@ const AIAgent: React.FC = () => {
         console.error("Failed to initialize auth in AIAgent:", error);
       }
     };
-    
+
     initAuth();
     return () => {
       disposed = true;
       unsubscribe();
     };
   }, []);
-  
+
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -1150,12 +1148,12 @@ const AIAgent: React.FC = () => {
       } catch (error: unknown) {
         if (!isCurrentRequest()) return;
         const friendlyError = getErrorMessage(error);
-        setMessages(prev => [...prev, { 
-          id: (Date.now() + 1).toString(), 
-          role: "bot", 
-          content: friendlyError, 
-          model: "pollinations", 
-          timestamp: new Date(), 
+        setMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: "bot",
+          content: friendlyError,
+          model: "pollinations",
+          timestamp: new Date(),
           error: true,
           errorDetails: getErrorText(error)
         }]);
@@ -1168,7 +1166,7 @@ const AIAgent: React.FC = () => {
       }
       return;
     }
-    
+
     try {
       const response = await callAI(messageText, images, files, retryModelIndex, messagesRef.current, isRetry, messageText, modelSequence, requestOwnerUid, requestId);
       if (!isCurrentRequest()) return;
@@ -1202,7 +1200,7 @@ const AIAgent: React.FC = () => {
       const errorMessage = getErrorText(error);
       const errorObject = error instanceof Error ? error : new Error(errorMessage);
       const isRetryableFailure = isRetryableAgentFailure(error, images.length > 0);
-      
+
       const attemptedModel = modelSequence[retryModelIndex] || selectedModel;
       if (shouldRetryWithNextAgentModel(attemptedModel, isRetryableFailure, retryModelIndex, modelSequence.length)) {
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -1210,18 +1208,18 @@ const AIAgent: React.FC = () => {
         await sendMessage(messageText, images, files, retryModelIndex + 1, true, modelSequence, requestOwnerUid, requestId);
         return;
       }
-      
-      setMessages(prev => [...prev, { 
-        id: (Date.now() + 1).toString(), 
-        role: "bot", 
-        content: friendlyError, 
-        model: "Error", 
+
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: "bot",
+        content: friendlyError,
+        model: "Error",
         requestedModel: modelSequence[0] || attemptedModel,
-        timestamp: new Date(), 
+        timestamp: new Date(),
         error: true,
         errorDetails: errorObject.message
       }]);
-      
+
       console.error("API Error Details:", {
         type: errorType,
         message: errorObject.message,
@@ -1229,7 +1227,7 @@ const AIAgent: React.FC = () => {
         model: attemptedModel,
         retryCount: retryModelIndex
       });
-    } finally { 
+    } finally {
       if (activeRequestIdRef.current === requestId) {
         activeRequestIdRef.current = null;
         setIsLoading(false);
@@ -1304,9 +1302,9 @@ const AIAgent: React.FC = () => {
   };
 
   const copyMessage = (content: string) => navigator.clipboard.writeText(content);
-  
-  const clearChat = () => { 
-    setMessages([]); 
+
+  const clearChat = () => {
+    setMessages([]);
     if (currentUserUid) {
       try {
         localStorage.removeItem(getAgentMessagesStorageKey(currentUserUid));
@@ -1346,7 +1344,7 @@ const AIAgent: React.FC = () => {
   if (authLoading || !currentUserUid) return <Loading />;
   if (configurationError) {
     return (
-      <div className="aiagent-container">
+      <div className="aiagent-container global-page">
         <div className="aiagent-catalog-status" role="alert">
           <p>Unable to check this account&apos;s OpenRouter key: {configurationError}</p>
           <button type="button" className="aiagent-icon-btn" onClick={() => window.location.reload()}>Retry</button>
@@ -1369,11 +1367,11 @@ const AIAgent: React.FC = () => {
   return (
     <>
       {isConfigured && (
-        <div className="aiagent-container">
-          {!modelOptions.length && (
+        <div className="aiagent-container global-page">
+          {modelSource === "cloud" && !cloudModelOptions.length && (
             <div className="aiagent-catalog-status" role={catalogError ? "alert" : "status"}>
-              <p>{routerModels.length ? `No model is classified for ${effectiveAgentMode} mode. Open the AI Agent menu to choose another available mode.` : getCatalogStatusMessage(catalogError)}</p>
-              {!routerModels.length && <RouterLink className="aiagent-settings-link" to="/setting">Manage this account&apos;s OpenRouter key in Settings</RouterLink>}
+              <p>{getCatalogStatusMessage(catalogError)}</p>
+              <RouterLink className="aiagent-settings-link" to="/setting">Manage this account&apos;s OpenRouter key in Settings</RouterLink>
             </div>
           )}
           <div className="aiagent-messages" ref={scrollRef}>
@@ -1397,8 +1395,8 @@ const AIAgent: React.FC = () => {
                             {msg.model === 'pollinations' ? 'Pollinations' : (msg.model || selectedModel)}
                           </span>
                           {msg.error && (
-                            <button 
-                              onClick={() => retryMessage(msg.id)} 
+                            <button
+                              onClick={() => retryMessage(msg.id)}
                               className="aiagent-retry-btn-header"
                               title="Retry from the current selection, using this account's fallback models on 429/503"
                             >
@@ -1408,22 +1406,22 @@ const AIAgent: React.FC = () => {
                         </div>
                         {!msg.imageData && (
                           <div className="aiagent-bot-actions">
-                            <button 
+                            <button
                               onClick={() => {
                                 const textToSpeak = msg.error ? getFullErrorText(msg) : msg.content;
                                 speakText(textToSpeak, msg.id);
-                              }} 
+                              }}
                               className="aiagent-speak-btn"
                               title={msg.error ? "Audio error message" : "Audio"}
                             >
                               {isSpeaking && currentSpeakingId === msg.id ? <VolumeX size={14} /> : <Volume2 size={14} />}
                               <span>Audio</span>
                             </button>
-                            <button 
+                            <button
                               onClick={() => {
                                 const textToCopy = msg.error ? getFullErrorText(msg) : msg.content;
                                 copyMessage(textToCopy);
-                              }} 
+                              }}
                               className="aiagent-copy-btn"
                               title={msg.error ? "Copy error message" : "Copy"}
                             >
@@ -1527,22 +1525,22 @@ const AIAgent: React.FC = () => {
                     )}
                     {msg.role === "bot" && msg.sources && msg.sources.length > 0 && (
                       <div className="aiagent-sources">
-                        <button 
+                        <button
                           className="aiagent-sources-toggle"
-                          style={{ color: 'var(--text)' }}
+                          style={{ color: 'var(--global-color-text)' }}
                           onClick={() => {
                             const key = `sources_${msg.id}`;
                             setSourcesVisibility(prev => ({ ...prev, [key]: !prev[key] }));
                           }}
                         >
-                          <Link size={14} style={{ color: 'var(--text)', stroke: 'var(--text)' }} />
-                          <span style={{ color: 'var(--text)', fontWeight: 600 }}>
+                          <Link size={14} style={{ color: 'var(--global-color-text)', stroke: 'var(--global-color-text)' }} />
+                          <span style={{ color: 'var(--global-color-text)', fontWeight: 600 }}>
                             {sourcesVisibility[`sources_${msg.id}`] ? 'Hide' : 'Show'} Sources ({msg.sources.length})
                           </span>
-                          <ChevronDown 
-                            size={14} 
-                            style={{ color: 'var(--text)', stroke: 'var(--text)' }} 
-                            className={sourcesVisibility[`sources_${msg.id}`] ? 'rotate-180' : ''} 
+                          <ChevronDown
+                            size={14}
+                            style={{ color: 'var(--global-color-text)', stroke: 'var(--global-color-text)' }}
+                            className={sourcesVisibility[`sources_${msg.id}`] ? 'rotate-180' : ''}
                           />
                         </button>
                         <ul className={`aiagent-sources-list ${sourcesVisibility[`sources_${msg.id}`] ? 'open' : ''}`}>
@@ -1588,7 +1586,7 @@ const AIAgent: React.FC = () => {
               ))}
             </div>
           )}
-          {uploadNotice && <div role="status" style={{ fontSize: 12, padding: "0 12px 8px", color: "var(--text-muted, #666)" }}>{uploadNotice}</div>}
+          {uploadNotice && <div role="status" style={{ fontSize: 12, padding: "0 12px 8px", color: "var(--global-color-text-muted, #666)" }}>{uploadNotice}</div>}
 
           <div className="aiagent-input-container">
             <textarea
@@ -1603,10 +1601,10 @@ const AIAgent: React.FC = () => {
             <div className="aiagent-input-buttons">
               <div className="aiagent-input-buttons-left">
                 <div className="aiagent-upload-wrapper" ref={uploadDropdownRef}>
-                  <button className="aiagent-icon-btn" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setUploadDropdownPos(calcDropdownPos(r, Math.min(220, window.innerWidth - 24), 180)); setIsUploadDropdownOpen(!isUploadDropdownOpen); }}><Plus size={24} /></button>
+                  <button type="button" className="aiagent-add-btn" aria-label="Add attachments" title="Add attachments" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setUploadDropdownPos(calcDropdownPos(r, Math.min(220, window.innerWidth - 24), 180)); setIsUploadDropdownOpen(!isUploadDropdownOpen); }}><Plus size={16} aria-hidden="true" /><span>Add</span></button>
                   <AnimatePresence>
                     {isUploadDropdownOpen && (
-                      <AIAgentPopover className="aiagent-popover aiagent-upload-popover" position={uploadDropdownPos}>
+                      <AIAgentPopover className="aiagent-popover aiagent-upload-popover global-popover" position={uploadDropdownPos}>
                         <button onClick={() => imageInputRef.current?.click()}><span className="aiagent-upload-option-icon"><ImageIcon size={18} /></span><span>Photos (multi)</span></button>
                         <button onClick={() => multiFileInputRef.current?.click()}><span className="aiagent-upload-option-icon"><FileText size={18} /></span><span>Files (multi)</span></button>
                         <button onClick={() => folderInputRef.current?.click()}><span className="aiagent-upload-option-icon"><Folder size={18} /></span><span>Folder</span></button>
@@ -1635,12 +1633,11 @@ const AIAgent: React.FC = () => {
                       ));
                       setIsModelPickerOpen((open) => !open);
                     }}
-                    title={`Choose AI mode: ${effectiveAgentMode}`}
-                    aria-label={`AI Agent mode: ${effectiveAgentMode}`}
+                    title="Choose AI model"
+                    aria-label="Choose AI model"
                     aria-haspopup="dialog"
                     aria-expanded={isModelPickerOpen}
                     aria-controls="aiagent-model-picker"
-                    disabled={!routerModels.length}
                   >
                     <Bot size={22} aria-hidden="true" />
                   </button>
@@ -1648,7 +1645,7 @@ const AIAgent: React.FC = () => {
                     {isModelPickerOpen && (
                       <AIAgentPopover
                         id="aiagent-model-picker"
-                        className="aiagent-popover aiagent-model-picker-popover"
+                        className="aiagent-popover aiagent-model-picker-popover global-popover"
                         position={modelPickerPos}
                         role="dialog"
                         ariaModal={false}
@@ -1658,39 +1655,26 @@ const AIAgent: React.FC = () => {
                           <div className="aiagent-model-picker-icon"><Bot size={19} /></div>
                           <div className="aiagent-model-picker-heading aiagent-popover">
                             <h3 id="aiagent-model-picker-title">AI Agent</h3>
-                            <p>
-                              {effectiveAgentMode === "auto"
-                                ? "Auto prioritizes known Thinking/Fast models, then includes other cloud models from this account's catalog. Provider usage may incur charges."
-                                : effectiveAgentMode === "thinking"
-                                  ? "Reasoning-capable model families from this account's catalog are available in this mode."
-                                  : effectiveAgentMode === "fast"
-                                    ? "Models marked reasoning:false in this account's catalog. This is not a response-time guarantee."
-                                    : "Models without reasoning capability metadata. Choose one manually; they are not guessed into Thinking or Fast."}
-                            </p>
+                            <p>Cloud uses this account&apos;s free-model catalog. Local is reserved for a future local model list.</p>
                           </div>
                         </div>
-                        <div className="aiagent-mode-options" role="group" aria-label="AI modes">
-                          {(["auto", "thinking", "fast", "other"] as AgentMode[]).map((mode) => (
-                            <button
-                              key={mode}
-                              type="button"
-                              className={`aiagent-mode-option aiagent-popover${effectiveAgentMode === mode ? " selected" : ""}`}
-                              aria-pressed={effectiveAgentMode === mode}
-                              onClick={() => selectAgentMode(mode)}
-                            >
-                              {mode[0].toUpperCase() + mode.slice(1)}
-                            </button>
-                          ))}
+                        <div className="aiagent-model-source-options" role="group" aria-label="AI model source">
+                          <button
+                            type="button"
+                            className={`aiagent-model-source-option aiagent-popover${modelSource === "cloud" ? " selected" : ""}`}
+                            aria-pressed={modelSource === "cloud"}
+                            onClick={() => setModelSource("cloud")}
+                          >Cloud</button>
+                          <button
+                            type="button"
+                            className={`aiagent-model-source-option aiagent-popover${modelSource === "local" ? " selected" : ""}`}
+                            aria-pressed={modelSource === "local"}
+                            onClick={() => setModelSource("local")}
+                          >Local</button>
                         </div>
-                        <div className="aiagent-model-option-list" role="list" aria-label={`${effectiveAgentMode} models available to this account`}>
-                          {modelOptions.length ? modelOptions.map((model) => {
-                            const classification = getAgentModelClassification(model, routerModelCatalog);
-                            const isSelected = effectiveAgentMode === "auto"
-                              ? hasPreferredAutoModel ? model === selectedModel : model === autoRecommendedModel
-                              : model === selectedModel;
-                            const modelDescription = effectiveAgentMode === "auto"
-                              ? `${classification} candidate in this account's Auto pool; fallback stays within cloud models.`
-                              : `${classification} model; capacity fallback stays within the ${effectiveAgentMode} category.`;
+                        <div className="aiagent-model-option-list" role="list" aria-label="Cloud models available to this account">
+                          {modelSource === "cloud" ? modelOptions.length ? modelOptions.map((model) => {
+                            const isSelected = hasPreferredAutoModel ? model === selectedModel : model === autoRecommendedModel;
                             return (
                               <button
                                 type="button"
@@ -1698,27 +1682,24 @@ const AIAgent: React.FC = () => {
                                 className={`aiagent-model-option${isSelected ? " selected" : ""}`}
                                 aria-pressed={isSelected}
                                 onClick={() => {
-                                  setAgentMode(effectiveAgentMode);
                                   setPreferredModel(model);
                                   setIsModelPickerOpen(false);
                                 }}
                               >
                                 <span className="aiagent-model-option-copy aiagent-popover">
                                   <strong>{model}</strong>
-                                  <small>{modelDescription}</small>
+                                  <small>Free cloud model</small>
                                 </span>
                                 {isSelected && <Check size={17} aria-hidden="true" />}
                               </button>
                             );
                           }) : (
                             <p className="aiagent-model-empty aiagent-popover" role="status">
-                              {effectiveAgentMode === "auto"
-                                ? "No cloud model is available in this account's catalog."
-                                : effectiveAgentMode === "thinking"
-                                  ? "No supported reasoning-capable model is available in this account's catalog."
-                                    : effectiveAgentMode === "fast"
-                                      ? "No model marked reasoning:false is available in this account's catalog."
-                                      : "No unclassified model is available in this account's catalog."}
+                              No free Cloud models are available in this account&apos;s catalog.
+                            </p>
+                          ) : (
+                            <p className="aiagent-model-empty aiagent-popover" role="status">
+                              Local model catalog is empty for now.
                             </p>
                           )}
                         </div>
@@ -1726,9 +1707,9 @@ const AIAgent: React.FC = () => {
                     )}
                   </AnimatePresence>
                 </div>
-                <button 
-                  className={`aiagent-icon-btn wand2-btn${imageGenEnabled ? " image-gen-active" : ""}`} 
-                  onClick={() => setImageGenEnabled(v => !v)} 
+                <button
+                  className={`aiagent-icon-btn wand2-btn${imageGenEnabled ? " image-gen-active" : ""}`}
+                  onClick={() => setImageGenEnabled(v => !v)}
                   title={imageGenEnabled ? "Image Gen ON" : "Image Gen OFF"}
                 >
                   <Wand2 size={22} />
@@ -1745,8 +1726,8 @@ const AIAgent: React.FC = () => {
           <input type="file" ref={multiFileInputRef} multiple style={{ display: "none" }} onChange={handleMultiFilesUpload} />
           <input type="file" ref={folderInputRef} style={{ display: "none" }} {...{ webkitdirectory: "true", directory: "true" }} onChange={handleFolderUpload} />
           {pendingHostAction && (
-            <div className="aiagent-host-action-overlay" role="dialog" aria-modal="true" aria-labelledby="host-action-confirm-title">
-              <section className="aiagent-host-action-dialog">
+            <div className="aiagent-host-action-overlay global-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="host-action-confirm-title">
+              <section className="aiagent-host-action-dialog global-modal">
                 <h3 id="host-action-confirm-title">Konfirmasi aksi owner pada Sandbox</h3>
                 <div className="aiagent-host-action-summary">
                   <strong>{summarizeHostAction(pendingHostAction.action).title}</strong>

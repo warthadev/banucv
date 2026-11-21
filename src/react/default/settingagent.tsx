@@ -179,7 +179,7 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ onLoadingChange }) => {
 
   if (!authReady || loading) {
     return (
-      <section className="stack-item settings-service-section setting-agent-card" aria-label="AI Agent · OpenRouter" aria-busy="true">
+      <section className="stack-item settings-service-section setting-agent-card global-card global-section global-card--padded" aria-label="AI Agent · OpenRouter" aria-busy="true">
         <div className="setting-agent-loading" role="status" aria-label="Loading OpenRouter settings">
           <LoaderCircle size={18} className="setting-agent-spinner" />
         </div>
@@ -188,7 +188,7 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ onLoadingChange }) => {
   }
 
   return (
-    <section className="stack-item settings-service-section setting-agent-card" aria-label="AI Agent · OpenRouter">
+    <section className="stack-item settings-service-section setting-agent-card global-card global-section global-card--padded" aria-label="AI Agent · OpenRouter">
       {!currentUser ? (
         <p className="setting-agent-note" role="status">Sign in to your Firebase account to manage its OpenRouter settings.</p>
       ) : (
@@ -231,7 +231,7 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ onLoadingChange }) => {
                 required={!credentials}
               />
               <button
-                className="setting-agent-reveal-btn theme-icon-button"
+                className="setting-agent-reveal-btn global-icon-button"
                 type="button"
                 onClick={() => setShowKey((current) => !current)}
                 aria-label={showKey ? "Hide saved OpenRouter API key" : "Reveal saved OpenRouter API key"}
@@ -241,7 +241,7 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ onLoadingChange }) => {
                 {showKey ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
               </button>
               <button
-                className="su-copy-btn setting-agent-copy-btn theme-icon-button"
+                className="su-copy-btn setting-agent-copy-btn global-icon-button"
                 type="button"
                 onClick={() => void handleCopyApiKey()}
                 disabled={!apiKey}

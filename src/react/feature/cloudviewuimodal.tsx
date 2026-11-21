@@ -19,7 +19,7 @@ export const RenameRepoModal: React.FC<{
     <AnimatePresence>
       {open && (
         <motion.div
-          className="cloudview-modal-overlay"
+          className="cloudview-modal-overlay global-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -27,7 +27,7 @@ export const RenameRepoModal: React.FC<{
           onClick={onClose}
         >
           <motion.div
-            className="cloudview-modal"
+            className="cloudview-modal global-modal"
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -83,7 +83,7 @@ export const DeleteRepoModal: React.FC<{
     <AnimatePresence>
       {open && targets.length > 0 && (
         <motion.div
-          className="cloudview-modal-overlay"
+          className="cloudview-modal-overlay global-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -91,7 +91,7 @@ export const DeleteRepoModal: React.FC<{
           onClick={onClose}
         >
           <motion.div
-            className="cloudview-modal cloudview-modal--danger"
+            className="cloudview-modal cloudview-modal--danger global-modal"
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -169,7 +169,7 @@ const AddRepoModalContent: React.FC<AddRepoModalProps> = ({ open, onConfirm, onC
 
   return (
         <motion.div
-          className="cloudview-modal-overlay"
+          className="cloudview-modal-overlay global-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -177,7 +177,7 @@ const AddRepoModalContent: React.FC<AddRepoModalProps> = ({ open, onConfirm, onC
           onClick={loading ? undefined : onClose}
         >
           <motion.div
-            className="cloudview-modal cloudview-modal--add-repo"
+            className="cloudview-modal cloudview-modal--add-repo global-modal"
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -224,7 +224,7 @@ const AddRepoModalContent: React.FC<AddRepoModalProps> = ({ open, onConfirm, onC
                 <AnimatePresence>
                   {typeMenuOpen && (
                     <motion.div
-                      className="cloudview-transfer-select-menu"
+                      className="cloudview-transfer-select-menu global-popover"
                       initial={{ opacity: 0, y: -4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
@@ -261,7 +261,7 @@ const AddRepoModalContent: React.FC<AddRepoModalProps> = ({ open, onConfirm, onC
                 <AnimatePresence>
                   {visMenuOpen && (
                     <motion.div
-                      className="cloudview-transfer-select-menu"
+                      className="cloudview-transfer-select-menu global-popover"
                       initial={{ opacity: 0, y: -4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
@@ -320,7 +320,7 @@ export const SquashRepoModal: React.FC<{
     <AnimatePresence>
       {open && count > 0 && (
         <motion.div
-          className="cloudview-modal-overlay"
+          className="cloudview-modal-overlay global-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -328,7 +328,7 @@ export const SquashRepoModal: React.FC<{
           onClick={loading ? undefined : onClose}
         >
           <motion.div
-            className="cloudview-modal cloudview-modal--danger"
+            className="cloudview-modal cloudview-modal--danger global-modal"
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -379,7 +379,7 @@ export const VisibilityRepoModal: React.FC<{
     <AnimatePresence>
       {open && (
         <motion.div
-          className="cloudview-modal-overlay"
+          className="cloudview-modal-overlay global-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -387,7 +387,7 @@ export const VisibilityRepoModal: React.FC<{
           onClick={onClose}
         >
           <motion.div
-            className="cloudview-modal"
+            className="cloudview-modal global-modal"
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}

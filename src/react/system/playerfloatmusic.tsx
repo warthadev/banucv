@@ -48,6 +48,7 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
   const title = playlist?.title || selectedGenre;
   const visible = location.pathname !== '/setting' && !mediaOverlays.mediarender && !mediaOverlays.slideshow && (playlistMode || (!isStopped && !!selectedGenre));
   const playerRef = useRef<HTMLDivElement>(null);
+  const restorePlayerRef = useRef<HTMLButtonElement>(null);
   const dragStartXRef = useRef<number | null>(null);
   const dragDistanceRef = useRef(0);
   const suppressClickRef = useRef(false);
@@ -85,8 +86,9 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
   useEffect(() => {
     const handleOverlayState = (event: Event) => {
       const detail = (event as CustomEvent<{ source?: 'mediarender' | 'slideshow'; active?: boolean }>).detail;
-      if (!detail?.source) return;
-      setMediaOverlays((current) => ({ ...current, [detail.source]: detail.active === true }));
+      const source = detail?.source;
+      if (!source) return;
+      setMediaOverlays((current) => ({ ...current, [source]: detail.active === true }));
     };
     window.addEventListener('media-overlay:state', handleOverlayState);
     return () => window.removeEventListener('media-overlay:state', handleOverlayState);
@@ -175,7 +177,7 @@ const PlayerFloatMusic: React.FC<PlayerFloatMusicProps> = ({ playlist }) => {
       )}
       {visible && isMinimized && (
         <motion.button
-          ref={playerRef}
+          ref={restorePlayerRef}
           className={`floating-player-restore${playlist?.cover ? ' has-cover' : ''}`}
           type="button"
           initial={{ opacity: 0, x: 48 }}

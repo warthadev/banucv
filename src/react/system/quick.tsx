@@ -4,21 +4,21 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAudio } from '@hook/useaudio';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@redux/store';
-import { 
-  LayoutGrid, 
-  Bot, 
-  MessageSquareText, 
-  Download, 
-  Loader2, 
+import {
+  LayoutGrid,
+  Bot,
+  MessageSquareText,
+  Download,
+  Loader2,
   QrCode,
   X,
   Camera,
   Cloud
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  quickMenuVariants, 
-  quickToggleVariants, 
+import {
+  quickMenuVariants,
+  quickToggleVariants,
   quickItemVariants,
   quickOverlayVariants
 } from '@animation/quick';
@@ -57,7 +57,7 @@ const Quick: React.FC = () => {
   const isQuickVisible = useSelector((state: RootState) => state.visible.isQuickVisible);
   const menuRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
-  
+
   const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState(readQuickPosition);
   const [isDragging, setIsDragging] = useState(false);
@@ -117,7 +117,7 @@ const Quick: React.FC = () => {
       else if (width < 1024) setScreenSize('tablet');
       else setScreenSize('desktop');
     };
-    
+
     updateScreenSize();
     window.addEventListener('resize', updateScreenSize);
     return () => window.removeEventListener('resize', updateScreenSize);
@@ -128,7 +128,7 @@ const Quick: React.FC = () => {
     const padding = 10;
     const maxX = window.innerWidth - btnSize - padding;
     const maxY = window.innerHeight - btnSize - padding;
-    
+
     if (pos.x === 0 && pos.y === 0) return { x: 0, y: 0 };
 
     const safe = {
@@ -214,7 +214,7 @@ const Quick: React.FC = () => {
 
   const handleDragStart = (e: React.MouseEvent<HTMLButtonElement> | React.TouchEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    
+
     let clientX, clientY;
     if ('touches' in e) {
       clientX = e.touches[0].clientX;
@@ -223,13 +223,13 @@ const Quick: React.FC = () => {
       clientX = e.clientX;
       clientY = e.clientY;
     }
-    
+
     setDragStartPos({ x: clientX, y: clientY });
     setIsClick(true);
     setIsDragging(true);
-    
+
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    
+
     setDragOffset({
       x: clientX - rect.left,
       y: clientY - rect.top
@@ -239,7 +239,7 @@ const Quick: React.FC = () => {
   const handleDragMove = useCallback((e: MouseEvent | TouchEvent) => {
     if (!isDragging) return;
     e.preventDefault();
-    
+
     let clientX, clientY;
     if ('touches' in e) {
       clientX = e.touches[0].clientX;
@@ -248,17 +248,17 @@ const Quick: React.FC = () => {
       clientX = e.clientX;
       clientY = e.clientY;
     }
-    
+
     const deltaX = Math.abs(clientX - dragStartPos.x);
     const deltaY = Math.abs(clientY - dragStartPos.y);
-    
+
     if (deltaX > 5 || deltaY > 5) {
       setIsClick(false);
     }
-    
+
     const newX = clientX - dragOffset.x;
     const newY = clientY - dragOffset.y;
-    
+
     setPosition(clampPosition({ x: newX, y: newY }));
     setHasMoved(true);
   }, [isDragging, dragStartPos, dragOffset, clampPosition]);
@@ -291,10 +291,10 @@ const Quick: React.FC = () => {
     const style: React.CSSProperties = {
       position: 'fixed',
       zIndex: 99999,
-      backgroundColor: 'var(--bg-alpha)',
+      backgroundColor: 'var(--global-color-background-alpha)',
       backdropFilter: 'blur(15px)',
       WebkitBackdropFilter: 'blur(15px)',
-      border: isDashboard ? 'none' : '1px solid var(--border-color)',
+      border: isDashboard ? 'none' : '1px solid var(--global-color-border)',
       borderRadius: '20px',
       padding: '8px',
       width: screenSize === 'mobile' ? '200px' : '230px',
@@ -359,7 +359,7 @@ const Quick: React.FC = () => {
   const padding = 10;
   const maxX = window.innerWidth - btnSize - padding;
   const maxY = window.innerHeight - btnSize - padding;
-  
+
   const hasCustomPosition = hasMoved && position.x >= padding && position.x <= maxX && position.y >= padding && position.y <= maxY;
   const finalX = hasCustomPosition ? position.x : 0;
   const finalY = hasCustomPosition ? position.y : 0;
@@ -403,19 +403,19 @@ const Quick: React.FC = () => {
 
       <AnimatePresence>
         {isOpen && (
-          <motion.div 
+          <motion.div
             variants={quickMenuVariants}
             initial="initial"
             animate="animate"
             exit="exit"
             style={getDropdownStyle()}
-            className={`quick-dropdown-menu${isDashboard ? ' quick-dropdown-menu--dashboard' : ''}`}
+            className={`quick-dropdown-menu global-popover global-popover--glass${isDashboard ? ' quick-dropdown-menu--dashboard' : ''}`}
             role="menu"
           >
             <div className="quick-menu-header">
               <span>QUICK ACCESS</span>
             </div>
-            
+
             <div className="dropdown-list-wrapper hide-scrollbar">
               {quickMenuItems.map((item, index) => {
                 const Icon = item.icon;
@@ -433,10 +433,10 @@ const Quick: React.FC = () => {
                     aria-label={`Open ${item.name}`}
                   >
                     <div className="item-icon-wrapper">
-                      <Icon 
-                        size={screenSize === 'mobile' ? 16 : 18} 
-                        strokeWidth={2.5} 
-                        className={item.name === 'Loading Test' ? 'animate-spin' : ''} 
+                      <Icon
+                        size={screenSize === 'mobile' ? 16 : 18}
+                        strokeWidth={2.5}
+                        className={item.name === 'Loading Test' ? 'animate-spin' : ''}
                         style={{ color: 'currentColor' }}
                       />
                     </div>
@@ -452,7 +452,7 @@ const Quick: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <motion.div 
+      <motion.div
         ref={menuRef}
         className="quick-action-wrapper"
         animate={hasCustomPosition ? {
@@ -491,7 +491,7 @@ const Quick: React.FC = () => {
           })
         }}
       >
-        <motion.button 
+        <motion.button
           ref={toggleRef}
           className={getToggleClassName()}
           variants={quickToggleVariants}
@@ -504,7 +504,7 @@ const Quick: React.FC = () => {
           onDoubleClick={resetPosition}
           aria-label={isOpen ? "Close quick menu" : "Open quick menu"}
           aria-expanded={isOpen}
-          style={{ 
+          style={{
             cursor: isDragging ? 'grabbing' : 'grab',
             touchAction: 'none',
             position: 'relative',

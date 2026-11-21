@@ -146,7 +146,7 @@ const CloudRoot: React.FC<CloudRootProps> = ({ onSelectSource, clearSession }) =
   const getSourceAccent = useCallback((source: CloudSource): string => {
     if (source.type === 'telegram') return '#229ED9';
     if (source.type === 'hf_dataset') return '#FFB000';
-    return 'var(--primary)';
+    return 'var(--global-color-accent)';
   }, []);
 
   const getAddSourceIcon = useCallback((type: 'telegram' | 'hf') => {

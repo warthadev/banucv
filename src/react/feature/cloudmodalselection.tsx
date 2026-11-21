@@ -210,7 +210,7 @@ const RenameModal: React.FC<RenameModalProps> = ({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="cloudview-modal-overlay"
+          className="cloudview-modal-overlay global-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -218,7 +218,7 @@ const RenameModal: React.FC<RenameModalProps> = ({
           onClick={onClose}
         >
           <motion.div
-            className="cloudview-modal"
+            className="cloudview-modal global-modal"
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -277,7 +277,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
     <AnimatePresence>
       {open && targets.length > 0 && (
         <motion.div
-          className="cloudview-modal-overlay"
+          className="cloudview-modal-overlay global-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -285,7 +285,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
           onClick={onClose}
         >
           <motion.div
-            className="cloudview-modal cloudview-modal--danger"
+            className="cloudview-modal cloudview-modal--danger global-modal"
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -334,7 +334,7 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="cloudview-modal-overlay"
+          className="cloudview-modal-overlay global-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -342,7 +342,7 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
           onClick={onClose}
         >
           <motion.div
-            className="cloudview-modal"
+            className="cloudview-modal global-modal"
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -652,7 +652,7 @@ const TransferModal: React.FC<TransferModalProps> = ({
       <AnimatePresence>
         {open && !confirmOpen && (
           <motion.div
-            className="cloudview-modal-overlay"
+            className="cloudview-modal-overlay global-modal-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -660,7 +660,7 @@ const TransferModal: React.FC<TransferModalProps> = ({
             onClick={onClose}
           >
             <motion.div
-              className="cloudview-modal cloudview-modal--transfer"
+              className="cloudview-modal cloudview-modal--transfer global-modal"
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -710,7 +710,7 @@ const TransferModal: React.FC<TransferModalProps> = ({
                     <AnimatePresence>
                       {accountDropdownOpen && (
                         <motion.div
-                          className="cloudview-transfer-select-menu"
+                          className="cloudview-transfer-select-menu global-popover"
                           initial={{ opacity: 0, y: -4 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -4 }}
@@ -798,7 +798,7 @@ const TransferModal: React.FC<TransferModalProps> = ({
                         <AnimatePresence>
                           {repoDropdownOpen && (
                             <motion.div
-                              className="cloudview-transfer-select-menu"
+                              className="cloudview-transfer-select-menu global-popover"
                               initial={{ opacity: 0, y: -4 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -4 }}
@@ -976,7 +976,7 @@ const TransferModal: React.FC<TransferModalProps> = ({
       <AnimatePresence>
         {open && !isCopy && !isPublicSource && confirmOpen && (
           <motion.div
-            className="cloudview-modal-overlay"
+            className="cloudview-modal-overlay global-modal-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -984,7 +984,7 @@ const TransferModal: React.FC<TransferModalProps> = ({
             onClick={() => setConfirmOpen(false)}
           >
             <motion.div
-              className="cloudview-modal cloudview-modal--danger"
+              className="cloudview-modal cloudview-modal--danger global-modal"
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}

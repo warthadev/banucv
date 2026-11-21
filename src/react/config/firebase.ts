@@ -7,6 +7,8 @@ import {
   onAuthStateChanged 
 } from "firebase/auth";
 import { getFirestore as firebaseGetFirestore } from "firebase/firestore";
+import type { Auth } from "firebase/auth";
+import type { Firestore } from "firebase/firestore";
 import { getFirebaseConfig } from "./api";
 
 let appInitialized = false;

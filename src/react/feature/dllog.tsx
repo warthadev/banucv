@@ -33,7 +33,7 @@ interface DlLogProps {
 const getLogColor = (type: LogType) => {
   if (type === 'critical') return '#ef4444';
   if (type === 'success') return '#22c55e';
-  return 'var(--text-sub)';
+  return 'var(--global-color-text-secondary)';
 };
 
 const formatCountdown = (seconds: number): string => {

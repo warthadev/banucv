@@ -507,7 +507,7 @@ export const useHuggingFace = (options: HuggingFaceStateOptions = {}) => {
             name: item.rfilename || item.path || 'Unknown',
             size: item.size || 0,
             type: item.rfilename ? item.rfilename.split('.').pop()?.toLowerCase() || 'file' : 'file',
-            url: `https://huggingface.co/datasets/${datasetId}/resolve/main/${encodeURIComponent(item.path || item.rfilename)}`,
+            url: `https://huggingface.co/datasets/${datasetId}/resolve/main/${encodeURIComponent(item.path || item.rfilename || '')}`,
             path: item.path || item.rfilename,
             createdAt: item.created_at ? new Date(item.created_at) : undefined,
           }));

@@ -21,10 +21,10 @@
 /* Tabs */
 .aic-tabs {
   display: flex;
-  background-color: var(--card-bg);
+  background-color: var(--global-color-surface);
   padding: 5px;
   border-radius: 12px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--global-color-border);
 }
 
 .aic-tab {
@@ -35,7 +35,7 @@
   cursor: pointer;
   border: none;
   background: none;
-  color: var(--text-sub);
+  color: var(--global-color-text-secondary);
   transition: color 0.2s ease;
 }
 
@@ -46,7 +46,7 @@
 .aic-tab-active {
   position: absolute;
   inset: 0;
-  background-color: var(--primary);
+  background-color: var(--global-color-accent);
   border-radius: 8px;
   z-index: 0;
 }
@@ -86,16 +86,16 @@
   width: 100%;
   padding: 15px 45px 15px 15px;
   border-radius: 12px;
-  border: 1px solid var(--border-color);
-  background-color: var(--card-bg);
-  color: var(--color-text);
+  border: 1px solid var(--global-color-border);
+  background-color: var(--global-color-surface);
+  color: var(--global-color-text);
   outline: none;
   font-size: 14px;
   box-sizing: border-box;
 }
 
 .aic-key-input:focus {
-  border-color: var(--primary);
+  border-color: var(--global-color-accent);
 }
 
 .aic-key-eye-btn {
@@ -105,7 +105,7 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: var(--text-sub);
+  color: var(--global-color-text-secondary);
   cursor: pointer;
   padding: 4px;
   display: flex;
@@ -114,7 +114,7 @@
 }
 
 .aic-key-eye-btn:hover {
-  color: var(--primary);
+  color: var(--global-color-accent);
 }
 
 /* Actions */
@@ -129,8 +129,8 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background-color: var(--primary);
-  color: var(--color-accent-foreground);
+  background-color: var(--global-color-accent);
+  color: var(--global-color-on-accent);
   border: none;
   border-radius: 12px;
   padding: 15px 20px;
@@ -143,7 +143,7 @@
 }
 
 .aic-fetch-btn.loading {
-  background-color: var(--border-color);
+  background-color: var(--global-color-border);
   cursor: not-allowed;
 }
 
@@ -164,9 +164,9 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background-color: var(--card-bg);
-  color: var(--color-text);
-  border: 1px solid var(--border-color);
+  background-color: var(--global-color-surface);
+  color: var(--global-color-text);
+  border: 1px solid var(--global-color-border);
   border-radius: 12px;
   padding: 15px 20px;
   cursor: pointer;
@@ -176,9 +176,9 @@
 }
 
 .aic-copy-btn:hover {
-  background-color: var(--primary-alpha);
-  border-color: var(--primary);
-  color: var(--primary);
+  background-color: var(--global-color-accent-alpha);
+  border-color: var(--global-color-accent);
+  color: var(--global-color-accent);
 }
 
 .aic-copy-btn.copied {
@@ -210,8 +210,8 @@
   font-size: 10px;
   padding: 3px 8px;
   border-radius: 6px;
-  background-color: var(--border-color);
-  color: var(--text-sub);
+  background-color: var(--global-color-border);
+  color: var(--global-color-text-secondary);
   display: flex;
   align-items: center;
   gap: 4px;

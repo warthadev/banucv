@@ -349,7 +349,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
   if (loading) {
     return (
       <>
-        <section className="stack-item settings-bundle-section">
+        <section className="stack-item settings-bundle-section global-card global-section global-card--padded">
           <div className="su-loading-container">
             <div className="status-spinner" />
           </div>
@@ -361,7 +361,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
   if (error) {
     return (
       <>
-        <section className="stack-item settings-bundle-section">
+        <section className="stack-item settings-bundle-section global-card global-section global-card--padded">
           <div className="su-error-container">
             <AlertCircle size={24} className="su-error-icon" />
             <div className="su-error-text">Failed to load profile</div>
@@ -386,7 +386,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
 
   return (
     <>
-      <section className="stack-item settings-bundle-section" aria-label="User Profile">
+      <section className="stack-item settings-bundle-section global-card global-section global-card--padded" aria-label="User Profile">
         <div className="su-profile-card">
           <div className="su-profile-header">
             {profile?.photoURL && (
@@ -395,7 +395,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
             <div className="su-profile-info">
               <div className="su-display-name">{profile?.displayName || currentUser?.displayName || "User"}</div>
               <div className="su-email">
-                <Mail size={12} color="var(--text-muted)" />
+                <Mail size={12} color="var(--global-color-text-muted)" />
                 <span>{displayEmail}</span>
               </div>
               <div className="su-meta-info">
@@ -404,7 +404,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
                 <span>Provider: {providerNames || "?"}</span>
               </div>
               <div className="su-last-login">
-                <Calendar size={10} color="var(--text-muted)" className="su-last-login-icon" />
+                <Calendar size={10} color="var(--global-color-text-muted)" className="su-last-login-icon" />
                 Last login: {profile?.lastLoginAt ? getDateOnly(profile.lastLoginAt) : "Unknown"}
               </div>
             </div>
@@ -414,7 +414,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
         <div className="su-stats-grid">
           <div className="su-stat-card">
             <div className="su-stat-header">
-              <Calendar size={16} color="var(--primary)" />
+              <Calendar size={16} color="var(--global-color-accent)" />
               <span className="su-stat-label">REGISTERED</span>
             </div>
             <div className="su-stat-value">
@@ -425,7 +425,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
           </div>
           <div className="su-stat-card">
             <div className="su-stat-header">
-              <Activity size={16} color="var(--primary)" />
+              <Activity size={16} color="var(--global-color-accent)" />
               <span className="su-stat-label">LAST SEEN</span>
             </div>
             <div className="su-stat-value">
@@ -437,24 +437,24 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
         {profile?.lastLocation && (
           <div className="su-location-card">
             <div className="su-location-header">
-              <MapPin size={16} color="var(--primary)" />
+              <MapPin size={16} color="var(--global-color-accent)" />
               <span className="su-location-title">Last Known Location</span>
             </div>
             <div className={`su-location-grid ${isMobileScreen ? 'su-location-grid-mobile' : ''}`}>
               <div className="su-location-item">
-                <Globe size={12} color="var(--text-muted)" className="su-location-icon" />
+                <Globe size={12} color="var(--global-color-text-muted)" className="su-location-icon" />
                 <span>{profile.lastLocation.city}, {profile.lastLocation.country}</span>
               </div>
               <div className="su-location-item">
-                <Wifi size={12} color="var(--text-muted)" className="su-location-icon" />
+                <Wifi size={12} color="var(--global-color-text-muted)" className="su-location-icon" />
                 <span>{profile.lastLocation.ip}</span>
               </div>
               <div className="su-location-item">
-                <Navigation size={12} color="var(--text-muted)" className="su-location-icon" />
+                <Navigation size={12} color="var(--global-color-text-muted)" className="su-location-icon" />
                 <span>{profile.lastLocation.lat}, {profile.lastLocation.lon}</span>
               </div>
               <div className="su-location-item">
-                <Clock size={12} color="var(--text-muted)" className="su-location-icon" />
+                <Clock size={12} color="var(--global-color-text-muted)" className="su-location-icon" />
                 <span>{getTimeOnly(profile.lastLocation.timestamp)}</span>
               </div>
             </div>
@@ -464,16 +464,16 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
         {profile?.lastDevice && (
           <div className="su-device-card">
             <div className="su-device-header">
-              <Smartphone size={16} color="var(--primary)" />
+              <Smartphone size={16} color="var(--global-color-accent)" />
               <span className="su-device-title">Device Information</span>
             </div>
             <div className="su-device-info">
               <div className="su-device-type">
-                {profile.lastDevice.isMobile ? <Phone size={12} color="var(--text-muted)" className="su-device-icon" /> : <Monitor size={12} color="var(--text-muted)" className="su-device-icon" />}
+                {profile.lastDevice.isMobile ? <Phone size={12} color="var(--global-color-text-muted)" className="su-device-icon" /> : <Monitor size={12} color="var(--global-color-text-muted)" className="su-device-icon" />}
                 <span>{profile.lastDevice.isMobile ? "Mobile Device" : "Desktop"}</span>
               </div>
               <div className="su-device-platform">
-                <Cpu size={12} color="var(--text-muted)" className="su-device-icon" />
+                <Cpu size={12} color="var(--global-color-text-muted)" className="su-device-icon" />
                 <span>{profile.lastDevice.platform}</span>
               </div>
               <div className="su-device-ua">
@@ -484,7 +484,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
         )}
       </section>
 
-    <section className="stack-item settings-service-section" aria-label="GitHub">
+    <section className="stack-item settings-service-section global-card global-section global-card--padded" aria-label="GitHub">
       <div className="su-profile-card setting-agent-safe-status">
         <GithubIcon />
         <span>
@@ -526,7 +526,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
           />
           <button
             type="button"
-            className="setting-eye-btn setting-agent-reveal-btn theme-icon-button"
+            className="setting-eye-btn setting-agent-reveal-btn global-icon-button"
             onClick={() => setShowGithubToken(!showGithubToken)}
             aria-label={showGithubToken ? "Hide GitHub personal access token" : "Reveal GitHub personal access token"}
             aria-pressed={showGithubToken}
@@ -535,7 +535,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
           </button>
           <button
             type="button"
-            className="su-copy-btn setting-agent-copy-btn settings-token-copy-button theme-icon-button"
+            className="su-copy-btn setting-agent-copy-btn settings-token-copy-button global-icon-button"
             onClick={() => void copyToken("github", githubToken)}
             aria-label={copyFeedback.github === "copied" ? "GitHub token copied to clipboard" : "Copy GitHub personal access token"}
             disabled={!githubToken}
@@ -576,7 +576,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
 
     </section>
 
-    <section className="stack-item settings-service-section" aria-label="Cloud Manager">
+    <section className="stack-item settings-service-section global-card global-section global-card--padded" aria-label="Cloud Manager">
       <div className="su-profile-card setting-agent-safe-status">
         <Cloud size={17} aria-hidden="true" />
         <span>
@@ -641,7 +641,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
                     />
                     <button
                       type="button"
-                      className="setting-eye-btn setting-agent-reveal-btn theme-icon-button"
+                      className="setting-eye-btn setting-agent-reveal-btn global-icon-button"
                       onClick={() => setShowCloudTokens((current) => ({ ...current, [tokenId]: !current[tokenId] }))}
                       aria-label={`${isVisible ? "Hide" : "Show"} Telegram session for ${accountName}`}
                       aria-pressed={isVisible}
@@ -651,7 +651,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
                     </button>
                     <button
                       type="button"
-                      className="su-copy-btn setting-agent-copy-btn settings-token-copy-button theme-icon-button"
+                      className="su-copy-btn setting-agent-copy-btn settings-token-copy-button global-icon-button"
                       onClick={() => void copyToken(tokenId, session)}
                       aria-label={feedback === "copied" ? `Telegram session for ${accountName} copied to clipboard` : `Copy Telegram session for ${accountName}`}
                       disabled={!session}
@@ -722,7 +722,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
                     />
                     <button
                       type="button"
-                      className="setting-eye-btn setting-agent-reveal-btn theme-icon-button"
+                      className="setting-eye-btn setting-agent-reveal-btn global-icon-button"
                       onClick={() => setShowCloudTokens((current) => ({ ...current, [tokenId]: !current[tokenId] }))}
                       aria-label={`${isVisible ? "Hide" : "Show"} Hugging Face token for ${username}`}
                       aria-pressed={isVisible}
@@ -732,7 +732,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
                     </button>
                     <button
                       type="button"
-                      className="su-copy-btn setting-agent-copy-btn settings-token-copy-button theme-icon-button"
+                      className="su-copy-btn setting-agent-copy-btn settings-token-copy-button global-icon-button"
                       onClick={() => void copyToken(tokenId, token)}
                       aria-label={feedback === "copied" ? `Hugging Face token for ${username} copied to clipboard` : `Copy Hugging Face token for ${username}`}
                       disabled={!token}

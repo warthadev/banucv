@@ -1218,3 +1218,13 @@
 .settings-token-copy-feedback[role="alert"] {
   color: #dc2626;
 }
+
+.settings-cloud-token-group {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.settings-cloud-token-group .su-input-label {
+  margin-bottom: 0;
+}

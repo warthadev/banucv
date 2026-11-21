@@ -481,20 +481,20 @@ const SettingUser: React.FC = () => {
               const isVisible = Boolean(showCloudTokens[tokenId]);
               const feedback = copyFeedback[tokenId];
               return (
-                <div key={tokenId} className="su-list-item">
-                  <div className="su-list-item-info">
-                    <span className="su-list-item-name">{accountName}</span>
-                    <span className="su-list-item-value">{session ? (isVisible ? session : "••••••••••••••••") : "No session"}</span>
-                    {feedback && (
-                      <span className="settings-token-copy-feedback" role={feedback === "error" ? "alert" : "status"} aria-live={feedback === "error" ? "assertive" : "polite"}>
-                        {feedback === "copied" ? "Session copied to clipboard" : "Could not copy session"}
-                      </span>
-                    )}
-                  </div>
-                  <div className="settings-token-actions">
+                <div key={tokenId} className="settings-cloud-token-group">
+                  <label className="su-input-label" htmlFor={`${tokenId}-input`}>{accountName}</label>
+                  <div className="su-input-wrapper settings-token-input-wrapper">
+                    <input
+                      id={`${tokenId}-input`}
+                      type={isVisible ? "text" : "password"}
+                      value={session}
+                      readOnly
+                      aria-label={`${accountName} Telegram session token`}
+                      className="setting-agent-input setting-sensitive-input"
+                    />
                     <button
                       type="button"
-                      className="setting-agent-reveal-btn"
+                      className="setting-eye-btn setting-agent-reveal-btn"
                       onClick={() => setShowCloudTokens((current) => ({ ...current, [tokenId]: !current[tokenId] }))}
                       aria-label={`${isVisible ? "Hide" : "Show"} Telegram session for ${accountName}`}
                       aria-pressed={isVisible}
@@ -504,7 +504,7 @@ const SettingUser: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      className="su-copy-btn setting-agent-copy-btn"
+                      className="su-copy-btn setting-agent-copy-btn settings-token-copy-button"
                       onClick={() => void copyToken(tokenId, session)}
                       aria-label={feedback === "copied" ? `Telegram session for ${accountName} copied to clipboard` : `Copy Telegram session for ${accountName}`}
                       disabled={!session}
@@ -512,6 +512,11 @@ const SettingUser: React.FC = () => {
                       {feedback === "copied" ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
                     </button>
                   </div>
+                  {feedback && (
+                    <span className="settings-token-copy-feedback" role={feedback === "error" ? "alert" : "status"} aria-live={feedback === "error" ? "assertive" : "polite"}>
+                      {feedback === "copied" ? "Session copied to clipboard" : "Could not copy session"}
+                    </span>
+                  )}
                 </div>
               );
             })}
@@ -538,20 +543,20 @@ const SettingUser: React.FC = () => {
               const isVisible = Boolean(showCloudTokens[tokenId]);
               const feedback = copyFeedback[tokenId];
               return (
-                <div key={tokenId} className="su-list-item">
-                  <div className="su-list-item-info">
-                    <span className="su-list-item-name">{username}</span>
-                    <span className="su-list-item-value">{token ? (isVisible ? token : "••••••••••••••••") : "No token saved"}</span>
-                    {feedback && (
-                      <span className="settings-token-copy-feedback" role={feedback === "error" ? "alert" : "status"} aria-live={feedback === "error" ? "assertive" : "polite"}>
-                        {feedback === "copied" ? "Token copied to clipboard" : "Could not copy token"}
-                      </span>
-                    )}
-                  </div>
-                  <div className="settings-token-actions">
+                <div key={tokenId} className="settings-cloud-token-group">
+                  <label className="su-input-label" htmlFor={`${tokenId}-input`}>{username}</label>
+                  <div className="su-input-wrapper settings-token-input-wrapper">
+                    <input
+                      id={`${tokenId}-input`}
+                      type={isVisible ? "text" : "password"}
+                      value={token}
+                      readOnly
+                      aria-label={`${username} Hugging Face token`}
+                      className="setting-agent-input setting-sensitive-input"
+                    />
                     <button
                       type="button"
-                      className="setting-agent-reveal-btn"
+                      className="setting-eye-btn setting-agent-reveal-btn"
                       onClick={() => setShowCloudTokens((current) => ({ ...current, [tokenId]: !current[tokenId] }))}
                       aria-label={`${isVisible ? "Hide" : "Show"} Hugging Face token for ${username}`}
                       aria-pressed={isVisible}
@@ -561,7 +566,7 @@ const SettingUser: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      className="su-copy-btn setting-agent-copy-btn"
+                      className="su-copy-btn setting-agent-copy-btn settings-token-copy-button"
                       onClick={() => void copyToken(tokenId, token)}
                       aria-label={feedback === "copied" ? `Hugging Face token for ${username} copied to clipboard` : `Copy Hugging Face token for ${username}`}
                       disabled={!token}
@@ -569,6 +574,11 @@ const SettingUser: React.FC = () => {
                       {feedback === "copied" ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
                     </button>
                   </div>
+                  {feedback && (
+                    <span className="settings-token-copy-feedback" role={feedback === "error" ? "alert" : "status"} aria-live={feedback === "error" ? "assertive" : "polite"}>
+                      {feedback === "copied" ? "Token copied to clipboard" : "Could not copy token"}
+                    </span>
+                  )}
                 </div>
               );
             })}

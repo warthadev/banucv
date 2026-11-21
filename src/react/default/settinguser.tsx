@@ -257,7 +257,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
 
   if (loading) {
     return (
-      <section className="stack-item">
+      <section className="settings-bundle-section">
         <div className="section-header">
           <UserIcon size={18} color="var(--primary)" />
           <span className="section-label">User Profile</span>
@@ -271,7 +271,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
 
   if (error) {
     return (
-      <section className="stack-item">
+      <section className="settings-bundle-section">
         <div className="section-header">
           <UserIcon size={18} color="var(--primary)" />
           <span className="section-label">User Profile</span>
@@ -295,7 +295,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
 
   return (
     <>
-    <section className="stack-item setting-agent-card" aria-labelledby="setting-user-profile-title">
+    <section className="settings-bundle-section" aria-labelledby="setting-user-profile-title">
       <div className="section-header">
         <UserIcon size={18} color="var(--primary)" />
         <span className="section-label" id="setting-user-profile-title">User Profile</span>
@@ -400,7 +400,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
 
     </section>
 
-    <section className="stack-item setting-agent-card" aria-labelledby="setting-github-title">
+    <section className="settings-bundle-section" aria-labelledby="setting-github-title">
       <div className="section-header">
         <GithubIcon />
         <span className="section-label" id="setting-github-title">GitHub</span>
@@ -469,7 +469,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ registerSaveHandler, onSettin
 
     </section>
 
-    <section className="stack-item setting-agent-card" aria-labelledby="setting-cloud-manager-title">
+    <section className="settings-bundle-section" aria-labelledby="setting-cloud-manager-title">
       <div className="section-header">
         <Cloud size={18} color="var(--primary)" />
         <span className="section-label" id="setting-cloud-manager-title">Cloud Manager</span>

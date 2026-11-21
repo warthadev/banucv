@@ -209,14 +209,18 @@ const SettingAgent: React.FC<SettingAgentProps> = ({ registerSaveHandler, onSett
 
   if (!authReady || loading) {
     return (
-      <section className="stack-item setting-agent-card" aria-busy="true">
+      <section className="settings-bundle-section setting-agent-card" aria-busy="true">
+        <div className="section-header">
+          <KeyRound size={19} aria-hidden="true" />
+          <span className="section-label">AI Agent · OpenRouter</span>
+        </div>
         <div className="setting-agent-loading"><LoaderCircle size={18} className="setting-agent-spinner" /> Loading OpenRouter settings…</div>
       </section>
     );
   }
 
   return (
-    <section className="stack-item setting-agent-card" aria-labelledby="setting-agent-title">
+    <section className="settings-bundle-section setting-agent-card" aria-labelledby="setting-agent-title">
       <div className="section-header">
         <KeyRound size={19} aria-hidden="true" />
         <span className="section-label" id="setting-agent-title">AI Agent · OpenRouter</span>

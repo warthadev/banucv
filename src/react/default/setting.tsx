@@ -77,36 +77,38 @@ const SettingsPage: React.FC = () => {
         </header>
 
         {/* User Profile & Credentials */}
-        <SettingUser registerSaveHandler={registerSaveHandler} onSettingsChanged={clearSaveSummary} />
-        <SettingAgent registerSaveHandler={registerSaveHandler} onSettingsChanged={clearSaveSummary} />
+        <section className="stack-item settings-account-bundle" aria-label="Account and integrations">
+          <SettingUser registerSaveHandler={registerSaveHandler} onSettingsChanged={clearSaveSummary} />
+          <SettingAgent registerSaveHandler={registerSaveHandler} onSettingsChanged={clearSaveSummary} />
 
-        <div className="settings-save-all-panel">
-          <button
-            className="setting-agent-primary settings-save-all-button"
-            type="button"
-            onClick={() => void handleSaveAll()}
-            disabled={isSavingAll || !saveHandlers.github || !saveHandlers.openrouter}
-          >
-            {isSavingAll ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Save size={16} aria-hidden="true" />}
-            {isSavingAll ? 'Saving all…' : 'Save All'}
-          </button>
-          {saveResults && (
-            <div
-              className="settings-save-all-results"
-              role={hasSaveErrors ? 'alert' : 'status'}
-              aria-live={hasSaveErrors ? 'assertive' : 'polite'}
+          <div className="settings-save-all-panel">
+            <button
+              className="setting-agent-primary settings-save-all-button"
+              type="button"
+              onClick={() => void handleSaveAll()}
+              disabled={isSavingAll || !saveHandlers.github || !saveHandlers.openrouter}
             >
-              {allUnchanged ? (
-                <p>No changes to save.</p>
-              ) : saveResults.map((result) => (
-                <p key={result.sectionId} className={result.status === 'error' ? 'is-error' : ''}>
-                  {result.status === 'error' ? <AlertCircle size={15} aria-hidden="true" /> : <CheckCircle size={15} aria-hidden="true" />}
-                  <span><strong>{result.sectionName}:</strong> {result.message}</span>
-                </p>
-              ))}
-            </div>
-          )}
-        </div>
+              {isSavingAll ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Save size={16} aria-hidden="true" />}
+              {isSavingAll ? 'Saving all…' : 'Save All'}
+            </button>
+            {saveResults && (
+              <div
+                className="settings-save-all-results"
+                role={hasSaveErrors ? 'alert' : 'status'}
+                aria-live={hasSaveErrors ? 'assertive' : 'polite'}
+              >
+                {allUnchanged ? (
+                  <p>No changes to save.</p>
+                ) : saveResults.map((result) => (
+                  <p key={result.sectionId} className={result.status === 'error' ? 'is-error' : ''}>
+                    {result.status === 'error' ? <AlertCircle size={15} aria-hidden="true" /> : <CheckCircle size={15} aria-hidden="true" />}
+                    <span><strong>{result.sectionName}:</strong> {result.message}</span>
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
         
         {/* Pengaturan Visual */}
         <SettingVisual />

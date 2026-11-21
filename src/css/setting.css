@@ -96,25 +96,10 @@
 }
 
 .settings-page-loading {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   min-height: 160px;
   animation: settings-content-enter 260ms ease-out both;
-}
-
-.settings-page-loading .section-header {
-  margin-bottom: 20px;
-}
-
-.settings-loading-message {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  min-height: 48px;
-  color: var(--text-sub);
-  font-size: 13px;
 }
 
 .settings-all-content:not([hidden]) {
@@ -144,7 +129,7 @@
     animation: none;
   }
 
-  .settings-page-loading .setting-agent-spinner {
+  .settings-page-loading .status-spinner {
     animation: none;
   }
 }

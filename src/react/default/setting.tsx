@@ -1,7 +1,7 @@
 // src/react/default/setting.tsx
 import React, { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, ArrowLeft, CheckCircle, LoaderCircle, Save, User } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle, LoaderCircle, Save } from 'lucide-react';
 import SettingAudio from './settingaudio';
 import SettingVisual from './settingvisual';
 import SettingUser from './settinguser';
@@ -82,14 +82,9 @@ const SettingsPage: React.FC = () => {
         {/* User Profile & Credentials */}
         <section className="stack-item settings-all-bundle" aria-label="Settings" aria-busy={isSettingsLoading}>
           {isSettingsLoading && (
-            <div className="settings-page-loading" role="status" aria-live="polite" aria-busy="true">
-              <div className="section-header">
-                <User size={18} color="var(--primary)" aria-hidden="true" />
-                <span className="section-label">User Profile</span>
-              </div>
-              <div className="settings-loading-message">
-                <LoaderCircle size={18} className="setting-agent-spinner" aria-hidden="true" />
-                <span>Loading settings…</span>
+            <div className="settings-page-loading" role="status" aria-label="Loading" aria-live="polite" aria-busy="true">
+              <div className="su-loading-container">
+                <div className="status-spinner" aria-hidden="true" />
               </div>
             </div>
           )}

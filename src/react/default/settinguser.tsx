@@ -63,6 +63,7 @@ const SettingUser: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [messageTarget, setMessageTarget] = useState<"github" | "cloud">("github");
   
   const [githubUser, setGithubUser] = useState("");
   const [githubToken, setGithubToken] = useState("");
@@ -148,6 +149,7 @@ const SettingUser: React.FC = () => {
     if (!currentUser) return;
     setSaving(true);
     setMessage(null);
+    setMessageTarget("github");
     try {
       const userRef = doc(db, "users", currentUser.uid);
       const updateData: Record<string, string | null> = {};
@@ -219,10 +221,11 @@ const SettingUser: React.FC = () => {
   const providerNames = (profile?.providers || []).join(", ");
 
   return (
-    <section className="stack-item">
+    <>
+    <section className="stack-item" aria-labelledby="setting-user-profile-title">
       <div className="section-header">
         <UserIcon size={18} color="var(--primary)" />
-        <span className="section-label">User Profile</span>
+        <span className="section-label" id="setting-user-profile-title">User Profile</span>
       </div>
 
       <div className="su-profile-card">
@@ -321,6 +324,14 @@ const SettingUser: React.FC = () => {
         </div>
       )}
 
+    </section>
+
+    <section className="stack-item" aria-labelledby="setting-github-title">
+      <div className="section-header">
+        <GithubIcon />
+        <span className="section-label" id="setting-github-title">GitHub</span>
+      </div>
+
       <div className="su-input-group">
         <label className="su-input-label">
           <GithubIcon />
@@ -358,6 +369,29 @@ const SettingUser: React.FC = () => {
         </div>
       </div>
 
+      {message && messageTarget === "github" && (
+        <div className={`su-message ${message.type === "success" ? "su-message-success" : "su-message-error"}`}>
+          {message.type === "success" ? <CheckCircle size={16} color="#10b981" /> : <AlertCircle size={16} color="#ef4444" />}
+          <span>{message.text}</span>
+        </div>
+      )}
+
+      <button
+        onClick={handleSaveAll}
+        disabled={saving}
+        className="su-save-btn"
+      >
+        {saving ? <div className="status-spinner" /> : null}
+        {saving ? "Saving..." : "Save Credentials"}
+      </button>
+    </section>
+
+    <section className="stack-item" aria-labelledby="setting-cloud-manager-title">
+      <div className="section-header">
+        <Cloud size={18} color="var(--primary)" />
+        <span className="section-label" id="setting-cloud-manager-title">Cloud Manager</span>
+      </div>
+
       <div className="su-input-group su-input-group-lg">
         <div className="su-input-header-row">
           <label className="su-input-label">
@@ -386,6 +420,7 @@ const SettingUser: React.FC = () => {
                   type="button"
                   onClick={() => {
                     navigator.clipboard.writeText(session);
+                    setMessageTarget("cloud");
                     setMessage({ type: "success", text: "Session copied to clipboard" });
                     setTimeout(() => setMessage(null), 2000);
                   }}
@@ -428,6 +463,7 @@ const SettingUser: React.FC = () => {
                   type="button"
                   onClick={() => {
                     navigator.clipboard.writeText(hfTokens[index]);
+                    setMessageTarget("cloud");
                     setMessage({ type: "success", text: "Token copied to clipboard" });
                     setTimeout(() => setMessage(null), 2000);
                   }}
@@ -442,22 +478,14 @@ const SettingUser: React.FC = () => {
         )}
       </div>
 
-      {message && (
+      {message && messageTarget === "cloud" && (
         <div className={`su-message ${message.type === "success" ? "su-message-success" : "su-message-error"}`}>
           {message.type === "success" ? <CheckCircle size={16} color="#10b981" /> : <AlertCircle size={16} color="#ef4444" />}
           <span>{message.text}</span>
         </div>
       )}
-
-      <button
-        onClick={handleSaveAll}
-        disabled={saving}
-        className="su-save-btn"
-      >
-        {saving ? <div className="status-spinner" /> : null}
-        {saving ? "Saving..." : "Save Credentials"}
-      </button>
     </section>
+    </>
   );
 };
 

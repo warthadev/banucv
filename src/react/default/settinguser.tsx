@@ -4,11 +4,11 @@ import { auth, db } from "@config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { 
-  User as UserIcon, Key, AlertCircle, CheckCircle, 
+import {
+  User as UserIcon, AlertCircle, CheckCircle,
   Mail, Calendar, MapPin, Smartphone, Globe, Clock, 
   Activity, Monitor, Phone, Cpu, Navigation, Wifi,
-  Cloud, Copy, Eye, EyeOff
+  Cloud, Copy, Eye, EyeOff, Check
 } from "lucide-react";
 import { GithubIcon } from "@/react/control/icon";
 import { formatTimestamp } from "@config/userstorage";
@@ -63,11 +63,12 @@ const SettingUser: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [messageTarget, setMessageTarget] = useState<"github" | "cloud">("github");
   
   const [githubUser, setGithubUser] = useState("");
   const [githubToken, setGithubToken] = useState("");
   const [showGithubToken, setShowGithubToken] = useState(false);
+  const [showCloudTokens, setShowCloudTokens] = useState<Record<string, boolean>>({});
+  const [copyFeedback, setCopyFeedback] = useState<Record<string, "copied" | "error">>({});
   const [telegramSessions, setTelegramSessions] = useState<string[]>([]);
   const [telegramAccountNames, setTelegramAccountNames] = useState<string[]>([]);
   const [hfUsernames, setHfUsernames] = useState<string[]>([]);
@@ -87,9 +88,54 @@ const SettingUser: React.FC = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
+      setShowGithubToken(false);
+      setShowCloudTokens({});
+      setCopyFeedback({});
       setAuthReady(true);
     });
     return () => unsubscribe();
+  }, []);
+
+  const copyToken = useCallback(async (tokenId: string, token: string) => {
+    if (!token) return;
+
+    let copied = false;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(token);
+        copied = true;
+      }
+    } catch {
+      // Use the local fallback below when clipboard permission is unavailable.
+    }
+
+    if (!copied) {
+      const textArea = document.createElement("textarea");
+      textArea.value = token;
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+      textArea.setAttribute("aria-hidden", "true");
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        copied = document.execCommand("copy");
+      } catch {
+        copied = false;
+      } finally {
+        document.body.removeChild(textArea);
+      }
+    }
+
+    const status = copied ? "copied" : "error";
+    setCopyFeedback((current) => ({ ...current, [tokenId]: status }));
+    window.setTimeout(() => {
+      setCopyFeedback((current) => {
+        if (current[tokenId] !== status) return current;
+        const next = { ...current };
+        delete next[tokenId];
+        return next;
+      });
+    }, 2500);
   }, []);
 
   const fetchUserData = useCallback(async () => {
@@ -149,7 +195,6 @@ const SettingUser: React.FC = () => {
     if (!currentUser) return;
     setSaving(true);
     setMessage(null);
-    setMessageTarget("github");
     try {
       const userRef = doc(db, "users", currentUser.uid);
       const updateData: Record<string, string | null> = {};
@@ -341,7 +386,6 @@ const SettingUser: React.FC = () => {
 
       <div className="su-input-group">
         <label className="su-input-label">
-          <GithubIcon />
           GITHUB USERNAME
         </label>
         <input
@@ -355,10 +399,9 @@ const SettingUser: React.FC = () => {
 
       <div className="su-input-group">
         <label className="su-input-label">
-          <Key size={14} color="var(--primary)" />
           GITHUB PERSONAL ACCESS TOKEN
         </label>
-        <div className="su-input-wrapper">
+        <div className="su-input-wrapper settings-token-input-wrapper">
           <input
             type={showGithubToken ? "text" : "password"}
             value={githubToken}
@@ -375,10 +418,24 @@ const SettingUser: React.FC = () => {
           >
             {showGithubToken ? <EyeOff size={16} color="var(--primary)" /> : <Eye size={16} color="var(--primary)" />}
           </button>
+          <button
+            type="button"
+            className="su-copy-btn setting-agent-copy-btn settings-token-copy-button"
+            onClick={() => void copyToken("github", githubToken)}
+            aria-label={copyFeedback.github === "copied" ? "GitHub token copied to clipboard" : "Copy GitHub personal access token"}
+            disabled={!githubToken}
+          >
+            {copyFeedback.github === "copied" ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+          </button>
         </div>
+        {copyFeedback.github && (
+          <span className="setting-agent-copy-feedback" role={copyFeedback.github === "error" ? "alert" : "status"} aria-live={copyFeedback.github === "error" ? "assertive" : "polite"}>
+            {copyFeedback.github === "copied" ? "Copied to clipboard" : "Could not copy token"}
+          </span>
+        )}
       </div>
 
-      {message && messageTarget === "github" && (
+      {message && (
         <div className={`su-message ${message.type === "success" ? "su-message-success" : "su-message-error"}`}>
           {message.type === "success" ? <CheckCircle size={16} color="#10b981" /> : <AlertCircle size={16} color="#ef4444" />}
           <span>{message.text}</span>
@@ -408,7 +465,6 @@ const SettingUser: React.FC = () => {
       <div className="su-input-group su-input-group-lg">
         <div className="su-input-header-row">
           <label className="su-input-label">
-            <Cloud size={14} color="var(--primary)" />
             TELEGRAM ACCOUNTS ({telegramSessions.length})
           </label>
         </div>
@@ -419,31 +475,46 @@ const SettingUser: React.FC = () => {
           </div>
         ) : (
           <div className="su-list-container">
-            {telegramSessions.map((session, index) => (
-              <div key={index} className="su-list-item">
-                <div className="su-list-item-info">
-                  <span className="su-list-item-name">
-                    {telegramAccountNames[index] || `Account ${index + 1}`}
-                  </span>
-                  <span className="su-list-item-value">
-                    {session}
-                  </span>
+            {telegramSessions.map((session, index) => {
+              const tokenId = `telegram-${index}`;
+              const accountName = telegramAccountNames[index] || `Account ${index + 1}`;
+              const isVisible = Boolean(showCloudTokens[tokenId]);
+              const feedback = copyFeedback[tokenId];
+              return (
+                <div key={tokenId} className="su-list-item">
+                  <div className="su-list-item-info">
+                    <span className="su-list-item-name">{accountName}</span>
+                    <span className="su-list-item-value">{session ? (isVisible ? session : "••••••••••••••••") : "No session"}</span>
+                    {feedback && (
+                      <span className="settings-token-copy-feedback" role={feedback === "error" ? "alert" : "status"} aria-live={feedback === "error" ? "assertive" : "polite"}>
+                        {feedback === "copied" ? "Session copied to clipboard" : "Could not copy session"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="settings-token-actions">
+                    <button
+                      type="button"
+                      className="setting-agent-reveal-btn"
+                      onClick={() => setShowCloudTokens((current) => ({ ...current, [tokenId]: !current[tokenId] }))}
+                      aria-label={`${isVisible ? "Hide" : "Show"} Telegram session for ${accountName}`}
+                      aria-pressed={isVisible}
+                      disabled={!session}
+                    >
+                      {isVisible ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+                    </button>
+                    <button
+                      type="button"
+                      className="su-copy-btn setting-agent-copy-btn"
+                      onClick={() => void copyToken(tokenId, session)}
+                      aria-label={feedback === "copied" ? `Telegram session for ${accountName} copied to clipboard` : `Copy Telegram session for ${accountName}`}
+                      disabled={!session}
+                    >
+                      {feedback === "copied" ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+                    </button>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(session);
-                    setMessageTarget("cloud");
-                    setMessage({ type: "success", text: "Session copied to clipboard" });
-                    setTimeout(() => setMessage(null), 2000);
-                  }}
-                  className="su-copy-btn"
-                  title="Copy session"
-                >
-                  <Copy size={14} color="var(--primary)" />
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -451,7 +522,6 @@ const SettingUser: React.FC = () => {
       <div className="su-input-group su-input-group-lg">
         <div className="su-input-header-row">
           <label className="su-input-label">
-            <Cloud size={14} color="var(--primary)" />
             HUGGING FACE ACCOUNTS ({hfUsernames.length})
           </label>
         </div>
@@ -462,41 +532,50 @@ const SettingUser: React.FC = () => {
           </div>
         ) : (
           <div className="su-list-container">
-            {hfUsernames.map((username, index) => (
-              <div key={index} className="su-list-item">
-                <div className="su-list-item-info">
-                  <span className="su-list-item-name">
-                    {username}
-                  </span>
-                  <span className="su-list-item-value">
-                    {hfTokens[index]}
-                  </span>
+            {hfUsernames.map((username, index) => {
+              const tokenId = `huggingface-${index}`;
+              const token = hfTokens[index] || "";
+              const isVisible = Boolean(showCloudTokens[tokenId]);
+              const feedback = copyFeedback[tokenId];
+              return (
+                <div key={tokenId} className="su-list-item">
+                  <div className="su-list-item-info">
+                    <span className="su-list-item-name">{username}</span>
+                    <span className="su-list-item-value">{token ? (isVisible ? token : "••••••••••••••••") : "No token saved"}</span>
+                    {feedback && (
+                      <span className="settings-token-copy-feedback" role={feedback === "error" ? "alert" : "status"} aria-live={feedback === "error" ? "assertive" : "polite"}>
+                        {feedback === "copied" ? "Token copied to clipboard" : "Could not copy token"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="settings-token-actions">
+                    <button
+                      type="button"
+                      className="setting-agent-reveal-btn"
+                      onClick={() => setShowCloudTokens((current) => ({ ...current, [tokenId]: !current[tokenId] }))}
+                      aria-label={`${isVisible ? "Hide" : "Show"} Hugging Face token for ${username}`}
+                      aria-pressed={isVisible}
+                      disabled={!token}
+                    >
+                      {isVisible ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+                    </button>
+                    <button
+                      type="button"
+                      className="su-copy-btn setting-agent-copy-btn"
+                      onClick={() => void copyToken(tokenId, token)}
+                      aria-label={feedback === "copied" ? `Hugging Face token for ${username} copied to clipboard` : `Copy Hugging Face token for ${username}`}
+                      disabled={!token}
+                    >
+                      {feedback === "copied" ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+                    </button>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(hfTokens[index]);
-                    setMessageTarget("cloud");
-                    setMessage({ type: "success", text: "Token copied to clipboard" });
-                    setTimeout(() => setMessage(null), 2000);
-                  }}
-                  className="su-copy-btn"
-                  title="Copy token"
-                >
-                  <Copy size={14} color="var(--primary)" />
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
-      {message && messageTarget === "cloud" && (
-        <div className={`su-message ${message.type === "success" ? "su-message-success" : "su-message-error"}`}>
-          {message.type === "success" ? <CheckCircle size={16} color="#10b981" /> : <AlertCircle size={16} color="#ef4444" />}
-          <span>{message.text}</span>
-        </div>
-      )}
     </section>
     </>
   );

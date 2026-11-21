@@ -181,8 +181,8 @@ const CollectPhoto: React.FC = () => {
     return fullDate.split(",")[0] || fullDate;
   };
 
-  if (isAuthorizing) return <div className="collectphoto-loading"><Loader2 className="spin" size={40} /><p>Authorizing...</p></div>;
-  if (!isAdmin) return <div className="collectphoto-error"><Shield size={48} /><h2>Access Denied</h2><p>You don't have permission to view this page.</p></div>;
+  if (isAuthorizing) return <div className="collectphoto-loading global-page"><Loader2 className="spin" size={40} /><p>Authorizing...</p></div>;
+  if (!isAdmin) return <div className="collectphoto-error global-page"><Shield size={48} /><h2>Access Denied</h2><p>You don't have permission to view this page.</p></div>;
 
   return (
     <div className="collectphoto-container global-page">

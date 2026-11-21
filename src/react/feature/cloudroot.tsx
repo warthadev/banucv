@@ -187,7 +187,7 @@ const CloudRoot: React.FC<CloudRootProps> = ({ onSelectSource, clearSession }) =
   );
 
   return (
-    <div className="cloudroot-container">
+    <div className="cloudroot-container global-page">
       {isMobile ? (
         <header className="cloudview-mobile-header cloudroot-bar">
           <div className="cloudview-mobile-header-left">
@@ -239,7 +239,7 @@ const CloudRoot: React.FC<CloudRootProps> = ({ onSelectSource, clearSession }) =
               <p className="cloudroot-caption">
                 {sources.length} {sources.length === 1 ? 'source' : 'sources'} · {onlineCount} online
               </p>
-              <div className="cloudroot-grid">
+              <div className="cloudroot-grid global-responsive-grid">
               {sources.map((source, i) => (
                 <motion.button
                   key={source.id}

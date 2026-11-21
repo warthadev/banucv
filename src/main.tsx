@@ -32,6 +32,8 @@ import { initActiveBase } from "./react/config/api";
 const rootElement = document.getElementById("root");
 
 if (rootElement) {
+  rootElement.classList.add("global-responsive-page");
+
   const bootstrap = async () => {
     try {
       await initActiveBase();

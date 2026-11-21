@@ -411,7 +411,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
           </div>
         </div>
 
-        <div className="su-stats-grid">
+        <div className="su-stats-grid global-responsive-grid global-responsive-grid--two">
           <div className="su-stat-card">
             <div className="su-stat-header">
               <Calendar size={16} color="var(--global-color-accent)" />
@@ -440,7 +440,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
               <MapPin size={16} color="var(--global-color-accent)" />
               <span className="su-location-title">Last Known Location</span>
             </div>
-            <div className={`su-location-grid ${isMobileScreen ? 'su-location-grid-mobile' : ''}`}>
+            <div className={`su-location-grid global-responsive-grid global-responsive-grid--two ${isMobileScreen ? 'su-location-grid-mobile' : ''}`}>
               <div className="su-location-item">
                 <Globe size={12} color="var(--global-color-text-muted)" className="su-location-icon" />
                 <span>{profile.lastLocation.city}, {profile.lastLocation.country}</span>

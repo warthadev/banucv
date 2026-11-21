@@ -1,5 +1,6 @@
 /* Shared responsive contract for all pages: mobile <=639px, tablet 640-1023px, desktop >=1024px. */
 :root {
+  --global-layout-content-width: 1440px;
   --global-layout-gutter-mobile: 16px;
   --global-layout-gutter-tablet: 24px;
   --global-layout-gutter-desktop: clamp(24px, 3vw, 40px);
@@ -12,6 +13,13 @@
   --global-card-padding-mobile: 16px;
   --global-card-padding-tablet: 20px;
   --global-card-padding-desktop: 24px;
+}
+
+#root.global-responsive-page {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .global-page,

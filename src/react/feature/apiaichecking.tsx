@@ -169,7 +169,7 @@ const AICheck: React.FC = () => {
                 variants={listContainerVariants}
                 initial="hidden"
                 animate="visible"
-                className="home-grid"
+                className="home-grid global-responsive-grid"
               >
                 {currentModels.map((model) => (
                   <motion.div key={model.name} variants={listItemVariants} className="home-card global-card global-card--padded">

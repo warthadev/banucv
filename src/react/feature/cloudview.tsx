@@ -2844,7 +2844,7 @@ const CloudView: React.FC = () => {
     if (hfError && hfRepos.length === 0) {
       return (
         <div
-          className="cloudview-container"
+          className="cloudview-container global-page"
           style={{
             height: '100vh',
             display: 'flex',

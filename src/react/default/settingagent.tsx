@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
-import { AlertCircle, CheckCircle, KeyRound, LoaderCircle, RefreshCw, ShieldCheck, Trash2 } from "lucide-react";
+import { AlertCircle, Check, CheckCircle, Copy, KeyRound, LoaderCircle, RefreshCw, ShieldCheck, Trash2 } from "lucide-react";
 import { getAuth } from "@config/firebase";
 import { clearOpenRouterCredentials, loadOpenRouterCredentials, saveOpenRouterCredentials, type OpenRouterCredentials } from "@config/routerhelper";
 import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
@@ -17,7 +17,14 @@ const SettingAgent: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [copyStatus, setCopyStatus] = useState<"copied" | "error" | null>(null);
   const requestIdRef = useRef(0);
+
+  useEffect(() => {
+    if (!copyStatus) return;
+    const timeout = window.setTimeout(() => setCopyStatus(null), 2500);
+    return () => window.clearTimeout(timeout);
+  }, [copyStatus]);
 
   const refresh = useCallback(async (user: User | null) => {
     const requestId = ++requestIdRef.current;
@@ -51,6 +58,7 @@ const SettingAgent: React.FC = () => {
         setCurrentUser(user);
         setAuthReady(true);
         setApiKey("");
+        setCopyStatus(null);
         setMessage(null);
         void refresh(user);
       });
@@ -74,6 +82,7 @@ const SettingAgent: React.FC = () => {
     try {
       await saveOpenRouterCredentials(apiKey);
       setApiKey("");
+      setCopyStatus(null);
       await refresh(currentUser);
       window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
       setMessage({ type: "success", text: "OpenRouter key verified. This account's old 9Router settings, if any, were removed." });
@@ -85,6 +94,38 @@ const SettingAgent: React.FC = () => {
     }
   };
 
+  const handleCopyApiKey = async () => {
+    const enteredKey = apiKey;
+    if (!enteredKey) return;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(enteredKey);
+        setCopyStatus("copied");
+        return;
+      }
+    } catch {
+      // Fall back for browsers without clipboard permission/API support.
+    }
+
+    const textarea = document.createElement("textarea");
+    textarea.value = enteredKey;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    let copied = false;
+    try {
+      document.body.appendChild(textarea);
+      textarea.select();
+      copied = document.execCommand("copy");
+    } catch {
+      copied = false;
+    } finally {
+      textarea.remove();
+    }
+    setCopyStatus(copied ? "copied" : "error");
+  };
+
   const handleDelete = async () => {
     if (!currentUser || deleting) return;
     if (!window.confirm("Remove this account's encrypted OpenRouter API key?")) return;
@@ -93,6 +134,7 @@ const SettingAgent: React.FC = () => {
     try {
       await clearOpenRouterCredentials();
       setApiKey("");
+      setCopyStatus(null);
       await refresh(currentUser);
       window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
       setMessage({ type: "success", text: "This account's OpenRouter API key was removed." });
@@ -141,19 +183,43 @@ const SettingAgent: React.FC = () => {
             <label className="setting-agent-label" htmlFor="setting-openrouter-key">
               OpenRouter API key
             </label>
-            <input
-              id="setting-openrouter-key"
-              className="setting-agent-input"
-              type="password"
-              name="openrouter-api-key"
-              value={apiKey}
-              onChange={(event) => setApiKey(event.target.value)}
-              placeholder={credentials ? "Enter a key to replace the saved key" : "Paste this account's OpenRouter API key"}
-              autoComplete="off"
-              spellCheck={false}
-              autoCapitalize="none"
-              required={!credentials}
-            />
+            <div className="su-list-item setting-agent-key-control">
+              <input
+                id="setting-openrouter-key"
+                className="setting-agent-input setting-agent-key-input"
+                type="password"
+                name="openrouter-api-key"
+                value={apiKey}
+                onChange={(event) => {
+                  setApiKey(event.target.value);
+                  setCopyStatus(null);
+                }}
+                placeholder={credentials ? "Enter a key to replace the saved key" : "Paste this account's OpenRouter API key"}
+                autoComplete="off"
+                spellCheck={false}
+                autoCapitalize="none"
+                required={!credentials}
+              />
+              <button
+                className="su-copy-btn setting-agent-copy-btn"
+                type="button"
+                onClick={() => void handleCopyApiKey()}
+                disabled={!apiKey}
+                aria-label={copyStatus === "copied" ? "OpenRouter API key copied to clipboard" : "Copy entered OpenRouter API key"}
+                title="Copy API key"
+              >
+                {copyStatus === "copied" ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+              </button>
+            </div>
+            {copyStatus && (
+              <p
+                className={`setting-agent-copy-feedback${copyStatus === "error" ? " is-error" : ""}`}
+                role={copyStatus === "error" ? "alert" : "status"}
+                aria-live={copyStatus === "error" ? "assertive" : "polite"}
+              >
+                {copyStatus === "copied" ? "OpenRouter API key copied to clipboard." : "Could not copy the API key. Please try again."}
+              </p>
+            )}
             {credentials && <span className="setting-agent-footnote">Enter a key to replace it, or leave blank to verify the saved key.</span>}
             <div className="setting-agent-actions">
               <button className="setting-agent-primary" type="submit" disabled={saving || (!apiKey.trim() && !credentials)}>

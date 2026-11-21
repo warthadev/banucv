@@ -476,7 +476,7 @@ export const CloudModalTele: React.FC<CloudModalTeleProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="ui-overlay-blocker github-modal-overlay"
+          className="github-modal-overlay"
           variants={overlayVariants}
           initial="initial"
           animate="animate"

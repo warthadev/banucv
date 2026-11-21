@@ -767,7 +767,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="ui-overlay-blocker github-modal-overlay"
+          className="github-modal-overlay"
           variants={overlayVariants}
           initial="initial"
           animate="animate"

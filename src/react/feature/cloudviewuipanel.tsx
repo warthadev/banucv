@@ -444,7 +444,7 @@ export const FilesPanel: React.FC<{
   const renderMobile = () => (
     <div className="cloudview-files-panel cloudview-files-panel--mobile">
       {renderToolbar()}
-
+      
       {renderActionBar()}
 
       <div className="cloudview-file-list" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
@@ -556,7 +556,7 @@ export const FilesPanel: React.FC<{
 
       <div className="cloudview-file-list" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         {loadingFiles && !isMobile && (
-          <div className="ui-local-blocker cloudview-files-loading-overlay">
+          <div className="cloudview-files-loading-overlay">
             <div className="cloudview-files-loading-inline">
               <div className="cloudview-loading-spinner" />
               <span>Loading files...</span>

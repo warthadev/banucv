@@ -16,7 +16,7 @@ const listContainerVariants = {
 
 const listItemVariants = {
   hidden: { opacity: 0, y: 10 },
-  visible: {
+  visible: { 
     opacity: 1, y: 0,
     transition: { duration: 0.25, ease: "easeOut" }
   }
@@ -93,9 +93,9 @@ const AICheck: React.FC = () => {
 
           <div className="aic-controls">
             <div className="aic-actions">
-              <motion.button
-                onClick={fetchModels}
-                disabled={status === "loading" || isFetching}
+              <motion.button 
+                onClick={fetchModels} 
+                disabled={status === "loading" || isFetching} 
                 className={`aic-fetch-btn ${status === "loading" || isFetching ? "loading" : ""}`}
                 whileTap={{ scale: 0.98 }}
               >
@@ -132,11 +132,11 @@ const AICheck: React.FC = () => {
               </motion.button>
 
               {currentModels.length > 0 && (
-                <motion.button
+                <motion.button 
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={handleCopy}
+                  onClick={handleCopy} 
                   className={`aic-copy-btn ${copied ? "copied" : ""}`}
                 >
                   {copied ? <Check size={18} /> : <Copy size={18} />}
@@ -148,22 +148,22 @@ const AICheck: React.FC = () => {
 
           <AnimatePresence mode="wait">
             {status === "error" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="home-card ui-surface--card ui-state-box--error aic-error-card"
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, scale: 0.95 }} 
+                className="home-card aic-error-card"
               >
                 <div className="card-header">
-                  <AlertCircle color="var(--status-danger)" size={20} />
-                  <h3 className="home-card-title ui-text-danger">Failed</h3>
+                  <AlertCircle color="#ff4d4d" size={20} />
+                  <h3 className="home-card-title" style={{ color: '#ff4d4d' }}>Failed</h3>
                 </div>
                 <p className="home-card-text">{errorMessage}</p>
               </motion.div>
             )}
 
             {currentModels.length > 0 && (
-              <motion.div
+              <motion.div 
                 key="account-catalog"
                 variants={listContainerVariants}
                 initial="hidden"
@@ -171,13 +171,13 @@ const AICheck: React.FC = () => {
                 className="home-grid"
               >
                 {currentModels.map((model) => (
-                  <motion.div key={model.name} variants={listItemVariants} className="home-card ui-surface--card">
+                  <motion.div key={model.name} variants={listItemVariants} className="home-card">
                     <div className="card-header">
                       <div className="card-icon-wrapper"><Cpu size={20} /></div>
                       <h3 className="home-card-title">{model.name?.replace('models/', '') || ''}</h3>
                     </div>
                     <p className="home-card-text aic-model-desc">{model.description}</p>
-
+                    
                     <div className="aic-methods">
                       {model.supported_generation_methods?.map((method: string) => (
                         <span key={method} className="aic-method-chip">

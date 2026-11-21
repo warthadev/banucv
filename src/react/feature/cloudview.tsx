@@ -2887,11 +2887,31 @@ const CloudView: React.FC = () => {
               {activeSource.name}
             </h2>
           </div>
-          <div className="cloudview-error ui-state-box--error">
+          <div
+            className="cloudview-error"
+            style={{
+              padding: '20px',
+              textAlign: 'center',
+              color: '#ef4444',
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             <p>{hfError}</p>
             <button
-              className="ui-control ui-button--primary cloudview-error-retry"
               onClick={handleRefreshHF}
+              style={{
+                marginTop: '10px',
+                padding: '8px 20px',
+                background: 'var(--primary)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+              }}
             >
               Retry
             </button>

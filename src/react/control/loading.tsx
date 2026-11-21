@@ -3,7 +3,7 @@ import React from "react";
 
 const Loading: React.FC = () => {
   return (
-    <div className="loading-container ui-overlay-blocker ui-overlay-blocker--solid">
+    <div className="loading-container">
       <div className="loading-content">
         <div className="loading-ring"></div>
         <div className="loading-text-wrapper">

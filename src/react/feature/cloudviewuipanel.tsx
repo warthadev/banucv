@@ -703,7 +703,7 @@ export const PlayerPanel: React.FC<{
           <div className="cloudview-preview-icon" style={{ color: '#f59e0b' }}>
             <Folder size={56} />
           </div>
-          <p style={{ fontWeight: 600, fontSize: '18px' }}>{sanitizeText(selectedFile.name)}</p>
+          <p style={{ fontWeight: 600, fontSize: 'var(--global-font-size-18px)' }}>{sanitizeText(selectedFile.name)}</p>
           <span>Folder</span>
         </div>
       </div>
@@ -736,7 +736,7 @@ export const PlayerPanel: React.FC<{
           <div className="cloudview-preview-icon" style={{ color: getColor(selectedFile.media_type) }}>
             <ImageIcon size={56} />
           </div>
-          <p style={{ fontWeight: 600, fontSize: '18px' }}>{sanitizeText(selectedFile.name)}</p>
+          <p style={{ fontWeight: 600, fontSize: 'var(--global-font-size-18px)' }}>{sanitizeText(selectedFile.name)}</p>
           <span>Open the file from the image list to view it in slideshow</span>
         </div>
       </div>
@@ -782,7 +782,7 @@ export const PlayerPanel: React.FC<{
         <p>Preview not available</p>
         <span>{getLabel(selectedFile.media_type)}</span>
         {fileMetadata?.subtitleTracks && fileMetadata.subtitleTracks.length > 0 && (
-          <span style={{ fontSize: '12px', color: 'var(--global-color-text-muted)' }}>
+          <span style={{ fontSize: 'var(--global-font-size-12px)', color: 'var(--global-color-text-muted)' }}>
             Subtitles: {fileMetadata.subtitleTracks.map(t => sanitizeText(t.language)).join(', ')}
           </span>
         )}

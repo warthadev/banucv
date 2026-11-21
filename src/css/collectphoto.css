@@ -16,7 +16,7 @@
 }
 
 .collectphoto-header h1 {
-  font-size: 2.5rem;
+  font-size: var(--global-font-size-2-5rem);
   font-weight: 800;
   background: linear-gradient(135deg, var(--global-color-text) 0%, var(--global-color-accent) 100%);
   -webkit-background-clip: text;
@@ -28,7 +28,7 @@
 
 .collectphoto-header > p {
   color: var(--global-color-text-secondary);
-  font-size: 0.95rem;
+  font-size: var(--global-font-size-0-95rem);
   margin-bottom: 32px;
 }
 
@@ -70,7 +70,7 @@
   border: none;
   outline: none;
   color: var(--global-color-text);
-  font-size: 0.9rem;
+  font-size: var(--global-font-size-0-9rem);
 }
 
 .collectphoto-search input::placeholder {
@@ -96,7 +96,7 @@
   border: none;
   background: transparent;
   color: var(--global-color-text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--global-font-size-0-85rem);
   font-weight: 600;
   cursor: pointer;
   z-index: 1;
@@ -189,14 +189,14 @@
 }
 
 .collectphoto-card-info h3 {
-  font-size: 1.15rem;
+  font-size: var(--global-font-size-1-15rem);
   font-weight: 700;
   margin-bottom: 6px;
   color: var(--global-color-text);
 }
 
 .collectphoto-card-info p {
-  font-size: 0.8rem;
+  font-size: var(--global-font-size-0-8rem);
   color: var(--global-color-text-secondary);
   margin-bottom: 12px;
   word-break: break-all;
@@ -205,7 +205,7 @@
 .collectphoto-card-meta {
   display: flex;
   gap: 16px;
-  font-size: 0.7rem;
+  font-size: var(--global-font-size-0-7rem);
   color: var(--global-color-text-muted);
 }
 
@@ -259,12 +259,12 @@
 }
 
 .collectphoto-empty p:first-of-type {
-  font-size: 1.1rem;
+  font-size: var(--global-font-size-1-1rem);
   font-weight: 500;
 }
 
 .collectphoto-empty-sub {
-  font-size: 0.85rem;
+  font-size: var(--global-font-size-0-85rem);
   opacity: 0.7;
   margin-top: 4px;
 }
@@ -434,7 +434,7 @@
 }
 
 .carousel-date {
-  font-size: 0.7rem;
+  font-size: var(--global-font-size-0-7rem);
   font-weight: 500;
   background: rgba(0,0,0,0.5);
   padding: 4px 10px;
@@ -451,7 +451,7 @@
   border: none;
   border-radius: 40px;
   padding: 6px 14px;
-  font-size: 0.7rem;
+  font-size: var(--global-font-size-0-7rem);
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -532,14 +532,14 @@
 }
 
 .modal-user-header h2 {
-  font-size: 1.4rem;
+  font-size: var(--global-font-size-1-4rem);
   font-weight: 700;
   margin: 0 0 4px 0;
   color: var(--global-color-text);
 }
 
 .modal-email {
-  font-size: 0.8rem;
+  font-size: var(--global-font-size-0-8rem);
   color: var(--global-color-text-secondary);
   word-break: break-all;
 }
@@ -549,7 +549,7 @@
 }
 
 .detail-section h4 {
-  font-size: 0.7rem;
+  font-size: var(--global-font-size-0-7rem);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -563,7 +563,7 @@
   align-items: flex-start;
   padding: 10px 0;
   border-bottom: 1px solid var(--global-color-border);
-  font-size: 0.8rem;
+  font-size: var(--global-font-size-0-8rem);
   flex-wrap: wrap;
   gap: 12px;
 }
@@ -584,7 +584,7 @@
   background: var(--global-color-accent-alpha);
   padding: 2px 8px;
   border-radius: 20px;
-  font-size: 0.7rem;
+  font-size: var(--global-font-size-0-7rem);
   max-width: 70%;
   display: inline-block;
 }
@@ -692,14 +692,14 @@
     padding: 70px 16px 30px;
   }
   .collectphoto-header h1 {
-    font-size: 1.8rem;
+    font-size: var(--global-font-size-1-8rem);
   }
   .collectphoto-search {
     padding: 10px 18px;
   }
   .toggle-btn {
     padding: 6px 16px;
-    font-size: 0.7rem;
+    font-size: var(--global-font-size-0-7rem);
   }
   .collectphoto-grid {
     gap: 16px;
@@ -714,17 +714,17 @@
     padding: 20px;
   }
   .modal-user-header h2 {
-    font-size: 1.2rem;
+    font-size: var(--global-font-size-1-2rem);
   }
   .carousel-overlay {
     padding: 8px 12px;
   }
   .carousel-date {
-    font-size: 0.6rem;
+    font-size: var(--global-font-size-0-6rem);
   }
   .carousel-download-btn {
     padding: 4px 10px;
-    font-size: 0.6rem;
+    font-size: var(--global-font-size-0-6rem);
   }
   .carousel .control-dots {
     gap: 6px !important;

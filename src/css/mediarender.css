@@ -188,7 +188,7 @@
 }
 
 .mediarender-time {
-  font-size: 13px;
+  font-size: var(--global-font-size-13px);
   color: #ffffff;
   font-family: inherit;
   flex-shrink: 0;
@@ -198,7 +198,7 @@
 }
 
 .mediarender-time-sep {
-  font-size: 13px;
+  font-size: var(--global-font-size-13px);
   color: #ffffff;
   opacity: 0.5;
   flex-shrink: 0;
@@ -219,7 +219,7 @@
 }
 
 .mediarender-track-badge {
-  font-size: 10px;
+  font-size: var(--global-font-size-10px);
   margin-left: 2px;
 }
 
@@ -248,7 +248,7 @@
   color: var(--global-color-text);
   cursor: pointer;
   text-align: left;
-  font-size: 12px;
+  font-size: var(--global-font-size-12px);
   transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -272,7 +272,7 @@
   color: var(--global-color-text-muted);
   cursor: pointer;
   text-align: left;
-  font-size: 12px;
+  font-size: var(--global-font-size-12px);
   border-top: 1px solid var(--global-color-border);
   margin-top: 4px;
   transition: background 0.15s ease, color 0.15s ease;
@@ -292,7 +292,7 @@
   max-width: 800px;
   text-align: center;
   color: #ffffff;
-  font-size: 18px;
+  font-size: var(--global-font-size-18px);
   font-weight: 500;
   text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.8);
   pointer-events: none;
@@ -391,7 +391,7 @@
 }
 
 .mediarender-audio-name {
-  font-size: 18px;
+  font-size: var(--global-font-size-18px);
   font-weight: 600;
   color: var(--global-color-text);
   margin-bottom: 6px;
@@ -400,12 +400,12 @@
 }
 
 .mediarender-audio-sub {
-  font-size: 13px;
+  font-size: var(--global-font-size-13px);
   color: var(--global-color-text-muted);
 }
 
 .mediarender-audio-tracks {
-  font-size: 11px;
+  font-size: var(--global-font-size-11px);
   color: var(--global-color-text-muted);
   display: block;
   margin-top: 4px;
@@ -443,7 +443,7 @@
 .mediarender-audio-time {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: var(--global-font-size-11px);
   color: var(--global-color-text-muted);
   margin-top: 8px;
   width: 100%;
@@ -519,7 +519,7 @@
 }
 
 .mediarender-title {
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   font-weight: 600;
   color: var(--global-color-text);
   margin-bottom: 8px;
@@ -529,7 +529,7 @@
 .mediarender-info {
   display: flex;
   gap: 16px;
-  font-size: 12px;
+  font-size: var(--global-font-size-12px);
   color: var(--global-color-text-muted);
   margin-bottom: 8px;
 }
@@ -539,7 +539,7 @@
 }
 
 .mediarender-caption {
-  font-size: 13px;
+  font-size: var(--global-font-size-13px);
   color: var(--global-color-text-secondary);
   background: var(--global-color-surface);
   border-radius: 8px;
@@ -565,7 +565,7 @@
 }
 
 .mediarender-error span {
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   font-weight: 500;
 }
 
@@ -693,7 +693,7 @@ body:has(.mediarender-container.is-fullscreen) {
     gap: 8px;
   }
   .mediarender-time {
-    font-size: 12px;
+    font-size: var(--global-font-size-12px);
   }
   .mediarender-controls-right {
     gap: 8px;
@@ -734,7 +734,7 @@ body:has(.mediarender-container.is-fullscreen) {
     height: 44px;
   }
   .mediarender-audio-name {
-    font-size: 16px;
+    font-size: var(--global-font-size-16px);
   }
   
   .mediarender-error {
@@ -742,12 +742,12 @@ body:has(.mediarender-container.is-fullscreen) {
   }
   
   .mediarender-error span {
-    font-size: 13px;
+    font-size: var(--global-font-size-13px);
   }
   
   .mediarender-error button {
     padding: 6px 20px;
-    font-size: 13px;
+    font-size: var(--global-font-size-13px);
   }
 }
 
@@ -806,14 +806,14 @@ body:has(.mediarender-container.is-fullscreen) {
 }
 
 .mediarender-codec-notice strong {
-  font-size: 15px;
+  font-size: var(--global-font-size-15px);
   font-weight: 600;
 }
 
 .mediarender-codec-notice p {
   margin: 0;
   max-width: 420px;
-  font-size: 13px;
+  font-size: var(--global-font-size-13px);
   line-height: 1.45;
   color: rgba(255, 255, 255, 0.82);
 }
@@ -835,7 +835,7 @@ body:has(.mediarender-container.is-fullscreen) {
   border: none;
   border-radius: 8px;
   color: var(--global-color-on-accent);
-  font-size: 13px;
+  font-size: var(--global-font-size-13px);
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s;
@@ -878,7 +878,7 @@ body:has(.mediarender-container.is-fullscreen) {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
-  font-size: 15px;
+  font-size: var(--global-font-size-15px);
   font-weight: 600;
 }
 
@@ -918,7 +918,7 @@ body:has(.mediarender-container.is-fullscreen) {
   border: none;
   border-radius: 8px;
   color: var(--global-color-text) !important;
-  font-size: 13px;
+  font-size: var(--global-font-size-13px);
   text-align: left;
   text-decoration: none;
   cursor: pointer;
@@ -932,7 +932,7 @@ body:has(.mediarender-container.is-fullscreen) {
 
 .mediarender-ext-note {
   margin: 6px 4px 0;
-  font-size: 12px;
+  font-size: var(--global-font-size-12px);
   line-height: 1.45;
   color: var(--global-color-text-muted);
 }
@@ -959,7 +959,7 @@ body:has(.mediarender-container.is-fullscreen) {
     padding: 12px 16px;
   }
   .mediarender-codec-notice p {
-    font-size: 12px;
+    font-size: var(--global-font-size-12px);
   }
 }
 

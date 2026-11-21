@@ -74,10 +74,10 @@ export const RouterAuthModal: React.FC<RouterAuthModalProps> = ({
           >
             <div style={{ textAlign: "center", marginBottom: "24px" }}>
               <div className="github-auth-icon-wrapper" aria-hidden="true"><Sparkles size={32} /></div>
-              <h3 id="aiagent-openrouter-key-title" style={{ margin: "16px 0 8px 0", fontSize: "1.5rem" }}>
+              <h3 id="aiagent-openrouter-key-title" style={{ margin: "16px 0 8px 0", fontSize: "var(--global-font-size-1-5rem)" }}>
                 Connect OpenRouter
               </h3>
-              <p style={{ fontSize: "0.85rem", color: "var(--global-color-text-secondary)", margin: 0 }}>
+              <p style={{ fontSize: "var(--global-font-size-0-85rem)", color: "var(--global-color-text-secondary)", margin: 0 }}>
                 Add this account&apos;s key to discover its available free models.
               </p>
             </div>

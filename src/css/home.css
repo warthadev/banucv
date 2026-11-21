@@ -21,7 +21,7 @@
 }
 
 .home-title {
-  font-size: clamp(2.5rem, 8vw, 4rem);
+  font-size: var(--global-font-size-display-responsive);
   font-weight: 900;
   margin-bottom: 20px;
   letter-spacing: -2px;
@@ -30,7 +30,7 @@
 }
 
 .home-subtitle {
-  font-size: 1.1rem;
+  font-size: var(--global-font-size-1-1rem);
   max-width: 600px;
   line-height: 1.6;
   margin-bottom: 40px;
@@ -38,7 +38,7 @@
 }
 
 .home-subtitle1 {
-  font-size: 1.8rem;
+  font-size: var(--global-font-size-1-8rem);
   max-width: 600px;
   line-height: 1.6;
   margin-bottom: 40px;
@@ -78,13 +78,13 @@
 }
 
 .home-card-title {
-  font-size: 1.2rem;
+  font-size: var(--global-font-size-1-2rem);
   margin: 0;
   color: var(--global-color-text);
 }
 
 .home-card-text {
-  font-size: 0.9rem;
+  font-size: var(--global-font-size-0-9rem);
   line-height: 1.5;
   color: var(--global-color-text-secondary);
 }
@@ -100,7 +100,7 @@
   width: 100%;
   padding: 30px;
   text-align: center;
-  font-size: 0.8rem;
+  font-size: var(--global-font-size-0-8rem);
   margin-top: auto;
   color: var(--global-color-text-secondary);
 }
@@ -155,14 +155,14 @@
 }
 
 .profile-name {
-  font-size: 1.3rem;
+  font-size: var(--global-font-size-1-3rem);
   font-weight: 700;
   margin: 0 0 4px 0;
   color: var(--global-color-text);
 }
 
 .profile-status {
-  font-size: 0.75rem;
+  font-size: var(--global-font-size-0-75rem);
   color: var(--global-color-text-secondary);
   margin: 0;
   opacity: 0.8;
@@ -186,7 +186,7 @@
   background: var(--global-color-accent-alpha);
   padding: 6px 12px;
   border-radius: 20px;
-  font-size: 0.7rem;
+  font-size: var(--global-font-size-0-7rem);
   font-weight: 600;
   color: var(--global-color-accent);
 }
@@ -195,7 +195,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.7rem;
+  font-size: var(--global-font-size-0-7rem);
   color: var(--global-color-text-secondary);
 }
 
@@ -229,14 +229,14 @@
 
 .stat-value {
   display: block;
-  font-size: 1.1rem;
+  font-size: var(--global-font-size-1-1rem);
   font-weight: 800;
   color: var(--global-color-accent);
   margin-bottom: 4px;
 }
 
 .stat-label {
-  font-size: 0.7rem;
+  font-size: var(--global-font-size-0-7rem);
   color: var(--global-color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -259,7 +259,7 @@
   }
   
   .profile-name {
-    font-size: 1rem;
+    font-size: var(--global-font-size-1rem);
   }
   
   .selfie-info {
@@ -277,6 +277,6 @@
   }
   
   .stat-value {
-    font-size: 0.9rem;
+    font-size: var(--global-font-size-0-9rem);
   }
 }

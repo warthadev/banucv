@@ -93,7 +93,7 @@
 }
 
 .loading-text {
-  font-size: 1rem;
+  font-size: var(--global-font-size-1rem);
   font-weight: 600;
   color: var(--global-color-loading-text);
   letter-spacing: 3.5px;

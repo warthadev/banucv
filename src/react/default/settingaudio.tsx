@@ -123,7 +123,7 @@ const SettingAudio: React.FC = () => {
                 border: 'none',
                 background: 'none',
                 minHeight: '44px',
-                fontSize: '14px',
+                fontSize: 'var(--global-font-size-14px)',
                 fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
@@ -137,7 +137,7 @@ const SettingAudio: React.FC = () => {
                   style={{ position: 'absolute', inset: 0, backgroundColor: 'var(--global-color-accent)', borderRadius: '8px', zIndex: 0 }}
                 />
               )}
-              <span style={{ position: 'relative', zIndex: 1, fontSize: '14px', fontWeight: 600 }}>{m.toUpperCase()}</span>
+              <span style={{ position: 'relative', zIndex: 1, fontSize: 'var(--global-font-size-14px)', fontWeight: 600 }}>{m.toUpperCase()}</span>
             </button>
           ))}
         </div>
@@ -186,7 +186,7 @@ const SettingAudio: React.FC = () => {
               border: 'none',
               background: 'none',
               minHeight: '44px',
-              fontSize: '14px',
+              fontSize: 'var(--global-font-size-14px)',
               fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
@@ -200,7 +200,7 @@ const SettingAudio: React.FC = () => {
                 style={{ position: 'absolute', inset: 0, backgroundColor: 'var(--global-color-accent)', borderRadius: '8px', zIndex: 0 }}
               />
             )}
-            <span style={{ position: 'relative', zIndex: 1, fontSize: '14px', fontWeight: 600 }}>SHOW QUICK MENU</span>
+            <span style={{ position: 'relative', zIndex: 1, fontSize: 'var(--global-font-size-14px)', fontWeight: 600 }}>SHOW QUICK MENU</span>
           </button>
         </div>
       </section>

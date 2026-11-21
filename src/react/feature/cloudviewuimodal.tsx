@@ -204,7 +204,7 @@ const AddRepoModalContent: React.FC<AddRepoModalProps> = ({ open, onConfirm, onC
               }}
             />
             {showError && (
-              <p className="cloudview-modal-desc" style={{ color: '#ef4444', marginTop: 6, fontSize: 12 }}>
+              <p className="cloudview-modal-desc" style={{ color: '#ef4444', marginTop: 6, fontSize: "var(--global-font-size-12px)" }}>
                 Use letters, numbers, "-", "_" or "." only (no spaces).
               </p>
             )}

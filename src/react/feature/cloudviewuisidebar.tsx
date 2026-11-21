@@ -69,7 +69,7 @@ export const Breadcrumb: React.FC<{
     }
 
     return (
-      <div className="cloudview-breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap', minWidth: 0, fontSize: '16px', fontWeight: '700' }}>
+      <div className="cloudview-breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap', minWidth: 0, fontSize: 'var(--global-font-size-16px)', fontWeight: '700' }}>
         <button
           className="cloudview-bc-item cloudview-bc-link"
           onClick={onBack}
@@ -78,7 +78,7 @@ export const Breadcrumb: React.FC<{
           <ChevronLeft size={20} />
         </button>
         <span className="cloudview-bc-item cloudview-bc-current" style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: 0, fontWeight: '700' }}>
-          <span className="cloudview-bc-file-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '600', fontSize: '17px' }}>{sanitizeText(displayName)}</span>
+          <span className="cloudview-bc-file-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '600', fontSize: 'var(--global-font-size-17px)' }}>{sanitizeText(displayName)}</span>
         </span>
       </div>
     );

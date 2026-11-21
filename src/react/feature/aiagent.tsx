@@ -1586,7 +1586,7 @@ const AIAgent: React.FC = () => {
               ))}
             </div>
           )}
-          {uploadNotice && <div role="status" style={{ fontSize: 12, padding: "0 12px 8px", color: "var(--global-color-text-muted, #666)" }}>{uploadNotice}</div>}
+          {uploadNotice && <div role="status" style={{ fontSize: "var(--global-font-size-12px)", padding: "0 12px 8px", color: "var(--global-color-text-muted, #666)" }}>{uploadNotice}</div>}
 
           <div className="aiagent-input-container">
             <textarea

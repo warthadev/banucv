@@ -140,7 +140,7 @@ const CloudRoot: React.FC<CloudRootProps> = ({ onSelectSource, clearSession }) =
     } else if (source.type === 'hf_dataset') {
       return <HuggingFaceIcon size={22} />;
     }
-    return <span style={{ fontSize: '16px' }}>{source.icon}</span>;
+    return <span style={{ fontSize: 'var(--global-font-size-16px)' }}>{source.icon}</span>;
   }, []);
 
   const getSourceAccent = useCallback((source: CloudSource): string => {

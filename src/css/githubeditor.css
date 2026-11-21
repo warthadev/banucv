@@ -69,7 +69,7 @@
 }
 
 .github-sidebar-title h1 {
-  font-size: 1rem;
+  font-size: var(--global-font-size-1rem);
   margin: 0;
   font-weight: 700;
   color: var(--global-color-text);
@@ -144,7 +144,7 @@
 }
 
 .github-sidebar-label {
-  font-size: 10px;
+  font-size: var(--global-font-size-10px);
   font-weight: 800;
   text-transform: uppercase;
   color: var(--global-color-accent);
@@ -250,7 +250,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--global-color-text);
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   font-weight: 500;
 }
 
@@ -396,7 +396,7 @@
   border-radius: 50%;
   background: #ef4444;
   color: white;
-  font-size: 10px;
+  font-size: var(--global-font-size-10px);
   font-weight: bold;
   display: inline-flex;
   align-items: center;
@@ -451,7 +451,7 @@
 }
 
 .github-editor-filename {
-  font-size: 13px;
+  font-size: var(--global-font-size-13px);
   opacity: 0.85;
   max-width: 320px;
   overflow: hidden;
@@ -517,7 +517,7 @@
   align-items: center;
   gap: 6px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--global-font-size-13px);
   transition: opacity 0.13s ease;
   transform: none !important;
 }
@@ -551,7 +551,7 @@
   border: none;
   color: var(--global-color-text);
   padding: 26px;
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   resize: none;
   outline: none;
   line-height: 1.7;
@@ -585,7 +585,7 @@
 }
 
 .github-empty-text {
-  font-size: 13px;
+  font-size: var(--global-font-size-13px);
   opacity: 0.6;
   font-weight: 500;
 }
@@ -594,7 +594,7 @@
   text-align: center;
   padding: 40px 20px;
   color: var(--global-color-text-secondary);
-  font-size: 13px;
+  font-size: var(--global-font-size-13px);
 }
 
 .github-empty-actions,
@@ -616,7 +616,7 @@
   background: transparent;
   color: var(--global-color-text-secondary) !important;
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--global-font-size-13px);
   font-weight: 600;
   transition: background 0.14s ease, border-color 0.14s ease;
   transform: none !important;
@@ -686,14 +686,14 @@
 
 .github-modal h3 {
   margin: 0 0 16px 0;
-  font-size: 1.2rem;
+  font-size: var(--global-font-size-1-2rem);
   font-weight: 700;
   color: var(--global-color-text);
 }
 
 .github-modal p {
   margin: 0 0 20px 0;
-  font-size: 13.5px;
+  font-size: var(--global-font-size-13-5px);
   color: var(--global-color-text-secondary);
   line-height: 1.5;
 }
@@ -711,7 +711,7 @@
   border-radius: 12px;
   background: var(--global-color-background);
   color: var(--global-color-text);
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   outline: none;
   transition: border-color 0.15s ease;
   box-sizing: border-box;
@@ -729,7 +729,7 @@
   border-radius: 12px;
   background: var(--global-color-background);
   color: var(--global-color-text);
-  font-size: 13px;
+  font-size: var(--global-font-size-13px);
   font-family: monospace;
   resize: vertical;
   outline: none;
@@ -759,7 +759,7 @@
   background: var(--global-color-background);
   color: var(--global-color-text-secondary) !important;
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--global-font-size-13px);
   font-weight: 600;
   transition: background 0.14s, border-color 0.14s, color 0.14s;
   transform: none !important;
@@ -813,7 +813,7 @@
   max-width: 130px;
   padding: 10px 20px;
   border-radius: 12px;
-  font-size: 13px;
+  font-size: var(--global-font-size-13px);
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s, opacity 0.2s;
@@ -886,7 +886,7 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto;
-  font-size: 32px;
+  font-size: var(--global-font-size-32px);
   color: var(--global-color-text-secondary) !important;
 }
 
@@ -900,7 +900,7 @@
 
 .github-modal-label {
   display: block;
-  font-size: 0.75rem;
+  font-size: var(--global-font-size-0-75rem);
   font-weight: 600;
   margin-bottom: 6px;
   color: var(--global-color-text-secondary);
@@ -957,7 +957,7 @@
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid #ef4444;
   margin-bottom: 20px;
-  font-size: 12px;
+  font-size: var(--global-font-size-12px);
   color: #ef4444 !important;
 }
 
@@ -976,7 +976,7 @@
 }
 
 .github-modal-footer p {
-  font-size: 11px;
+  font-size: var(--global-font-size-11px);
   color: var(--global-color-text-muted);
   margin: 0;
 }
@@ -992,7 +992,7 @@
 
 .github-modal-footer-note {
   margin-top: 8px !important;
-  font-size: 10px !important;
+  font-size: var(--global-font-size-10px) !important;
 }
 
 @media (max-height: 700px) and (min-width: 600px) {
@@ -1002,20 +1002,20 @@
   }
 
   .github-modal h3 {
-    font-size: 1.1rem;
+    font-size: var(--global-font-size-1-1rem);
     margin: 0 0 12px 0;
   }
 
   .github-modal p {
     margin: 0 0 16px 0;
-    font-size: 13px;
+    font-size: var(--global-font-size-13px);
   }
 
   .github-modal-input,
   .github-modal-textarea {
     padding: 12px 14px;
     margin-bottom: 12px;
-    font-size: 13px;
+    font-size: var(--global-font-size-13px);
   }
 
   .github-modal-type-selector {
@@ -1024,7 +1024,7 @@
 
   .type-btn {
     padding: 10px;
-    font-size: 12px;
+    font-size: var(--global-font-size-12px);
   }
 
   .github-modal-actions {
@@ -1034,7 +1034,7 @@
   .github-modal-cancel,
   .github-modal-confirm {
     padding: 9px 18px;
-    font-size: 12px;
+    font-size: var(--global-font-size-12px);
   }
 
   .github-modal-footer {
@@ -1061,13 +1061,13 @@
   }
 
   .github-modal h3 {
-    font-size: 1rem;
+    font-size: var(--global-font-size-1rem);
     margin: 0 0 10px 0;
   }
 
   .github-modal p {
     margin: 0 0 12px 0;
-    font-size: 12px;
+    font-size: var(--global-font-size-12px);
     line-height: 1.4;
   }
 
@@ -1075,7 +1075,7 @@
   .github-modal-textarea {
     padding: 10px 12px;
     margin-bottom: 10px;
-    font-size: 13px;
+    font-size: var(--global-font-size-13px);
     border-radius: 10px;
   }
 
@@ -1086,7 +1086,7 @@
 
   .type-btn {
     padding: 9px;
-    font-size: 12px;
+    font-size: var(--global-font-size-12px);
     gap: 6px;
   }
 
@@ -1098,7 +1098,7 @@
   .github-modal-cancel,
   .github-modal-confirm {
     padding: 8px 16px;
-    font-size: 12px;
+    font-size: var(--global-font-size-12px);
     min-width: 90px;
   }
 
@@ -1108,7 +1108,7 @@
   }
 
   .github-modal-footer p {
-    font-size: 10.5px;
+    font-size: var(--global-font-size-10-5px);
   }
 
   .github-auth-icon-wrapper {
@@ -1122,14 +1122,14 @@
   }
 
   .github-modal-label {
-    font-size: 0.7rem;
+    font-size: var(--global-font-size-0-7rem);
     margin-bottom: 4px;
   }
 
   .github-modal-error {
     padding: 8px;
     margin-bottom: 14px;
-    font-size: 11px;
+    font-size: var(--global-font-size-11px);
   }
 }
 
@@ -1141,20 +1141,20 @@
   }
 
   .github-modal h3 {
-    font-size: 0.95rem;
+    font-size: var(--global-font-size-0-95rem);
     margin: 0 0 8px 0;
   }
 
   .github-modal p {
     margin: 0 0 10px 0;
-    font-size: 11.5px;
+    font-size: var(--global-font-size-11-5px);
   }
 
   .github-modal-input,
   .github-modal-textarea {
     padding: 8px 10px;
     margin-bottom: 8px;
-    font-size: 12px;
+    font-size: var(--global-font-size-12px);
     border-radius: 8px;
   }
 
@@ -1165,7 +1165,7 @@
 
   .type-btn {
     padding: 7px;
-    font-size: 11px;
+    font-size: var(--global-font-size-11px);
   }
 
   .github-modal-actions {
@@ -1176,7 +1176,7 @@
   .github-modal-cancel,
   .github-modal-confirm {
     padding: 7px 14px;
-    font-size: 11px;
+    font-size: var(--global-font-size-11px);
     min-width: 80px;
     border-radius: 10px;
   }
@@ -1197,14 +1197,14 @@
   }
 
   .github-modal-label {
-    font-size: 0.65rem;
+    font-size: var(--global-font-size-0-65rem);
     margin-bottom: 3px;
   }
 
   .github-modal-error {
     padding: 6px 8px;
     margin-bottom: 10px;
-    font-size: 10.5px;
+    font-size: var(--global-font-size-10-5px);
   }
 }
 
@@ -1269,7 +1269,7 @@
 
   .github-editor-filename {
     max-width: 180px;
-    font-size: 12px;
+    font-size: var(--global-font-size-12px);
   }
 
   .github-sidebar-header {
@@ -1281,7 +1281,7 @@
   }
 
   .github-item-name {
-    font-size: 15px;
+    font-size: var(--global-font-size-15px);
   }
 
   .github-item-actions .github-item-action-btn {
@@ -1293,7 +1293,7 @@
   }
 
   .github-textarea {
-    font-size: 14px;
+    font-size: var(--global-font-size-14px);
     padding: 20px;
   }
 
@@ -1304,7 +1304,7 @@
   }
 
   .github-modal h3 {
-    font-size: 1.15rem;
+    font-size: var(--global-font-size-1-15rem);
   }
 
   .github-sidebar-footer {
@@ -1327,7 +1327,7 @@
   }
 
   .github-item-name {
-    font-size: 13.5px;
+    font-size: var(--global-font-size-13-5px);
   }
 
   .github-editor-header {
@@ -1341,11 +1341,11 @@
   }
 
   .github-item-name {
-    font-size: 14px;
+    font-size: var(--global-font-size-14px);
   }
 
   .github-textarea {
-    font-size: 14.5px;
+    font-size: var(--global-font-size-14-5px);
     padding: 30px;
   }
 }
@@ -1360,7 +1360,7 @@
   }
 
   .github-textarea {
-    font-size: 12.5px;
+    font-size: var(--global-font-size-12-5px);
     padding: 16px;
   }
 

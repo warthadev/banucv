@@ -6,6 +6,7 @@ import { store } from "./react/redux/store";
 import App from "./app.tsx";
 import "./css/global-root.css";
 import "./css/global-style.css";
+import "./css/global-typography.css";
 import "./css/global-color.css";
 import "./css/loading.css";
 import "./css/nav.css";

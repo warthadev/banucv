@@ -353,7 +353,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
         <span
           style={{
             display: "block",
-            fontSize: "14px",
+            fontSize: "var(--global-font-size-14px)",
             fontWeight: 500,
             color: "var(--global-color-text)",
             whiteSpace: "nowrap",
@@ -367,7 +367,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
           <span
             style={{
               display: "block",
-              fontSize: "11px",
+              fontSize: "var(--global-font-size-11px)",
               color: "var(--global-color-text-muted)",
               marginTop: "1px",
               whiteSpace: "nowrap",
@@ -426,7 +426,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
           <span
             style={{
               display: "block",
-              fontSize: "14px",
+              fontSize: "var(--global-font-size-14px)",
               fontWeight: 500,
               color: "var(--global-color-text)",
               whiteSpace: "nowrap",
@@ -439,7 +439,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
           <span
             style={{
               display: "block",
-              fontSize: "11px",
+              fontSize: "var(--global-font-size-11px)",
               color: "var(--global-color-text-muted)",
               marginTop: "1px",
             }}
@@ -500,7 +500,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
             <div style={{ flex: 1, minWidth: 0 }}>
               <div
                 style={{
-                  fontSize: "14px",
+                  fontSize: "var(--global-font-size-14px)",
                   fontWeight: 600,
                   color: "var(--global-color-text)",
                   whiteSpace: "nowrap",
@@ -510,7 +510,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
               >
                 {sanitizeText(selectedUser.username)}
               </div>
-              <div style={{ fontSize: "11px", color: "var(--global-color-text-muted)" }}>
+              <div style={{ fontSize: "var(--global-font-size-11px)", color: "var(--global-color-text-muted)" }}>
                 {userRepos.length} repositor{userRepos.length === 1 ? "y" : "ies"}
               </div>
             </div>
@@ -551,7 +551,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
                   minHeight: "100%",
                   padding: "40px 20px",
                   color: "var(--global-color-text-muted)",
-                  fontSize: "13px",
+                  fontSize: "var(--global-font-size-13px)",
                   boxSizing: "border-box",
                 }}
               >
@@ -569,7 +569,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
                   minHeight: "100%",
                   padding: "40px 20px",
                   color: "var(--global-color-text-muted)",
-                  fontSize: "13px",
+                  fontSize: "var(--global-font-size-13px)",
                   textAlign: "center",
                   boxSizing: "border-box",
                 }}
@@ -666,7 +666,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
               type="button"
               onClick={() => setMode("users")}
               className={`cva-tab ${mode === "users" ? "active" : ""}`}
-              style={{ flex: 1, padding: "8px 12px", minHeight: "36px", fontSize: "13px" }}
+              style={{ flex: 1, padding: "8px 12px", minHeight: "36px", fontSize: "var(--global-font-size-13px)" }}
             >
               Users
             </button>
@@ -674,7 +674,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
               type="button"
               onClick={() => setMode("repos")}
               className={`cva-tab ${mode === "repos" ? "active" : ""}`}
-              style={{ flex: 1, padding: "8px 12px", minHeight: "36px", fontSize: "13px" }}
+              style={{ flex: 1, padding: "8px 12px", minHeight: "36px", fontSize: "var(--global-font-size-13px)" }}
             >
               Repositories
             </button>
@@ -693,7 +693,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
                 flex: 1,
                 padding: "40px 20px",
                 color: "var(--global-color-text-muted)",
-                fontSize: "13px",
+                fontSize: "var(--global-font-size-13px)",
               }}
             >
               <Loader2 size={24} className="spin" />
@@ -710,7 +710,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
                 flex: 1,
                 padding: "40px 20px",
                 color: "#ef4444",
-                fontSize: "13px",
+                fontSize: "var(--global-font-size-13px)",
                 textAlign: "center",
               }}
             >
@@ -728,7 +728,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
                 flex: 1,
                 padding: "40px 20px",
                 color: "var(--global-color-text-muted)",
-                fontSize: "13px",
+                fontSize: "var(--global-font-size-13px)",
                 textAlign: "center",
               }}
             >
@@ -746,7 +746,7 @@ export const CloudModalHFSearch: React.FC<CloudModalHFSearchProps> = ({
                 flex: 1,
                 padding: "40px 20px",
                 color: "var(--global-color-text-muted)",
-                fontSize: "13px",
+                fontSize: "var(--global-font-size-13px)",
                 textAlign: "center",
               }}
             >

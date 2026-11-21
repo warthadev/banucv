@@ -237,8 +237,8 @@ export const GithubAuthModal: React.FC<GithubAuthModalProps> = ({ isOpen, onSave
           <motion.div className="github-modal global-modal" variants={modalVariants} initial="hidden" animate="visible" exit="exit">
             <div style={{ textAlign: "center", marginBottom: "24px" }}>
               <div className="github-auth-icon-wrapper"><GithubIcon /></div>
-              <h3 style={{ margin: "16px 0 8px 0", fontSize: "1.5rem" }}>GitHub Setup</h3>
-              <p style={{ fontSize: "0.85rem", color: "var(--global-color-text-secondary)", margin: 0 }}>Enter your GitHub credentials to access the repository editor</p>
+              <h3 style={{ margin: "16px 0 8px 0", fontSize: "var(--global-font-size-1-5rem)" }}>GitHub Setup</h3>
+              <p style={{ fontSize: "var(--global-font-size-0-85rem)", color: "var(--global-color-text-secondary)", margin: 0 }}>Enter your GitHub credentials to access the repository editor</p>
             </div>
 
             <form onSubmit={handleSubmit}>

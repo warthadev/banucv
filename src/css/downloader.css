@@ -29,7 +29,7 @@
 }
 
 .downloader-save-target .cloudview-transfer-select-trigger {
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   width: 100%;
   min-height: 100%;
   height: 100%;
@@ -83,7 +83,7 @@
   align-items: center;
   gap: 8px;
   padding: 4px 6px 6px;
-  font-size: 12px;
+  font-size: var(--global-font-size-12px);
   font-weight: 600;
   color: var(--global-color-text);
   font-family: inherit;
@@ -124,7 +124,7 @@
 }
 
 .downloader-hf-inline-label {
-  font-size: 12px;
+  font-size: var(--global-font-size-12px);
   font-weight: 600;
   color: var(--global-color-text);
   font-family: inherit;
@@ -136,7 +136,7 @@
 }
 
 .downloader-hf-inline .cloudview-transfer-select-trigger {
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   padding: 8px 10px;
   border-radius: 8px;
   min-height: 36px;
@@ -154,7 +154,7 @@
 }
 
 .downloader-hf-inline .cloudview-transfer-select-item {
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   padding: 8px 10px;
   text-align: left;
   font-weight: 400;
@@ -172,7 +172,7 @@
   justify-content: center;
   gap: 6px;
   padding: 8px 4px;
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   color: var(--global-color-text);
   font-family: inherit;
   line-height: 1.4;
@@ -219,7 +219,7 @@
   border-radius: 8px;
   background: var(--global-color-background);
   color: var(--global-color-text);
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   font-family: inherit;
   outline: none;
   box-sizing: border-box;
@@ -331,7 +331,7 @@
   background: none;
   border: none;
   color: var(--global-color-text);
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   font-family: inherit;
   font-weight: 400;
   line-height: 1.4;
@@ -371,7 +371,7 @@
   background: var(--global-color-background);
   color: var(--global-color-text);
   outline: none;
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   font-family: inherit;
   width: 100%;
   box-sizing: border-box;
@@ -401,7 +401,7 @@
   background: var(--global-color-accent);
   color: var(--global-color-on-accent);
   font-weight: 700;
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   font-family: inherit;
   line-height: 1.4;
   cursor: pointer;
@@ -455,7 +455,7 @@
 }
 
 .downloader-console-label {
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   color: var(--global-color-text);
   font-family: inherit;
   line-height: 1.4;
@@ -484,7 +484,7 @@
 .downloader-colab-session-timer {
   font-variant-numeric: tabular-nums;
   color: var(--global-color-text);
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   letter-spacing: 0.4px;
   font-weight: 600;
 }
@@ -495,7 +495,7 @@
 
 .downloader-colab-session-id {
   color: var(--global-color-text-secondary);
-  font-size: 12px;
+  font-size: var(--global-font-size-12px);
   letter-spacing: 0.2px;
   text-align: right;
 }
@@ -511,7 +511,7 @@
   background: var(--global-color-background);
   scroll-behavior: smooth;
   font-family: monospace;
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   line-height: 1.5;
 }
 
@@ -524,13 +524,13 @@
 
 .downloader-terminal-empty {
   color: var(--global-color-text-secondary);
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   line-height: 1.5;
   opacity: 0.5;
 }
 
 .downloader-log-line {
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   margin-bottom: 0;
   line-height: 1.5;
   text-align: left;
@@ -575,7 +575,7 @@
   background: var(--global-color-accent);
   color: var(--global-color-on-accent);
   padding: 2px 8px;
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   border-radius: 8px;
   text-transform: lowercase;
   font-family: inherit;
@@ -588,7 +588,7 @@
 
 .downloader-title {
   margin: 18px 0 14px 0;
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   border-left: 3px solid var(--global-color-accent);
   padding-left: 10px;
   color: var(--global-color-text);
@@ -616,7 +616,7 @@
 }
 
 .downloader-audio-count-label {
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   font-family: inherit;
   color: var(--global-color-text-secondary);
   line-height: 1.4;
@@ -645,7 +645,7 @@
   border: 1px solid var(--global-color-border);
   background: transparent;
   color: var(--global-color-text);
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   font-family: inherit;
   cursor: pointer;
   line-height: 1.4;
@@ -673,7 +673,7 @@
   border: none;
   background: var(--global-color-accent);
   color: var(--global-color-on-accent);
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   font-family: inherit;
   text-decoration: none;
   cursor: pointer;
@@ -703,7 +703,7 @@
 
 .downloader-format-info {
   opacity: 0.75;
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -730,7 +730,7 @@
   border: 1px solid rgba(255, 255, 255, 0.35);
   background: rgba(255, 255, 255, 0.12);
   color: var(--global-color-on-accent);
-  font-size: 12px;
+  font-size: var(--global-font-size-12px);
   font-family: inherit;
   font-weight: 500;
   line-height: 1.4;
@@ -761,7 +761,7 @@
 }
 
 .downloader-mux-badge {
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   font-weight: 400;
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.35);
@@ -773,7 +773,7 @@
 }
 
 .downloader-clean-badge {
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   font-weight: 400;
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -786,7 +786,7 @@
 
 .downloader-empty {
   color: var(--global-color-text-secondary);
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   line-height: 1.4;
   margin: 0;
 }
@@ -832,7 +832,7 @@
   padding: 10px 12px;
   background: transparent;
   color: var(--global-color-text);
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   font-family: inherit;
   border-bottom: 1px solid var(--global-color-border);
   box-sizing: border-box;
@@ -877,7 +877,7 @@
 .downloader-torrent-plain-size {
   flex-shrink: 0;
   color: var(--global-color-text-secondary);
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -956,7 +956,7 @@
   border: 1px solid var(--global-color-border);
   background: transparent;
   color: var(--global-color-accent);
-  font-size: 12px;
+  font-size: var(--global-font-size-12px);
   font-family: inherit;
   text-decoration: none;
   transition: background 0.15s ease, border-color 0.15s ease;
@@ -973,7 +973,7 @@
   }
 
   .downloader-colab-session-timer {
-    font-size: 12px;
+    font-size: var(--global-font-size-12px);
   }
 
   .downloader-console-header-actions {
@@ -985,7 +985,7 @@
   }
 
   .downloader-format-action {
-    font-size: 11px;
+    font-size: var(--global-font-size-11px);
     padding: 4px 8px;
   }
 }
@@ -1019,7 +1019,7 @@
 }
 .downloader-preview-title {
   color: var(--global-color-text);
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   font-weight: 600;
   line-height: 1.35;
   display: -webkit-box;
@@ -1031,7 +1031,7 @@
 }
 .downloader-preview-sub {
   color: var(--global-color-text-secondary);
-  font-size: 12px;
+  font-size: var(--global-font-size-12px);
   margin-top: 4px;
   overflow: hidden;
   text-overflow: ellipsis;

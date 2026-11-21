@@ -44,7 +44,7 @@
 }
 
 .nav-logo {
-  font-size: 1.5rem;
+  font-size: var(--global-font-size-1-5rem);
   font-weight: 800;
   letter-spacing: -1px;
   color: var(--global-color-text) !important;
@@ -92,7 +92,7 @@
 }
 
 .home-nav-link, .nav-btn-dash, .nav-item-link {
-  font-size: 0.85rem;
+  font-size: var(--global-font-size-0-85rem);
   font-weight: 600;
   text-decoration: none;
   transition: 0.3s;
@@ -164,7 +164,7 @@
 
 @media (min-width: 641px) and (max-width: 1024px) {
   .nav-container-main { min-width: 90%; height: 52px; }
-  .nav-logo { font-size: 1.3rem; }
+  .nav-logo { font-size: var(--global-font-size-1-3rem); }
 }
 
 @media (max-width: 640px) {
@@ -193,7 +193,7 @@
   .desktop-center-nav { display: none; }
 
   .nav-logo {
-    font-size: 1.3rem;
+    font-size: var(--global-font-size-1-3rem);
   }
 
   .nav-header--dashboard .nav-logo {
@@ -250,7 +250,7 @@
     display: block;
     padding: 10px 14px 4px;
     color: var(--global-color-text);
-    font-size: 10px;
+    font-size: var(--global-font-size-10px);
     font-weight: 800;
     letter-spacing: 1.5px;
   }
@@ -273,7 +273,7 @@
     gap: 12px;
     padding: 12px 14px;
     border-radius: 20px;
-    font-size: 0.85rem;
+    font-size: var(--global-font-size-0-85rem);
     font-weight: 600;
     transition: all 0.2s ease;
   }

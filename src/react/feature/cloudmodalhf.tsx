@@ -196,7 +196,7 @@ export const CloudModalHF: React.FC<CloudModalHFProps> = ({
               <div style={{
                 marginTop: '16px',
                 textAlign: 'center',
-                fontSize: '13px',
+                fontSize: 'var(--global-font-size-13px)',
                 color: 'var(--global-color-text-secondary)'
               }}>
                 <span>Don't have an API token? </span>

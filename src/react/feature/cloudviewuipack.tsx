@@ -278,7 +278,7 @@ export const CloudViewPack: React.FC<CloudViewPackProps> = (props) => {
             <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, overflow: 'hidden' }}>{renderBreadcrumb(true)}</div>
           </div>
           <div className="cloudview-mobile-header-right" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            <span className="cloudview-mobile-count" style={{ fontSize: '12px', color: 'var(--global-color-text-muted)', whiteSpace: 'nowrap' }}>
+            <span className="cloudview-mobile-count" style={{ fontSize: 'var(--global-font-size-12px)', color: 'var(--global-color-text-muted)', whiteSpace: 'nowrap' }}>
               {sourceType === 'telegram' ? (mobileView === 'chats' ? `${dialogs.length} chats` : '') : (mobileView === 'chats' ? `${hfRepos.length} repos` : '')}
             </span>
             <button className="cloudview-toolbar-btn" onClick={handleBackToRoot} title="Home" style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '6px', color: 'var(--global-color-text-secondary)', cursor: 'pointer' }}><Home size={18} /></button>

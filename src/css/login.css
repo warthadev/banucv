@@ -31,7 +31,7 @@
 }
 
 .login-title {
-  font-size: 1.8rem;
+  font-size: var(--global-font-size-1-8rem);
   font-weight: 800;
   letter-spacing: -0.5px;
   color: var(--global-color-text);
@@ -40,7 +40,7 @@
 
 .login-text {
   color: var(--global-color-text-secondary);
-  font-size: 0.95rem;
+  font-size: var(--global-font-size-0-95rem);
   line-height: 1.5;
   opacity: 0.8;
   margin: 0;

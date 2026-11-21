@@ -115,7 +115,7 @@
 }
 
 .player-genre-display {
-  font-size: 14px;
+  font-size: var(--global-font-size-14px);
   font-weight: 700;
   color: var(--global-color-text);
   line-height: 1.2;
@@ -125,7 +125,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 8px;
+  font-size: var(--global-font-size-8px);
   font-weight: 800;
   color: var(--global-color-text-muted);
   margin-top: 2px;

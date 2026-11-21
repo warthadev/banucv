@@ -2876,7 +2876,7 @@ const CloudView: React.FC = () => {
                 border: 'none',
                 color: 'var(--global-color-text-secondary)',
                 cursor: 'pointer',
-                fontSize: '0.85rem',
+                fontSize: 'var(--global-font-size-0-85rem)',
                 fontWeight: 500,
                 padding: '8px 12px',
                 borderRadius: '10px',
@@ -2886,7 +2886,7 @@ const CloudView: React.FC = () => {
             </button>
             <h2
               style={{
-                fontSize: '1rem',
+                fontSize: 'var(--global-font-size-1rem)',
                 fontWeight: 600,
                 color: 'var(--global-color-text)',
                 margin: 0,

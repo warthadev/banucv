@@ -5,13 +5,11 @@ import { ArrowLeft } from 'lucide-react';
 import SettingAudio from './settingaudio';
 import SettingVisual from './settingvisual';
 import SettingUser from './settinguser';
-import SettingAgent from './settingagent';
 
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const [isProfileLoading, setIsProfileLoading] = useState(true);
-  const [isOpenRouterLoading, setIsOpenRouterLoading] = useState(true);
-  const isSettingsLoading = isProfileLoading || isOpenRouterLoading;
+  const isSettingsLoading = isProfileLoading;
 
   return (
     <div className="settings-page-container global-page">
@@ -41,7 +39,6 @@ const SettingsPage: React.FC = () => {
 
         <div className="settings-all-content" hidden={isSettingsLoading} aria-hidden={isSettingsLoading}>
           <SettingUser onLoadingChange={setIsProfileLoading} />
-          <SettingAgent onLoadingChange={setIsOpenRouterLoading} />
           <SettingVisual />
           <SettingAudio />
         </div>

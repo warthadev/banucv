@@ -1,7 +1,8 @@
 // src/react/feature/downloader.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertCircle, ExternalLink, Check, Play, CheckCircle2, Circle, Eye, EyeOff, LoaderCircle, Save, ShieldCheck, Trash2 } from 'lucide-react';
+import { ExternalLink, Check, Play, CheckCircle2, Circle, LoaderCircle } from 'lucide-react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import DlLog from './dllog';
 import type { LogItem, KaggleRemoteSessionView } from './dllog';
 import DlSave from './dlsave';
@@ -10,10 +11,13 @@ import { isMagnetLink, useDlTorrent } from '@hook/usedltorrent';
 import { useDlUniversal } from '@hook/usedluniversal';
 import type { UniversalFormat } from '@hook/usedluniversal';
 import { formatBytes } from '@config/utils';
-import { getAuth } from '@config/firebase';
-import { deleteKaggleCredentials, loadKaggleCredentials, saveKaggleCredentials, type KaggleCredentials } from '@config/kagglecredentials';
+import { db, getAuth } from '@config/firebase';
+import { loadKaggleCredentials, saveKaggleCredentials } from '@config/kagglecredentials';
+import { CloudModalHF } from './cloudmodalhf';
+import { CloudModalKaggle } from './cloudmodalkaggle';
 
 type LogType = 'system' | 'critical' | 'success';
+type CredentialStep = 'loading' | 'signed-out' | 'huggingface' | 'kaggle' | 'ready' | 'error';
 const nowTime = (): string => new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 const formatLogPrefix = (type: LogType): string => {
   const prefix = type === 'critical' ? '[error]' : type === 'success' ? '[success]' : '[info]';
@@ -58,96 +62,6 @@ const formatDuration = (sec?: number | null): string => {
   return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
 };
 
-interface KaggleCredentialFormProps {
-  username: string;
-  token: string;
-  showToken: boolean;
-  hasCredentials: boolean;
-  saving: boolean;
-  error: string | null;
-  message: string | null;
-  onUsernameChange: (value: string) => void;
-  onTokenChange: (value: string) => void;
-  onToggleToken: () => void;
-  onSave: () => void;
-  onDelete: () => void;
-}
-
-const KaggleCredentialForm: React.FC<KaggleCredentialFormProps> = ({
-  username, token, showToken, hasCredentials, saving, error, message,
-  onUsernameChange, onTokenChange, onToggleToken, onSave, onDelete,
-}) => (
-  <div className="global-stack global-stack--gap-10">
-    {hasCredentials && (
-      <div className="su-profile-card setting-agent-safe-status global-inline-row global-inline-row--gap-8">
-        <ShieldCheck size={17} aria-hidden="true" />
-        <span>
-          Kaggle connected as {username}
-          <small>Saved as plaintext in this account’s Firestore settings.</small>
-        </span>
-      </div>
-    )}
-    <div className="setting-agent-form">
-      <label className="setting-agent-label" htmlFor="downloader-kaggle-username">Kaggle username</label>
-      <input
-        id="downloader-kaggle-username"
-        className="setting-agent-input"
-        type="text"
-        name="kaggle-username"
-        value={username}
-        onChange={event => onUsernameChange(event.target.value)}
-        placeholder="Your Kaggle username"
-        autoComplete="off"
-        spellCheck={false}
-        autoCapitalize="none"
-        disabled={saving}
-        required
-      />
-      <label className="setting-agent-label" htmlFor="downloader-kaggle-token">Kaggle API token</label>
-      <div className="su-list-item setting-agent-key-control">
-        <input
-          id="downloader-kaggle-token"
-          className="setting-agent-input setting-agent-key-input"
-          type={showToken ? 'text' : 'password'}
-          name="kaggle-api-token"
-          value={token}
-          onChange={event => onTokenChange(event.target.value)}
-          placeholder={hasCredentials ? 'Enter a token to replace the saved token' : 'Paste your Kaggle API token'}
-          autoComplete="off"
-          spellCheck={false}
-          autoCapitalize="none"
-          disabled={saving}
-          required
-        />
-        <button
-          className="setting-agent-reveal-btn global-icon-button"
-          type="button"
-          onClick={onToggleToken}
-          aria-label={showToken ? 'Hide Kaggle API token' : 'Reveal Kaggle API token'}
-          aria-pressed={showToken}
-          disabled={!token || saving}
-        >
-          {showToken ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
-        </button>
-      </div>
-    </div>
-    {error && <p className="setting-agent-error global-inline-row global-inline-row--gap-8" role="alert"><AlertCircle size={15} />{error}</p>}
-    <div className="settings-section-actions">
-      <button className="setting-agent-primary settings-section-save-btn" type="button" onClick={onSave} disabled={saving}>
-        {saving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Save size={16} aria-hidden="true" />}
-        {saving ? 'Saving…' : hasCredentials ? 'Update credentials' : 'Save and continue'}
-      </button>
-      {hasCredentials && (
-        <button className="setting-agent-danger" type="button" onClick={onDelete} disabled={saving}>
-          {saving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Trash2 size={16} aria-hidden="true" />}
-          Remove
-        </button>
-      )}
-      {message && <p className="settings-save-feedback" role="status"><CheckCircle2 size={15} aria-hidden="true" /><span>{message}</span></p>}
-    </div>
-  </div>
-);
-
 const Downloader: React.FC = () => {
   const [inputUrl, setInputUrl] = useState('');
   const [logs, setLogs] = useState<LogItem[]>([]);
@@ -155,16 +69,9 @@ const Downloader: React.FC = () => {
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
   const [saveSelection, setSaveSelectionState] = useState<DlSaveSelection>(() => readStoredSaveSelection());
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [kaggleAuthReady, setKaggleAuthReady] = useState(false);
-  const [kaggleCredentials, setKaggleCredentials] = useState<KaggleCredentials | null>(null);
-  const [kaggleUsername, setKaggleUsername] = useState('');
-  const [kaggleToken, setKaggleToken] = useState('');
-  const [showKaggleToken, setShowKaggleToken] = useState(false);
-  const [kaggleCredentialsLoading, setKaggleCredentialsLoading] = useState(true);
-  const [kaggleCredentialsSaving, setKaggleCredentialsSaving] = useState(false);
-  const [kaggleCredentialsError, setKaggleCredentialsError] = useState<string | null>(null);
-  const [kaggleCredentialsMessage, setKaggleCredentialsMessage] = useState<string | null>(null);
-  const kaggleCredentialsRequestRef = useRef(0);
+  const [credentialStep, setCredentialStep] = useState<CredentialStep>('loading');
+  const [credentialError, setCredentialError] = useState<string | null>(null);
+  const credentialRequestRef = useRef(0);
 
   const detectedType = useMemo<'torrent' | 'universal' | 'invalid' | null>(() => {
     const trimmed = inputUrl.trim();
@@ -188,103 +95,83 @@ const Downloader: React.FC = () => {
     try { localStorage.setItem(SAVE_SELECTION_STORAGE_KEY, JSON.stringify(next)); } catch { void 0; }
   }, []);
 
-  const refreshKaggleCredentials = useCallback(async (user: User | null) => {
-    const requestId = ++kaggleCredentialsRequestRef.current;
-    setKaggleCredentialsLoading(Boolean(user));
-    setKaggleCredentialsError(null);
-    if (!user) {
-      setKaggleCredentials(null);
-      setKaggleUsername('');
-      setKaggleToken('');
-      setKaggleCredentialsLoading(false);
-      return;
-    }
+  const checkKaggleCredentials = useCallback(async (requestId: number) => {
     try {
-      const saved = await loadKaggleCredentials();
-      if (requestId !== kaggleCredentialsRequestRef.current) return;
-      setKaggleCredentials(saved);
-      setKaggleUsername(saved?.username || '');
-      setKaggleToken(saved?.apiToken || '');
-      setShowKaggleToken(false);
+      const credentials = await loadKaggleCredentials();
+      if (requestId !== credentialRequestRef.current) return;
+      setCredentialError(null);
+      setCredentialStep(credentials ? 'ready' : 'kaggle');
     } catch (error) {
-      if (requestId === kaggleCredentialsRequestRef.current) {
-        setKaggleCredentials(null);
-        setKaggleCredentialsError(error instanceof Error ? error.message : 'Unable to load this account’s Kaggle settings.');
+      if (requestId === credentialRequestRef.current) {
+        setCredentialError(error instanceof Error ? error.message : 'Unable to load this account’s Kaggle settings.');
+        setCredentialStep('error');
       }
-    } finally {
-      if (requestId === kaggleCredentialsRequestRef.current) setKaggleCredentialsLoading(false);
     }
   }, []);
+
+  const checkRequiredCredentials = useCallback(async (user: User | null) => {
+    const requestId = ++credentialRequestRef.current;
+    setCurrentUser(user);
+    setCredentialError(null);
+    if (!user) {
+      setCredentialStep('signed-out');
+      return;
+    }
+    setCredentialStep('loading');
+    try {
+      const userSnapshot = await getDoc(doc(db, 'users', user.uid));
+      if (requestId !== credentialRequestRef.current) return;
+      const profile = userSnapshot.exists() ? userSnapshot.data() : {};
+      const usernames: unknown[] = Array.isArray(profile.hfUsernames) ? profile.hfUsernames : [];
+      const tokens: unknown[] = Array.isArray(profile.hfTokens) ? profile.hfTokens : [];
+      const hasHuggingFaceCredentials = usernames.some((username, index) =>
+        typeof username === 'string' && Boolean(username.trim())
+        && typeof tokens[index] === 'string' && Boolean(tokens[index].trim()));
+      if (!hasHuggingFaceCredentials) {
+        setCredentialStep('huggingface');
+        return;
+      }
+      await checkKaggleCredentials(requestId);
+    } catch (error) {
+      if (requestId === credentialRequestRef.current) {
+        setCredentialError(error instanceof Error ? error.message : 'Unable to check this account’s Hugging Face settings.');
+        setCredentialStep('error');
+      }
+    }
+  }, [checkKaggleCredentials]);
 
   useEffect(() => {
     let unsubscribe = () => {};
     let disposed = false;
-    getAuth().then(firebaseAuth => {
+    getAuth().then((firebaseAuth) => {
       if (disposed) return;
-      unsubscribe = onAuthStateChanged(firebaseAuth, user => {
-        setCurrentUser(user);
-        setKaggleAuthReady(true);
-        setKaggleCredentialsMessage(null);
-        setKaggleCredentialsError(null);
-        setKaggleToken('');
-        void refreshKaggleCredentials(user);
+      unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+        void checkRequiredCredentials(user);
       });
     }).catch((error: unknown) => {
-      setKaggleAuthReady(true);
-      setKaggleCredentialsLoading(false);
-      setKaggleCredentialsError(error instanceof Error ? error.message : 'Firebase authentication is unavailable.');
+      setCredentialError(error instanceof Error ? error.message : 'Firebase authentication is unavailable.');
+      setCredentialStep('error');
     });
     return () => {
       disposed = true;
-      kaggleCredentialsRequestRef.current += 1;
+      credentialRequestRef.current += 1;
       unsubscribe();
     };
-  }, [refreshKaggleCredentials]);
+  }, [checkRequiredCredentials]);
 
-  const handleSaveKaggleCredentials = useCallback(async () => {
-    setKaggleCredentialsMessage(null);
-    setKaggleCredentialsError(null);
-    if (!currentUser) {
-      setKaggleCredentialsError('Sign in to save Kaggle credentials for this account.');
-      return;
-    }
-    if (!kaggleUsername.trim() || !kaggleToken.trim()) {
-      setKaggleCredentialsError('Enter both the Kaggle username and API token.');
-      return;
-    }
-    setKaggleCredentialsSaving(true);
-    try {
-      const saved = await saveKaggleCredentials(kaggleUsername, kaggleToken);
-      setKaggleCredentials(saved);
-      setKaggleUsername(saved.username);
-      setKaggleToken(saved.apiToken);
-      setShowKaggleToken(false);
-      setKaggleCredentialsMessage('Kaggle credentials saved for this account.');
-    } catch (error) {
-      setKaggleCredentialsError(error instanceof Error ? error.message : 'Could not save this account’s Kaggle credentials.');
-    } finally {
-      setKaggleCredentialsSaving(false);
-    }
-  }, [currentUser, kaggleUsername, kaggleToken]);
+  const handleSaveHuggingFace = useCallback(async () => {
+    if (!currentUser) throw new Error('Sign in before saving Hugging Face credentials.');
+    const requestId = ++credentialRequestRef.current;
+    setCredentialStep('loading');
+    setCredentialError(null);
+    await checkKaggleCredentials(requestId);
+  }, [currentUser, checkKaggleCredentials]);
 
-  const handleDeleteKaggleCredentials = useCallback(async () => {
-    if (!currentUser || kaggleCredentialsSaving) return;
-    setKaggleCredentialsSaving(true);
-    setKaggleCredentialsError(null);
-    setKaggleCredentialsMessage(null);
-    try {
-      await deleteKaggleCredentials();
-      setKaggleCredentials(null);
-      setKaggleUsername('');
-      setKaggleToken('');
-      setShowKaggleToken(false);
-      setKaggleCredentialsMessage('Kaggle credentials removed. Save them again to enter the Downloader.');
-    } catch (error) {
-      setKaggleCredentialsError(error instanceof Error ? error.message : 'Could not remove this account’s Kaggle credentials.');
-    } finally {
-      setKaggleCredentialsSaving(false);
-    }
-  }, [currentUser, kaggleCredentialsSaving]);
+  const handleSaveKaggle = useCallback(async (username: string, apiToken: string) => {
+    await saveKaggleCredentials(username, apiToken);
+    setCredentialError(null);
+    setCredentialStep('ready');
+  }, []);
 
   const addLog = useCallback((msg: string, type: LogType = 'system') => {
     const id = ++logIdCounterRef.current;
@@ -476,53 +363,60 @@ const Downloader: React.FC = () => {
   const allUSelected = uFormats.length > 0 && selectedFormatIndexes.size === uFormats.length;
   const allTSelected = torrentFiles.length > 0 && tSelectedIndexes.size === torrentFiles.length;
 
-  const kaggleCredentialForm = (
-    <KaggleCredentialForm
-      username={kaggleUsername}
-      token={kaggleToken}
-      showToken={showKaggleToken}
-      hasCredentials={Boolean(kaggleCredentials)}
-      saving={kaggleCredentialsSaving}
-      error={kaggleCredentialsError}
-      message={kaggleCredentialsMessage}
-      onUsernameChange={setKaggleUsername}
-      onTokenChange={value => { setKaggleToken(value); setKaggleCredentialsMessage(null); }}
-      onToggleToken={() => setShowKaggleToken(value => !value)}
-      onSave={() => void handleSaveKaggleCredentials()}
-      onDelete={() => void handleDeleteKaggleCredentials()}
-    />
-  );
-
-  if (!kaggleAuthReady || kaggleCredentialsLoading) {
+  if (credentialStep !== 'ready') {
     return (
       <div className="home-container global-page">
         <main className="home-hero">
           <div className="downloader-body-inner">
-            <section className="setting-agent-card global-card global-section global-card--padded" aria-label="Kaggle credentials" aria-busy="true">
-              <div className="setting-agent-loading global-inline-row global-inline-row--gap-8" role="status">
-                <LoaderCircle size={18} className="setting-agent-spinner" /> Loading Kaggle settings…
-              </div>
-            </section>
+            {credentialStep === 'loading' ? (
+              <section className="setting-agent-card global-card global-section global-card--padded" aria-label="Checking Downloader credentials" aria-busy="true">
+                <div className="setting-agent-loading global-inline-row global-inline-row--gap-8" role="status">
+                  <LoaderCircle size={18} className="setting-agent-spinner" /> Checking account credentials…
+                </div>
+              </section>
+            ) : credentialStep === 'error' ? (
+              <section className="setting-agent-card global-card global-section global-card--padded" aria-label="Credential check failed">
+                <h1 className="downloader-title">Could not verify account credentials</h1>
+                <p className="setting-agent-note" role="alert">{credentialError || 'Please try again.'}</p>
+                {currentUser && (
+                  <button className="setting-agent-primary settings-section-save-btn" type="button" onClick={() => void checkRequiredCredentials(currentUser)}>
+                    Retry
+                  </button>
+                )}
+              </section>
+            ) : credentialStep === 'signed-out' ? (
+              <section className="setting-agent-card global-card global-section global-card--padded" aria-label="Sign in to Downloader">
+                <h1 className="downloader-title">Sign in to continue</h1>
+                <p className="setting-agent-note" role="status">Sign in to your account to check the Hugging Face and Kaggle credentials required by Downloader.</p>
+              </section>
+            ) : (
+              <section className="setting-agent-card global-card global-section global-card--padded" aria-label="Set up Downloader credentials">
+                <h1 className="downloader-title">
+                  {credentialStep === 'huggingface' ? 'Connect your Hugging Face account' : 'Connect your Kaggle account'}
+                </h1>
+                <p className="setting-agent-note">
+                  {credentialStep === 'huggingface'
+                    ? 'Save Hugging Face credentials first. After they are saved, Downloader will check your Kaggle credentials.'
+                    : 'Hugging Face is ready. Save your Kaggle username and API token to continue to Downloader.'}
+                </p>
+              </section>
+            )}
           </div>
         </main>
-      </div>
-    );
-  }
-
-  if (!currentUser || !kaggleCredentials) {
-    return (
-      <div className="home-container global-page">
-        <main className="home-hero">
-          <div className="downloader-body-inner">
-            <section className="setting-agent-card global-card global-section global-card--padded" aria-label="Set up Kaggle for Downloader">
-              <h1 className="downloader-title">Connect your Kaggle account</h1>
-              <p className="setting-agent-note">Save your Kaggle username and API token to continue to the Downloader. These credentials apply only to your signed-in account.</p>
-              {!currentUser ? (
-                <p className="setting-agent-note" role="status">Sign in to your Firebase account before setting up Kaggle credentials.</p>
-              ) : kaggleCredentialForm}
-            </section>
-          </div>
-        </main>
+        {currentUser && (
+          <>
+            <CloudModalHF
+              isOpen={credentialStep === 'huggingface'}
+              onSave={handleSaveHuggingFace}
+              onClose={() => {}}
+            />
+            <CloudModalKaggle
+              isOpen={credentialStep === 'kaggle'}
+              onSave={handleSaveKaggle}
+              onClose={() => {}}
+            />
+          </>
+        )}
       </div>
     );
   }
@@ -531,10 +425,6 @@ const Downloader: React.FC = () => {
     <div className="home-container global-page">
       <main className="home-hero">
         <div className="downloader-body-inner">
-          <details className="global-card global-card--padded global-section" style={{ marginBottom: 12 }}>
-            <summary className="setting-agent-label" style={{ cursor: 'pointer' }}>Manage Kaggle credentials · {kaggleCredentials.username}</summary>
-            <div style={{ marginTop: 12 }}>{kaggleCredentialForm}</div>
-          </details>
           <div className="downloader-input-row">
             <DlSave selection={saveSelection} onChange={setSaveSelection} />
             <input type="text" className="downloader-input" placeholder="Paste Magnet or Video URL here..." value={inputUrl} onChange={e => setInputUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleRun()} />

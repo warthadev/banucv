@@ -8,10 +8,12 @@ import AgentModelCatalog from "./agentmodelcatalog";
 import type { SettingsSaveResult } from "./settingssave";
 
 interface SettingAgentProps {
-  onLoadingChange: (isLoading: boolean) => void;
+  onLoadingChange?: (isLoading: boolean) => void;
 }
 
-const SettingAgent: React.FC<SettingAgentProps> = ({ onLoadingChange }) => {
+const ignoreLoadingChange = () => {};
+
+const SettingAgent: React.FC<SettingAgentProps> = ({ onLoadingChange = ignoreLoadingChange }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [credentials, setCredentials] = useState<OpenRouterCredentials | null>(null);

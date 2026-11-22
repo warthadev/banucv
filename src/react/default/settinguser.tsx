@@ -13,6 +13,8 @@ import {
 import { GithubIcon } from "@/react/control/icon";
 import { formatTimestamp } from "@config/userstorage";
 import type { SettingsSaveResult } from "./settingssave";
+import SettingAgent from "./settingagent";
+import SettingKaggle from "./settingkaggle";
 
 interface UserProfile {
   uid: string;
@@ -575,6 +577,9 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
       </div>
 
     </section>
+
+    <SettingAgent />
+    <SettingKaggle />
 
     <section className="stack-item settings-service-section global-card global-section global-card--padded" aria-label="Cloud Manager">
       <div className="su-profile-card setting-agent-safe-status global-inline-row global-inline-row--gap-8">

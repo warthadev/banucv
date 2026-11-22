@@ -196,7 +196,7 @@ const Login: React.FC = () => {
             initial="initial"
             animate="animate"
           >
-            Sign In or Create Account
+            Sign In
           </motion.h1>
 
           <motion.p 
@@ -205,7 +205,7 @@ const Login: React.FC = () => {
             initial="initial"
             animate="animate"
           >
-            Choose Google, GitHub, or Yahoo. New users are registered with that provider, their profile is saved, and they return to the page they requested.
+            Choose a provider to continue
           </motion.p>
 
           <div className="login-icon-wrapper">

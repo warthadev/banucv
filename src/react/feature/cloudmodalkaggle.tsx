@@ -159,7 +159,7 @@ export const CloudModalKaggle: React.FC<CloudModalKaggleProps> = ({
               }}>
                 <span>Need an API token? </span>
                 <a
-                  href="https://www.kaggle.com/settings"
+                  href="https://www.kaggle.com/settings/api"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ color: "var(--global-color-accent)", textDecoration: "none", fontWeight: 600, cursor: "pointer" }}

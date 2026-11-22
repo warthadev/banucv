@@ -94,8 +94,8 @@ Saat aplikasi dimulai, frontend mencoba endpoint `/health` pada backend, memilih
 | --- | --- | --- |
 | Telegram | `/telegram` | Session, metadata, streaming file, dan sinkronisasi Firestore |
 | Hugging Face | `/hf` | Repository, file/folder, dataset, model, dan space |
-| Universal downloader | `/universal` | Ekstraksi serta orkestrasi download media |
-| Torrent | `/torrent` | Metadata, session, progress, dan sinkronisasi torrent |
+| Universal downloader | `/universal` | Ekstraksi media dengan worker Kaggle otomatis; frontend memantau progress lewat backend |
+| Torrent | `/torrent` | Metadata torrent dan worker Kaggle otomatis untuk download/sinkronisasi |
 | Proxy | `/proxy` | Streaming media, direct download, dan signed URL |
 | Token API | `/token` | Validasi API key dan akses model Gemini |
 | Media extractor | `/extract` | Ekstraksi video/audio dengan yt-dlp dan fallback Cobalt |
@@ -158,14 +158,15 @@ npm install
 Buat file `.env` di root project. Jangan commit file ini atau memasukkan secret ke dalam bundle frontend.
 
 ```env
-# URL backend utama yang menyediakan /health dan /config
-VITE_API_URL=https://your-api.example.com
+# Opsional override URL backend utama; default aplikasi ini adalah backend Render
+VITE_API_URL=https://warthadev-backend.onrender.com
 
 # Opsional: fallback backend, dipisahkan dengan koma
 VITE_API_FALLBACKS=https://backup-api.example.com,https://another-api.example.com
 ```
 
 Aplikasi akan melakukan health check terhadap kandidat backend, mengambil konfigurasi Firebase/feature flag dari endpoint `/config`, lalu menyimpan base URL aktif selama sesi browser.
+Downloader menjalankan job lewat backend dan Kaggle API; tidak perlu membuka situs atau notebook Kaggle secara manual.
 
 ### Development
 

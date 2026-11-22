@@ -11,6 +11,8 @@ interface UniversalStartResponse {
   ok?: boolean;
   session_id?: string;
   detail?: string;
+  runner?: string;
+  runner_error?: string | null;
   reused?: boolean;
 }
 
@@ -47,7 +49,7 @@ export interface UniversalMeta {
 }
 
 export interface UniversalResolved {
-  source: 'server' | 'colab';
+  source: 'server' | 'worker';
   formats: UniversalFormat[];
   meta: UniversalMeta | null;
 }
@@ -340,10 +342,10 @@ export const useDlUniversal = ({
 
         if (resolvedFormats) {
           resolvingRef.current = false;
-          applyResolved({ source: 'colab', formats: resolvedFormats, meta: normalizeMeta(json.meta) });
+          applyResolved({ source: 'worker', formats: resolvedFormats, meta: normalizeMeta(json.meta) });
           if (stopOnResolve) {
             finishAll();
-            onReplaceProgress(`Formats extracted. Please select and click Run in Colab.`, 'success');
+            onReplaceProgress(`Formats extracted. Select a format in the app and click Run.`, 'success');
             return;
           }
         }
@@ -418,7 +420,7 @@ export const useDlUniversal = ({
   const resolveViaColab = useCallback(async (url: string) => {
     const st = saveTargetRef.current;
     if (!st || !st.token || !st.repoId) {
-      onLog('Server could not read this link. Select a Hugging Face account and repository to resolve via Colab.', 'critical');
+      onLog('Server could not read this link. Select a Hugging Face account and repository so the Kaggle worker can resolve it.', 'critical');
       return;
     }
 
@@ -433,6 +435,7 @@ export const useDlUniversal = ({
         url: url.trim(),
         session_id: liveSid || undefined,
         token: st.token, repo_id: st.repoId, repo_type: st.repoType, folder: st.folder,
+        runner: 'kaggle',
       };
 
       const res = await fetch(`${API_BASE}/universal/colab-start`, {
@@ -440,6 +443,7 @@ export const useDlUniversal = ({
       });
       const json: UniversalStartResponse = await res.json().catch(() => ({} as UniversalStartResponse));
       if (!res.ok || !json.ok || !json.session_id) throw new Error(json.detail || `HTTP ${res.status}`);
+      if (json.runner !== 'kaggle') throw new Error(json.runner_error || 'Kaggle worker was not started. Check the backend configuration.');
 
       colabSessionIdRef.current = json.session_id;
       writeStoredSessionId(json.session_id);
@@ -451,11 +455,11 @@ export const useDlUniversal = ({
       else onLog('[universal]\nCopy Session ID manually', 'system');
 
       if (json.reused) {
-        onLog('[universal]\nSession ID unchanged. If Colab is still running it will pick up this URL automatically.', 'success');
+        onLog('[universal]\nExisting Kaggle worker session reused for this URL.', 'success');
       } else {
-        onLog('[universal]\nPlease open Colab and paste the Session ID manually.', 'success');
+        onLog('[universal]\nKaggle worker started automatically.', 'success');
       }
-      onLog('[universal]\nWaiting for Colab to extract formats...', 'system');
+      onLog('[universal]\nWaiting for Kaggle to extract formats...', 'system');
 
       resolvingRef.current = true;
       pollProgress(json.session_id, url.slice(0, 60), true);
@@ -491,12 +495,12 @@ export const useDlUniversal = ({
           meta: normalizeMeta({ title: json.title, thumbnail: json.thumbnail, uploader: json.uploader, duration: json.duration }),
         });
         setStarting(false);
-        onLog(`[universal]\n${json.formats.length} formats found. Select and run in Colab.`, 'success');
+        onLog(`[universal]\n${json.formats.length} formats found. Select a format and click Run.`, 'success');
         return;
       }
-      onLog(`[universal]\nServer could not read this link${json.reason ? ` (${String(json.reason).slice(0, 80)})` : ''}. Falling back to Colab...`, 'system');
+      onLog(`[universal]\nServer could not read this link${json.reason ? ` (${String(json.reason).slice(0, 80)})` : ''}. Falling back to the Kaggle worker...`, 'system');
     } catch {
-      onLog('[universal]\nServer resolve unavailable. Falling back to Colab...', 'system');
+      onLog('[universal]\nServer resolve unavailable. Falling back to the Kaggle worker...', 'system');
     }
 
     setStarting(false);
@@ -523,11 +527,13 @@ export const useDlUniversal = ({
         body: JSON.stringify({
           url: url.trim(), session_id: liveSid || undefined,
           token: st.token, repo_id: st.repoId, repo_type: st.repoType, folder: st.folder,
+          runner: 'kaggle',
           formats, preselected: true,
         }),
       });
       const json: UniversalStartResponse = await res.json().catch(() => ({} as UniversalStartResponse));
       if (!res.ok || !json.ok || !json.session_id) throw new Error(json.detail || `HTTP ${res.status}`);
+      if (json.runner !== 'kaggle') throw new Error(json.runner_error || 'Kaggle worker was not started. Check the backend configuration.');
 
       colabSessionIdRef.current = json.session_id;
       writeStoredSessionId(json.session_id);
@@ -539,11 +545,11 @@ export const useDlUniversal = ({
       else onLog('[universal]\nCopy Session ID manually', 'system');
 
       if (json.reused) {
-        onLog('[universal]\nSession ID unchanged. If Colab is still running it will start this download automatically.', 'success');
+        onLog('[universal]\nExisting Kaggle worker session reused; the download will start automatically.', 'success');
       } else {
-        onLog('[universal]\nPlease open Colab and paste the Session ID manually.', 'success');
+        onLog('[universal]\nKaggle worker started automatically.', 'success');
       }
-      onLog('[universal]\nWaiting for Colab to start...', 'system');
+      onLog('[universal]\nWaiting for Kaggle to start...', 'system');
 
       resolvingRef.current = false;
       pollProgress(json.session_id, url.slice(0, 60), false);
@@ -565,7 +571,7 @@ export const useDlUniversal = ({
     if (onResetLogs) onResetLogs();
     setStarting(true);
     setColabBusy(true);
-    onLog(`[universal]\nSending selection to Colab...`, 'system');
+    onLog(`[universal]\nSending selection to the Kaggle worker...`, 'system');
 
     try {
       const API_BASE = getActiveBase();
@@ -581,7 +587,7 @@ export const useDlUniversal = ({
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       resolvingRef.current = false;
 
-      onLog('[universal]\nColab resumed. Downloading...', 'success');
+      onLog('[universal]\nKaggle worker resumed. Downloading...', 'success');
       pollProgress(colabSessionIdRef.current!, url.slice(0, 60), false);
 
     } catch (e: unknown) {

@@ -1,6 +1,6 @@
 // src/react/feature/dllog.tsx
 import React, { useState } from 'react';
-import { Copy, Check, RefreshCw, ExternalLink } from 'lucide-react';
+import { Copy, Check, RefreshCw } from 'lucide-react';
 
 type LogType = 'system' | 'critical' | 'success';
 
@@ -27,7 +27,6 @@ interface DlLogProps {
   colabSession?: ColabSessionView | null;
   onCopySession?: () => Promise<boolean>;
   onResetSession?: () => void;
-  colabUrl?: string;
 }
 
 const getLogColor = (type: LogType) => {
@@ -57,7 +56,6 @@ const DlLog: React.FC<DlLogProps> = ({
   colabSession,
   onCopySession,
   onResetSession,
-  colabUrl,
 }) => {
   const [sessionCopied, setSessionCopied] = useState(false);
 
@@ -71,7 +69,6 @@ const DlLog: React.FC<DlLogProps> = ({
   };
 
   const expired = !!colabSession && colabSession.secondsLeft <= 0;
-  const showColabLink = !!(colabSession && colabUrl);
 
   return (
     <div className="downloader-console-wrap">
@@ -151,19 +148,6 @@ const DlLog: React.FC<DlLogProps> = ({
             <div className="downloader-log-spacer" aria-hidden="true" />
           </React.Fragment>
         ))}
-        {showColabLink && (
-          <div className="downloader-colab-url-row" style={{ marginTop: 4 }}>
-            <a
-              className="downloader-colab-url-link"
-              href={colabUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <ExternalLink size={14} />
-              Open Colab
-            </a>
-          </div>
-        )}
       </div>
     </div>
   );

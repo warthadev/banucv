@@ -122,7 +122,7 @@ const Downloader: React.FC = () => {
     let taggedMsg = msg;
     if (trimmed.startsWith('[download]')) taggedMsg = `[download] ${nowTime()} ${trimmed.slice('[download]'.length)}`;
     else if (trimmed.startsWith('[upload]')) taggedMsg = `[upload] ${nowTime()} ${trimmed.slice('[upload]'.length)}`;
-    else if (trimmed.startsWith('[colab]')) taggedMsg = `[colab] ${nowTime()} ${trimmed.slice('[colab]'.length)}`;
+    else if (trimmed.startsWith('[kaggle]')) taggedMsg = `[kaggle] ${nowTime()} ${trimmed.slice('[kaggle]'.length)}`;
 
     setLogs(prev => {
       const next = [...prev];
@@ -258,12 +258,6 @@ const Downloader: React.FC = () => {
     return null;
   }, [detectedType, tColabSession, uColabSession]);
 
-  const activeColabUrl = useMemo(() => {
-    if (detectedType === 'torrent' && tColabSession) return 'https://colab.research.google.com/drive/1HPCV9DbL2QCaahkxALemIyN2fQwcEGHd#scrollTo=GluOt8MjYi2C';
-    if (detectedType === 'universal' && uColabSession) return 'https://colab.research.google.com/drive/1HPCV9DbL2QCaahkxALemIyN2fQwcEGHd#scrollTo=GluOt8MjYi2C';
-    return undefined;
-  }, [detectedType, tColabSession, uColabSession]);
-
   const handleCopyActiveSession = useCallback(async () => {
     if (activeColabSession?.sessionType === 'torrent') return await tCopySession();
     if (activeColabSession?.sessionType === 'universal') return await uCopySession();
@@ -280,8 +274,6 @@ const Downloader: React.FC = () => {
   const allUSelected = uFormats.length > 0 && selectedFormatIndexes.size === uFormats.length;
   const allTSelected = torrentFiles.length > 0 && tSelectedIndexes.size === torrentFiles.length;
   
-  const showColabBtn = (isBusy || uStarting || tColabBusy || uColabBusy) && activeColabSession && activeColabUrl;
-
   return (
     <div className="home-container global-page">
       <main className="home-hero">
@@ -299,21 +291,6 @@ const Downloader: React.FC = () => {
             <DlLog logs={logs} isMobile={isMobile} copyLabel={copyLabel} onCopy={copyToClipboard} terminalRef={terminalRef}
               colabSession={activeColabSession} onCopySession={handleCopyActiveSession} onResetSession={handleResetActiveSession} />
 
-            {showColabBtn && (
-              <div style={{ width: '100%', marginTop: '-10px' }}>
-                <a
-                  href={activeColabUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="downloader-btn-run"
-                  style={{ width: '100%', textDecoration: 'none', display: 'flex', padding: '12px', boxSizing: 'border-box' }}
-                >
-                  <ExternalLink size={18} />
-                  <span>Open Colab</span>
-                </a>
-              </div>
-            )}
-
             {detectedType === 'torrent' && hasTorrentPanel && (
               <div className="downloader-results-wrap global-section global-section--spaced">
                 <div className="downloader-result-card global-card">
@@ -326,7 +303,7 @@ const Downloader: React.FC = () => {
                           <span className="hidden-mobile">{allTSelected ? 'Deselect All' : 'Select All'}</span>
                         </button>
                         <button type="button" className="cloudview-selection-bar-btn" onClick={handleTorrentColabClick} disabled={isBusy || !colabEnabledForTorrent || tSelectedIndexes.size === 0}>
-                          <ExternalLink size={16} /> <span className="hidden-mobile">Run in Colab</span>
+                          <ExternalLink size={16} /> <span className="hidden-mobile">Run on Kaggle</span>
                         </button>
                       </div>
                     </div>
@@ -381,7 +358,7 @@ const Downloader: React.FC = () => {
                           <span className="hidden-mobile">{allUSelected ? 'Deselect All' : 'Select All'}</span>
                         </button>
                         <button type="button" className="cloudview-selection-bar-btn" onClick={handleUniversalDownload} disabled={isBusy || selectedFormatIndexes.size === 0}>
-                          {uColabSession?.sessionId ? <><ExternalLink size={16} /> <span className="hidden-mobile">Add to Colab</span></> : <><Play size={16} /> <span className="hidden-mobile">Run in Colab</span></>}
+                          {uColabSession?.sessionId ? <><ExternalLink size={16} /> <span className="hidden-mobile">Add to Kaggle</span></> : <><Play size={16} /> <span className="hidden-mobile">Run on Kaggle</span></>}
                         </button>
                       </div>
                     </div>

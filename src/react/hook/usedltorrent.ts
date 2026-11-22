@@ -26,10 +26,12 @@ interface TorrentStartResponse {
 }
 
 interface TorrentColabStartResponse {
-  ok: boolean;
+  ok?: boolean;
   session_id?: string;
   files_count?: number;
   appended?: boolean;
+  runner?: string;
+  runner_error?: string | null;
   detail?: string;
 }
 
@@ -116,7 +118,7 @@ const formatBytes = (bytes: number): string => {
 };
 
 const buildProgressEntry = (
-  tag: 'colab' | 'upload',
+  tag: 'kaggle' | 'upload',
   filePrefix: string,
   fileName: string,
   percent: number,
@@ -408,7 +410,7 @@ export const useDlTorrent = ({
           if (pollFailRef.current < POLL_MAX_FAILS) return;
           finishAll();
           const hint = res.status === 410 ? ' - session not found on server (restarted/expired), run Extract again' : '';
-          onReplaceProgress(`Colab progress polling failed for ${fallbackFileName} (HTTP ${res.status})${hint}`, 'critical');
+          onReplaceProgress(`Kaggle worker progress polling failed for ${fallbackFileName} (HTTP ${res.status})${hint}`, 'critical');
           return;
         }
         pollFailRef.current = 0;
@@ -464,7 +466,7 @@ export const useDlTorrent = ({
         if (phaseChanged) {
           lastPhaseRef.current = phase;
           if (phase === 'download') {
-            onLog(`[colab]${filePrefix ? ' ' + filePrefix : ''}\nDownload started\n${currentFileName}`, 'system');
+            onLog(`[kaggle]${filePrefix ? ' ' + filePrefix : ''}\nDownload started\n${currentFileName}`, 'system');
           } else if (phase === 'upload') {
             onLog(`[upload]${filePrefix ? ' ' + filePrefix : ''}\nUpload started\n${currentFileName}`, 'system');
           }
@@ -473,7 +475,7 @@ export const useDlTorrent = ({
         if (fileChanged) {
           if (lastFileIndexRef.current > 0 && localIdx > lastFileIndexRef.current) {
             onLog(
-              `[colab]\nFile ${lastFileIndexRef.current} done · ${completedFiles} ok, ${failedFiles} failed`,
+              `[kaggle]\nFile ${lastFileIndexRef.current} done · ${completedFiles} ok, ${failedFiles} failed`,
               failedFiles > 0 ? 'system' : 'success'
             );
             void refreshColabSession();
@@ -514,7 +516,7 @@ export const useDlTorrent = ({
           finishAll();
           const summary = submittedTotal > 1
             ? `Failed: ${completedFiles} saved, ${failedFiles} failed`
-            : `${currentFileName} failed on Colab: ${json.save_error || json.error || 'unknown error'}`;
+            : `${currentFileName} failed: ${json.save_error || json.error || 'unknown error'}`;
           if (onResetLogs) onResetLogs();
           onLog(summary, 'critical');
           return;
@@ -522,7 +524,7 @@ export const useDlTorrent = ({
 
         if (json.status === 'error' && !json.finished) {
           const errMsg = json.save_error || json.error || 'unknown error';
-          const tag = phase === 'upload' ? '[upload]' : '[colab]';
+          const tag = phase === 'upload' ? '[upload]' : '[kaggle]';
           onLog(`${tag}${filePrefix ? ' ' + filePrefix : ''}\nError: ${errMsg}\n${currentFileName}`, 'critical');
           return;
         }
@@ -560,7 +562,7 @@ export const useDlTorrent = ({
           }
 
           const entry = buildProgressEntry(
-            'colab',
+            'kaggle',
             filePrefix,
             currentFileName,
             percent,
@@ -578,7 +580,7 @@ export const useDlTorrent = ({
         if (pollFailRef.current < POLL_MAX_FAILS) return;
         finishAll();
         const errMsg = e instanceof Error ? e.message : 'unknown';
-        onLog(`${fallbackFileName} Colab progress error: ${errMsg}`, 'critical');
+        onLog(`${fallbackFileName} Kaggle progress error: ${errMsg}`, 'critical');
       }
     };
 
@@ -597,7 +599,7 @@ export const useDlTorrent = ({
     const prevInfoHash = prevMagnet ? extractMagnetInfoHash(prevMagnet) : '';
 
     if (colabSessionIdRef.current && newInfoHash && prevInfoHash && newInfoHash !== prevInfoHash) {
-      onLog('Different magnet detected. Clearing previous Colab session.', 'system');
+      onLog('Different magnet detected. Clearing previous worker session.', 'system');
       clearColabSession();
     }
 
@@ -652,9 +654,9 @@ export const useDlTorrent = ({
     if (isAppending) {
       onLog(`Appending ${files.length} file${files.length > 1 ? 's' : ''} to existing session.`, 'system');
     } else {
-      onLog(`Starting Colab session for ${files.length} file${files.length > 1 ? 's' : ''}`, 'system');
+      onLog(`Starting Kaggle worker for ${files.length} file${files.length > 1 ? 's' : ''}`, 'system');
     }
-    onLog(isAppending ? 'Appending to Colab session...' : 'Requesting Colab session...', 'system');
+    onLog(isAppending ? 'Appending files and resuming the Kaggle worker...' : 'Requesting a Kaggle worker...', 'system');
 
     const payloadFiles = files.map(f => ({ index: f.index, name: f.name, size: f.size }));
 
@@ -669,6 +671,7 @@ export const useDlTorrent = ({
         repo_type: st.repoType,
         folder: st.folder,
         files: payloadFiles,
+        runner: 'kaggle',
       };
       if (existingSid) body.session_id = existingSid;
 
@@ -683,6 +686,7 @@ export const useDlTorrent = ({
       if (!res.ok || !json.ok || !json.session_id) {
         throw new Error(json.detail || `HTTP ${res.status}`);
       }
+      if (json.runner !== 'kaggle') throw new Error(json.runner_error || 'Kaggle worker was not started. Check the backend configuration.');
 
       colabSessionIdRef.current = json.session_id;
       colabSessionMagnetRef.current = inputUrlRef.current;
@@ -692,27 +696,14 @@ export const useDlTorrent = ({
 
       onLog(`Session ID: ${json.session_id}`, 'system');
       onLog(`Files in session: ${json.files_count || files.length}`, 'system');
-
-      if (!isAppending) {
-        const copied = await copyToClipboard(json.session_id);
-        if (copied) {
-          onLog('Session ID copied to clipboard', 'success');
-        } else {
-          onLog('Auto-copy failed — copy Session ID manually from log above.', 'system');
-        }
-
-        onLog('Please open Colab and paste the Session ID manually.', 'success');
-      } else {
-        onLog('Colab session reused. Run the script in Colab again to pick up new files.', 'success');
-      }
-
-      onLog('Waiting for Colab to start...', 'system');
+      onLog(isAppending ? 'Kaggle worker resumed automatically.' : 'Kaggle worker started automatically.', 'success');
+      onLog('Waiting for Kaggle to process the selected files...', 'system');
 
       pollColabProgress(json.session_id, firstFile.name);
     } catch (e: unknown) {
       setColabBusy(false);
       const errMsg = e instanceof Error ? e.message : 'unknown error';
-      onLog(`Failed to start Colab session: ${errMsg}`, 'critical');
+      onLog(`Failed to start Kaggle worker: ${errMsg}`, 'critical');
     }
   }, [torrentInfoHash, colabBusy, onLog, pollColabProgress, refreshColabSession, onResetLogs, ensureLiveSession]);
 
@@ -724,7 +715,7 @@ export const useDlTorrent = ({
 
   const resetColabSession = useCallback(() => {
     clearColabSession();
-    onLog('Colab session cleared. Next Run in Colab will create a new session.', 'system');
+    onLog('Kaggle worker session cleared. The next run will start a new worker.', 'system');
   }, [clearColabSession, onLog]);
 
   const hasTorrentPanel = torrentInfoHash !== null && torrentFiles.length > 0;

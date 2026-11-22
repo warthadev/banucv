@@ -29,11 +29,7 @@ const cacheImageMotionPlugin = (): Plugin => ({
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const API_URL = env.VITE_API_URL?.trim()
-
-  if (!API_URL) {
-    throw new Error('VITE_API_URL must be set')
-  }
+  const API_URL = env.VITE_API_URL?.trim() || 'https://warthadev-backend.onrender.com'
 
   return {
     plugins: [react(), cacheImageMotionPlugin()],

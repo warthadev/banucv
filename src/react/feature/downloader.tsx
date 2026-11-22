@@ -497,7 +497,7 @@ const Downloader: React.FC = () => {
     return (
       <div className="home-container global-page">
         <main className="home-hero">
-          <div className="downloader-body-inner global-wrapper">
+          <div className="downloader-body-inner">
             <section className="setting-agent-card global-card global-section global-card--padded" aria-label="Kaggle credentials" aria-busy="true">
               <div className="setting-agent-loading global-inline-row global-inline-row--gap-8" role="status">
                 <LoaderCircle size={18} className="setting-agent-spinner" /> Loading Kaggle settings…
@@ -513,7 +513,7 @@ const Downloader: React.FC = () => {
     return (
       <div className="home-container global-page">
         <main className="home-hero">
-          <div className="downloader-body-inner global-wrapper">
+          <div className="downloader-body-inner">
             <section className="setting-agent-card global-card global-section global-card--padded" aria-label="Set up Kaggle for Downloader">
               <h1 className="downloader-title">Connect your Kaggle account</h1>
               <p className="setting-agent-note">Save your Kaggle username and API token to continue to the Downloader. These credentials apply only to your signed-in account.</p>
@@ -530,7 +530,7 @@ const Downloader: React.FC = () => {
   return (
     <div className="home-container global-page">
       <main className="home-hero">
-        <div className="downloader-body-inner global-wrapper">
+        <div className="downloader-body-inner">
           <details className="global-card global-card--padded global-section" style={{ marginBottom: 12 }}>
             <summary className="setting-agent-label" style={{ cursor: 'pointer' }}>Manage Kaggle credentials · {kaggleCredentials.username}</summary>
             <div style={{ marginTop: 12 }}>{kaggleCredentialForm}</div>

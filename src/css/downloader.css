@@ -4,7 +4,7 @@
   grid-template-columns: auto 1fr auto;
   gap: 10px;
   width: 100%;
-  max-width: 1100px;
+  max-width: var(--global-layout-content-width);
   margin-bottom: 20px;
   align-items: stretch;
 }
@@ -426,9 +426,8 @@
   gap: 20px;
   align-items: stretch;
   width: 100%;
-  max-width: 1100px;
+  max-width: var(--global-layout-content-width);
 }
-
 .downloader-body.mobile {
   flex-direction: column;
 }
@@ -1050,5 +1049,5 @@
   gap: 20px;
   align-items: stretch;
   width: 100%;
-  max-width: 1100px;
+  max-width: var(--global-layout-content-width);
 }

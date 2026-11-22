@@ -1,6 +1,7 @@
 // src/react/hook/usedltorrent.ts
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getActiveBase } from '@config/api';
+import { getKaggleAuthHeaders } from '@config/kagglecredentials';
 
 const SESSION_STORAGE_KEY = 'wartha_kaggle_session_id';
 const SESSION_MAGNET_KEY = 'wartha_kaggle_session_magnet';
@@ -288,7 +289,9 @@ export const useDlTorrent = ({
   const fetchRemoteSessionInfo = useCallback(async (sid: string): Promise<{ info: KaggleSessionInfo; fileIndexes: number[] } | null> => {
     const API_BASE = getActiveBase();
     try {
-      const res = await fetch(`${API_BASE}/torrent/kaggle-session?session_id=${encodeURIComponent(sid)}`);
+      const res = await fetch(`${API_BASE}/torrent/kaggle-session?session_id=${encodeURIComponent(sid)}`, {
+        headers: await getKaggleAuthHeaders(),
+      });
       if (!res.ok) return null;
       const json: KaggleSessionResponse = await res.json();
       if (!json.ok || !json.session_id || typeof json.expires_at !== 'number') return null;
@@ -401,7 +404,9 @@ export const useDlTorrent = ({
       const API_BASE = getActiveBase();
 
       try {
-        const res = await fetch(`${API_BASE}/torrent/kaggle-session?session_id=${sessionId}`);
+        const res = await fetch(`${API_BASE}/torrent/kaggle-session?session_id=${sessionId}`, {
+          headers: await getKaggleAuthHeaders(),
+        });
         const json: TorrentProgressResponse = await res
           .json()
           .catch(() => ({} as TorrentProgressResponse));
@@ -677,7 +682,7 @@ export const useDlTorrent = ({
 
       const res = await fetch(`${API_BASE}/torrent/kaggle-start`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...(await getKaggleAuthHeaders()), 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       const json: TorrentKaggleStartResponse = await res

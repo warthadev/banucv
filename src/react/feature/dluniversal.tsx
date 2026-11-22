@@ -1,5 +1,6 @@
 // src/react/hook/usedluniversal.ts
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { getKaggleAuthHeaders } from '@config/kagglecredentials';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 const SESSION_STORAGE_KEY = 'wartha_universal_session_id';
@@ -175,7 +176,9 @@ export const useDlUniversal = ({
 
   const fetchRemoteSessionInfo = useCallback(async (sid: string): Promise<UniversalKaggleSessionInfo | null> => {
     try {
-      const res = await fetch(`${API_BASE}/universal/kaggle-session?session_id=${encodeURIComponent(sid)}`);
+      const res = await fetch(`${API_BASE}/universal/kaggle-session?session_id=${encodeURIComponent(sid)}`, {
+        headers: await getKaggleAuthHeaders(),
+      });
       if (!res.ok) return null;
       const json: UniversalSessionResponse = await res.json();
       if (!json.ok || !json.session_id || typeof json.expires_at !== 'number') return null;
@@ -236,7 +239,9 @@ export const useDlUniversal = ({
       if (doneHandledRef.current) return;
 
       try {
-        const res = await fetch(`${API_BASE}/universal/kaggle-session?session_id=${encodeURIComponent(sessionId)}`);
+        const res = await fetch(`${API_BASE}/universal/kaggle-session?session_id=${encodeURIComponent(sessionId)}`, {
+          headers: await getKaggleAuthHeaders(),
+        });
         const json: UniversalProgressResponse = await res.json().catch(() => ({} as UniversalProgressResponse));
         if (!res.ok || !json.ok) {
           finishAll();
@@ -352,7 +357,7 @@ export const useDlUniversal = ({
 
       const res = await fetch(`${API_BASE}/universal/kaggle-start`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...(await getKaggleAuthHeaders()), 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       const json = await res.json().catch(() => ({})) as { ok?: boolean; session_id?: string; detail?: string };

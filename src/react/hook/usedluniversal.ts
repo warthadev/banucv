@@ -1,6 +1,7 @@
 // src/react/hook/usedluniversal.ts
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getActiveBase } from '@config/api';
+import { getKaggleAuthHeaders } from '@config/kagglecredentials';
 
 const SESSION_STORAGE_KEY = 'wartha_universal_session_id';
 const POLL_MAX_FAILS = 15;
@@ -238,7 +239,9 @@ export const useDlUniversal = ({
   const fetchRemoteSessionInfo = useCallback(async (sid: string): Promise<UniversalKaggleSessionInfo | null> => {
     const API_BASE = getActiveBase();
     try {
-      const res = await fetch(`${API_BASE}/universal/kaggle-session?session_id=${encodeURIComponent(sid)}`);
+      const res = await fetch(`${API_BASE}/universal/kaggle-session?session_id=${encodeURIComponent(sid)}`, {
+        headers: await getKaggleAuthHeaders(),
+      });
       if (!res.ok) return null;
       const json: UniversalSessionResponse = await res.json();
       if (!json.ok || !json.session_id || typeof json.expires_at !== 'number') return null;
@@ -315,7 +318,9 @@ export const useDlUniversal = ({
       const API_BASE = getActiveBase();
 
       try {
-        const res = await fetch(`${API_BASE}/universal/kaggle-session?session_id=${encodeURIComponent(sessionId)}`);
+        const res = await fetch(`${API_BASE}/universal/kaggle-session?session_id=${encodeURIComponent(sessionId)}`, {
+          headers: await getKaggleAuthHeaders(),
+        });
         const json: UniversalProgressResponse = await res.json().catch(() => ({} as UniversalProgressResponse));
         if (!res.ok || !json.ok) {
           pollFailRef.current += 1;
@@ -439,7 +444,7 @@ export const useDlUniversal = ({
       };
 
       const res = await fetch(`${API_BASE}/universal/kaggle-start`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+        method: 'POST', headers: { ...(await getKaggleAuthHeaders()), 'Content-Type': 'application/json' }, body: JSON.stringify(body),
       });
       const json: UniversalStartResponse = await res.json().catch(() => ({} as UniversalStartResponse));
       if (!res.ok || !json.ok || !json.session_id) throw new Error(json.detail || `HTTP ${res.status}`);
@@ -523,7 +528,7 @@ export const useDlUniversal = ({
       const API_BASE = getActiveBase();
       const liveSid = await ensureLiveSession();
       const res = await fetch(`${API_BASE}/universal/kaggle-start`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { ...(await getKaggleAuthHeaders()), 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: url.trim(), session_id: liveSid || undefined,
           token: st.token, repo_id: st.repoId, repo_type: st.repoType, folder: st.folder,
@@ -576,7 +581,7 @@ export const useDlUniversal = ({
     try {
       const API_BASE = getActiveBase();
       const r = await fetch(`${API_BASE}/universal/kaggle-update?session_id=${kaggleSessionIdRef.current}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { ...(await getKaggleAuthHeaders()), 'Content-Type': 'application/json' },
         body: JSON.stringify({
           status: 'download', formats,
           finished: false, phase: 'resolve', percent: 0,

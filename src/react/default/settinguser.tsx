@@ -1,5 +1,5 @@
 // src/react/default/settinguser.tsx
-import React, { useEffect, useLayoutEffect, useState, useCallback } from "react";
+import React, { useEffect, useLayoutEffect, useState, useCallback, useRef } from "react";
 import { auth, db } from "@config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
@@ -8,13 +8,13 @@ import {
   AlertCircle, CheckCircle, LoaderCircle, Save,
   Mail, Calendar, MapPin, Smartphone, Globe, Clock, 
   Activity, Monitor, Phone, Cpu, Navigation, Wifi,
-  Cloud, Copy, Eye, EyeOff, Check
+  Cloud, Copy, Eye, EyeOff, Check, KeyRound, ShieldCheck
 } from "lucide-react";
 import { GithubIcon } from "@/react/control/icon";
 import { formatTimestamp } from "@config/userstorage";
+import { deleteKaggleCredentials, loadKaggleCredentials, saveKaggleCredentials, type KaggleCredentials } from "@config/kagglecredentials";
 import type { SettingsSaveResult } from "./settingssave";
 import SettingAgent from "./settingagent";
-import SettingKaggle from "./settingkaggle";
 
 interface UserProfile {
   uid: string;
@@ -88,6 +88,16 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
   const [cloudSaving, setCloudSaving] = useState(false);
   const [saveResult, setSaveResult] = useState<SettingsSaveResult | null>(null);
   const [cloudSaveResult, setCloudSaveResult] = useState<SettingsSaveResult | null>(null);
+
+  const [kaggleCredentials, setKaggleCredentials] = useState<KaggleCredentials | null>(null);
+  const [kaggleUsername, setKaggleUsername] = useState("");
+  const [kaggleApiToken, setKaggleApiToken] = useState("");
+  const [showKaggleToken, setShowKaggleToken] = useState(false);
+  const [kaggleLoading, setKaggleLoading] = useState(true);
+  const [kaggleSaving, setKaggleSaving] = useState(false);
+  const [kaggleError, setKaggleError] = useState<string | null>(null);
+  const [kaggleMessage, setKaggleMessage] = useState<string | null>(null);
+  const kaggleRequestId = useRef(0);
   
   const [isMobileScreen, setIsMobileScreen] = useState(window.innerWidth <= 768);
 
@@ -103,6 +113,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      kaggleRequestId.current += 1;
       setLoading(true);
       setCurrentUser(user);
       setSaveResult(null);
@@ -110,10 +121,44 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
       setShowGithubToken(false);
       setShowCloudTokens({});
       setCopyFeedback({});
+      setKaggleCredentials(null);
+      setKaggleUsername("");
+      setKaggleApiToken("");
+      setShowKaggleToken(false);
+      setKaggleLoading(Boolean(user));
+      setKaggleError(null);
+      setKaggleMessage(null);
       setAuthReady(true);
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!authReady) return;
+
+    const requestId = ++kaggleRequestId.current;
+    if (!currentUser) return;
+
+    let cancelled = false;
+    void loadKaggleCredentials().then((saved) => {
+      if (cancelled || requestId !== kaggleRequestId.current) return;
+      setKaggleCredentials(saved);
+      setKaggleUsername(saved?.username || "");
+      setKaggleApiToken(saved?.apiToken || "");
+      setShowKaggleToken(false);
+    }).catch((loadError: unknown) => {
+      if (cancelled || requestId !== kaggleRequestId.current) return;
+      setKaggleCredentials(null);
+      setKaggleError(loadError instanceof Error ? loadError.message : "Unable to load this account’s Kaggle settings.");
+    }).finally(() => {
+      if (!cancelled && requestId === kaggleRequestId.current) setKaggleLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+      kaggleRequestId.current += 1;
+    };
+  }, [authReady, currentUser]);
 
   const copyToken = useCallback(async (tokenId: string, token: string) => {
     if (!token) return;
@@ -331,6 +376,64 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
       };
     } finally {
       setCloudSaving(false);
+    }
+  };
+
+  const handleSaveKaggle = async () => {
+    setKaggleMessage(null);
+    setKaggleError(null);
+    if (!authReady || kaggleLoading) {
+      setKaggleError("Kaggle settings are still loading.");
+      return;
+    }
+    if (!currentUser) {
+      setKaggleError("Sign in to save Kaggle credentials for this account.");
+      return;
+    }
+
+    const normalizedUsername = kaggleUsername.trim();
+    const normalizedToken = kaggleApiToken.trim();
+    if (!normalizedUsername && !normalizedToken) {
+      if (!kaggleCredentials) {
+        setKaggleMessage("No changes to save.");
+        return;
+      }
+      setKaggleSaving(true);
+      try {
+        await deleteKaggleCredentials();
+        setKaggleCredentials(null);
+        setKaggleUsername("");
+        setKaggleApiToken("");
+        setShowKaggleToken(false);
+        setKaggleMessage("Kaggle credentials removed.");
+      } catch (deleteError: unknown) {
+        setKaggleError(deleteError instanceof Error ? deleteError.message : "Could not remove this account’s Kaggle credentials.");
+      } finally {
+        setKaggleSaving(false);
+      }
+      return;
+    }
+    if (!normalizedUsername || !normalizedToken) {
+      setKaggleError("Enter both fields, or clear both to remove Kaggle credentials.");
+      return;
+    }
+    if (kaggleCredentials && normalizedUsername === kaggleCredentials.username.trim() && normalizedToken === kaggleCredentials.apiToken.trim()) {
+      setKaggleMessage("No changes to save.");
+      return;
+    }
+
+    setKaggleSaving(true);
+    try {
+      const saved = await saveKaggleCredentials(normalizedUsername, normalizedToken);
+      setKaggleCredentials(saved);
+      setKaggleUsername(saved.username);
+      setKaggleApiToken(saved.apiToken);
+      setShowKaggleToken(false);
+      setKaggleMessage(kaggleCredentials ? "Kaggle credentials updated for this account." : "Kaggle credentials saved for this account.");
+    } catch (saveError: unknown) {
+      setKaggleError(saveError instanceof Error ? saveError.message : "Could not save this account’s Kaggle credentials.");
+    } finally {
+      setKaggleSaving(false);
     }
   };
 
@@ -580,7 +683,81 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
     </section>
 
     <SettingAgent />
-    <SettingKaggle />
+
+    <section className="stack-item settings-service-section global-card global-section global-card--padded" aria-label="Kaggle">
+      <div className="su-profile-card setting-agent-safe-status global-inline-row global-inline-row--gap-8">
+        {kaggleCredentials ? <ShieldCheck size={17} aria-hidden="true" /> : <KeyRound size={17} aria-hidden="true" />}
+        <span>
+          {kaggleLoading || !authReady
+            ? "Loading Kaggle settings…"
+            : kaggleCredentials
+              ? `Kaggle connected as ${kaggleCredentials.username}`
+              : "Kaggle credentials are not configured."}
+          <small>Credentials apply only to this signed-in account and are stored by the Downloader backend.</small>
+        </span>
+      </div>
+
+      {!currentUser && authReady ? (
+        <p className="setting-agent-note" role="status">Sign in to manage this account’s Kaggle settings.</p>
+      ) : (
+        <>
+          <div className="su-input-group">
+            <label className="su-input-label" htmlFor="setting-kaggle-username">KAGGLE USERNAME</label>
+            <input
+              id="setting-kaggle-username"
+              className="setting-agent-input setting-plain-input"
+              type="text"
+              name="kaggle-username"
+              value={kaggleUsername}
+              onChange={(event) => { setKaggleUsername(event.target.value); setKaggleMessage(null); setKaggleError(null); }}
+              placeholder="Your Kaggle username"
+              autoComplete="off"
+              spellCheck={false}
+              autoCapitalize="none"
+              disabled={kaggleSaving || kaggleLoading || !authReady}
+            />
+          </div>
+
+          <div className="su-input-group">
+            <label className="su-input-label" htmlFor="setting-kaggle-token">KAGGLE API TOKEN</label>
+            <div className="su-list-item setting-agent-key-control">
+              <input
+                id="setting-kaggle-token"
+                className="setting-agent-input setting-agent-key-input"
+                type={showKaggleToken ? "text" : "password"}
+                name="kaggle-api-token"
+                value={kaggleApiToken}
+                onChange={(event) => { setKaggleApiToken(event.target.value); setKaggleMessage(null); setKaggleError(null); }}
+                placeholder={kaggleCredentials ? "Enter a token to replace the saved token" : "Paste your Kaggle API token"}
+                autoComplete="off"
+                spellCheck={false}
+                autoCapitalize="none"
+                disabled={kaggleSaving || kaggleLoading || !authReady}
+              />
+              <button
+                className="setting-agent-reveal-btn global-icon-button"
+                type="button"
+                onClick={() => setShowKaggleToken((visible) => !visible)}
+                aria-label={showKaggleToken ? "Hide Kaggle API token" : "Reveal Kaggle API token"}
+                aria-pressed={showKaggleToken}
+                disabled={!kaggleApiToken || kaggleSaving}
+              >
+                {showKaggleToken ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+              </button>
+            </div>
+          </div>
+
+          {kaggleError && <p className="setting-agent-error global-inline-row global-inline-row--gap-8" role="alert"><AlertCircle size={15} />{kaggleError}</p>}
+          <div className="settings-section-actions">
+            <button className="setting-agent-primary settings-section-save-btn" type="button" onClick={() => void handleSaveKaggle()} disabled={kaggleSaving || kaggleLoading || !authReady || !currentUser}>
+              {kaggleSaving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Save size={16} aria-hidden="true" />}
+              {kaggleSaving ? "Saving…" : "Save"}
+            </button>
+            {kaggleMessage && <p className="settings-save-feedback" role="status"><CheckCircle size={15} aria-hidden="true" /><span>{kaggleMessage}</span></p>}
+          </div>
+        </>
+      )}
+    </section>
 
     <section className="stack-item settings-service-section global-card global-section global-card--padded" aria-label="Cloud Manager">
       <div className="su-profile-card setting-agent-safe-status global-inline-row global-inline-row--gap-8">

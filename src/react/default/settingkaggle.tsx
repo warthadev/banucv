@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
-import { AlertCircle, CheckCircle, Eye, EyeOff, KeyRound, LoaderCircle, Save, ShieldCheck, Trash2 } from "lucide-react";
+import { AlertCircle, CheckCircle, Eye, EyeOff, KeyRound, LoaderCircle, Save, ShieldCheck } from "lucide-react";
 import { getAuth } from "@config/firebase";
 import { deleteKaggleCredentials, loadKaggleCredentials, saveKaggleCredentials, type KaggleCredentials } from "@config/kagglecredentials";
 
@@ -77,39 +77,46 @@ const SettingKaggle: React.FC = () => {
       setError("Sign in to save Kaggle credentials for this account.");
       return;
     }
-    if (!username.trim() || !apiToken.trim()) {
-      setError("Enter both the Kaggle username and API token.");
+    const normalizedUsername = username.trim();
+    const normalizedToken = apiToken.trim();
+    if (!normalizedUsername && !normalizedToken) {
+      if (!credentials) {
+        setMessage("No changes to save.");
+        return;
+      }
+      setSaving(true);
+      try {
+        await deleteKaggleCredentials();
+        setCredentials(null);
+        setUsername("");
+        setApiToken("");
+        setShowToken(false);
+        setMessage("Kaggle credentials removed.");
+      } catch (deleteError) {
+        setError(deleteError instanceof Error ? deleteError.message : "Could not remove this account’s Kaggle credentials.");
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+    if (!normalizedUsername || !normalizedToken) {
+      setError("Enter both fields, or clear both to remove Kaggle credentials.");
+      return;
+    }
+    if (credentials && normalizedUsername === credentials.username.trim() && normalizedToken === credentials.apiToken.trim()) {
+      setMessage("No changes to save.");
       return;
     }
     setSaving(true);
     try {
-      const saved = await saveKaggleCredentials(username, apiToken);
+      const saved = await saveKaggleCredentials(normalizedUsername, normalizedToken);
       setCredentials(saved);
       setUsername(saved.username);
       setApiToken(saved.apiToken);
       setShowToken(false);
-      setMessage("Kaggle credentials saved for this account.");
+      setMessage(credentials ? "Kaggle credentials updated for this account." : "Kaggle credentials saved for this account.");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Could not save this account’s Kaggle credentials.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!currentUser || saving) return;
-    setSaving(true);
-    setError(null);
-    setMessage(null);
-    try {
-      await deleteKaggleCredentials();
-      setCredentials(null);
-      setUsername("");
-      setApiToken("");
-      setShowToken(false);
-      setMessage("Kaggle credentials removed.");
-    } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Could not remove this account’s Kaggle credentials.");
     } finally {
       setSaving(false);
     }
@@ -141,7 +148,7 @@ const SettingKaggle: React.FC = () => {
               type="text"
               name="kaggle-username"
               value={username}
-              onChange={(event) => { setUsername(event.target.value); setMessage(null); }}
+              onChange={(event) => { setUsername(event.target.value); setMessage(null); setError(null); }}
               placeholder="Your Kaggle username"
               autoComplete="off"
               spellCheck={false}
@@ -159,7 +166,7 @@ const SettingKaggle: React.FC = () => {
                 type={showToken ? "text" : "password"}
                 name="kaggle-api-token"
                 value={apiToken}
-                onChange={(event) => { setApiToken(event.target.value); setMessage(null); }}
+                onChange={(event) => { setApiToken(event.target.value); setMessage(null); setError(null); }}
                 placeholder={credentials ? "Enter a token to replace the saved token" : "Paste your Kaggle API token"}
                 autoComplete="off"
                 spellCheck={false}
@@ -183,14 +190,8 @@ const SettingKaggle: React.FC = () => {
           <div className="settings-section-actions">
             <button className="setting-agent-primary settings-section-save-btn" type="button" onClick={() => void handleSave()} disabled={saving || loading || !authReady || !currentUser}>
               {saving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Save size={16} aria-hidden="true" />}
-              {saving ? "Saving…" : credentials ? "Update credentials" : "Save"}
+              {saving ? "Saving…" : "Save"}
             </button>
-            {credentials && (
-              <button className="setting-agent-danger" type="button" onClick={() => void handleDelete()} disabled={saving || loading}>
-                {saving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Trash2 size={16} aria-hidden="true" />}
-                Remove
-              </button>
-            )}
             {message && <p className="settings-save-feedback" role="status"><CheckCircle size={15} aria-hidden="true" /><span>{message}</span></p>}
           </div>
         </>

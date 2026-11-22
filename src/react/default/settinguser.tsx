@@ -84,7 +84,8 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
   
   const [authReady, setAuthReady] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [githubSaving, setGithubSaving] = useState(false);
+  const [cloudSaving, setCloudSaving] = useState(false);
   const [saveResult, setSaveResult] = useState<SettingsSaveResult | null>(null);
   const [cloudSaveResult, setCloudSaveResult] = useState<SettingsSaveResult | null>(null);
   
@@ -272,7 +273,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
     if (error || !profile) {
       return { sectionId, sectionName, status: "error", message: error || "Profile settings are unavailable." };
     }
-    if (saving) {
+    if (cloudSaving) {
       return { sectionId, sectionName, status: "error", message: "Settings are already being saved." };
     }
 
@@ -311,7 +312,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
       return { sectionId, sectionName, status: "unchanged", message: "No changes to save." };
     }
 
-    setSaving(true);
+    setCloudSaving(true);
     try {
       const userRef = doc(db, "users", currentUser.uid);
       await setDoc(userRef, updateData, { merge: true });
@@ -329,17 +330,17 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
         message: err instanceof Error ? err.message : "Failed to save Cloud Manager settings.",
       };
     } finally {
-      setSaving(false);
+      setCloudSaving(false);
     }
   };
 
   const handleSave = async () => {
     setSaveResult(null);
-    setSaving(true);
+    setGithubSaving(true);
     try {
       setSaveResult(await saveGithubSettings());
     } finally {
-      setSaving(false);
+      setGithubSaving(false);
     }
   };
 
@@ -557,10 +558,10 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
           className="setting-agent-primary settings-section-save-btn"
           type="button"
           onClick={() => void handleSave()}
-          disabled={saving || loading || !currentUser}
+          disabled={githubSaving || loading || !currentUser}
         >
-          {saving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Save size={16} aria-hidden="true" />}
-          {saving ? "Saving…" : "Save"}
+          {githubSaving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Save size={16} aria-hidden="true" />}
+          {githubSaving ? "Saving…" : "Save"}
         </button>
         {saveResult && (
           <p
@@ -591,6 +592,7 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
               ? "Cloud Manager entries are saved in this profile."
               : "No Cloud Manager entries are saved in this profile."}
           <small>Telegram: {telegramSessions.length} · Hugging Face: {hfUsernames.length}</small>
+          <small>Clear a Telegram session or both Hugging Face fields, then save to remove an account.</small>
         </span>
       </div>
 
@@ -762,10 +764,10 @@ const SettingUser: React.FC<SettingUserProps> = ({ onLoadingChange }) => {
           className="setting-agent-primary settings-section-save-btn"
           type="button"
           onClick={() => void handleSaveCloudManager()}
-          disabled={saving || loading || !currentUser || Boolean(error)}
+          disabled={cloudSaving || loading || !currentUser || Boolean(error)}
         >
-          {saving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Save size={16} aria-hidden="true" />}
-          {saving ? "Saving…" : "Save"}
+          {cloudSaving ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Save size={16} aria-hidden="true" />}
+          {cloudSaving ? "Saving…" : "Save"}
         </button>
         {cloudSaveResult && (
           <p

@@ -289,7 +289,6 @@ const techItems: TechItem[] = [
 ];
 
 const thanksItems: string[] = [
-  "Google Colab",
   "DeepSeek",
   "Claude",
   "9router",

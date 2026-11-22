@@ -7,19 +7,19 @@ import type { TorrentFile } from '@hook/usedltorrent';
 interface DlTorrentProps {
   infoHash: string | null;
   files: TorrentFile[];
-  onColab?: (files: TorrentFile[]) => void;
-  colabEnabled?: boolean;
-  colabSessionId?: string | null;
-  colabBusy?: boolean;
+  onKaggle?: (files: TorrentFile[]) => void;
+  kaggleEnabled?: boolean;
+  kaggleSessionId?: string | null;
+  kaggleBusy?: boolean;
 }
 
 const DlTorrent: React.FC<DlTorrentProps> = ({
   infoHash,
   files,
-  onColab,
-  colabEnabled = false,
-  colabSessionId = null,
-  colabBusy = false,
+  onKaggle,
+  kaggleEnabled = false,
+  kaggleSessionId = null,
+  kaggleBusy = false,
 }) => {
   const [selectedIndexes, setSelectedIndexes] = useState<Set<number>>(new Set());
 
@@ -29,13 +29,13 @@ const DlTorrent: React.FC<DlTorrentProps> = ({
     );
   }, [files]);
 
-  const isBusy = colabBusy;
+  const isBusy = kaggleBusy;
   const selectedCount = selectedIndexes.size;
 
-  const hasActiveSession = !!colabSessionId;
-  const colabTitle = hasActiveSession
-    ? 'Append to existing Colab session'
-    : 'Run download in Google Colab (offloads processing from your server)';
+  const hasActiveSession = !!kaggleSessionId;
+  const kaggleTitle = hasActiveSession
+    ? 'Append to existing Kaggle session'
+    : 'Run download in Kaggle (offloads processing from your server)';
 
   const allSelected = sortedFiles.length > 0 && selectedIndexes.size === sortedFiles.length;
 
@@ -62,14 +62,14 @@ const DlTorrent: React.FC<DlTorrentProps> = ({
     setSelectedIndexes(new Set());
   }, [isBusy]);
 
-  const handleColab = useCallback(() => {
+  const handleKaggle = useCallback(() => {
     if (isBusy) return;
-    if (!onColab || selectedIndexes.size === 0) return;
+    if (!onKaggle || selectedIndexes.size === 0) return;
     const selected = sortedFiles.filter(f => selectedIndexes.has(f.index));
     if (selected.length === 0) return;
     setSelectedIndexes(new Set());
-    onColab(selected);
-  }, [isBusy, onColab, selectedIndexes, sortedFiles]);
+    onKaggle(selected);
+  }, [isBusy, onKaggle, selectedIndexes, sortedFiles]);
 
   return (
     <div className="downloader-result-card global-card">
@@ -89,25 +89,25 @@ const DlTorrent: React.FC<DlTorrentProps> = ({
               {allSelected ? <CheckCircle2 size={16} /> : <Circle size={16} />}
               <span>{allSelected ? 'Deselect All' : 'Select All'}</span>
             </button>
-            {colabEnabled && onColab && (
+            {kaggleEnabled && onKaggle && (
               <button
                 type="button"
                 className="cloudview-selection-bar-btn"
-                onClick={handleColab}
+                onClick={handleKaggle}
                 disabled={isBusy || selectedCount === 0}
-                title={colabTitle}
+                title={kaggleTitle}
               >
-                {colabBusy ? (
+                {kaggleBusy ? (
                   <Loader2 size={16} className="spin" />
                 ) : (
                   <ExternalLink size={16} />
                 )}
                 <span>
-                  {colabBusy
+                  {kaggleBusy
                     ? 'Processing...'
                     : hasActiveSession
-                      ? 'Add to Colab'
-                      : 'Run in Colab'}
+                      ? 'Add to Kaggle'
+                      : 'Run on Kaggle'}
                 </span>
               </button>
             )}

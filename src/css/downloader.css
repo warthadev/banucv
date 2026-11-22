@@ -470,7 +470,7 @@
   min-width: 0;
 }
 
-.downloader-colab-session-stack {
+.downloader-kaggle-session-stack {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -481,7 +481,7 @@
   line-height: 1.3;
 }
 
-.downloader-colab-session-timer {
+.downloader-kaggle-session-timer {
   font-variant-numeric: tabular-nums;
   color: var(--global-color-text);
   font-size: var(--global-font-size-14px);
@@ -489,11 +489,11 @@
   font-weight: 600;
 }
 
-.downloader-colab-session-timer.is-expired {
+.downloader-kaggle-session-timer.is-expired {
   color: #ef4444;
 }
 
-.downloader-colab-session-id {
+.downloader-kaggle-session-id {
   color: var(--global-color-text-secondary);
   font-size: var(--global-font-size-12px);
   letter-spacing: 0.2px;
@@ -685,7 +685,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.downloader-format-btn--colab {
+.downloader-format-btn--kaggle {
   cursor: default;
 }
 
@@ -750,12 +750,12 @@
   cursor: not-allowed;
 }
 
-.downloader-format-action--colab {
+.downloader-format-action--kaggle {
   background: rgba(255, 255, 255, 0.18);
   border-color: rgba(255, 255, 255, 0.45);
 }
 
-.downloader-format-action--colab:hover:not(:disabled) {
+.downloader-format-action--kaggle:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.3);
   border-color: rgba(255, 255, 255, 0.7);
 }
@@ -906,7 +906,7 @@
   color: var(--global-color-background);
 }
 
-.downloader-torrent-plain-colab-btn {
+.downloader-torrent-plain-kaggle-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -922,13 +922,13 @@
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-.downloader-torrent-plain-colab-btn:hover:not(:disabled) {
+.downloader-torrent-plain-kaggle-btn:hover:not(:disabled) {
   background: var(--global-color-accent-alpha);
   color: var(--global-color-accent);
   border-color: var(--global-color-accent);
 }
 
-.downloader-torrent-plain-colab-btn:disabled {
+.downloader-torrent-plain-kaggle-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -940,14 +940,14 @@
   border-top: none;
 }
 
-.downloader-colab-url-row {
+.downloader-kaggle-url-row {
   display: flex;
   align-items: center;
   justify-content: flex-start;
   padding: 4px 0 8px 0;
 }
 
-.downloader-colab-url-link {
+.downloader-kaggle-url-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -962,7 +962,7 @@
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.downloader-colab-url-link:hover {
+.downloader-kaggle-url-link:hover {
   background: var(--global-color-accent-alpha);
   border-color: var(--global-color-accent);
 }
@@ -972,7 +972,7 @@
     gap: 6px;
   }
 
-  .downloader-colab-session-timer {
+  .downloader-kaggle-session-timer {
     font-size: var(--global-font-size-12px);
   }
 

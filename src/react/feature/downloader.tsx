@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ExternalLink, Check, Play, CheckCircle2, Circle } from 'lucide-react';
 import DlLog from './dllog';
-import type { LogItem, ColabSessionView } from './dllog';
+import type { LogItem, KaggleRemoteSessionView } from './dllog';
 import DlSave from './dlsave';
 import type { DlSaveSelection } from './dlsave';
 import { isMagnetLink, useDlTorrent } from '@hook/usedltorrent';
@@ -146,14 +146,14 @@ const Downloader: React.FC = () => {
 
   const {
     torrentInfoHash, torrentFiles, torrentStarting, hasTorrentPanel,
-    colabSession: tColabSession, colabBusy: tColabBusy,
-    handleTorrentStart, handleTorrentColabStart, copyColabSession: tCopySession, resetColabSession: tResetSession,
+    kaggleSession: tKaggleSession, kaggleBusy: tKaggleBusy,
+    handleTorrentStart, handleTorrentRemoteStart, copyRemoteSession: tCopySession, resetRemoteSession: tResetSession,
   } = useDlTorrent({
     onLog: addLog, onProgressLog: upsertProgressLog, onReplaceProgress: replaceProgressLogWithFinal, onResetLogs: resetLogs, saveTarget: saveSelection,
   });
 
   const {
-    starting: uStarting, colabSession: uColabSession, colabBusy: uColabBusy,
+    starting: uStarting, kaggleSession: uKaggleSession, kaggleBusy: uKaggleBusy,
     resolved: uResolved, clearResolved: uClearResolved,
     handleResolve: uHandleResolve, handleDownload: uHandleDownload, copySession: uCopySession, resetSession: uResetSession,
   } = useDlUniversal({
@@ -224,11 +224,11 @@ const Downloader: React.FC = () => {
     await uHandleDownload(inputUrl.trim(), selected);
   }, [inputUrl, addLog, uHandleDownload, selectedFormatIndexes, uFormats]);
 
-  const handleTorrentColabClick = useCallback(() => {
+  const handleTorrentRemoteClick = useCallback(() => {
     if (tSelectedIndexes.size === 0) { addLog('Select at least one file', 'critical'); return; }
     const selected = torrentFiles.filter(f => tSelectedIndexes.has(f.index));
-    handleTorrentColabStart(selected);
-  }, [tSelectedIndexes, torrentFiles, addLog, handleTorrentColabStart]);
+    handleTorrentRemoteStart(selected);
+  }, [tSelectedIndexes, torrentFiles, addLog, handleTorrentRemoteStart]);
 
   const toggleUIndex = (index: number) => {
     setSelectedFormatIndexes(prev => {
@@ -248,29 +248,29 @@ const Downloader: React.FC = () => {
     });
   };
 
-  const activeColabSession = useMemo<ColabSessionView | null>(() => {
-    if (detectedType === 'torrent' && tColabSession) {
-      return { sessionId: tColabSession.sessionId, secondsLeft: tColabSession.secondsLeft, ttlSeconds: tColabSession.ttlSeconds, sessionType: 'torrent' };
+  const activeRemoteSession = useMemo<KaggleRemoteSessionView | null>(() => {
+    if (detectedType === 'torrent' && tKaggleSession) {
+      return { sessionId: tKaggleSession.sessionId, secondsLeft: tKaggleSession.secondsLeft, ttlSeconds: tKaggleSession.ttlSeconds, sessionType: 'torrent' };
     }
-    if (detectedType === 'universal' && uColabSession) {
-      return { sessionId: uColabSession.sessionId, secondsLeft: uColabSession.secondsLeft, ttlSeconds: uColabSession.ttlSeconds, sessionType: 'universal' };
+    if (detectedType === 'universal' && uKaggleSession) {
+      return { sessionId: uKaggleSession.sessionId, secondsLeft: uKaggleSession.secondsLeft, ttlSeconds: uKaggleSession.ttlSeconds, sessionType: 'universal' };
     }
     return null;
-  }, [detectedType, tColabSession, uColabSession]);
+  }, [detectedType, tKaggleSession, uKaggleSession]);
 
   const handleCopyActiveSession = useCallback(async () => {
-    if (activeColabSession?.sessionType === 'torrent') return await tCopySession();
-    if (activeColabSession?.sessionType === 'universal') return await uCopySession();
+    if (activeRemoteSession?.sessionType === 'torrent') return await tCopySession();
+    if (activeRemoteSession?.sessionType === 'universal') return await uCopySession();
     return false;
-  }, [activeColabSession, tCopySession, uCopySession]);
+  }, [activeRemoteSession, tCopySession, uCopySession]);
 
   const handleResetActiveSession = useCallback(() => {
-    if (activeColabSession?.sessionType === 'torrent') tResetSession();
-    if (activeColabSession?.sessionType === 'universal') uResetSession();
-  }, [activeColabSession, tResetSession, uResetSession]);
+    if (activeRemoteSession?.sessionType === 'torrent') tResetSession();
+    if (activeRemoteSession?.sessionType === 'universal') uResetSession();
+  }, [activeRemoteSession, tResetSession, uResetSession]);
 
-  const colabEnabledForTorrent = useMemo(() => !!(saveSelection.accountId && saveSelection.repoId && saveSelection.token), [saveSelection]);
-  const isBusy = torrentStarting || uStarting || tColabBusy || uColabBusy;
+  const remoteEnabledForTorrent = useMemo(() => !!(saveSelection.accountId && saveSelection.repoId && saveSelection.token), [saveSelection]);
+  const isBusy = torrentStarting || uStarting || tKaggleBusy || uKaggleBusy;
   const allUSelected = uFormats.length > 0 && selectedFormatIndexes.size === uFormats.length;
   const allTSelected = torrentFiles.length > 0 && tSelectedIndexes.size === torrentFiles.length;
   
@@ -289,7 +289,7 @@ const Downloader: React.FC = () => {
 
           <div className={`downloader-body${isMobile ? ' mobile' : ''}`}>
             <DlLog logs={logs} isMobile={isMobile} copyLabel={copyLabel} onCopy={copyToClipboard} terminalRef={terminalRef}
-              colabSession={activeColabSession} onCopySession={handleCopyActiveSession} onResetSession={handleResetActiveSession} />
+              kaggleSession={activeRemoteSession} onCopySession={handleCopyActiveSession} onResetSession={handleResetActiveSession} />
 
             {detectedType === 'torrent' && hasTorrentPanel && (
               <div className="downloader-results-wrap global-section global-section--spaced">
@@ -302,7 +302,7 @@ const Downloader: React.FC = () => {
                           {allTSelected ? <CheckCircle2 size={16} /> : <Circle size={16} />}
                           <span className="hidden-mobile">{allTSelected ? 'Deselect All' : 'Select All'}</span>
                         </button>
-                        <button type="button" className="cloudview-selection-bar-btn" onClick={handleTorrentColabClick} disabled={isBusy || !colabEnabledForTorrent || tSelectedIndexes.size === 0}>
+                        <button type="button" className="cloudview-selection-bar-btn" onClick={handleTorrentRemoteClick} disabled={isBusy || !remoteEnabledForTorrent || tSelectedIndexes.size === 0}>
                           <ExternalLink size={16} /> <span className="hidden-mobile">Run on Kaggle</span>
                         </button>
                       </div>
@@ -358,7 +358,7 @@ const Downloader: React.FC = () => {
                           <span className="hidden-mobile">{allUSelected ? 'Deselect All' : 'Select All'}</span>
                         </button>
                         <button type="button" className="cloudview-selection-bar-btn" onClick={handleUniversalDownload} disabled={isBusy || selectedFormatIndexes.size === 0}>
-                          {uColabSession?.sessionId ? <><ExternalLink size={16} /> <span className="hidden-mobile">Add to Kaggle</span></> : <><Play size={16} /> <span className="hidden-mobile">Run on Kaggle</span></>}
+                          {uKaggleSession?.sessionId ? <><ExternalLink size={16} /> <span className="hidden-mobile">Add to Kaggle</span></> : <><Play size={16} /> <span className="hidden-mobile">Run on Kaggle</span></>}
                         </button>
                       </div>
                     </div>

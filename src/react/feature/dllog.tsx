@@ -11,7 +11,7 @@ export interface LogItem {
   progress?: boolean;
 }
 
-export interface ColabSessionView {
+export interface KaggleRemoteSessionView {
   sessionId: string;
   secondsLeft: number;
   ttlSeconds: number;
@@ -24,7 +24,7 @@ interface DlLogProps {
   copyLabel: string;
   onCopy: () => void;
   terminalRef: React.RefObject<HTMLDivElement | null>;
-  colabSession?: ColabSessionView | null;
+  kaggleSession?: KaggleRemoteSessionView | null;
   onCopySession?: () => Promise<boolean>;
   onResetSession?: () => void;
 }
@@ -53,7 +53,7 @@ const DlLog: React.FC<DlLogProps> = ({
   isMobile,
   onCopy,
   terminalRef,
-  colabSession,
+  kaggleSession,
   onCopySession,
   onResetSession,
 }) => {
@@ -68,27 +68,27 @@ const DlLog: React.FC<DlLogProps> = ({
     }
   };
 
-  const expired = !!colabSession && colabSession.secondsLeft <= 0;
+  const expired = !!kaggleSession && kaggleSession.secondsLeft <= 0;
 
   return (
     <div className="downloader-console-wrap">
       <div className="downloader-console-header">
         <span className="downloader-console-label">● kernel log</span>
         <div className="downloader-console-header-actions">
-          {colabSession && (
+          {kaggleSession && (
             <>
-              <div className="downloader-colab-session-stack">
+              <div className="downloader-kaggle-session-stack">
                 <span
-                  className={`downloader-colab-session-timer${expired ? ' is-expired' : ''}`}
+                  className={`downloader-kaggle-session-timer${expired ? ' is-expired' : ''}`}
                   translate="no"
                 >
-                  {formatCountdown(colabSession.secondsLeft)}
+                  {formatCountdown(kaggleSession.secondsLeft)}
                 </span>
                 <span
-                  className="downloader-colab-session-id"
+                  className="downloader-kaggle-session-id"
                   translate="no"
                 >
-                  [{getSessionTag(colabSession.sessionType)}] {colabSession.sessionId}
+                  [{getSessionTag(kaggleSession.sessionType)}] {kaggleSession.sessionId}
                 </span>
               </div>
               <button

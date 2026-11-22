@@ -2,8 +2,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getActiveBase } from '@config/api';
 
-const SESSION_STORAGE_KEY = 'wartha_colab_session_id';
-const SESSION_MAGNET_KEY = 'wartha_colab_session_magnet';
+const SESSION_STORAGE_KEY = 'wartha_kaggle_session_id';
+const SESSION_MAGNET_KEY = 'wartha_kaggle_session_magnet';
 const POLL_MAX_FAILS = 15;
 
 type LogType = 'system' | 'critical' | 'success';
@@ -25,7 +25,7 @@ interface TorrentStartResponse {
   detail?: string;
 }
 
-interface TorrentColabStartResponse {
+interface TorrentKaggleStartResponse {
   ok?: boolean;
   session_id?: string;
   files_count?: number;
@@ -71,7 +71,7 @@ interface TorrentProgressResponse {
   total_elapsed_seconds?: number;
 }
 
-interface ColabSessionResponse {
+interface KaggleSessionResponse {
   ok: boolean;
   session_id?: string;
   expires_at?: number;
@@ -82,7 +82,7 @@ interface ColabSessionResponse {
   files_count?: number;
 }
 
-export interface ColabSessionInfo {
+export interface KaggleSessionInfo {
   sessionId: string;
   expiresAt: number;
   secondsLeft: number;
@@ -225,9 +225,9 @@ export const useDlTorrent = ({
   const [torrentInfoHash, setTorrentInfoHash] = useState<string | null>(null);
   const [torrentFiles, setTorrentFiles] = useState<TorrentFile[]>([]);
   const [torrentStarting, setTorrentStarting] = useState(false);
-  const [colabSession, setColabSession] = useState<ColabSessionInfo | null>(null);
-  const [colabFileIndexes, setColabFileIndexes] = useState<Set<number>>(new Set());
-  const [colabBusy, setColabBusy] = useState(false);
+  const [kaggleSession, setKaggleSession] = useState<KaggleSessionInfo | null>(null);
+  const [kaggleFileIndexes, setKaggleFileIndexes] = useState<Set<number>>(new Set());
+  const [kaggleBusy, setKaggleBusy] = useState(false);
 
   const progressPollRef = useRef<number | null>(null);
   const sessionCountdownRef = useRef<number | null>(null);
@@ -248,8 +248,8 @@ export const useDlTorrent = ({
   const submittedFilesRef = useRef<TorrentFile[]>([]);
   const currentSubmittedIdxRef = useRef<number>(0);
 
-  const colabSessionIdRef = useRef<string | null>(readStoredSessionId());
-  const colabSessionMagnetRef = useRef<string | null>(readStoredSessionMagnet());
+  const kaggleSessionIdRef = useRef<string | null>(readStoredSessionId());
+  const kaggleSessionMagnetRef = useRef<string | null>(readStoredSessionMagnet());
 
   useEffect(() => {
     return () => {
@@ -274,7 +274,7 @@ export const useDlTorrent = ({
   const startSessionCountdown = useCallback(() => {
     stopSessionCountdown();
     sessionCountdownRef.current = window.setInterval(() => {
-      setColabSession(prev => {
+      setKaggleSession(prev => {
         if (!prev) return prev;
         const next = Math.max(0, Math.floor(prev.expiresAt - Date.now() / 1000));
         if (next <= 0) {
@@ -285,12 +285,12 @@ export const useDlTorrent = ({
     }, 1000);
   }, [stopSessionCountdown]);
 
-  const fetchColabSessionInfo = useCallback(async (sid: string): Promise<{ info: ColabSessionInfo; fileIndexes: number[] } | null> => {
+  const fetchRemoteSessionInfo = useCallback(async (sid: string): Promise<{ info: KaggleSessionInfo; fileIndexes: number[] } | null> => {
     const API_BASE = getActiveBase();
     try {
-      const res = await fetch(`${API_BASE}/torrent/colab-session?session_id=${encodeURIComponent(sid)}`);
+      const res = await fetch(`${API_BASE}/torrent/kaggle-session?session_id=${encodeURIComponent(sid)}`);
       if (!res.ok) return null;
-      const json: ColabSessionResponse = await res.json();
+      const json: KaggleSessionResponse = await res.json();
       if (!json.ok || !json.session_id || typeof json.expires_at !== 'number') return null;
       return {
         info: {
@@ -306,47 +306,47 @@ export const useDlTorrent = ({
     }
   }, []);
 
-  const clearColabSession = useCallback(() => {
-    colabSessionIdRef.current = null;
-    colabSessionMagnetRef.current = null;
+  const clearRemoteSession = useCallback(() => {
+    kaggleSessionIdRef.current = null;
+    kaggleSessionMagnetRef.current = null;
     writeStoredSessionId(null);
     writeStoredSessionMagnet(null);
-    setColabSession(null);
-    setColabFileIndexes(new Set());
-    setColabBusy(false);
+    setKaggleSession(null);
+    setKaggleFileIndexes(new Set());
+    setKaggleBusy(false);
     stopSessionCountdown();
   }, [stopSessionCountdown]);
 
-  const refreshColabSession = useCallback(async () => {
-    const sid = colabSessionIdRef.current;
+  const refreshRemoteSession = useCallback(async () => {
+    const sid = kaggleSessionIdRef.current;
     if (!sid) {
-      setColabSession(null);
-      setColabFileIndexes(new Set());
+      setKaggleSession(null);
+      setKaggleFileIndexes(new Set());
       stopSessionCountdown();
       return;
     }
-    const result = await fetchColabSessionInfo(sid);
+    const result = await fetchRemoteSessionInfo(sid);
     if (!result) {
-      clearColabSession();
+      clearRemoteSession();
       return;
     }
-    setColabSession(result.info);
-    setColabFileIndexes(new Set(result.fileIndexes));
+    setKaggleSession(result.info);
+    setKaggleFileIndexes(new Set(result.fileIndexes));
     startSessionCountdown();
-  }, [fetchColabSessionInfo, startSessionCountdown, stopSessionCountdown, clearColabSession]);
+  }, [fetchRemoteSessionInfo, startSessionCountdown, stopSessionCountdown, clearRemoteSession]);
 
   useEffect(() => {
-    void refreshColabSession();
-  }, [refreshColabSession]);
+    void refreshRemoteSession();
+  }, [refreshRemoteSession]);
 
   const ensureLiveSession = useCallback(async (): Promise<string | null> => {
-    const sid = colabSessionIdRef.current;
+    const sid = kaggleSessionIdRef.current;
     if (!sid) return null;
-    const result = await fetchColabSessionInfo(sid);
+    const result = await fetchRemoteSessionInfo(sid);
     if (result) return sid;
-    clearColabSession();
+    clearRemoteSession();
     return null;
-  }, [fetchColabSessionInfo, clearColabSession]);
+  }, [fetchRemoteSessionInfo, clearRemoteSession]);
 
   const resetTorrent = useCallback(() => {
     setTorrentInfoHash(null);
@@ -355,7 +355,7 @@ export const useDlTorrent = ({
       window.clearInterval(progressPollRef.current);
       progressPollRef.current = null;
     }
-    setColabBusy(false);
+    setKaggleBusy(false);
     doneHandledRef.current = false;
     lastStatusRef.current = '';
     lastPhaseRef.current = '';
@@ -367,7 +367,7 @@ export const useDlTorrent = ({
     currentSubmittedIdxRef.current = 0;
   }, []);
 
-  const pollColabProgress = useCallback((sessionId: string, fallbackFileName: string) => {
+  const pollRemoteProgress = useCallback((sessionId: string, fallbackFileName: string) => {
     if (progressPollRef.current !== null) {
       window.clearInterval(progressPollRef.current);
       progressPollRef.current = null;
@@ -392,7 +392,7 @@ export const useDlTorrent = ({
     const finishAll = () => {
       doneHandledRef.current = true;
       cleanup();
-      setColabBusy(false);
+      setKaggleBusy(false);
     };
 
     const tick = async () => {
@@ -401,7 +401,7 @@ export const useDlTorrent = ({
       const API_BASE = getActiveBase();
 
       try {
-        const res = await fetch(`${API_BASE}/torrent/progress/${sessionId}`);
+        const res = await fetch(`${API_BASE}/torrent/kaggle-session?session_id=${sessionId}`);
         const json: TorrentProgressResponse = await res
           .json()
           .catch(() => ({} as TorrentProgressResponse));
@@ -418,7 +418,7 @@ export const useDlTorrent = ({
         if (doneHandledRef.current) return;
 
         if (typeof json.expires_at === 'number') {
-          setColabSession(prev => {
+          setKaggleSession(prev => {
             if (!prev || prev.sessionId !== sessionId) return prev;
             const nextLeft = typeof json.seconds_left === 'number'
               ? json.seconds_left
@@ -478,7 +478,7 @@ export const useDlTorrent = ({
               `[kaggle]\nFile ${lastFileIndexRef.current} done · ${completedFiles} ok, ${failedFiles} failed`,
               failedFiles > 0 ? 'system' : 'success'
             );
-            void refreshColabSession();
+            void refreshRemoteSession();
           }
           lastFileIndexRef.current = localIdx;
           firstProgressSeenRef.current = false;
@@ -508,7 +508,7 @@ export const useDlTorrent = ({
             summary,
             totalLine,
           ].filter(Boolean).join('\n'), failedFiles > 0 ? 'critical' : 'success');
-          void refreshColabSession();
+          void refreshRemoteSession();
           return;
         }
 
@@ -586,7 +586,7 @@ export const useDlTorrent = ({
 
     progressPollRef.current = window.setInterval(tick, 1000);
     void tick();
-  }, [onLog, onProgressLog, onReplaceProgress, onResetLogs, refreshColabSession]);
+  }, [onLog, onProgressLog, onReplaceProgress, onResetLogs, refreshRemoteSession]);
 
   const handleTorrentStart = useCallback(async (magnet: string) => {
     setTorrentStarting(true);
@@ -595,12 +595,12 @@ export const useDlTorrent = ({
     inputUrlRef.current = magnet;
 
     const newInfoHash = extractMagnetInfoHash(magnet);
-    const prevMagnet = colabSessionMagnetRef.current;
+    const prevMagnet = kaggleSessionMagnetRef.current;
     const prevInfoHash = prevMagnet ? extractMagnetInfoHash(prevMagnet) : '';
 
-    if (colabSessionIdRef.current && newInfoHash && prevInfoHash && newInfoHash !== prevInfoHash) {
+    if (kaggleSessionIdRef.current && newInfoHash && prevInfoHash && newInfoHash !== prevInfoHash) {
       onLog('Different magnet detected. Clearing previous worker session.', 'system');
-      clearColabSession();
+      clearRemoteSession();
     }
 
     onLog('Magnet link detected.', 'system');
@@ -623,17 +623,17 @@ export const useDlTorrent = ({
       setTorrentFiles(files);
       onLog(`Info hash: ${json.info_hash || 'unknown'}`, 'success');
       onLog(`Files found: ${files.length} · ${json.total_size_human || ''}`.trim(), 'success');
-      void refreshColabSession();
+      void refreshRemoteSession();
     } catch (e: unknown) {
       onLog(`Torrent start failed: ${getErrorMessage(e, 'unknown error')}`, 'critical');
     } finally {
       setTorrentStarting(false);
     }
-  }, [onLog, refreshColabSession, clearColabSession]);
+  }, [onLog, refreshRemoteSession, clearRemoteSession]);
 
-  const handleTorrentColabStart = useCallback(async (files: TorrentFile[]) => {
+  const handleTorrentRemoteStart = useCallback(async (files: TorrentFile[]) => {
     if (!torrentInfoHash) return;
-    if (colabBusy) return;
+    if (kaggleBusy) return;
     if (!files.length) return;
 
     const st = saveTargetRef.current;
@@ -660,7 +660,7 @@ export const useDlTorrent = ({
 
     const payloadFiles = files.map(f => ({ index: f.index, name: f.name, size: f.size }));
 
-    setColabBusy(true);
+    setKaggleBusy(true);
 
     try {
       const API_BASE = getActiveBase();
@@ -675,48 +675,48 @@ export const useDlTorrent = ({
       };
       if (existingSid) body.session_id = existingSid;
 
-      const res = await fetch(`${API_BASE}/torrent/colab-start`, {
+      const res = await fetch(`${API_BASE}/torrent/kaggle-start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      const json: TorrentColabStartResponse = await res
+      const json: TorrentKaggleStartResponse = await res
         .json()
-        .catch(() => ({} as TorrentColabStartResponse));
+        .catch(() => ({} as TorrentKaggleStartResponse));
       if (!res.ok || !json.ok || !json.session_id) {
         throw new Error(json.detail || `HTTP ${res.status}`);
       }
       if (json.runner !== 'kaggle') throw new Error(json.runner_error || 'Kaggle worker was not started. Check the backend configuration.');
 
-      colabSessionIdRef.current = json.session_id;
-      colabSessionMagnetRef.current = inputUrlRef.current;
+      kaggleSessionIdRef.current = json.session_id;
+      kaggleSessionMagnetRef.current = inputUrlRef.current;
       writeStoredSessionId(json.session_id);
       writeStoredSessionMagnet(inputUrlRef.current);
-      await refreshColabSession();
+      await refreshRemoteSession();
 
       onLog(`Session ID: ${json.session_id}`, 'system');
       onLog(`Files in session: ${json.files_count || files.length}`, 'system');
       onLog(isAppending ? 'Kaggle worker resumed automatically.' : 'Kaggle worker started automatically.', 'success');
       onLog('Waiting for Kaggle to process the selected files...', 'system');
 
-      pollColabProgress(json.session_id, firstFile.name);
+      pollRemoteProgress(json.session_id, firstFile.name);
     } catch (e: unknown) {
-      setColabBusy(false);
+      setKaggleBusy(false);
       const errMsg = e instanceof Error ? e.message : 'unknown error';
       onLog(`Failed to start Kaggle worker: ${errMsg}`, 'critical');
     }
-  }, [torrentInfoHash, colabBusy, onLog, pollColabProgress, refreshColabSession, onResetLogs, ensureLiveSession]);
+  }, [torrentInfoHash, kaggleBusy, onLog, pollRemoteProgress, refreshRemoteSession, onResetLogs, ensureLiveSession]);
 
-  const copyColabSession = useCallback(async (): Promise<boolean> => {
-    const sid = colabSessionIdRef.current;
+  const copyRemoteSession = useCallback(async (): Promise<boolean> => {
+    const sid = kaggleSessionIdRef.current;
     if (!sid) return false;
     return await copyToClipboard(sid);
   }, []);
 
-  const resetColabSession = useCallback(() => {
-    clearColabSession();
+  const resetRemoteSession = useCallback(() => {
+    clearRemoteSession();
     onLog('Kaggle worker session cleared. The next run will start a new worker.', 'system');
-  }, [clearColabSession, onLog]);
+  }, [clearRemoteSession, onLog]);
 
   const hasTorrentPanel = torrentInfoHash !== null && torrentFiles.length > 0;
 
@@ -725,14 +725,14 @@ export const useDlTorrent = ({
     torrentFiles,
     torrentStarting,
     hasTorrentPanel,
-    colabSession,
-    colabFileIndexes,
-    colabBusy,
+    kaggleSession,
+    kaggleFileIndexes,
+    kaggleBusy,
     handleTorrentStart,
-    handleTorrentColabStart,
+    handleTorrentRemoteStart,
     resetTorrent,
-    copyColabSession,
-    resetColabSession,
-    refreshColabSession,
+    copyRemoteSession,
+    resetRemoteSession,
+    refreshRemoteSession,
   };
 };

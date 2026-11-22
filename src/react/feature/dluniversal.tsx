@@ -43,7 +43,7 @@ interface UniversalSessionResponse {
   status?: string;
 }
 
-export interface UniversalColabSessionInfo {
+export interface UniversalKaggleSessionInfo {
   sessionId: string;
   expiresAt: number;
   secondsLeft: number;
@@ -129,8 +129,8 @@ const buildProgressEntry = (
 export const useDlUniversal = ({
   onLog, onProgressLog, onReplaceProgress, onResetLogs, saveTarget,
 }: UseDlUniversalOptions) => {
-  const [colabSession, setColabSession] = useState<UniversalColabSessionInfo | null>(null);
-  const [colabBusy, setColabBusy] = useState(false);
+  const [kaggleSession, setKaggleSession] = useState<UniversalKaggleSessionInfo | null>(null);
+  const [kaggleBusy, setKaggleBusy] = useState(false);
   const [starting, setStarting] = useState(false);
 
   const progressPollRef = useRef<number | null>(null);
@@ -145,7 +145,7 @@ export const useDlUniversal = ({
   const lastSaveStatusRef = useRef<string>('');
   const firstProgressSeenRef = useRef<boolean>(false);
 
-  const colabSessionIdRef = useRef<string | null>(readStoredSessionId());
+  const kaggleSessionIdRef = useRef<string | null>(readStoredSessionId());
 
   useEffect(() => {
     return () => {
@@ -164,7 +164,7 @@ export const useDlUniversal = ({
   const startSessionCountdown = useCallback(() => {
     stopSessionCountdown();
     sessionCountdownRef.current = window.setInterval(() => {
-      setColabSession(prev => {
+      setKaggleSession(prev => {
         if (!prev) return prev;
         const next = Math.max(0, Math.floor(prev.expiresAt - Date.now() / 1000));
         if (next <= 0) return { ...prev, secondsLeft: 0 };
@@ -173,9 +173,9 @@ export const useDlUniversal = ({
     }, 1000);
   }, [stopSessionCountdown]);
 
-  const fetchColabSessionInfo = useCallback(async (sid: string): Promise<UniversalColabSessionInfo | null> => {
+  const fetchRemoteSessionInfo = useCallback(async (sid: string): Promise<UniversalKaggleSessionInfo | null> => {
     try {
-      const res = await fetch(`${API_BASE}/universal/colab-session?session_id=${encodeURIComponent(sid)}`);
+      const res = await fetch(`${API_BASE}/universal/kaggle-session?session_id=${encodeURIComponent(sid)}`);
       if (!res.ok) return null;
       const json: UniversalSessionResponse = await res.json();
       if (!json.ok || !json.session_id || typeof json.expires_at !== 'number') return null;
@@ -188,24 +188,24 @@ export const useDlUniversal = ({
     } catch { return null; }
   }, []);
 
-  const clearColabSession = useCallback(() => {
-    colabSessionIdRef.current = null;
+  const clearRemoteSession = useCallback(() => {
+    kaggleSessionIdRef.current = null;
     writeStoredSessionId(null);
-    setColabSession(null);
-    setColabBusy(false);
+    setKaggleSession(null);
+    setKaggleBusy(false);
     stopSessionCountdown();
   }, [stopSessionCountdown]);
 
-  const refreshColabSession = useCallback(async () => {
-    const sid = colabSessionIdRef.current;
-    if (!sid) { setColabSession(null); stopSessionCountdown(); return; }
-    const result = await fetchColabSessionInfo(sid);
-    if (!result) { clearColabSession(); return; }
-    setColabSession(result);
+  const refreshRemoteSession = useCallback(async () => {
+    const sid = kaggleSessionIdRef.current;
+    if (!sid) { setKaggleSession(null); stopSessionCountdown(); return; }
+    const result = await fetchRemoteSessionInfo(sid);
+    if (!result) { clearRemoteSession(); return; }
+    setKaggleSession(result);
     startSessionCountdown();
-  }, [fetchColabSessionInfo, startSessionCountdown, stopSessionCountdown, clearColabSession]);
+  }, [fetchRemoteSessionInfo, startSessionCountdown, stopSessionCountdown, clearRemoteSession]);
 
-  useEffect(() => { void refreshColabSession(); }, [refreshColabSession]);
+  useEffect(() => { void refreshRemoteSession(); }, [refreshRemoteSession]);
 
   const pollProgress = useCallback((sessionId: string, fallbackFileName: string) => {
     if (progressPollRef.current !== null) {
@@ -228,7 +228,7 @@ export const useDlUniversal = ({
     const finishAll = () => {
       doneHandledRef.current = true;
       cleanup();
-      setColabBusy(false);
+      setKaggleBusy(false);
       setStarting(false);
     };
 
@@ -236,7 +236,7 @@ export const useDlUniversal = ({
       if (doneHandledRef.current) return;
 
       try {
-        const res = await fetch(`${API_BASE}/universal/colab-session?session_id=${encodeURIComponent(sessionId)}`);
+        const res = await fetch(`${API_BASE}/universal/kaggle-session?session_id=${encodeURIComponent(sessionId)}`);
         const json: UniversalProgressResponse = await res.json().catch(() => ({} as UniversalProgressResponse));
         if (!res.ok || !json.ok) {
           finishAll();
@@ -247,7 +247,7 @@ export const useDlUniversal = ({
         if (doneHandledRef.current) return;
 
         if (typeof json.expires_at === 'number') {
-          setColabSession(prev => {
+          setKaggleSession(prev => {
             if (!prev || prev.sessionId !== sessionId) return prev;
             const nextLeft = typeof json.seconds_left === 'number' ? json.seconds_left : Math.max(0, Math.floor(json.expires_at! - Date.now() / 1000));
             return { ...prev, expiresAt: json.expires_at!, secondsLeft: nextLeft, ttlSeconds: json.ttl_seconds ?? prev.ttlSeconds };
@@ -276,7 +276,7 @@ export const useDlUniversal = ({
         if (json.save_status === 'done' && json.finished) {
           finishAll();
           onReplaceProgress(`All done`, 'success');
-          void refreshColabSession();
+          void refreshRemoteSession();
           return;
         }
 
@@ -318,7 +318,7 @@ export const useDlUniversal = ({
 
     progressPollRef.current = window.setInterval(tick, 1000);
     void tick();
-  }, [onLog, onProgressLog, onReplaceProgress, refreshColabSession]);
+  }, [onLog, onProgressLog, onReplaceProgress, refreshRemoteSession]);
 
   const handleStart = useCallback(async (url: string) => {
     const st = saveTargetRef.current;
@@ -333,7 +333,7 @@ export const useDlUniversal = ({
 
     if (onResetLogs) onResetLogs();
     setStarting(true);
-    setColabBusy(true);
+    setKaggleBusy(true);
     onLog(`[universal]\nPreparing session...`, 'system');
     onLog(`[universal]\nURL: ${url.slice(0, 100)}`, 'system');
     onLog(`[universal]\nMode: auto`, 'system');
@@ -350,7 +350,7 @@ export const useDlUniversal = ({
         folder: st.folder,
       };
 
-      const res = await fetch(`${API_BASE}/universal/colab-start`, {
+      const res = await fetch(`${API_BASE}/universal/kaggle-start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -360,40 +360,40 @@ export const useDlUniversal = ({
         throw new Error(json.detail || `HTTP ${res.status}`);
       }
 
-      colabSessionIdRef.current = json.session_id;
+      kaggleSessionIdRef.current = json.session_id;
       writeStoredSessionId(json.session_id);
-      await refreshColabSession();
+      await refreshRemoteSession();
 
       onLog(`[universal]\nSession ID: ${json.session_id}`, 'system');
       const copied = await copyToClipboard(json.session_id);
       if (copied) onLog('[universal]\nSession ID copied to clipboard', 'success');
       else onLog('[universal]\nCopy Session ID manually', 'system');
 
-      onLog('[universal]\nPlease open Colab and paste the Session ID manually.', 'success');
-      onLog('[universal]\nWaiting for Colab to start...', 'system');
+      onLog('[universal]\nPlease open Kaggle and paste the Session ID manually.', 'success');
+      onLog('[universal]\nWaiting for Kaggle to start...', 'system');
 
       pollProgress(json.session_id, url.slice(0, 60));
     } catch (e: unknown) {
-      setColabBusy(false);
+      setKaggleBusy(false);
       setStarting(false);
       const message = typeof e === 'object' && e !== null && 'message' in e && typeof e.message === 'string' ? e.message : 'unknown error';
       onLog(`[universal]\nFailed to start: ${message}`, 'critical');
     }
-  }, [onLog, onResetLogs, pollProgress, refreshColabSession]);
+  }, [onLog, onResetLogs, pollProgress, refreshRemoteSession]);
 
   const copySession = useCallback(async (): Promise<boolean> => {
-    const sid = colabSessionIdRef.current;
+    const sid = kaggleSessionIdRef.current;
     if (!sid) return false;
     return await copyToClipboard(sid);
   }, []);
 
   const resetSession = useCallback(() => {
-    clearColabSession();
+    clearRemoteSession();
     onLog('[universal]\nSession cleared.', 'system');
-  }, [clearColabSession, onLog]);
+  }, [clearRemoteSession, onLog]);
 
   return {
-    starting, colabSession, colabBusy,
-    handleStart, copySession, resetSession, refreshColabSession, formatBytes,
+    starting, kaggleSession, kaggleBusy,
+    handleStart, copySession, resetSession, refreshRemoteSession, formatBytes,
   };
 };

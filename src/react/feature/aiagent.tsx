@@ -10,7 +10,10 @@ import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentm
 import { AI_AGENT_API_BASE } from "@config/api";
 import { saveOpenRouterCredentials } from "@config/routerhelper";
 import { canSendAgentModel, shouldShowRouterAuthModal } from "@config/agentauthflow";
-import { isLocalAgentModel, isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
+import { isLocalAgentModel, isRetryableAgentAvailabilityError, LOCAL_AGENT_MODEL_PREFIX, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
+import { connectLocalAgent, fetchLocalAgentStatus, pollLocalAgentUntilReady, type LocalAgentPollHandle, type LocalAgentStatus } from "@config/agentlocal";
+import { loadKaggleCredentials, saveKaggleCredentials } from "@config/kagglecredentials";
+import { CloudModalKaggle } from "./cloudmodalkaggle";
 import { buildModelScopedHistory, formatAgentFileContext, getAgentRequestModels, getAgentMessagesStorageKey, getAgentPreferencesStorageKey, parseAgentModeSettings, type AgentMode } from "@config/agentmodes";
 import { parseAgentFile } from "@config/agentfileparser";
 import { useAudio } from "@hook/useaudio";
@@ -690,15 +693,21 @@ const AIAgent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [preferredModel, setPreferredModel] = useState("");
   const [modelSource, setModelSource] = useState<"cloud" | "local">("cloud");
+  const [localStatus, setLocalStatus] = useState<LocalAgentStatus | null>(null);
+  const [isLocalConnecting, setIsLocalConnecting] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [isKaggleModalOpen, setIsKaggleModalOpen] = useState(false);
   const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
   const effectiveAgentMode: AgentMode = "auto";
   const cloudModelOptions = routerModels.filter((model) => !isLocalAgentModel(model));
-  const modelOptions = modelSource === "cloud" ? cloudModelOptions : [];
+  const localModelId = localStatus?.connected ? (localStatus.modelId || "") : "";
+  const localModelOptions = localModelId ? [`${LOCAL_AGENT_MODEL_PREFIX}${localModelId}`] : [];
+  const modelOptions = modelSource === "cloud" ? cloudModelOptions : localModelOptions;
   const selectedModel = modelOptions.includes(preferredModel) ? preferredModel : modelOptions[0] || "";
   const hasPreferredAutoModel = modelOptions.includes(preferredModel);
   const requestModelOptions = modelSource === "cloud"
     ? getAgentRequestModels(cloudModelOptions, effectiveAgentMode, selectedModel, "", hasPreferredAutoModel, routerModelCatalog)
-    : [];
+    : modelOptions;
   const autoRecommendedModel = getAgentRequestModels(cloudModelOptions, "auto", "", input, false, routerModelCatalog)[0] || "";
   const isRouterAuthModalOpen = shouldShowRouterAuthModal({
     isLoading: authLoading,
@@ -734,6 +743,67 @@ const AIAgent: React.FC = () => {
   const [hostActionError, setHostActionError] = useState("");
   const [confirmLabelChoice, setConfirmLabelChoice] = useState<"A" | "B" | "C" | "custom">("A");
   const [customConfirmLabel, setCustomConfirmLabel] = useState("");
+  const localPollRef = useRef<LocalAgentPollHandle | null>(null);
+  const localKaggleSavedRef = useRef(false);
+
+  const cancelLocalPoll = () => {
+    if (localPollRef.current) {
+      localPollRef.current.cancel();
+      localPollRef.current = null;
+    }
+    setIsLocalConnecting(false);
+  };
+
+  const handleLocalKaggleSave = async (username: string, apiToken: string) => {
+    await saveKaggleCredentials(username, apiToken);
+    localKaggleSavedRef.current = true;
+  };
+
+  const handleConnectLocal = async () => {
+    if (isLocalConnecting || !currentUserUidRef.current) return;
+    setIsLocalConnecting(true);
+    setLocalError(null);
+    try {
+      const credentials = await loadKaggleCredentials();
+      if (!credentials) {
+        setIsKaggleModalOpen(true);
+        return;
+      }
+      let status: LocalAgentStatus;
+      try {
+        status = await fetchLocalAgentStatus();
+      } catch {
+        status = { connected: false, status: "offline", modelId: null, error: null, alive: false, sessionId: null };
+      }
+      if (!(status.connected && status.status !== "error")) {
+        try {
+          status = await connectLocalAgent();
+        } catch (connectError) {
+          const message = connectError instanceof Error ? connectError.message : "";
+          if (/kaggle/i.test(message)) {
+            setIsKaggleModalOpen(true);
+            return;
+          }
+          throw connectError;
+        }
+        setLocalStatus(status);
+      } else {
+        setLocalStatus(status);
+      }
+      if (status.status === "ready") return;
+      const poll = pollLocalAgentUntilReady((next) => {
+        if (next) setLocalStatus(next);
+      });
+      localPollRef.current = poll;
+      const finalStatus = await poll.promise;
+      localPollRef.current = null;
+      if (finalStatus.status === "error") setLocalError(finalStatus.error);
+    } catch (error) {
+      setLocalError(error instanceof Error ? error.message : "Failed to connect AI Local");
+    } finally {
+      setIsLocalConnecting(false);
+    }
+  };
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const speechSynthRef = useRef<SpeechSynthesis | null>(null);
@@ -757,6 +827,9 @@ const AIAgent: React.FC = () => {
       setPreferredModel("");
       setModelSource("cloud");
       setPreferencesOwnerUid(null);
+      cancelLocalPoll();
+      setLocalStatus(null);
+      setIsKaggleModalOpen(false);
       return;
     }
     const uid = currentUserUid;
@@ -769,6 +842,8 @@ const AIAgent: React.FC = () => {
     } catch (error) {
       console.warn("Failed to load this account's AI preferences:", error);
     }
+    cancelLocalPoll();
+    setLocalStatus(null);
     setModelSource("cloud");
     setPreferredModel(savedPreferences.model);
     setMessagesOwnerUid(uid);
@@ -788,6 +863,21 @@ const AIAgent: React.FC = () => {
       }
     }
   }, [currentUserUid, preferencesOwnerUid, preferredModel]);
+
+  useEffect(() => {
+    if (modelSource !== "local" || !currentUserUid) return;
+    let cancelled = false;
+    fetchLocalAgentStatus()
+      .then((status) => {
+        if (!cancelled) setLocalStatus(status);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [modelSource, currentUserUid]);
+
+  useEffect(() => () => cancelLocalPoll(), []);
 
   useEffect(() => {
     let disposed = false;
@@ -1056,10 +1146,14 @@ const AIAgent: React.FC = () => {
     }
     const prompt = textContext || (images.length ? "Describe these images" : "");
     const route = resolveAgentModelRoute(modelName, AI_AGENT_API_BASE);
-    const response = await fetch(`${route.apiBase}/agent/chat`, {
+    const isLocalModel = isLocalAgentModel(modelName);
+    const response = await fetch(`${route.apiBase}${isLocalModel ? "/agent/local/chat" : "/agent/chat"}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
-      body: JSON.stringify({
+      body: JSON.stringify(isLocalModel ? {
+        prompt,
+        images: images.map((image) => ({ mime_type: image.mimeType, data: image.data })),
+      } : {
         provider: connectedProvider || "",
         model: route.model,
         prompt,
@@ -1240,10 +1334,12 @@ const AIAgent: React.FC = () => {
     const requestOwnerUid = currentUserUidRef.current;
     if (!requestOwnerUid || requestOwnerUid !== currentUserUid || messagesOwnerUid !== requestOwnerUid || pendingHostAction || (!input.trim() && !uploadedImages.length && !uploadedFiles.length) || isLoading || !canSendAgentModel(isConfigured, isLocalAgentModel(selectedModel)) || !selectedModel || !modelOptions.includes(selectedModel) || !requestModelOptions.length) return;
     const currentInput = input, currentImages = [...uploadedImages], currentFiles = [...uploadedFiles];
-    const modelSequence = prioritizeVisionAgentModels(
-      getAgentRequestModels(routerModels, effectiveAgentMode, selectedModel, currentInput, hasPreferredAutoModel, routerModelCatalog),
-      currentImages.length > 0,
-    );
+    const modelSequence = isLocalAgentModel(selectedModel)
+      ? [selectedModel]
+      : prioritizeVisionAgentModels(
+          getAgentRequestModels(routerModels, effectiveAgentMode, selectedModel, currentInput, hasPreferredAutoModel, routerModelCatalog),
+          currentImages.length > 0,
+        );
     if (!modelSequence.length) return;
     setInput("");
     clearAllUploads();
@@ -1261,10 +1357,12 @@ const AIAgent: React.FC = () => {
     setMessages(prev => prev.filter(m => m.id !== messageId));
     const recoveredImages: UploadedImage[] = userMsg.images?.map(img => ({ data: img.data, mimeType: img.mimeType, preview: `data:${img.mimeType};base64,${img.data}` })) || [];
     const recoveredFiles: UploadedFile[] = userMsg.files?.map(f => ({ name: f.name, content: f.content, type: "" })) || [];
-    const modelSequence = prioritizeVisionAgentModels(
-      getAgentRequestModels(routerModels, effectiveAgentMode, selectedModel, userMsg.content, hasPreferredAutoModel, routerModelCatalog),
-      (userMsg.images?.length || 0) > 0,
-    );
+    const modelSequence = isLocalAgentModel(selectedModel)
+      ? [selectedModel]
+      : prioritizeVisionAgentModels(
+          getAgentRequestModels(routerModels, effectiveAgentMode, selectedModel, userMsg.content, hasPreferredAutoModel, routerModelCatalog),
+          (userMsg.images?.length || 0) > 0,
+        );
     await sendMessage(userMsg.content, recoveredImages, recoveredFiles, 0, true, modelSequence, requestOwnerUid);
   };
 
@@ -1655,7 +1753,7 @@ const AIAgent: React.FC = () => {
                           <div className="aiagent-model-picker-icon"><Bot size={19} /></div>
                           <div className="aiagent-model-picker-heading aiagent-popover">
                             <h3 id="aiagent-model-picker-title">AI Agent</h3>
-                            <p>Cloud uses this account&apos;s free-model catalog. Local is reserved for a future local model list.</p>
+                            <p>Cloud uses this account&apos;s free-model catalog. Local runs a GGUF model on this account&apos;s Kaggle GPU.</p>
                           </div>
                         </div>
                         <div className="aiagent-model-source-options" role="group" aria-label="AI model source">
@@ -1698,9 +1796,36 @@ const AIAgent: React.FC = () => {
                               No free Cloud models are available in this account&apos;s catalog.
                             </p>
                           ) : (
-                            <p className="aiagent-model-empty aiagent-popover" role="status">
-                              Local model catalog is empty for now.
-                            </p>
+                            <div className="aiagent-local-panel aiagent-popover">
+                              <p className="aiagent-model-empty" role="status">
+                                {!localStatus?.connected
+                                  ? "AI Local belum terhubung. Sambungkan worker GPU Kaggle milik akun ini."
+                                  : localStatus.status === "booting"
+                                    ? "Menyambung ke worker GPU Kaggle… (boot model bisa 1-3 menit)"
+                                    : localStatus.status === "ready"
+                                      ? localStatus.modelId
+                                        ? `Siap: ${localStatus.modelId}`
+                                        : "Worker AI Local siap."
+                                      : (localStatus.error || "Worker AI Local tidak aktif.")}
+                              </p>
+                              {isLocalConnecting && (
+                                <p className="aiagent-local-status" role="status">Memproses koneksi…</p>
+                              )}
+                              {localError && (
+                                <div className="aiagent-host-action-error" role="alert">{localError}</div>
+                              )}
+                              <button
+                                type="button"
+                                className="aiagent-model-option"
+                                onClick={() => void handleConnectLocal()}
+                                disabled={isLocalConnecting}
+                              >
+                                <span className="aiagent-model-option-copy aiagent-popover">
+                                  <strong>{localStatus?.connected ? "Reconnect AI Local" : "Connect AI Local"}</strong>
+                                  <small>Menjalankan model GGUF di GPU Kaggle</small>
+                                </span>
+                              </button>
+                            </div>
                           )}
                         </div>
                       </AIAgentPopover>
@@ -1725,6 +1850,17 @@ const AIAgent: React.FC = () => {
           <input type="file" ref={imageInputRef} accept="image/*" multiple style={{ display: "none" }} onChange={handleImageUpload} />
           <input type="file" ref={multiFileInputRef} multiple style={{ display: "none" }} onChange={handleMultiFilesUpload} />
           <input type="file" ref={folderInputRef} style={{ display: "none" }} {...{ webkitdirectory: "true", directory: "true" }} onChange={handleFolderUpload} />
+          <CloudModalKaggle
+            isOpen={isKaggleModalOpen}
+            onSave={handleLocalKaggleSave}
+            onClose={() => {
+              setIsKaggleModalOpen(false);
+              if (localKaggleSavedRef.current) {
+                localKaggleSavedRef.current = false;
+                void handleConnectLocal();
+              }
+            }}
+          />
           {pendingHostAction && (
             <div className="aiagent-host-action-overlay global-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="host-action-confirm-title">
               <section className="aiagent-host-action-dialog global-modal">

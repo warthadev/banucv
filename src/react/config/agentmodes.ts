@@ -1,4 +1,4 @@
-import { LOCAL_AGENT_MODEL } from "./agentrouting.ts";
+import { isLocalAgentModel } from "./agentrouting.ts";
 import type { AgentModel } from "./agentmodels.ts";
 
 export type AgentMode = "auto" | "thinking" | "fast" | "other";
@@ -13,9 +13,11 @@ type StoredConversationMessage = {
   error?: boolean;
 };
 
-// Reject the legacy Ollama identity even if it appears in a stale client cache.
+// Model lokal AI Local memakai id "local:<nama-gguf>" dari backend /agent/local.
+// Legacy Ollama identity tetap ditolak meski muncul di client cache lama.
 export const isLocalInferenceAgentModel = (model: string): boolean =>
-  (model.trim().toLowerCase().split("/").at(-1) || "") === LOCAL_AGENT_MODEL.toLowerCase();
+  isLocalAgentModel(model) ||
+  (model.trim().toLowerCase().split("/").at(-1) || "") === "mimo-v2.6:latest";
 
 export const isVerifiedFreeAgentModel = (model: string): boolean => {
   const normalized = model.trim().toLowerCase();

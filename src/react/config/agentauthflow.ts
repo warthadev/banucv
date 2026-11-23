@@ -13,5 +13,6 @@ export const shouldShowRouterAuthModal = ({
 }: RouterAuthModalState): boolean =>
   !isLoading && Boolean(userUid) && !isConfigured && !configurationError;
 
+// Model lokal tidak butuh key OpenRouter: chat-nya lewat worker Kaggle milik sendiri.
 export const canSendAgentModel = (isConfigured: boolean, selectedModelIsLocal: boolean): boolean =>
-  isConfigured && !selectedModelIsLocal;
+  selectedModelIsLocal || isConfigured;

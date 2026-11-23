@@ -437,11 +437,6 @@ export const useDlUniversal = ({
 
     try {
       const API_BASE = getActiveBase();
-<<<<<<< HEAD
-      // Setiap URL baru wajib mendapat session ID baru.
-      // Worker yang sedang aktif akan menerima session ini melalui queue.
-=======
->>>>>>> b71a9cf (update src)
       const body = {
         url: url.trim(),
         token: st.token, repo_id: st.repoId, repo_type: st.repoType, folder: st.folder,
@@ -540,13 +535,7 @@ export const useDlUniversal = ({
 
     try {
       const API_BASE = getActiveBase();
-<<<<<<< HEAD
-      // Jangan gunakan ulang session ID URL sebelumnya.
-      // Session baru akan diantrikan ke worker Kaggle yang masih hidup.
-      const res = await fetch(`${API_BASE}/universal/kaggle-start`, {
-=======
       const res = await fetchWithTimeout(`${API_BASE}/universal/kaggle-start`, {
->>>>>>> b71a9cf (update src)
         method: 'POST', headers: { ...(await getKaggleAuthHeaders()), 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: url.trim(),
@@ -599,7 +588,14 @@ export const useDlUniversal = ({
 
     try {
       const API_BASE = getActiveBase();
-      const r = await fetchWithTimeout(`${API_BASE}/universal/kaggle-update?session_id=${kaggleSessionIdRef.current}`, {
+      const sid = kaggleSessionIdRef.current;
+      if (!sid) {
+        // No live session (cleared/never stored): start a fresh one with the selected formats.
+        onLog(`[${siteRef.current}]\nSession not found, creating a new one with your selection...`, 'system');
+        await startRemoteWithSelection(url, formats);
+        return;
+      }
+      const r = await fetchWithTimeout(`${API_BASE}/universal/kaggle-update?session_id=${encodeURIComponent(sid)}`, {
         method: 'POST', headers: { ...(await getKaggleAuthHeaders()), 'Content-Type': 'application/json' },
         body: JSON.stringify({
           status: 'download', formats,
@@ -608,6 +604,13 @@ export const useDlUniversal = ({
           file_name: '', error: null, save_status: null, save_error: null, save_url: null,
         }),
       });
+      if (r.status === 410) {
+        // Backend lost the session (restart/redeploy/expired). Recover automatically.
+        clearRemoteSession();
+        onLog(`[${siteRef.current}]\nSession expired on server. Creating a new session with your selection...`, 'system');
+        await startRemoteWithSelection(url, formats);
+        return;
+      }
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       resolvingRef.current = false;
 
@@ -619,7 +622,7 @@ export const useDlUniversal = ({
       setStarting(false);
       onLog(`[${siteRef.current}]\nFailed to resume download: ${getErrorMessage(e, 'unknown error')}`, 'critical');
     }
-  }, [onLog, onResetLogs, pollProgress, startRemoteWithSelection]);
+  }, [onLog, onResetLogs, pollProgress, startRemoteWithSelection, clearRemoteSession]);
 
   const clearResolved = useCallback(() => { applyResolved(null); }, [applyResolved]);
 

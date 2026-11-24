@@ -1393,13 +1393,27 @@ const AIAgent: React.FC = () => {
     const textContext = messageText + imageNote + buildContextFromFiles(files);
     const prompt = textContext || (images.length ? "Describe these images" : "");
     const visionImages = images.filter((image) => image.data.length > 0 && image.data.length <= 9_000_000);
-    const { content, attachments: localAttachments } = await agentLocal.sendLocalChat(prompt, visionImages.map((image) => ({ mimeType: image.mimeType, data: image.data })));
+    setStreamActivity("Memahami permintaan…");
+    const activityTimer = window.setInterval(() => {
+      void agentLocal.pollActivity?.().then((line) => {
+        if (line) setStreamActivity(line);
+      });
+    }, 1200);
+    let content: string;
+    let localAttachments: Message["attachments"] = undefined;
+    try {
+      const result = await agentLocal.sendLocalChat(prompt, visionImages.map((image) => ({ mimeType: image.mimeType, data: image.data })));
+      content = result.content;
+      localAttachments = result.attachments && result.attachments.length > 0 ? result.attachments : undefined;
+    } finally {
+      window.clearInterval(activityTimer);
+    }
     if (currentUserUidRef.current !== requestOwnerUid || activeRequestIdRef.current !== requestId) {
       throw new Error("The signed-in account changed while this AI request was running");
     }
     const text = cleanMarkdown(content);
     if (!text) throw new Error("AI Local returned an empty response");
-    return { text, model: agentLocal.modelId || "ai-local", requestedModel: agentLocal.modelId || "ai-local", attachments: localAttachments.length > 0 ? localAttachments : undefined };
+    return { text, model: agentLocal.modelId || "ai-local", requestedModel: agentLocal.modelId || "ai-local", attachments: localAttachments };
   };
 
   const generateImage = async (prompt: string): Promise<string> => {

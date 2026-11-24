@@ -60,7 +60,7 @@ interface Message {
   errorDetails?: string;
   sources?: { title: string; url: string }[];
   searchImages?: string[];
-  attachments?: { name: string; path: string; mimeType: string; size?: number; dataUrl?: string }[];
+  attachments?: { name: string; path: string; mimeType: string; size?: number; dataUrl?: string; url?: string }[];
 }
 
 interface UploadedFile {
@@ -162,7 +162,7 @@ interface AgentStreamFinal {
   requestedModel: string;
   usage?: Message["usage"];
   sources?: { title: string; url: string }[];
-  attachments?: { name: string; path: string; mimeType: string; size?: number; dataUrl?: string }[];
+  attachments?: { name: string; path: string; mimeType: string; size?: number; dataUrl?: string; url?: string }[];
   pendingHostAction?: HostActionPreview;
 }
 
@@ -1385,7 +1385,7 @@ const AIAgent: React.FC = () => {
     files: UploadedFile[],
     requestOwnerUid: string,
     requestId: number,
-  ): Promise<{ text: string; model: string; requestedModel: string; usage?: Message["usage"]; sources?: { title: string; url: string }[]; searchImages?: string[]; pendingHostAction?: HostActionPreview }> => {
+  ): Promise<{ text: string; model: string; requestedModel: string; usage?: Message["usage"]; sources?: { title: string; url: string }[]; searchImages?: string[]; pendingHostAction?: HostActionPreview; attachments?: Message["attachments"] }> => {
     const imagePaths = images.filter((image) => image.kagglePath).map((image) => `- ${image.kagglePath} (${image.name || "image"})`);
     const imageNote = imagePaths.length
       ? `\n\nGambar juga disimpan di disk Kaggle. Untuk OCR gunakan read_document. Untuk melihat gambar gunakan inspect_image.\n${imagePaths.join("\n")}\n`
@@ -1393,13 +1393,13 @@ const AIAgent: React.FC = () => {
     const textContext = messageText + imageNote + buildContextFromFiles(files);
     const prompt = textContext || (images.length ? "Describe these images" : "");
     const visionImages = images.filter((image) => image.data.length > 0 && image.data.length <= 9_000_000);
-    const content = await agentLocal.sendLocalChat(prompt, visionImages.map((image) => ({ mimeType: image.mimeType, data: image.data })));
+    const { content, attachments: localAttachments } = await agentLocal.sendLocalChat(prompt, visionImages.map((image) => ({ mimeType: image.mimeType, data: image.data })));
     if (currentUserUidRef.current !== requestOwnerUid || activeRequestIdRef.current !== requestId) {
       throw new Error("The signed-in account changed while this AI request was running");
     }
     const text = cleanMarkdown(content);
     if (!text) throw new Error("AI Local returned an empty response");
-    return { text, model: agentLocal.modelId || "ai-local", requestedModel: agentLocal.modelId || "ai-local" };
+    return { text, model: agentLocal.modelId || "ai-local", requestedModel: agentLocal.modelId || "ai-local", attachments: localAttachments.length > 0 ? localAttachments : undefined };
   };
 
   const generateImage = async (prompt: string): Promise<string> => {
@@ -1874,8 +1874,8 @@ const AIAgent: React.FC = () => {
                           <img key={`att-img-${idx}`} src={a.dataUrl} alt={a.name} className="aiagent-attachment-image" onClick={() => window.open(a.dataUrl, "_blank")} />
                         ))}
                         {msg.attachments.filter(a => !(a.dataUrl && a.mimeType.startsWith("image/"))).map((a, idx) => (
-                          a.dataUrl ? (
-                            <a key={`att-file-${idx}`} className="file-chip file-chip-download" href={a.dataUrl} download={a.name} title="Download">
+                          (a.url || a.dataUrl) ? (
+                            <a key={`att-file-${idx}`} className="file-chip file-chip-download" href={a.url || a.dataUrl} download={a.name} target={a.url ? "_blank" : undefined} rel={a.url ? "noopener noreferrer" : undefined} title="Download">
                               <FileText size={14} /> {a.name}{a.size ? ` (${(a.size / 1024).toFixed(1)} kB)` : ""} <Download size={12} />
                             </a>
                           ) : (

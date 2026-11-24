@@ -209,6 +209,32 @@ const AIAgentPopover: React.FC<AIAgentPopoverProps> = ({
   </motion.div>
 );
 
+// Render inline markdown (bold, italic, inline code, links) inside table cells.
+// ReactMarkdown wraps everything in a <p>, which breaks <td>/<th> layout, so
+// table cells use this small, self-contained inline parser instead.
+const renderInlineMarkdown = (text: string): React.ReactNode[] => {
+  const nodes: React.ReactNode[] = [];
+  const pattern = /(\*\*([^*]+)\*\*|__([^_]+)__|`([^`]+)`|\*([^*]+)\*|_([^_]+)_|\[([^\]]+)\]\(([^)]+)\))/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) nodes.push(text.slice(lastIndex, match.index));
+    if (match[2] !== undefined || match[3] !== undefined) {
+      nodes.push(<strong key={key++}>{match[2] ?? match[3]}</strong>);
+    } else if (match[4] !== undefined) {
+      nodes.push(<code key={key++}>{match[4]}</code>);
+    } else if (match[5] !== undefined || match[6] !== undefined) {
+      nodes.push(<em key={key++}>{match[5] ?? match[6]}</em>);
+    } else if (match[7] !== undefined && match[8] !== undefined) {
+      nodes.push(<a key={key++} href={match[8]} target="_blank" rel="noopener noreferrer">{match[7]}</a>);
+    }
+    lastIndex = pattern.lastIndex;
+  }
+  if (lastIndex < text.length) nodes.push(text.slice(lastIndex));
+  return nodes;
+};
+
 const TableBlock = ({ content }: { content: string }) => {
   const [copied, setCopied] = useState(false);
 
@@ -269,7 +295,7 @@ const TableBlock = ({ content }: { content: string }) => {
         <thead>
           <tr>
             {headerCells.map((cell, idx) => (
-              <th key={idx}>{cell}</th>
+              <th key={idx}>{renderInlineMarkdown(cell)}</th>
             ))}
           </tr>
         </thead>
@@ -279,7 +305,7 @@ const TableBlock = ({ content }: { content: string }) => {
             return (
               <tr key={rowIdx}>
                 {cells.map((cell, cellIdx) => (
-                  <td key={cellIdx}>{cell}</td>
+                  <td key={cellIdx}>{renderInlineMarkdown(cell)}</td>
                 ))}
               </tr>
             );
@@ -1177,8 +1203,9 @@ const AIAgent: React.FC = () => {
         images: images.map((image) => ({ mime_type: image.mimeType, data: image.data })),
       }),
     });
-    if (response.status === 404) {
-      // Backend yang ter-deploy belum punya /agent/chat/stream (versi lama): pakai endpoint non-stream.
+    if (response.status === 404 || response.status === 503) {
+      // 404: backend lama belum punya /agent/chat/stream.
+      // 503: AGENT_RUNTIME_URL/Kaggle belum/tidak tersambung -> tetap jalan sebagai chat biasa (tanpa tool agent) lewat /agent/chat.
       const fallback = await fetch(`${route.apiBase}/agent/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
@@ -1796,7 +1823,13 @@ const AIAgent: React.FC = () => {
                           <img key={`att-img-${idx}`} src={a.dataUrl} alt={a.name} className="aiagent-attachment-image" onClick={() => window.open(a.dataUrl, "_blank")} />
                         ))}
                         {msg.attachments.filter(a => !(a.dataUrl && a.mimeType.startsWith("image/"))).map((a, idx) => (
-                          <div key={`att-file-${idx}`} className="file-chip"><FileText size={14} /> {a.name}{a.size ? ` (${(a.size / 1024).toFixed(1)} kB)` : ""}</div>
+                          a.dataUrl ? (
+                            <a key={`att-file-${idx}`} className="file-chip file-chip-download" href={a.dataUrl} download={a.name} title="Download">
+                              <FileText size={14} /> {a.name}{a.size ? ` (${(a.size / 1024).toFixed(1)} kB)` : ""} <Download size={12} />
+                            </a>
+                          ) : (
+                            <div key={`att-file-${idx}`} className="file-chip"><FileText size={14} /> {a.name}{a.size ? ` (${(a.size / 1024).toFixed(1)} kB)` : ""}</div>
+                          )
                         ))}
                       </div>
                     )}

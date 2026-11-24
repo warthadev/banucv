@@ -7,12 +7,12 @@ import {
 } from "lucide-react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
+import useAgentLocal from "@hook/useagentlocal";
 import { AI_AGENT_API_BASE } from "@config/api";
 import { saveOpenRouterCredentials } from "@config/routerhelper";
+import { saveKaggleCredentials } from "@config/kagglecredentials";
 import { canSendAgentModel, shouldShowRouterAuthModal } from "@config/agentauthflow";
-import { isLocalAgentModel, isRetryableAgentAvailabilityError, LOCAL_AGENT_MODEL_PREFIX, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
-import { connectLocalAgent, fetchLocalAgentStatus, pollLocalAgentUntilReady, type LocalAgentPollHandle, type LocalAgentStatus } from "@config/agentlocal";
-import { loadKaggleCredentials, saveKaggleCredentials } from "@config/kagglecredentials";
+import { isLocalAgentModel, isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
 import { CloudModalKaggle } from "./cloudmodalkaggle";
 import { buildModelScopedHistory, formatAgentFileContext, getAgentRequestModels, getAgentMessagesStorageKey, getAgentPreferencesStorageKey, parseAgentModeSettings, type AgentMode } from "@config/agentmodes";
 import { parseAgentFile } from "@config/agentfileparser";
@@ -693,22 +693,33 @@ const AIAgent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [preferredModel, setPreferredModel] = useState("");
   const [modelSource, setModelSource] = useState<"cloud" | "local">("cloud");
-  const [localStatus, setLocalStatus] = useState<LocalAgentStatus | null>(null);
-  const [isLocalConnecting, setIsLocalConnecting] = useState(false);
-  const [localError, setLocalError] = useState<string | null>(null);
-  const [isKaggleModalOpen, setIsKaggleModalOpen] = useState(false);
   const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
   const effectiveAgentMode: AgentMode = "auto";
   const cloudModelOptions = routerModels.filter((model) => !isLocalAgentModel(model));
-  const localModelId = localStatus?.connected ? (localStatus.modelId || "") : "";
-  const localModelOptions = localModelId ? [`${LOCAL_AGENT_MODEL_PREFIX}${localModelId}`] : [];
+  const agentLocal = useAgentLocal();
+  const localModelOptions = agentLocal.modelId ? [agentLocal.modelId] : [];
   const modelOptions = modelSource === "cloud" ? cloudModelOptions : localModelOptions;
   const selectedModel = modelOptions.includes(preferredModel) ? preferredModel : modelOptions[0] || "";
   const hasPreferredAutoModel = modelOptions.includes(preferredModel);
   const requestModelOptions = modelSource === "cloud"
     ? getAgentRequestModels(cloudModelOptions, effectiveAgentMode, selectedModel, "", hasPreferredAutoModel, routerModelCatalog)
-    : modelOptions;
+    : [];
   const autoRecommendedModel = getAgentRequestModels(cloudModelOptions, "auto", "", input, false, routerModelCatalog)[0] || "";
+  const isLocalSourceReady = modelSource === "local" && agentLocal.status === "ready" && Boolean(agentLocal.modelId);
+  const canSendCurrentSource = modelSource === "cloud"
+    ? canSendAgentModel(isConfigured, isLocalAgentModel(selectedModel)) && Boolean(selectedModel) && modelOptions.includes(selectedModel) && requestModelOptions.length > 0
+    : isLocalSourceReady;
+  const [isKaggleModalOpen, setIsKaggleModalOpen] = useState(false);
+  const [isSavingKaggleCredentials, setIsSavingKaggleCredentials] = useState(false);
+  const handleSaveKaggleCredentials = async (username: string, apiToken: string) => {
+    setIsSavingKaggleCredentials(true);
+    try {
+      await saveKaggleCredentials(username, apiToken);
+      await agentLocal.checkCredentials();
+    } finally {
+      setIsSavingKaggleCredentials(false);
+    }
+  };
   const isRouterAuthModalOpen = shouldShowRouterAuthModal({
     isLoading: authLoading,
     userUid: currentUserUid,
@@ -743,67 +754,6 @@ const AIAgent: React.FC = () => {
   const [hostActionError, setHostActionError] = useState("");
   const [confirmLabelChoice, setConfirmLabelChoice] = useState<"A" | "B" | "C" | "custom">("A");
   const [customConfirmLabel, setCustomConfirmLabel] = useState("");
-  const localPollRef = useRef<LocalAgentPollHandle | null>(null);
-  const localKaggleSavedRef = useRef(false);
-
-  const cancelLocalPoll = () => {
-    if (localPollRef.current) {
-      localPollRef.current.cancel();
-      localPollRef.current = null;
-    }
-    setIsLocalConnecting(false);
-  };
-
-  const handleLocalKaggleSave = async (username: string, apiToken: string) => {
-    await saveKaggleCredentials(username, apiToken);
-    localKaggleSavedRef.current = true;
-  };
-
-  const handleConnectLocal = async () => {
-    if (isLocalConnecting || !currentUserUidRef.current) return;
-    setIsLocalConnecting(true);
-    setLocalError(null);
-    try {
-      const credentials = await loadKaggleCredentials();
-      if (!credentials) {
-        setIsKaggleModalOpen(true);
-        return;
-      }
-      let status: LocalAgentStatus;
-      try {
-        status = await fetchLocalAgentStatus();
-      } catch {
-        status = { connected: false, status: "offline", modelId: null, error: null, alive: false, sessionId: null };
-      }
-      if (!(status.connected && status.status !== "error")) {
-        try {
-          status = await connectLocalAgent();
-        } catch (connectError) {
-          const message = connectError instanceof Error ? connectError.message : "";
-          if (/kaggle/i.test(message)) {
-            setIsKaggleModalOpen(true);
-            return;
-          }
-          throw connectError;
-        }
-        setLocalStatus(status);
-      } else {
-        setLocalStatus(status);
-      }
-      if (status.status === "ready") return;
-      const poll = pollLocalAgentUntilReady((next) => {
-        if (next) setLocalStatus(next);
-      });
-      localPollRef.current = poll;
-      const finalStatus = await poll.promise;
-      localPollRef.current = null;
-      if (finalStatus.status === "error") setLocalError(finalStatus.error);
-    } catch (error) {
-      setLocalError(error instanceof Error ? error.message : "Failed to connect AI Local");
-    } finally {
-      setIsLocalConnecting(false);
-    }
-  };
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const speechSynthRef = useRef<SpeechSynthesis | null>(null);
@@ -827,9 +777,6 @@ const AIAgent: React.FC = () => {
       setPreferredModel("");
       setModelSource("cloud");
       setPreferencesOwnerUid(null);
-      cancelLocalPoll();
-      setLocalStatus(null);
-      setIsKaggleModalOpen(false);
       return;
     }
     const uid = currentUserUid;
@@ -842,8 +789,6 @@ const AIAgent: React.FC = () => {
     } catch (error) {
       console.warn("Failed to load this account's AI preferences:", error);
     }
-    cancelLocalPoll();
-    setLocalStatus(null);
     setModelSource("cloud");
     setPreferredModel(savedPreferences.model);
     setMessagesOwnerUid(uid);
@@ -863,21 +808,6 @@ const AIAgent: React.FC = () => {
       }
     }
   }, [currentUserUid, preferencesOwnerUid, preferredModel]);
-
-  useEffect(() => {
-    if (modelSource !== "local" || !currentUserUid) return;
-    let cancelled = false;
-    fetchLocalAgentStatus()
-      .then((status) => {
-        if (!cancelled) setLocalStatus(status);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [modelSource, currentUserUid]);
-
-  useEffect(() => () => cancelLocalPoll(), []);
 
   useEffect(() => {
     let disposed = false;
@@ -1146,14 +1076,10 @@ const AIAgent: React.FC = () => {
     }
     const prompt = textContext || (images.length ? "Describe these images" : "");
     const route = resolveAgentModelRoute(modelName, AI_AGENT_API_BASE);
-    const isLocalModel = isLocalAgentModel(modelName);
-    const response = await fetch(`${route.apiBase}${isLocalModel ? "/agent/local/chat" : "/agent/chat"}`, {
+    const response = await fetch(`${route.apiBase}/agent/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
-      body: JSON.stringify(isLocalModel ? {
-        prompt,
-        images: images.map((image) => ({ mime_type: image.mimeType, data: image.data })),
-      } : {
+      body: JSON.stringify({
         provider: connectedProvider || "",
         model: route.model,
         prompt,
@@ -1185,6 +1111,24 @@ const AIAgent: React.FC = () => {
     const text = cleanMarkdown(result.content || "");
     if (!text) throw new Error("AI Agent returned an empty response");
     return { text, model: result.model || modelName, requestedModel: originallyRequestedModel, usage: normalizeTokenUsage(result.usage || data?.data?.usage), sources: normalizeAgentSources(result.sources), searchImages: [] };
+  };
+
+  const callLocalAI = async (
+    messageText: string,
+    images: UploadedImage[],
+    files: UploadedFile[],
+    requestOwnerUid: string,
+    requestId: number,
+  ): Promise<{ text: string; model: string; requestedModel: string; usage?: Message["usage"]; sources?: { title: string; url: string }[]; searchImages?: string[]; pendingHostAction?: HostActionPreview }> => {
+    const textContext = messageText + buildContextFromFiles(files);
+    const prompt = textContext || (images.length ? "Describe these images" : "");
+    const content = await agentLocal.sendLocalChat(prompt, images.map((image) => ({ mimeType: image.mimeType, data: image.data })));
+    if (currentUserUidRef.current !== requestOwnerUid || activeRequestIdRef.current !== requestId) {
+      throw new Error("The signed-in account changed while this AI request was running");
+    }
+    const text = cleanMarkdown(content);
+    if (!text) throw new Error("AI Local returned an empty response");
+    return { text, model: agentLocal.modelId || "ai-local", requestedModel: agentLocal.modelId || "ai-local" };
   };
 
   const generateImage = async (prompt: string): Promise<string> => {
@@ -1262,7 +1206,9 @@ const AIAgent: React.FC = () => {
     }
 
     try {
-      const response = await callAI(messageText, images, files, retryModelIndex, messagesRef.current, isRetry, messageText, modelSequence, requestOwnerUid, requestId);
+      const response = modelSource === "local"
+        ? await callLocalAI(messageText, images, files, requestOwnerUid, requestId)
+        : await callAI(messageText, images, files, retryModelIndex, messagesRef.current, isRetry, messageText, modelSequence, requestOwnerUid, requestId);
       if (!isCurrentRequest()) return;
       if (response.pendingHostAction) {
         setPendingHostAction(response.pendingHostAction);
@@ -1332,9 +1278,9 @@ const AIAgent: React.FC = () => {
 
   const handleSendMessage = async () => {
     const requestOwnerUid = currentUserUidRef.current;
-    if (!requestOwnerUid || requestOwnerUid !== currentUserUid || messagesOwnerUid !== requestOwnerUid || pendingHostAction || (!input.trim() && !uploadedImages.length && !uploadedFiles.length) || isLoading || !canSendAgentModel(isConfigured, isLocalAgentModel(selectedModel)) || !selectedModel || !modelOptions.includes(selectedModel) || !requestModelOptions.length) return;
+    if (!requestOwnerUid || requestOwnerUid !== currentUserUid || messagesOwnerUid !== requestOwnerUid || pendingHostAction || (!input.trim() && !uploadedImages.length && !uploadedFiles.length) || isLoading || !canSendCurrentSource) return;
     const currentInput = input, currentImages = [...uploadedImages], currentFiles = [...uploadedFiles];
-    const modelSequence = isLocalAgentModel(selectedModel)
+    const modelSequence = modelSource === "local"
       ? [selectedModel]
       : prioritizeVisionAgentModels(
           getAgentRequestModels(routerModels, effectiveAgentMode, selectedModel, currentInput, hasPreferredAutoModel, routerModelCatalog),
@@ -1348,7 +1294,7 @@ const AIAgent: React.FC = () => {
 
   const retryMessage = async (messageId: string) => {
     const requestOwnerUid = currentUserUidRef.current;
-    if (!requestOwnerUid || requestOwnerUid !== currentUserUid || messagesOwnerUid !== requestOwnerUid || isLoading || !selectedModel || !modelOptions.includes(selectedModel) || !requestModelOptions.length) return;
+    if (!requestOwnerUid || requestOwnerUid !== currentUserUid || messagesOwnerUid !== requestOwnerUid || isLoading || !canSendCurrentSource) return;
     const errorIndex = messages.findIndex(m => m.id === messageId);
     if (errorIndex <= 0) return;
     const userMsg = messages[errorIndex - 1];
@@ -1357,7 +1303,7 @@ const AIAgent: React.FC = () => {
     setMessages(prev => prev.filter(m => m.id !== messageId));
     const recoveredImages: UploadedImage[] = userMsg.images?.map(img => ({ data: img.data, mimeType: img.mimeType, preview: `data:${img.mimeType};base64,${img.data}` })) || [];
     const recoveredFiles: UploadedFile[] = userMsg.files?.map(f => ({ name: f.name, content: f.content, type: "" })) || [];
-    const modelSequence = isLocalAgentModel(selectedModel)
+    const modelSequence = modelSource === "local"
       ? [selectedModel]
       : prioritizeVisionAgentModels(
           getAgentRequestModels(routerModels, effectiveAgentMode, selectedModel, userMsg.content, hasPreferredAutoModel, routerModelCatalog),
@@ -1753,7 +1699,7 @@ const AIAgent: React.FC = () => {
                           <div className="aiagent-model-picker-icon"><Bot size={19} /></div>
                           <div className="aiagent-model-picker-heading aiagent-popover">
                             <h3 id="aiagent-model-picker-title">AI Agent</h3>
-                            <p>Cloud uses this account&apos;s free-model catalog. Local runs a GGUF model on this account&apos;s Kaggle GPU.</p>
+                            <p>Cloud uses this account&apos;s free-model catalog. Local runs on your own Kaggle GPU.</p>
                           </div>
                         </div>
                         <div className="aiagent-model-source-options" role="group" aria-label="AI model source">
@@ -1770,7 +1716,7 @@ const AIAgent: React.FC = () => {
                             onClick={() => setModelSource("local")}
                           >Local</button>
                         </div>
-                        <div className="aiagent-model-option-list" role="list" aria-label="Cloud models available to this account">
+                        <div className="aiagent-model-option-list" role="list" aria-label={modelSource === "cloud" ? "Cloud models available to this account" : "AI Local status"}>
                           {modelSource === "cloud" ? modelOptions.length ? modelOptions.map((model) => {
                             const isSelected = hasPreferredAutoModel ? model === selectedModel : model === autoRecommendedModel;
                             return (
@@ -1796,35 +1742,52 @@ const AIAgent: React.FC = () => {
                               No free Cloud models are available in this account&apos;s catalog.
                             </p>
                           ) : (
-                            <div className="aiagent-local-panel aiagent-popover">
-                              <p className="aiagent-model-empty" role="status">
-                                {!localStatus?.connected
-                                  ? "AI Local belum terhubung. Sambungkan worker GPU Kaggle milik akun ini."
-                                  : localStatus.status === "booting"
-                                    ? "Menyambung ke worker GPU Kaggle… (boot model bisa 1-3 menit)"
-                                    : localStatus.status === "ready"
-                                      ? localStatus.modelId
-                                        ? `Siap: ${localStatus.modelId}`
-                                        : "Worker AI Local siap."
-                                      : (localStatus.error || "Worker AI Local tidak aktif.")}
-                              </p>
-                              {isLocalConnecting && (
-                                <p className="aiagent-local-status" role="status">Memproses koneksi…</p>
+                            <div className="aiagent-local-status aiagent-popover" role="status">
+                              {agentLocal.status === "checking-credentials" && <p>Memeriksa kredensial Kaggle…</p>}
+                              {agentLocal.status === "needs-credentials" && (
+                                <>
+                                  <p>Sambungkan akun Kaggle lu dulu buat jalanin model lokal lewat GPU gratis Kaggle.</p>
+                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => setIsKaggleModalOpen(true)}>
+                                    Hubungkan Kaggle
+                                  </button>
+                                </>
                               )}
-                              {localError && (
-                                <div className="aiagent-host-action-error" role="alert">{localError}</div>
+                              {agentLocal.status === "disconnected" && (
+                                <>
+                                  <p>AI Local belum disambungkan.</p>
+                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.connect()}>
+                                    Jalankan di Kaggle
+                                  </button>
+                                </>
                               )}
-                              <button
-                                type="button"
-                                className="aiagent-model-option"
-                                onClick={() => void handleConnectLocal()}
-                                disabled={isLocalConnecting}
-                              >
-                                <span className="aiagent-model-option-copy aiagent-popover">
-                                  <strong>{localStatus?.connected ? "Reconnect AI Local" : "Connect AI Local"}</strong>
-                                  <small>Menjalankan model GGUF di GPU Kaggle</small>
-                                </span>
-                              </button>
+                              {agentLocal.status === "connecting" && <p>Menyalakan worker Kaggle…</p>}
+                              {agentLocal.status === "booting" && <p>Memuat GPU &amp; model (bisa 1–3 menit)…</p>}
+                              {agentLocal.status === "error" && (
+                                <>
+                                  <p className="aiagent-local-error">{agentLocal.error || "AI Local gagal terhubung."}</p>
+                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.connect()}>
+                                    Coba lagi
+                                  </button>
+                                </>
+                              )}
+                              {agentLocal.status === "ready" && localModelOptions.map((model) => (
+                                <button
+                                  type="button"
+                                  key={model}
+                                  className={`aiagent-model-option${model === selectedModel ? " selected" : ""}`}
+                                  aria-pressed={model === selectedModel}
+                                  onClick={() => {
+                                    setPreferredModel(model);
+                                    setIsModelPickerOpen(false);
+                                  }}
+                                >
+                                  <span className="aiagent-model-option-copy aiagent-popover">
+                                    <strong>{model}</strong>
+                                    <small>Lokal · Kaggle GPU</small>
+                                  </span>
+                                  {model === selectedModel && <Check size={17} aria-hidden="true" />}
+                                </button>
+                              ))}
                             </div>
                           )}
                         </div>
@@ -1841,7 +1804,7 @@ const AIAgent: React.FC = () => {
                 </button>
                 <button onClick={clearChat} className="aiagent-clear-btn"><Trash2 size={22} /></button>
               </div>
-              <button onClick={handleSendMessage} disabled={isLoading || Boolean(pendingHostAction) || !selectedModel || !modelOptions.includes(selectedModel) || !requestModelOptions.length || (!input.trim() && !uploadedImages.length && !uploadedFiles.length)} className="aiagent-send-btn">
+              <button onClick={handleSendMessage} disabled={isLoading || Boolean(pendingHostAction) || !canSendCurrentSource || (!input.trim() && !uploadedImages.length && !uploadedFiles.length)} className="aiagent-send-btn">
                 {isLoading ? <Loader2 size={24} className="spin" /> : <Send size={24} />}
               </button>
             </div>
@@ -1850,17 +1813,6 @@ const AIAgent: React.FC = () => {
           <input type="file" ref={imageInputRef} accept="image/*" multiple style={{ display: "none" }} onChange={handleImageUpload} />
           <input type="file" ref={multiFileInputRef} multiple style={{ display: "none" }} onChange={handleMultiFilesUpload} />
           <input type="file" ref={folderInputRef} style={{ display: "none" }} {...{ webkitdirectory: "true", directory: "true" }} onChange={handleFolderUpload} />
-          <CloudModalKaggle
-            isOpen={isKaggleModalOpen}
-            onSave={handleLocalKaggleSave}
-            onClose={() => {
-              setIsKaggleModalOpen(false);
-              if (localKaggleSavedRef.current) {
-                localKaggleSavedRef.current = false;
-                void handleConnectLocal();
-              }
-            }}
-          />
           {pendingHostAction && (
             <div className="aiagent-host-action-overlay global-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="host-action-confirm-title">
               <section className="aiagent-host-action-dialog global-modal">
@@ -1890,6 +1842,12 @@ const AIAgent: React.FC = () => {
               </section>
             </div>
           )}
+          <CloudModalKaggle
+            isOpen={isKaggleModalOpen}
+            isLoading={isSavingKaggleCredentials}
+            onSave={handleSaveKaggleCredentials}
+            onClose={() => setIsKaggleModalOpen(false)}
+          />
         </div>
       )}
     </>

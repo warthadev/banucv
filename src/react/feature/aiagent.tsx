@@ -29,6 +29,59 @@ import { RouterAuthModal } from "./routerauthmodal";
 
 const STREAM_MESSAGE_ID = "streaming";
 
+/** Natural rotating status lines so the wait feels alive (not a static model name). */
+const NATURAL_THINKING_PHRASES = [
+  "Sedang berpikir…",
+  "Memahami permintaan…",
+  "Menyusun jawaban…",
+  "Membaca konteks…",
+  "Memeriksa detail…",
+  "Merangkai respons…",
+  "Menyiapkan struktur…",
+  "Mengolah informasi…",
+];
+
+const STRUCTURE_THINKING_PHRASES = [
+  "Membaca struktur folder…",
+  "Menelusuri file…",
+  "Menyusun pohon direktori…",
+  "Mengumpulkan daftar lengkap…",
+  "Memastikan tidak ada yang terlewat…",
+];
+
+const pickThinkingPhrase = (seed: number, preferStructure = false): string => {
+  const list = preferStructure ? STRUCTURE_THINKING_PHRASES : NATURAL_THINKING_PHRASES;
+  return list[Math.abs(seed) % list.length];
+};
+
+/** Client-side progressive reveal so local (non-stream) replies still appear token-by-token. */
+const revealTextProgressively = (
+  fullText: string,
+  onChunk: (partial: string) => void,
+  isStillCurrent: () => boolean,
+  options?: { charsPerTick?: number; tickMs?: number },
+): Promise<void> => {
+  const charsPerTick = options?.charsPerTick ?? 14;
+  const tickMs = options?.tickMs ?? 14;
+  return new Promise((resolve) => {
+    let index = 0;
+    const step = () => {
+      if (!isStillCurrent()) {
+        resolve();
+        return;
+      }
+      index = Math.min(fullText.length, index + charsPerTick);
+      onChunk(fullText.slice(0, index));
+      if (index >= fullText.length) {
+        resolve();
+        return;
+      }
+      window.setTimeout(step, tickMs);
+    };
+    step();
+  });
+};
+
 const ROOT_CONFIRM_LABELS = {
   A: "Setujui aksi ini",
   B: "Jalankan aksi persis ini",
@@ -1393,12 +1446,21 @@ const AIAgent: React.FC = () => {
     const textContext = messageText + imageNote + buildContextFromFiles(files);
     const prompt = textContext || (images.length ? "Describe these images" : "");
     const visionImages = images.filter((image) => image.data.length > 0 && image.data.length <= 9_000_000);
-    setStreamActivity("Memahami permintaan…");
+    const wantsStructure = /struktur|structure|tree|pohon|direktori|directory|folder|arsip|archive|lengkap|complete|full list|daftar lengkap|extract/i.test(messageText);
+    let phraseIndex = 0;
+    setStreamActivity(pickThinkingPhrase(phraseIndex, wantsStructure));
     const activityTimer = window.setInterval(() => {
+      phraseIndex += 1;
       void agentLocal.pollActivity?.().then((line) => {
-        if (line) setStreamActivity(line);
+        if (line && line.trim()) {
+          setStreamActivity(line.trim());
+        } else {
+          setStreamActivity(pickThinkingPhrase(phraseIndex, wantsStructure));
+        }
+      }).catch(() => {
+        setStreamActivity(pickThinkingPhrase(phraseIndex, wantsStructure));
       });
-    }, 1200);
+    }, 1600);
     let content: string;
     let localAttachments: Message["attachments"] = undefined;
     try {
@@ -1442,6 +1504,8 @@ const AIAgent: React.FC = () => {
     activeRequestIdRef.current = requestId;
     const isCurrentRequest = () => currentUserUidRef.current === requestOwnerUid && activeRequestIdRef.current === requestId && messagesOwnerUid === requestOwnerUid;
     setIsLoading(true);
+    const wantsStructure = /struktur|structure|tree|pohon|direktori|directory|folder|arsip|archive|lengkap|complete|full list|daftar lengkap|extract/i.test(messageText);
+    setStreamActivity(pickThinkingPhrase(Date.now(), wantsStructure));
 
     if (!isRetry) {
       const userMsg: Message = {
@@ -1504,25 +1568,83 @@ const AIAgent: React.FC = () => {
         setMessages(prev => prev.filter(m => m.id !== STREAM_MESSAGE_ID));
         return;
       }
-      const finalizeMessage = (msg: Message): Message => ({ ...msg, content: response.text, model: response.model, requestedModel: response.requestedModel, usage: response.usage, sources: response.sources && response.sources.length > 0 ? response.sources : undefined, attachments: response.attachments && response.attachments.length > 0 ? response.attachments : undefined });
-      setMessages(prev => {
+      const finalizeMessage = (msg: Message): Message => ({
+        ...msg,
+        content: response.text,
+        model: response.model,
+        requestedModel: response.requestedModel,
+        usage: response.usage,
+        sources: response.sources && response.sources.length > 0 ? response.sources : undefined,
+        attachments: response.attachments && response.attachments.length > 0 ? response.attachments : undefined,
+      });
+      const hadStreamTokens = messagesRef.current.some(
+        (m) => m.id === STREAM_MESSAGE_ID && m.role === "bot" && Boolean(m.content?.trim()),
+      );
+      // Local (and non-streaming fallback) arrives as one blob — reveal progressively so the chat feels live.
+      if (!hadStreamTokens && response.text.length > 40) {
+        setStreamActivity("Menulis jawaban…");
+        setMessages((prev) => {
+          const withoutStream = prev.filter((m) => m.id !== STREAM_MESSAGE_ID);
+          return [
+            ...withoutStream,
+            {
+              id: STREAM_MESSAGE_ID,
+              role: "bot" as const,
+              content: "",
+              model: response.model,
+              requestedModel: response.requestedModel,
+              timestamp: new Date(),
+            },
+          ];
+        });
+        await revealTextProgressively(
+          response.text,
+          (partial) => {
+            if (!isCurrentRequest()) return;
+            setMessages((prev) => {
+              const last = prev[prev.length - 1];
+              if (last && last.id === STREAM_MESSAGE_ID && last.role === "bot") {
+                return [...prev.slice(0, -1), { ...last, content: partial }];
+              }
+              return [
+                ...prev,
+                {
+                  id: STREAM_MESSAGE_ID,
+                  role: "bot" as const,
+                  content: partial,
+                  model: response.model,
+                  requestedModel: response.requestedModel,
+                  timestamp: new Date(),
+                },
+              ];
+            });
+          },
+          isCurrentRequest,
+          { charsPerTick: response.text.length > 2000 ? 28 : 14, tickMs: 12 },
+        );
+        if (!isCurrentRequest()) return;
+      }
+      setMessages((prev) => {
         const last = prev[prev.length - 1];
         if (last && last.id === STREAM_MESSAGE_ID && last.role === "bot") {
           return [...prev.slice(0, -1), finalizeMessage({ ...last, id: (Date.now() + 1).toString() })];
         }
-        return [...prev, finalizeMessage({
-          id: (Date.now() + 1).toString(),
-          role: "bot",
-          content: response.text,
-          model: response.model,
-          requestedModel: response.requestedModel,
-          usage: response.usage,
-          timestamp: new Date(),
-        })];
+        return [
+          ...prev,
+          finalizeMessage({
+            id: (Date.now() + 1).toString(),
+            role: "bot",
+            content: response.text,
+            model: response.model,
+            requestedModel: response.requestedModel,
+            usage: response.usage,
+            timestamp: new Date(),
+          }),
+        ];
       });
       setStreamActivity(null);
 
-      if (aiMode === 'auto') {
+      if (aiMode === "auto") {
         speakText(response.text, (Date.now() + 1).toString());
       }
     } catch (error: unknown) {
@@ -1935,10 +2057,17 @@ const AIAgent: React.FC = () => {
                 </motion.div>
               ))}
             </AnimatePresence>
-            {isLoading && (
-              <div className="aiagent-typing">
-                <div className="aiagent-typing-content">
-                  <div className="aiagent-typing-header"><span>{streamActivity || selectedModel}</span><div className="aiagent-typing-dots"><span></span><span></span><span></span></div></div>
+            {isLoading && !messages.some((m) => m.id === STREAM_MESSAGE_ID && Boolean(m.content?.trim())) && (
+              <div className="aiagent-typing" role="status" aria-live="polite">
+                <div className="aiagent-typing-content aiagent-thinking-live">
+                  <div className="aiagent-thinking-pulse" aria-hidden="true" />
+                  <div className="aiagent-typing-header">
+                    <span className="aiagent-thinking-label">{streamActivity || "Sedang berpikir…"}</span>
+                    <div className="aiagent-typing-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+                  </div>
+                  {selectedModel && (
+                    <div className="aiagent-thinking-model">{selectedModel}</div>
+                  )}
                 </div>
               </div>
             )}

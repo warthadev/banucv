@@ -29,6 +29,52 @@ export interface AgentLocalCheck {
   detail?: string | null;
 }
 
+export interface AgentLocalAttachment {
+  name: string;
+  path: string;
+  mimeType: string;
+  size?: number;
+  dataUrl?: string; // small files sent inline by the worker (base64)
+  url?: string; // large files: direct https link (Hugging Face), downloaded by the browser without touching our server
+}
+
+// Direct links are only trusted when they point at Hugging Face, so a compromised worker cannot plant arbitrary links in the chat.
+const DOWNLOAD_HOSTS = ["huggingface.co", "hf.co"];
+const MIME_PATTERN = /^[\w.+-]+\/[\w.+-]+$/;
+
+const isTrustedDownloadUrl = (value: string): boolean => {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" && DOWNLOAD_HOSTS.some((host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`));
+  } catch {
+    return false;
+  }
+};
+
+const normalizeLocalAttachments = (raw: unknown): AgentLocalAttachment[] => {
+  if (!Array.isArray(raw)) return [];
+  const result: AgentLocalAttachment[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const entry = item as Record<string, unknown>;
+    const name = typeof entry.name === "string" ? entry.name.replace(/[\\/]/g, "_").slice(0, 200).trim() : "";
+    if (!name) continue;
+    const mimeRaw = String(entry.mime_type ?? entry.mimeType ?? "");
+    const mimeType = MIME_PATTERN.test(mimeRaw) ? mimeRaw : "application/octet-stream";
+    const size = typeof entry.size === "number" && entry.size >= 0 ? entry.size : undefined;
+    const path = typeof entry.path === "string" ? entry.path : "";
+    const base64 = typeof entry.data_base64 === "string" ? entry.data_base64 : "";
+    const link = typeof entry.url === "string" ? entry.url : "";
+    if (link && isTrustedDownloadUrl(link)) {
+      const url = link.includes("download=") ? link : `${link}${link.includes("?") ? "&" : "?"}download=true`;
+      result.push({ name, path, mimeType, size, url });
+    } else if (base64 && /^[A-Za-z0-9+/=\s]+$/.test(base64)) {
+      result.push({ name, path, mimeType, size, dataUrl: `data:${mimeType};base64,${base64.replace(/\s+/g, "")}` });
+    }
+  }
+  return result;
+};
+
 interface AgentLocalPreflightResponse {
   can_start?: boolean;
   blocker?: string | null;
@@ -295,7 +341,8 @@ export const useAgentLocal = () => {
       });
       const content = data?.data?.result?.content;
       if (typeof content !== "string" || !content) throw new Error("AI Local returned an empty response");
-      return content as string;
+      const attachments = normalizeLocalAttachments(data?.data?.result?.attachments);
+      return { content: content as string, attachments };
     } catch (err) {
       // 409/503/504 biasanya berarti worker Kaggle sudah mati -> perbarui UI supaya muncul tombol "Jalankan ulang".
       void refreshStatus();

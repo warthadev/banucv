@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
-import useAgentLocal from "@hook/useagentlocal";
+import useAgentLocal, { type AgentLocalCheck, type AgentLocalStep } from "@hook/useagentlocal";
 import { AI_AGENT_API_BASE } from "@config/api";
 import { saveOpenRouterCredentials } from "@config/routerhelper";
 import { saveKaggleCredentials } from "@config/kagglecredentials";
@@ -422,8 +422,50 @@ const MarkdownComponents: Components = {
 
 const cleanMarkdown = (text: string) => text.split("\u0000").join("").replace(/\r\n/g, "\n").trim();
 
-const stripMarkdownForSpeech = (text: string) => text
-  .replace(/```[\s\S]*?```/g, "code block")
+const formatElapsed = (totalSeconds: number) => {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+};
+
+const LocalBootProgress = ({ steps, connecting }: { steps: AgentLocalStep[]; connecting: boolean }) => {
+  // Before the first status response arrives, show the first step as in progress.
+  const visible: AgentLocalStep[] = steps.length
+    ? steps
+    : [{ id: "push", label: "Sending the worker to Kaggle", state: connecting ? "active" : "pending" }];
+  return (
+    <ol className="aiagent-local-steps" aria-label="Kaggle startup progress">
+      {visible.map((step) => (
+        <li key={step.id} className={`aiagent-local-step aiagent-local-step-${step.state}`}>
+          <span className="aiagent-local-step-mark" aria-hidden="true">
+            {step.state === "done" ? "✓" : step.state === "error" ? "!" : step.state === "active" ? "…" : "·"}
+          </span>
+          <span className="aiagent-local-step-copy">
+            <span>{step.label}</span>
+            {step.detail && <small>{step.detail}</small>}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+};
+
+const LocalChecklist = ({ checks }: { checks: AgentLocalCheck[] }) => (
+  <ul className="aiagent-local-steps" aria-label="Requirements">
+    {checks.map((check) => (
+      <li key={check.id} className={`aiagent-local-step aiagent-local-step-${check.ok ? "done" : "error"}`}>
+        <span className="aiagent-local-step-mark" aria-hidden="true">{check.ok ? "✓" : "!"}</span>
+        <span className="aiagent-local-step-copy">
+          <span>{check.label}</span>
+          {check.detail && check.id === "kernel" && <small>{check.detail}</small>}
+        </span>
+      </li>
+    ))}
+  </ul>
+);
+
+const stripMarkdownForSpeech = (text: string, codeBlockLabel = "code block") => text
+  .replace(/```[\s\S]*?```/g, codeBlockLabel)
   .replace(/`[^`]+`/g, "")
   .replace(/#{1,6}\s+/g, "")
   .replace(/\*\*(.+?)\*\*/g, "$1")
@@ -755,10 +797,13 @@ const AIAgent: React.FC = () => {
   const canSendCurrentSource = modelSource === "cloud"
     ? canSendAgentModel(isConfigured, isLocalAgentModel(selectedModel)) && Boolean(selectedModel) && modelOptions.includes(selectedModel) && requestModelOptions.length > 0
     : isLocalSourceReady;
-  // Tiap kali user membuka tab Local, cek ulang apakah worker Kaggle masih hidup.
+  // Every time the Local tab opens, re-check whether the Kaggle worker is still alive.
+  // If the worker or its notebook is gone, opening the tab starts it again automatically (once per open).
   useEffect(() => {
     if (modelSource !== "local") return;
-    if (["ready", "offline", "disconnected"].includes(agentLocal.status)) void agentLocal.refreshStatus();
+    agentLocal.armAutoStart(true);
+    if (["ready", "offline", "disconnected", "blocked"].includes(agentLocal.status)) void agentLocal.refreshStatus();
+    return () => agentLocal.armAutoStart(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelSource]);
   const [isKaggleModalOpen, setIsKaggleModalOpen] = useState(false);
@@ -957,13 +1002,19 @@ const AIAgent: React.FC = () => {
     if (!speechSynthRef.current) return;
     if (isSpeaking && currentSpeakingId === messageId) { speechSynthRef.current.cancel(); setIsSpeaking(false); setCurrentSpeakingId(null); return; }
     if (isSpeaking) speechSynthRef.current.cancel();
-    const cleanText = stripMarkdownForSpeech(text);
+    // The narrator follows the language of the text: Indonesian output gets an Indonesian voice and accent,
+    // English output gets an English one. Detect on the text without code so code never skews the result.
+    const lang = detectLanguage(stripMarkdownForSpeech(text, ""));
+    const cleanText = stripMarkdownForSpeech(text, lang === "id" ? "blok kode" : "code block");
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    const lang = detectLanguage(cleanText);
-    utterance.lang = lang === "id" ? "id-ID" : "en-US";
+    const targetLang = lang === "id" ? "id-ID" : "en-US";
+    utterance.lang = targetLang;
     const voices = speechSynthRef.current.getVoices();
     if (voices.length > 0) {
-      const matchingVoice = voices.find(v => v.lang.startsWith(lang === "id" ? "id" : "en"));
+      const prefix = lang === "id" ? "id" : "en";
+      const normalize = (value: string) => value.replace("_", "-").toLowerCase();
+      const matchingVoice = voices.find(v => normalize(v.lang) === targetLang.toLowerCase())
+        ?? voices.find(v => normalize(v.lang).startsWith(prefix));
       if (matchingVoice) {
         utterance.voice = matchingVoice;
       }
@@ -988,7 +1039,7 @@ const AIAgent: React.FC = () => {
       return stage ? { ...parsed, blob: file, stageOnKaggle: true } : parsed;
     } catch (error) {
       if (!stage) throw error;
-      setUploadNotice(`${name} tidak bisa dibaca di browser. Nyalakan AI Local, lalu kirim — file akan diproses di Kaggle.`);
+      setUploadNotice(`${name} tidak bisa dibaca di browser. Start AI Local, then send — the file will be processed on Kaggle.`);
       return { name, content: "", type: file.type || "application/octet-stream", blob: file, stageOnKaggle: true };
     }
   };
@@ -997,7 +1048,7 @@ const AIAgent: React.FC = () => {
     if (!(modelSource === "local" && agentLocal.status === "ready")) {
       const blocked = files.filter((file) => file.stageOnKaggle && !file.content.trim() && !file.kagglePath);
       if (blocked.length) {
-        throw new Error(`File ini butuh AI Local yang siap: ${blocked.map((file) => file.name).join(", ")}`);
+        throw new Error(`These files need AI Local to be ready: ${blocked.map((file) => file.name).join(", ")}`);
       }
       return { files, images };
     }
@@ -1513,7 +1564,7 @@ const AIAgent: React.FC = () => {
     let imagesToSend = currentImages;
     if (modelSource === "local" || currentFiles.some((file) => file.stageOnKaggle && !file.content.trim())) {
       setIsLoading(true);
-      setStreamActivity(modelSource === "local" && agentLocal.status === "ready" ? "Mengunggah ke Kaggle..." : null);
+      setStreamActivity(modelSource === "local" && agentLocal.status === "ready" ? "Uploading to Kaggle..." : null);
       try {
         const staged = await stageLocalAttachments(currentFiles, currentImages);
         filesToSend = staged.files;
@@ -1521,7 +1572,7 @@ const AIAgent: React.FC = () => {
       } catch (error) {
         setIsLoading(false);
         setStreamActivity(null);
-        setUploadNotice(getErrorText(error) || "Gagal mengunggah file ke Kaggle");
+        setUploadNotice(getErrorText(error) || "Failed to upload the file to Kaggle");
         return;
       }
     }
@@ -2008,48 +2059,80 @@ const AIAgent: React.FC = () => {
                               No free Cloud models are available in this account&apos;s catalog.
                             </p>
                           ) : (
-                            <div className="aiagent-local-status aiagent-popover" role="status">
-                              {agentLocal.status === "checking-credentials" && <p>Memeriksa kredensial Kaggle…</p>}
+                            <div className="aiagent-local-status aiagent-popover" role="status" aria-live="polite">
+                              {agentLocal.status === "checking-credentials" && <p>Checking your Kaggle account…</p>}
                               {agentLocal.status === "needs-credentials" && (
                                 <>
-                                  <p>Sambungkan akun Kaggle lu dulu buat jalanin model lokal lewat GPU gratis Kaggle.</p>
+                                  <p>Connect your Kaggle account first to run the local model on Kaggle&apos;s free GPU.</p>
                                   <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => setIsKaggleModalOpen(true)}>
-                                    Hubungkan Kaggle
+                                    Connect Kaggle
+                                  </button>
+                                </>
+                              )}
+                              {agentLocal.status === "blocked" && (
+                                <>
+                                  <p className="aiagent-local-error">{agentLocal.error || "AI Local cannot start yet."}</p>
+                                  {agentLocal.checks.length > 0 && <LocalChecklist checks={agentLocal.checks} />}
+                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.refreshStatus()}>
+                                    Check again
+                                  </button>
+                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => setIsKaggleModalOpen(true)}>
+                                    Change Kaggle account
                                   </button>
                                 </>
                               )}
                               {agentLocal.status === "disconnected" && (
                                 <>
-                                  <p>AI Local belum disambungkan.</p>
+                                  <p>
+                                    {agentLocal.kernelExists === false
+                                      ? "No worker notebook exists on your Kaggle account yet. Starting will create it automatically — the first start takes a few minutes."
+                                      : "AI Local is not running."}
+                                  </p>
+                                  {agentLocal.checks.length > 0 && <LocalChecklist checks={agentLocal.checks} />}
                                   <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.connect()}>
-                                    Jalankan di Kaggle
+                                    {agentLocal.kernelExists === false ? "Create & start on Kaggle" : "Start on Kaggle"}
                                   </button>
                                 </>
                               )}
-                              {agentLocal.status === "connecting" && <p>Menyalakan worker Kaggle…</p>}
-                              {agentLocal.status === "booting" && (
+                              {(agentLocal.status === "connecting" || agentLocal.status === "booting") && (
                                 <>
-                                  <p>Memuat GPU &amp; model (bisa 1–3 menit)…</p>
-                                  {agentLocal.kaggleState && <small>Status kernel Kaggle: {agentLocal.kaggleState}</small>}
+                                  <p>
+                                    {agentLocal.status === "connecting"
+                                      ? (agentLocal.autoStarting ? "The worker was not running, so it is starting automatically…" : "Contacting Kaggle…")
+                                      : `${agentLocal.autoStarting ? "The worker was not running, so it was started automatically. " : ""}Starting your Kaggle GPU worker. This usually takes 1–3 minutes, longer on the first run.`}
+                                  </p>
+                                  <LocalBootProgress steps={agentLocal.steps} connecting={agentLocal.status === "connecting"} />
+                                  <small>
+                                    Elapsed {formatElapsed(agentLocal.elapsedSeconds)}
+                                    {agentLocal.kaggleState ? ` · Kaggle kernel: ${agentLocal.kaggleState.replace("_", " ")}` : ""}
+                                  </small>
+                                  {agentLocal.status === "booting" && agentLocal.elapsedSeconds > 180 && (
+                                    <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.restart()}>
+                                      Restart Kaggle
+                                    </button>
+                                  )}
                                 </>
                               )}
                               {agentLocal.status === "offline" && (
                                 <>
-                                  <p>Worker Kaggle sedang mati (sesi Kaggle idle/sleep atau berhenti).</p>
+                                  <p>The Kaggle worker is stopped (the session went idle, slept, or was stopped).</p>
                                   {agentLocal.error && <small>{agentLocal.error}</small>}
-                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.connect()}>
-                                    Jalankan ulang
+                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.restart()}>
+                                    Restart Kaggle
                                   </button>
                                   <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.refreshStatus()}>
-                                    Cek status
+                                    Check status
                                   </button>
                                 </>
                               )}
                               {agentLocal.status === "error" && (
                                 <>
-                                  <p className="aiagent-local-error">{agentLocal.error || "AI Local gagal terhubung."}</p>
-                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.connect()}>
-                                    Jalankan ulang
+                                  <p className="aiagent-local-error">{agentLocal.error || "AI Local failed to connect."}</p>
+                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.restart()}>
+                                    Restart Kaggle
+                                  </button>
+                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.refreshStatus()}>
+                                    Check status
                                   </button>
                                 </>
                               )}
@@ -2066,11 +2149,16 @@ const AIAgent: React.FC = () => {
                                 >
                                   <span className="aiagent-model-option-copy aiagent-popover">
                                     <strong>{model}</strong>
-                                    <small>Lokal · Kaggle GPU</small>
+                                    <small>Local · Kaggle GPU</small>
                                   </span>
                                   {model === selectedModel && <Check size={17} aria-hidden="true" />}
                                 </button>
                               ))}
+                              {agentLocal.status === "ready" && (
+                                <button type="button" className="aiagent-model-option aiagent-local-connect-btn aiagent-local-secondary-btn" onClick={() => void agentLocal.restart()}>
+                                  Restart Kaggle
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>

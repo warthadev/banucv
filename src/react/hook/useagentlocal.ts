@@ -84,6 +84,7 @@ interface AgentLocalPreflightResponse {
 }
 
 interface AgentLocalStatusResponse {
+  activity?: string | null;
   steps?: AgentLocalStep[];
   boot_elapsed?: number | null;
   connected?: boolean;
@@ -145,6 +146,7 @@ export const useAgentLocal = () => {
   const [kernelExists, setKernelExists] = useState<boolean | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [autoStarting, setAutoStarting] = useState(false);
+  const [activity, setActivity] = useState<string | null>(null);
   // Armed only while the Local tab is open: lets ONE status check start a stopped worker by itself.
   const autoStartArmedRef = useRef(false);
   const connectRef = useRef<((force?: boolean) => Promise<void>) | null>(null);
@@ -197,6 +199,8 @@ export const useAgentLocal = () => {
         setStatusTracked("ready");
         setModelId(data.model_id);
         setError(null);
+        if (typeof data.activity === "string" && data.activity.trim()) setActivity(data.activity.trim());
+        else setActivity(null);
         // Keep watching: if Kaggle sleeps or stops, the UI must notice and offer "Restart Kaggle".
         pollRef.current = window.setTimeout(() => { void refreshStatus(); }, READY_WATCH_MS);
         return;
@@ -383,9 +387,23 @@ export const useAgentLocal = () => {
     }
   }, [refreshStatus]);
 
+  const pollActivity = useCallback(async () => {
+    try {
+      const data = (await authedFetch("/agent/local/status")) as AgentLocalStatusResponse;
+      if (typeof data.activity === "string" && data.activity.trim()) {
+        setActivity(data.activity.trim());
+        return data.activity.trim();
+      }
+      setActivity(null);
+      return null;
+    } catch {
+      return null;
+    }
+  }, []);
+
   return {
-    status, modelId, error, kaggleState, steps, checks, kernelExists, elapsedSeconds, autoStarting,
-    armAutoStart, checkCredentials, connect, restart, refreshStatus, sendLocalChat, uploadLocalFile,
+    status, modelId, error, kaggleState, steps, checks, kernelExists, elapsedSeconds, autoStarting, activity,
+    armAutoStart, checkCredentials, connect, restart, refreshStatus, pollActivity, sendLocalChat, uploadLocalFile,
   };
 };
 

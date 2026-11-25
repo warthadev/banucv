@@ -2118,15 +2118,6 @@ const AIAgent: React.FC = () => {
                         )}
                       </div>
                     )}
-                    {msg.role === "user" && msg.images && msg.images.length > 0 && (
-                      <div className="aiagent-message-images">
-                        {msg.images.map((img, idx) => (
-                          <div key={idx} className="aiagent-message-image">
-                            <img src={`data:${img.mimeType};base64,${img.data}`} alt={`Uploaded ${idx + 1}`} />
-                          </div>
-                        ))}
-                      </div>
-                    )}
                     {msg.role === "bot" && msg.imageData && msg.model?.startsWith("pollinations") && (
                       <img
                         src={msg.imageData}
@@ -2135,11 +2126,13 @@ const AIAgent: React.FC = () => {
                         onClick={() => window.open(msg.imageData, "_blank")}
                       />
                     )}
-                    {msg.files && msg.files.length > 0 && (
-                      <div className="aiagent-message-files">
-                        {msg.files.map((f, idx) => (
-                          <div key={idx} className="file-chip"><FileText size={14} /> {f.name}</div>
-                        ))}
+                    {msg.role === "bot" && msg.files && msg.files.length > 0 && (
+                      <div className="aiagent-message-bubble">
+                        <div className="aiagent-message-files">
+                          {msg.files.map((f, idx) => (
+                            <div key={idx} className="file-chip"><FileText size={14} /> {f.name}</div>
+                          ))}
+                        </div>
                       </div>
                     )}
                     {!(msg.role === "bot" && msg.model?.startsWith("pollinations") && msg.imageData) && (
@@ -2189,6 +2182,22 @@ const AIAgent: React.FC = () => {
                           )
                         ) : (
                           <div className="aiagent-message-bubble aiagent-user-bubble">
+                            {msg.images && msg.images.length > 0 && (
+                              <div className="aiagent-message-images">
+                                {msg.images.map((img, idx) => (
+                                  <div key={idx} className="aiagent-message-image">
+                                    <img src={`data:${img.mimeType};base64,${img.data}`} alt={`Uploaded ${idx + 1}`} />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {msg.files && msg.files.length > 0 && (
+                              <div className="aiagent-message-files">
+                                {msg.files.map((f, idx) => (
+                                  <div key={idx} className="file-chip"><FileText size={14} /> {f.name}</div>
+                                ))}
+                              </div>
+                            )}
                             <p className="aiagent-user-text">{msg.content}</p>
                           </div>
                         )}
@@ -2202,7 +2211,8 @@ const AIAgent: React.FC = () => {
                       </div>
                     )}
                     {msg.role === "bot" && msg.attachments && msg.attachments.length > 0 && (
-                      <div className="aiagent-attachments">
+                      <div className="aiagent-message-bubble">
+                        <div className="aiagent-attachments">
                         {msg.attachments.filter(a => a.dataUrl && a.mimeType.startsWith("image/")).map((a, idx) => (
                           <img key={`att-img-${idx}`} src={a.dataUrl} alt={a.name} className="aiagent-attachment-image" onClick={() => window.open(a.dataUrl, "_blank")} />
                         ))}
@@ -2215,6 +2225,7 @@ const AIAgent: React.FC = () => {
                             <div key={`att-file-${idx}`} className="file-chip"><FileText size={14} /> {a.name}{a.size ? ` (${(a.size / 1024).toFixed(1)} kB)` : ""}</div>
                           )
                         ))}
+                        </div>
                       </div>
                     )}
                     {msg.role === "bot" && msg.sources && msg.sources.length > 0 && (

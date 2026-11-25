@@ -1364,7 +1364,16 @@
 }
 .aiagent-local-connect-btn {
   justify-content: center;
+  align-items: center;
+  gap: 6px;
   font-weight: 600;
+}
+.aiagent-local-danger-btn {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.45);
+}
+.aiagent-local-danger-btn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .aiagent-local-steps {

@@ -784,10 +784,12 @@
 }
 
 /* Gambar terkirim: carousel mentok (full-bleed) TANPA pembungkus bubble.
-   Satu gambar = satu slide selebar carousel; geser terkunci per gambar
+   Gambar berdampingan, 2-3 kelihatan sekaligus: tiap slide tingginya
+   dibatasi (maks 280-320px HP / 360px tablet / 400px desktop), lebar ngikutin
+   rasio foto, slide nempel tanpa jarak. Geser terkunci per gambar
    (scroll snap). Margin negatif membatalkan padding kolom pesan supaya
    carousel nempel ke tepi layar/kolom. File tetap dibungkus bubble.
-   Tanpa border/radius dan tanpa max-height: gambar tampil selebar slide. */
+   Tanpa border/radius: gambar tampil selebar slide, tanpa bar hitam. */
 .aiagent-message.user .aiagent-message-images,
 .aiagent-message.bot .aiagent-message-images {
   display: flex;
@@ -802,11 +804,12 @@
   box-sizing: border-box;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
+  align-items: flex-start;
 }
 
 .aiagent-message.user .aiagent-message-images .aiagent-message-image,
 .aiagent-message.bot .aiagent-message-images .aiagent-message-image {
-  flex: 0 0 100%;
+  flex: 0 0 auto;
   max-width: 100%;
   margin-bottom: 0;
   border-radius: 0;
@@ -818,10 +821,10 @@
 
 .aiagent-message.user .aiagent-message-images .aiagent-message-image img,
 .aiagent-message.bot .aiagent-message-images .aiagent-message-image img {
-  width: 100%;
+  width: auto;
   height: auto;
-  max-width: 100%;
-  max-height: none;
+  max-width: 420px;
+  max-height: 400px;
   object-fit: contain;
   display: block;
 }
@@ -839,13 +842,14 @@
   box-sizing: border-box;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
+  align-items: flex-start;
 }
 
 .aiagent-attachment-image {
-  flex: 0 0 100%;
-  width: 100%;
-  max-width: 100%;
-  max-height: none;
+  flex: 0 0 auto;
+  width: auto;
+  max-width: 420px;
+  max-height: 400px;
   height: auto;
   border-radius: 0;
   cursor: pointer;
@@ -1693,7 +1697,8 @@
   .aiagent-message.user .aiagent-message-images .aiagent-message-image img,
   .aiagent-message.bot .aiagent-message-images .aiagent-message-image img,
   .aiagent-attachment-image {
-    max-height: none;
+    max-height: 360px;
+    max-width: 380px;
   }
   .aiagent-search-image { max-width: 100px; max-height: 100px; }
 }
@@ -1716,7 +1721,7 @@
   .aiagent-message.user .aiagent-message-images .aiagent-message-image img,
   .aiagent-message.bot .aiagent-message-images .aiagent-message-image img,
   .aiagent-attachment-image {
-    max-height: none;
+    max-height: 400px;
   }
   .aiagent-search-image { max-width: 140px; max-height: 140px; }
 }
@@ -1763,8 +1768,8 @@
   .aiagent-message.user .aiagent-message-images .aiagent-message-image img,
   .aiagent-message.bot .aiagent-message-images .aiagent-message-image img,
   .aiagent-attachment-image {
-    max-width: 100%;
-    max-height: none;
+    max-height: 320px;
+    max-width: 340px;
   }
   .aiagent-typing { padding: 4px 0; margin-left: 0; }
   .aiagent-messages::-webkit-scrollbar {
@@ -1818,8 +1823,8 @@
   .aiagent-message.user .aiagent-message-images .aiagent-message-image img,
   .aiagent-message.bot .aiagent-message-images .aiagent-message-image img,
   .aiagent-attachment-image {
-    max-width: 100%;
-    max-height: none;
+    max-height: 280px;
+    max-width: 300px;
   }
   .aiagent-search-image { max-width: 65px; max-height: 65px; }
   .aiagent-bot-actions span { display: none; }

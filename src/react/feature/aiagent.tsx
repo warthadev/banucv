@@ -11,7 +11,7 @@ import useAgentLocal, { type AgentLocalCheck, type AgentLocalStep, type AgentPro
 import { AI_AGENT_API_BASE } from "@config/api";
 import { saveOpenRouterCredentials } from "@config/routerhelper";
 import { saveKaggleCredentials } from "@config/kagglecredentials";
-import { detectAgentLanguage, getAgentProcessStrings } from "@config/agentlanguage";
+import { detectAgentLanguage, detectUserContext, describeAgentTool, getAgentProcessStrings } from "@config/agentlanguage";
 import { canSendAgentModel, shouldShowRouterAuthModal } from "@config/agentauthflow";
 import { isLocalAgentModel, isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
 import { CloudModalKaggle } from "./cloudmodalkaggle";
@@ -968,6 +968,9 @@ const AIAgent: React.FC = () => {
   useEffect(() => { messagesRef.current = messages; }, [messages]);
 
   const processIdRef = useRef<string | null>(null);
+  // AbortController untuk request cloud yang sedang streaming, supaya tombol
+  // Berhenti di blok Proses bisa menghentikan cloud sama seperti lokal.
+  const cloudAbortRef = useRef<AbortController | null>(null);
   // Batching update stream: banyak token per detik digabung jadi satu render
   // per frame (requestAnimationFrame) supaya teks dan bubble muncul mulus,
   // bukan berkedip tiap token. Dipakai streaming cloud dan lokal.
@@ -1397,6 +1400,18 @@ const AIAgent: React.FC = () => {
     const modelName = modelSequence[modelIndex];
     if (!modelName) throw new Error("Model not found");
     const originallyRequestedModel = modelSequence[0] || modelName;
+    const cloudStrings = getAgentProcessStrings(detectAgentLanguage());
+    const controller = new AbortController();
+    cloudAbortRef.current = controller;
+    const cancelledResult = (text: string) => ({
+      text,
+      model: modelName,
+      requestedModel: originallyRequestedModel,
+      usage: undefined,
+      sources: [] as { title: string; url: string }[],
+      searchImages: [] as string[],
+    });
+    const isAbortError = (err: unknown) => err instanceof DOMException && err.name === "AbortError";
     const priorMessages = currentMessages.filter(m => !m.error && !m.process && !(isRetry && m.role === "user" && m.content === originalUserMessage));
     const history = buildModelScopedHistory(priorMessages, modelName);
     const textContext = messageText + buildContextFromFiles(files);
@@ -1411,26 +1426,12 @@ const AIAgent: React.FC = () => {
     }
     const prompt = textContext || (images.length ? "Describe these images" : "");
     const route = resolveAgentModelRoute(modelName, AI_AGENT_API_BASE);
-    const response = await fetch(`${route.apiBase}/agent/chat/stream`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
-      body: JSON.stringify({
-        provider: connectedProvider || "",
-        model: route.model,
-        prompt,
-        web_search: false,
-        search_query: "",
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta",
-        history,
-        images: images.map((image) => ({ mime_type: image.mimeType, data: image.data })),
-      }),
-    });
-    if (response.status === 404 || response.status === 503) {
-      // 404: backend lama belum punya /agent/chat/stream.
-      // 503: AGENT_RUNTIME_URL/Kaggle belum/tidak tersambung -> tetap jalan sebagai chat biasa (tanpa tool agent) lewat /agent/chat.
-      const fallback = await fetch(`${route.apiBase}/agent/chat`, {
+    let response: Response;
+    try {
+      response = await fetch(`${route.apiBase}/agent/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        signal: controller.signal,
         body: JSON.stringify({
           provider: connectedProvider || "",
           model: route.model,
@@ -1438,10 +1439,40 @@ const AIAgent: React.FC = () => {
           web_search: false,
           search_query: "",
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta",
+          context: detectUserContext(),
           history,
           images: images.map((image) => ({ mime_type: image.mimeType, data: image.data })),
         }),
       });
+    } catch (err) {
+      if (isAbortError(err)) return cancelledResult(cloudStrings.cancelled);
+      throw err;
+    }
+    if (response.status === 404 || response.status === 503) {
+      // 404: backend lama belum punya /agent/chat/stream.
+      // 503: AGENT_RUNTIME_URL/Kaggle belum/tidak tersambung -> tetap jalan sebagai chat biasa (tanpa tool agent) lewat /agent/chat.
+      let fallback: Response;
+      try {
+        fallback = await fetch(`${route.apiBase}/agent/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+          signal: controller.signal,
+          body: JSON.stringify({
+            provider: connectedProvider || "",
+            model: route.model,
+            prompt,
+            web_search: false,
+            search_query: "",
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta",
+            context: detectUserContext(),
+            history,
+            images: images.map((image) => ({ mime_type: image.mimeType, data: image.data })),
+          }),
+        });
+      } catch (err) {
+        if (isAbortError(err)) return cancelledResult(cloudStrings.cancelled);
+        throw err;
+      }
       const fallbackData = await fallback.json().catch(() => null);
       if (!fallback.ok) throw parseAgentErrorPayload(fallbackData, fallback.status);
       const result = (fallbackData?.data?.result ?? {}) as Record<string, unknown>;
@@ -1470,6 +1501,7 @@ const AIAgent: React.FC = () => {
     let buffer = "";
     let final: AgentStreamFinal = { text: "", model: modelName, requestedModel: originallyRequestedModel };
     let toolStepCounter = 0;
+    let sawToolActivity = false;
     const openToolSteps: { name: string; id: string }[] = [];
     const appendToken = (delta: string) => {
       if (!delta) return;
@@ -1493,8 +1525,18 @@ const AIAgent: React.FC = () => {
         });
       });
     };
+    const readChunk = async (): Promise<ReadableStreamReadResult<Uint8Array> | null> => {
+      try {
+        return await reader.read();
+      } catch (err) {
+        if (isAbortError(err)) return null;
+        throw err;
+      }
+    };
     while (true) {
-      const { done, value } = await reader.read();
+      const chunk = await readChunk();
+      if (!chunk) return cancelledResult(final.text.trim() ? final.text : cloudStrings.cancelled);
+      const { done, value } = chunk;
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
@@ -1516,19 +1558,22 @@ const AIAgent: React.FC = () => {
         if (event.type === "token" && typeof event.delta === "string") {
           appendToken(event.delta);
         } else if (event.type === "tool_call" && typeof event.name === "string") {
-          setStreamActivity(`Memakai tool: ${event.name}`);
+          const toolTitle = describeAgentTool(event.name, detectAgentLanguage()) ?? `${cloudStrings.usingTool}: ${event.name}`;
+          sawToolActivity = true;
+          setStreamActivity(toolTitle);
           const toolStepId = `t${++toolStepCounter}`;
           openToolSteps.push({ name: event.name, id: toolStepId });
-          mergeProcessSteps([{ id: toolStepId, kind: "tool", tool: event.name, title: `Memakai tool: ${event.name}`, status: "running" }]);
+          mergeProcessSteps([{ id: toolStepId, kind: "tool", tool: event.name, title: toolTitle, status: "running" }]);
         } else if (event.type === "tool_result" && typeof event.name === "string") {
-          setStreamActivity(`Tool ${event.name} selesai`);
+          const toolLabel = describeAgentTool(event.name, detectAgentLanguage()) ?? `Tool ${event.name}`;
+          setStreamActivity(`${toolLabel} ${cloudStrings.toolDone}`);
           const openIndex = openToolSteps.findIndex(item => item.name === event.name);
           if (openIndex >= 0) {
             const [finished] = openToolSteps.splice(openIndex, 1);
             mergeProcessSteps([{ id: finished.id, status: "done" }]);
           }
         } else if (event.type === "status" && typeof event.status === "string") {
-          setStreamActivity(event.status === "thinking" ? "Sedang berpikir…" : event.status);
+          setStreamActivity(event.status === "thinking" ? cloudStrings.working : event.status);
         } else if (event.type === "final" && typeof event.result === "object" && event.result !== null) {
           const result = event.result as Record<string, unknown>;
           const pending = result.confirmation_required as HostActionPreview | undefined;
@@ -1544,6 +1589,10 @@ const AIAgent: React.FC = () => {
             attachments,
             pendingHostAction: pending && pending.confirmationRequired === true && typeof pending.actionId === "string" && pending.action ? pending : undefined,
           };
+          if (final.usage?.totalTokens !== undefined && sawToolActivity) {
+            const formatted = final.usage.totalTokens.toLocaleString(detectAgentLanguage() === "id" ? "id-ID" : "en-US");
+            mergeProcessSteps([{ id: "tokens", kind: "info", title: `${cloudStrings.tokensUsed}: ${formatted}`, status: "done" }]);
+          }
         } else if (event.type === "error") {
           const detail = typeof event.message === "string" ? event.message : `AI Agent request failed: ${event.status ?? ""}`;
           throw new AgentRequestError(detail, typeof event.status === "number" ? event.status : 502, typeof event.code === "string" ? event.code : undefined);
@@ -1576,7 +1625,7 @@ const AIAgent: React.FC = () => {
     const visionImages = images.filter((image) => image.data.length > 0 && image.data.length <= 9_000_000);
     setStreamActivity("Memahami permintaan…");
     // Pesan proses langsung muncul, lalu diisi langkah asli dari worker (berpikir / tool) lewat polling.
-    mergeProcessSteps([{ id: "c0", kind: "thinking", title: "Memahami permintaan", status: "running" }]);
+    mergeProcessSteps([{ id: "c0", kind: "thinking", title: getAgentProcessStrings(detectAgentLanguage()).understanding, status: "running" }]);
     let sinceSeq = 0;
     let syncing = false;
     // Sapaan pembuka dari worker: tampil sekali sebagai pesan chat, sebelum blok Proses.
@@ -1806,6 +1855,7 @@ const AIAgent: React.FC = () => {
       });
     } finally {
       if (activeRequestIdRef.current === requestId) {
+        cloudAbortRef.current = null;
         finishProcess("done");
         activeRequestIdRef.current = null;
         setIsLoading(false);
@@ -1997,7 +2047,7 @@ const AIAgent: React.FC = () => {
                       live={msg.processLive === true}
                       open={processOpen[msg.id] ?? (msg.processLive === true)}
                       onToggle={() => setProcessOpen(prev => ({ ...prev, [msg.id]: !(prev[msg.id] ?? (msg.processLive === true)) }))}
-                      onStop={msg.processLive === true ? () => void agentLocal.cancelLocalChat() : undefined}
+                      onStop={msg.processLive === true ? () => { if (cloudAbortRef.current) cloudAbortRef.current.abort(); else void agentLocal.cancelLocalChat(); } : undefined}
                     />
                   </div>
                 </motion.div>

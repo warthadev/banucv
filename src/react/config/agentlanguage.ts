@@ -23,6 +23,11 @@ export interface AgentProcessStrings {
   copy: string;
   copied: string;
   stop: string;
+  tokensUsed: string;
+  cancelled: string;
+  understanding: string;
+  usingTool: string;
+  toolDone: string;
 }
 
 export const AGENT_PROCESS_STRINGS: Record<AgentLanguage, AgentProcessStrings> = {
@@ -36,6 +41,11 @@ export const AGENT_PROCESS_STRINGS: Record<AgentLanguage, AgentProcessStrings> =
     copy: "Salin",
     copied: "Disalin",
     stop: "Berhenti",
+    tokensUsed: "Token dipakai",
+    cancelled: "Dibatalkan oleh user.",
+    understanding: "Memahami permintaan…",
+    usingTool: "Memakai tool",
+    toolDone: "selesai",
   },
   en: {
     working: "Working…",
@@ -47,6 +57,11 @@ export const AGENT_PROCESS_STRINGS: Record<AgentLanguage, AgentProcessStrings> =
     copy: "Copy",
     copied: "Copied",
     stop: "Stop",
+    tokensUsed: "Tokens used",
+    cancelled: "Cancelled by user.",
+    understanding: "Understanding the request…",
+    usingTool: "Using tool",
+    toolDone: "done",
   },
 };
 
@@ -85,4 +100,22 @@ export const detectUserContext = (): AgentUserContext => {
     local_time: localISO,
     locale: typeof navigator !== "undefined" ? (navigator.language || "") : "",
   };
+};
+
+// Label tampilan tool — sama dengan AGENT_STRINGS di workerlocal.py.
+export const AGENT_TOOL_LABELS: Record<string, Record<AgentLanguage, string>> = {
+  list_dir: { id: "Memeriksa isi folder…", en: "Checking folder contents…" },
+  read_file: { id: "Membaca file…", en: "Reading file…" },
+  patch_file: { id: "Mengedit file…", en: "Editing file…" },
+  write_file: { id: "Menulis file…", en: "Writing file…" },
+  run_bash: { id: "Menjalankan perintah…", en: "Running command…" },
+  web_search: { id: "Mencari di web…", en: "Searching the web…" },
+  web_fetch: { id: "Mengambil halaman web…", en: "Fetching web page…" },
+  inspect_image: { id: "Menganalisis gambar…", en: "Analyzing image…" },
+  read_document: { id: "Membaca dokumen…", en: "Reading document…" },
+};
+
+export const describeAgentTool = (name: string, lang: AgentLanguage): string | null => {
+  const entry = AGENT_TOOL_LABELS[name];
+  return entry ? entry[lang] : null;
 };

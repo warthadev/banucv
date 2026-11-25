@@ -22,6 +22,38 @@ export interface AgentLocalStep {
   detail?: string;
 }
 
+export interface AgentProcessStep {
+  id: string;
+  kind: "thinking" | "tool" | "info";
+  title: string;
+  status: "running" | "done" | "error";
+  tool?: string;
+  detail?: string;
+  output?: string;
+}
+
+const normalizeProcessSteps = (raw: unknown): AgentProcessStep[] => {
+  if (!Array.isArray(raw)) return [];
+  const result: AgentProcessStep[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const entry = item as Record<string, unknown>;
+    const id = typeof entry.id === "string" ? entry.id.slice(0, 24) : "";
+    if (!id) continue;
+    const kind = entry.kind === "tool" || entry.kind === "thinking" ? entry.kind : "info";
+    const status = entry.status === "done" || entry.status === "error" ? entry.status : "running";
+    const text = (value: unknown, max: number) => (typeof value === "string" && value.trim() ? value.slice(0, max) : undefined);
+    result.push({
+      id, kind, status,
+      title: text(entry.title, 160) ?? "",
+      tool: text(entry.tool, 40),
+      detail: text(entry.detail, 200),
+      output: text(entry.output, 1500),
+    });
+  }
+  return result;
+};
+
 export interface AgentLocalCheck {
   id: string;
   label: string;
@@ -401,9 +433,23 @@ export const useAgentLocal = () => {
     }
   }, []);
 
+  // Log langkah proses (berpikir / tool) yang sedang berjalan. `since` = seq terakhir yang sudah diterima.
+  const pollProcess = useCallback(async (since: number) => {
+    try {
+      const data = await authedFetch(`/agent/local/activity?since=${Math.max(0, Math.floor(since))}`);
+      return {
+        seq: typeof data?.seq === "number" ? data.seq : 0,
+        activity: typeof data?.activity === "string" && data.activity.trim() ? (data.activity as string).trim() : null,
+        steps: normalizeProcessSteps(data?.steps),
+      };
+    } catch {
+      return null;
+    }
+  }, []);
+
   return {
     status, modelId, error, kaggleState, steps, checks, kernelExists, elapsedSeconds, autoStarting, activity,
-    armAutoStart, checkCredentials, connect, restart, refreshStatus, pollActivity, sendLocalChat, uploadLocalFile,
+    armAutoStart, checkCredentials, connect, restart, refreshStatus, pollActivity, pollProcess, sendLocalChat, uploadLocalFile,
   };
 };
 

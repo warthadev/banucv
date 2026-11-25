@@ -251,7 +251,8 @@ interface AgentStreamFinal {
 const AIAGENT_POPOVER_TRIGGER_GAP = 8;
 
 interface AIAgentPopoverPosition {
-  bottom: number;
+  bottom?: number;
+  top?: number;
   left: number;
   maxHeight: number;
 }
@@ -278,7 +279,7 @@ const AIAgentPopover: React.FC<AIAgentPopoverProps> = ({
   <motion.div
     id={id}
     className={`aiagent-popover-panel ${className}`}
-    style={{ position: "fixed", bottom: position.bottom, left: position.left, maxHeight: position.maxHeight }}
+    style={{ position: "fixed", ...(position.top !== undefined ? { top: position.top } : { bottom: position.bottom }), left: position.left, maxHeight: position.maxHeight }}
     initial={{ opacity: 0, y: 6, scale: 0.98 }}
     animate={{ opacity: 1, y: 0, scale: 1 }}
     exit={{ opacity: 0, y: 6, scale: 0.98 }}
@@ -1934,11 +1935,48 @@ const AIAgent: React.FC = () => {
     return { bottom, left, maxHeight };
   };
 
+  const calcDropdownPosBelow = (
+    btnRect: DOMRect,
+    menuWidth: number,
+    menuHeight: number
+  ): { top: number; left: number; maxHeight: number } => {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    const gap = AIAGENT_POPOVER_TRIGGER_GAP;
+    const top = btnRect.bottom + gap;
+    const maxHeight = Math.min(menuHeight, Math.max(vh - btnRect.bottom - gap * 2, 140));
+
+    let left = btnRect.right - menuWidth;
+    const minLeft = 12;
+    const maxLeft = vw - menuWidth - 12;
+    if (left < minLeft) left = minLeft;
+    if (left > maxLeft) left = maxLeft;
+
+    return { top, left, maxHeight };
+  };
+
   const formatTime = (date: Date) => date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   const formatDate = (date: Date) => date.toLocaleDateString([], { month: "short", day: "numeric" });
   const isToday = (date: Date) => formatDate(date) === formatDate(new Date());
 
   const totalUploads = uploadedImages.length + uploadedFiles.length;
+
+  // Top bar "now playing": nama model + status sumber saat ini.
+  const playerModelName = modelSource === "local"
+    ? (agentLocal.modelId || selectedModel || "AI Local")
+    : (selectedModel || "AI Agent");
+  const playerStatusText = modelSource === "local"
+    ? agentLocal.status === "ready" ? "Local · Ready"
+    : agentLocal.status === "connecting" || agentLocal.status === "booting" ? "Local · Starting…"
+    : agentLocal.status === "stopping" ? "Local · Stopping…"
+    : "Local · Offline"
+    : "Cloud · Online";
+  const playerStatusTone = modelSource === "local"
+    ? agentLocal.status === "ready" ? "ready"
+    : agentLocal.status === "connecting" || agentLocal.status === "booting" ? "busy"
+    : "off"
+    : "ready";
 
   if (authLoading || !currentUserUid) return <Loading />;
   if (configurationError) {
@@ -1967,6 +2005,208 @@ const AIAgent: React.FC = () => {
     <>
       {isConfigured && (
         <div className="aiagent-container global-page">
+          <header className="aiagent-player-bar">
+            <div className="aiagent-model-wrapper" ref={modelPickerRef}>
+              <button
+                type="button"
+                className="aiagent-player-trigger"
+                onClick={(event) => {
+                  const triggerRect = event.currentTarget.getBoundingClientRect();
+                  const isNarrowViewport = window.innerWidth <= 639;
+                  const pickerWidth = isNarrowViewport
+                    ? Math.min(360, window.innerWidth - 60)
+                    : Math.min(380, window.innerWidth - 48);
+                  const pickerHeight = Math.min(
+                    isNarrowViewport ? 520 : 620,
+                    Math.round(window.innerHeight * (isNarrowViewport ? 0.68 : 0.72)),
+                  );
+                  setModelPickerPos(calcDropdownPosBelow(
+                    triggerRect,
+                    pickerWidth,
+                    pickerHeight,
+                  ));
+                  setIsModelPickerOpen((open) => !open);
+                }}
+                title="Choose AI model"
+                aria-label="Choose AI model"
+                aria-haspopup="dialog"
+                aria-expanded={isModelPickerOpen}
+                aria-controls="aiagent-model-picker"
+              >
+                <span className="aiagent-player-avatar">
+                  {modelSource === "local" ? <Bot size={20} aria-hidden="true" /> : <Sparkles size={20} aria-hidden="true" />}
+                  <span className={`aiagent-player-dot aiagent-player-dot--${playerStatusTone}`} />
+                </span>
+                <span className="aiagent-player-meta">
+                  <span className="aiagent-player-name">{playerModelName}</span>
+                  <span className="aiagent-player-sub">{playerStatusText}</span>
+                </span>
+                <ChevronDown size={16} aria-hidden="true" className="aiagent-player-chevron" />
+              </button>
+              <AnimatePresence>
+                {isModelPickerOpen && (
+                  <AIAgentPopover
+                    id="aiagent-model-picker"
+                    className="aiagent-popover aiagent-model-picker-popover global-popover"
+                    position={modelPickerPos}
+                    role="dialog"
+                    ariaModal={false}
+                    ariaLabelledBy="aiagent-model-picker-title"
+                  >
+                    <div className="aiagent-model-picker-header">
+                      <div className="aiagent-model-picker-icon"><Bot size={19} /></div>
+                      <div className="aiagent-model-picker-heading aiagent-popover">
+                        <h3 id="aiagent-model-picker-title">AI Agent</h3>
+                        <p>Cloud uses this account&apos;s free-model catalog. Local runs on your own Kaggle GPU.</p>
+                      </div>
+                    </div>
+                    <div className="aiagent-model-source-options" role="group" aria-label="AI model source">
+                      <button
+                        type="button"
+                        className={`aiagent-model-source-option aiagent-popover${modelSource === "cloud" ? " selected" : ""}`}
+                        aria-pressed={modelSource === "cloud"}
+                        onClick={() => setModelSource("cloud")}
+                      >Cloud</button>
+                      <button
+                        type="button"
+                        className={`aiagent-model-source-option aiagent-popover${modelSource === "local" ? " selected" : ""}`}
+                        aria-pressed={modelSource === "local"}
+                        onClick={() => setModelSource("local")}
+                      >Local</button>
+                    </div>
+                    <div className="aiagent-model-option-list" role="list" aria-label={modelSource === "cloud" ? "Cloud models available to this account" : "AI Local status"}>
+                      {modelSource === "cloud" ? modelOptions.length ? modelOptions.map((model) => {
+                        const isSelected = hasPreferredAutoModel ? model === selectedModel : model === autoRecommendedModel;
+                        return (
+                          <button
+                            type="button"
+                            key={model}
+                            className={`aiagent-model-option${isSelected ? " selected" : ""}`}
+                            aria-pressed={isSelected}
+                            onClick={() => {
+                              setPreferredModel(model);
+                              setIsModelPickerOpen(false);
+                            }}
+                          >
+                            <span className="aiagent-model-option-copy aiagent-popover">
+                              <strong>{model}</strong>
+                              <small>Free cloud model</small>
+                            </span>
+                            {isSelected && <Check size={17} aria-hidden="true" />}
+                          </button>
+                        );
+                      }) : (
+                        <p className="aiagent-model-empty aiagent-popover" role="status">
+                          No free Cloud models are available in this account&apos;s catalog.
+                        </p>
+                      ) : (
+                        <div className="aiagent-local-status aiagent-popover" role="status" aria-live="polite">
+                          {agentLocal.status === "checking-credentials" && <p>Checking your Kaggle account…</p>}
+                          {agentLocal.status === "needs-credentials" && (
+                            <>
+                              <p>Connect your Kaggle account first to run the local model on Kaggle&apos;s free GPU.</p>
+                              <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => setIsKaggleModalOpen(true)}>
+                                Connect Kaggle
+                              </button>
+                            </>
+                          )}
+                          {agentLocal.status === "blocked" && (
+                            <>
+                              <p className="aiagent-local-error">{agentLocal.error || "AI Local cannot start yet."}</p>
+                              {agentLocal.checks.length > 0 && <LocalChecklist checks={agentLocal.checks} />}
+                              <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.refreshStatus()}>
+                                Check Again
+                              </button>
+                              <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => setIsKaggleModalOpen(true)}>
+                                Change Kaggle Account
+                              </button>
+                            </>
+                          )}
+                          {agentLocal.status === "disconnected" && (
+                            <>
+                              <p>
+                                {agentLocal.kernelExists === false
+                                  ? "No worker notebook exists on your Kaggle account yet. Run will create it automatically — the first run takes a few minutes."
+                                  : "AI Local is not running. Nothing starts until you press Run."}
+                              </p>
+                              {agentLocal.checks.length > 0 && <LocalChecklist checks={agentLocal.checks} />}
+                              <LocalRunButton label={agentLocal.kernelExists === false ? "Create & Run On Kaggle" : "Run On Kaggle"} onRun={agentLocal.run} />
+                            </>
+                          )}
+                          {(agentLocal.status === "connecting" || agentLocal.status === "booting") && (
+                            <>
+                              <p>
+                                {agentLocal.status === "connecting"
+                                  ? "Checking Kaggle for an existing worker…"
+                                  : "Starting your Kaggle GPU worker. This usually takes 1–3 minutes, longer on the first run or when Kaggle is busy."}
+                              </p>
+                              <LocalBootProgress steps={agentLocal.steps} connecting={agentLocal.status === "connecting"} />
+                              <small>
+                                Elapsed {formatElapsed(agentLocal.elapsedSeconds)}
+                                {agentLocal.kaggleState ? ` · Kaggle kernel: ${agentLocal.kaggleState.replace("_", " ")}` : ""}
+                              </small>
+                              <small>Refreshing this page will not restart the worker.</small>
+                              {agentLocal.status === "booting" && (
+                                <LocalStopButton onStop={agentLocal.stop} />
+                              )}
+                            </>
+                          )}
+                          {agentLocal.status === "stopping" && (
+                            <>
+                              <p>Stopping the Kaggle worker and releasing the GPU…</p>
+                              <small>This takes a few seconds. You can run it again afterwards.</small>
+                            </>
+                          )}
+                          {agentLocal.status === "offline" && (
+                            <>
+                              <p>The Kaggle worker is not running (it was stopped, or Kaggle ended the session).</p>
+                              {agentLocal.error && <small>{agentLocal.error}</small>}
+                              <LocalRunButton label="Run On Kaggle" onRun={agentLocal.run} />
+                            </>
+                          )}
+                          {agentLocal.status === "error" && (
+                            <>
+                              <p className="aiagent-local-error">{agentLocal.error || "AI Local failed to connect."}</p>
+                              <LocalRunButton label="Run On Kaggle" onRun={agentLocal.run} />
+                              <LocalStopButton onStop={agentLocal.stop} />
+                            </>
+                          )}
+                          {agentLocal.status === "ready" && localModelOptions.map((model) => (
+                            <button
+                              type="button"
+                              key={model}
+                              className={`aiagent-model-option${model === selectedModel ? " selected" : ""}`}
+                              aria-pressed={model === selectedModel}
+                              onClick={() => {
+                                setPreferredModel(model);
+                                setIsModelPickerOpen(false);
+                              }}
+                            >
+                              <span className="aiagent-model-option-copy aiagent-popover">
+                                <strong>{model}</strong>
+                                <small>Local · Kaggle GPU</small>
+                              </span>
+                              {model === selectedModel && <Check size={17} aria-hidden="true" />}
+                            </button>
+                          ))}
+                          {agentLocal.status === "ready" && (
+                            <>
+                              <small>
+                                Stays on until you press Stop, or Kaggle ends the session.
+                              </small>
+                              <LocalRunButton label="Run On Kaggle" onRun={agentLocal.run} />
+                              <LocalStopButton onStop={agentLocal.stop} />
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </AIAgentPopover>
+                )}
+              </AnimatePresence>
+            </div>
+            <button type="button" onClick={clearChat} className="aiagent-player-clear" title="Clear chat" aria-label="Clear chat"><Trash2 size={20} /></button>
+          </header>
           {modelSource === "cloud" && !cloudModelOptions.length && (
             <div className="aiagent-catalog-status" role={catalogError ? "alert" : "status"}>
               <p>{getCatalogStatusMessage(catalogError)}</p>
@@ -2198,30 +2438,30 @@ const AIAgent: React.FC = () => {
             )}
           </div>
 
-          {(uploadedImages.length > 0 || uploadedFiles.length > 0) && (
-            <div className="aiagent-previews">
-              {uploadedImages.map((img, idx) => (
-                <div key={`img-${idx}`} className="aiagent-image-preview">
-                  <img src={img.preview} alt={`Preview ${idx + 1}`} />
-                  <button type="button" onClick={() => setCropTarget({ index: idx, src: img.preview, name: img.name })} className="aiagent-image-crop" aria-label={`Crop image ${idx + 1}`} title="Potong 1:1"><Crop size={15} /></button>
-                  <button type="button" onClick={() => removeImage(idx)} className="aiagent-image-remove" aria-label={`Remove image ${idx + 1}`}><X size={16} /></button>
-                </div>
-              ))}
-              {uploadedFiles.map((file, idx) => (
-                <div key={`file-${idx}`} className="aiagent-file-preview">
-                  <FileText size={14} />
-                  <span>{file.kagglePath || file.stageOnKaggle ? `${file.name.length > 24 ? file.name.slice(0, 21) + "..." : file.name} · Kaggle` : (file.name.length > 30 ? file.name.substring(0, 27) + "..." : file.name)}</span>
-                  <button type="button" onClick={() => removeFile(idx)} aria-label={`Remove ${file.name}`}><X size={16} /></button>
-                </div>
-              ))}
-            </div>
-          )}
-          {uploadNotice && <div role="status" style={{ fontSize: "var(--global-font-size-12px)", padding: "10px 12px 8px", color: "var(--global-color-text-muted, #666)" }}>{uploadNotice}</div>}
           {cropTarget && (
             <ImageCropper src={cropTarget.src} fileName={cropTarget.name} onDone={handleCropDone} onCancel={() => setCropTarget(null)} />
           )}
 
           <div className="aiagent-input-container">
+            {(uploadedImages.length > 0 || uploadedFiles.length > 0) && (
+              <div className="aiagent-previews">
+                {uploadedImages.map((img, idx) => (
+                  <div key={`img-${idx}`} className="aiagent-image-preview">
+                    <img src={img.preview} alt={`Preview ${idx + 1}`} />
+                    <button type="button" onClick={() => setCropTarget({ index: idx, src: img.preview, name: img.name })} className="aiagent-image-crop" aria-label={`Crop image ${idx + 1}`} title="Potong 1:1"><Crop size={15} /></button>
+                    <button type="button" onClick={() => removeImage(idx)} className="aiagent-image-remove" aria-label={`Remove image ${idx + 1}`}><X size={16} /></button>
+                  </div>
+                ))}
+                {uploadedFiles.map((file, idx) => (
+                  <div key={`file-${idx}`} className="aiagent-file-preview">
+                    <FileText size={14} />
+                    <span>{file.kagglePath || file.stageOnKaggle ? `${file.name.length > 24 ? file.name.slice(0, 21) + "..." : file.name} · Kaggle` : (file.name.length > 30 ? file.name.substring(0, 27) + "..." : file.name)}</span>
+                    <button type="button" onClick={() => removeFile(idx)} aria-label={`Remove ${file.name}`}><X size={16} /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {uploadNotice && <div role="status" style={{ fontSize: "var(--global-font-size-12px)", padding: "4px 2px 8px", color: "var(--global-color-text-muted, #666)" }}>{uploadNotice}</div>}
             <textarea
               ref={textareaRef}
               className="aiagent-input-textarea"
@@ -2245,198 +2485,6 @@ const AIAgent: React.FC = () => {
                     )}
                   </AnimatePresence>
                 </div>
-                <div className="aiagent-model-wrapper" ref={modelPickerRef}>
-                  <button
-                    type="button"
-                    className="aiagent-icon-btn aiagent-model-picker-trigger"
-                    onClick={(event) => {
-                      const triggerRect = event.currentTarget.getBoundingClientRect();
-                      const isNarrowViewport = window.innerWidth <= 639;
-                      const pickerWidth = isNarrowViewport
-                        ? Math.min(360, window.innerWidth - 60)
-                        : Math.min(380, window.innerWidth - 48);
-                      const pickerHeight = Math.min(
-                        isNarrowViewport ? 520 : 620,
-                        Math.round(window.innerHeight * (isNarrowViewport ? 0.68 : 0.72)),
-                      );
-                      setModelPickerPos(calcDropdownPos(
-                        triggerRect,
-                        pickerWidth,
-                        pickerHeight,
-                      ));
-                      setIsModelPickerOpen((open) => !open);
-                    }}
-                    title="Choose AI model"
-                    aria-label="Choose AI model"
-                    aria-haspopup="dialog"
-                    aria-expanded={isModelPickerOpen}
-                    aria-controls="aiagent-model-picker"
-                  >
-                    <Bot size={22} aria-hidden="true" />
-                  </button>
-                  <AnimatePresence>
-                    {isModelPickerOpen && (
-                      <AIAgentPopover
-                        id="aiagent-model-picker"
-                        className="aiagent-popover aiagent-model-picker-popover global-popover"
-                        position={modelPickerPos}
-                        role="dialog"
-                        ariaModal={false}
-                        ariaLabelledBy="aiagent-model-picker-title"
-                      >
-                        <div className="aiagent-model-picker-header">
-                          <div className="aiagent-model-picker-icon"><Bot size={19} /></div>
-                          <div className="aiagent-model-picker-heading aiagent-popover">
-                            <h3 id="aiagent-model-picker-title">AI Agent</h3>
-                            <p>Cloud uses this account&apos;s free-model catalog. Local runs on your own Kaggle GPU.</p>
-                          </div>
-                        </div>
-                        <div className="aiagent-model-source-options" role="group" aria-label="AI model source">
-                          <button
-                            type="button"
-                            className={`aiagent-model-source-option aiagent-popover${modelSource === "cloud" ? " selected" : ""}`}
-                            aria-pressed={modelSource === "cloud"}
-                            onClick={() => setModelSource("cloud")}
-                          >Cloud</button>
-                          <button
-                            type="button"
-                            className={`aiagent-model-source-option aiagent-popover${modelSource === "local" ? " selected" : ""}`}
-                            aria-pressed={modelSource === "local"}
-                            onClick={() => setModelSource("local")}
-                          >Local</button>
-                        </div>
-                        <div className="aiagent-model-option-list" role="list" aria-label={modelSource === "cloud" ? "Cloud models available to this account" : "AI Local status"}>
-                          {modelSource === "cloud" ? modelOptions.length ? modelOptions.map((model) => {
-                            const isSelected = hasPreferredAutoModel ? model === selectedModel : model === autoRecommendedModel;
-                            return (
-                              <button
-                                type="button"
-                                key={model}
-                                className={`aiagent-model-option${isSelected ? " selected" : ""}`}
-                                aria-pressed={isSelected}
-                                onClick={() => {
-                                  setPreferredModel(model);
-                                  setIsModelPickerOpen(false);
-                                }}
-                              >
-                                <span className="aiagent-model-option-copy aiagent-popover">
-                                  <strong>{model}</strong>
-                                  <small>Free cloud model</small>
-                                </span>
-                                {isSelected && <Check size={17} aria-hidden="true" />}
-                              </button>
-                            );
-                          }) : (
-                            <p className="aiagent-model-empty aiagent-popover" role="status">
-                              No free Cloud models are available in this account&apos;s catalog.
-                            </p>
-                          ) : (
-                            <div className="aiagent-local-status aiagent-popover" role="status" aria-live="polite">
-                              {agentLocal.status === "checking-credentials" && <p>Checking your Kaggle account…</p>}
-                              {agentLocal.status === "needs-credentials" && (
-                                <>
-                                  <p>Connect your Kaggle account first to run the local model on Kaggle&apos;s free GPU.</p>
-                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => setIsKaggleModalOpen(true)}>
-                                    Connect Kaggle
-                                  </button>
-                                </>
-                              )}
-                              {agentLocal.status === "blocked" && (
-                                <>
-                                  <p className="aiagent-local-error">{agentLocal.error || "AI Local cannot start yet."}</p>
-                                  {agentLocal.checks.length > 0 && <LocalChecklist checks={agentLocal.checks} />}
-                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.refreshStatus()}>
-                                    Check Again
-                                  </button>
-                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => setIsKaggleModalOpen(true)}>
-                                    Change Kaggle Account
-                                  </button>
-                                </>
-                              )}
-                              {agentLocal.status === "disconnected" && (
-                                <>
-                                  <p>
-                                    {agentLocal.kernelExists === false
-                                      ? "No worker notebook exists on your Kaggle account yet. Run will create it automatically — the first run takes a few minutes."
-                                      : "AI Local is not running. Nothing starts until you press Run."}
-                                  </p>
-                                  {agentLocal.checks.length > 0 && <LocalChecklist checks={agentLocal.checks} />}
-                                  <LocalRunButton label={agentLocal.kernelExists === false ? "Create & Run On Kaggle" : "Run On Kaggle"} onRun={agentLocal.run} />
-                                </>
-                              )}
-                              {(agentLocal.status === "connecting" || agentLocal.status === "booting") && (
-                                <>
-                                  <p>
-                                    {agentLocal.status === "connecting"
-                                      ? "Checking Kaggle for an existing worker…"
-                                      : "Starting your Kaggle GPU worker. This usually takes 1–3 minutes, longer on the first run or when Kaggle is busy."}
-                                  </p>
-                                  <LocalBootProgress steps={agentLocal.steps} connecting={agentLocal.status === "connecting"} />
-                                  <small>
-                                    Elapsed {formatElapsed(agentLocal.elapsedSeconds)}
-                                    {agentLocal.kaggleState ? ` · Kaggle kernel: ${agentLocal.kaggleState.replace("_", " ")}` : ""}
-                                  </small>
-                                  <small>Refreshing this page will not restart the worker.</small>
-                                  {agentLocal.status === "booting" && (
-                                    <LocalStopButton onStop={agentLocal.stop} />
-                                  )}
-                                </>
-                              )}
-                              {agentLocal.status === "stopping" && (
-                                <>
-                                  <p>Stopping the Kaggle worker and releasing the GPU…</p>
-                                  <small>This takes a few seconds. You can run it again afterwards.</small>
-                                </>
-                              )}
-                              {agentLocal.status === "offline" && (
-                                <>
-                                  <p>The Kaggle worker is not running (it was stopped, or Kaggle ended the session).</p>
-                                  {agentLocal.error && <small>{agentLocal.error}</small>}
-                                  <LocalRunButton label="Run On Kaggle" onRun={agentLocal.run} />
-                                </>
-                              )}
-                              {agentLocal.status === "error" && (
-                                <>
-                                  <p className="aiagent-local-error">{agentLocal.error || "AI Local failed to connect."}</p>
-                                  <LocalRunButton label="Run On Kaggle" onRun={agentLocal.run} />
-                                  <LocalStopButton onStop={agentLocal.stop} />
-                                </>
-                              )}
-                              {agentLocal.status === "ready" && localModelOptions.map((model) => (
-                                <button
-                                  type="button"
-                                  key={model}
-                                  className={`aiagent-model-option${model === selectedModel ? " selected" : ""}`}
-                                  aria-pressed={model === selectedModel}
-                                  onClick={() => {
-                                    setPreferredModel(model);
-                                    setIsModelPickerOpen(false);
-                                  }}
-                                >
-                                  <span className="aiagent-model-option-copy aiagent-popover">
-                                    <strong>{model}</strong>
-                                    <small>Local · Kaggle GPU</small>
-                                  </span>
-                                  {model === selectedModel && <Check size={17} aria-hidden="true" />}
-                                </button>
-                              ))}
-                              {agentLocal.status === "ready" && (
-                                <>
-                                  <small>
-                                    Stays on until you press Stop, or Kaggle ends the session.
-                                  </small>
-                                  <LocalRunButton label="Run On Kaggle" onRun={agentLocal.run} />
-                                  <LocalStopButton onStop={agentLocal.stop} />
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </AIAgentPopover>
-                    )}
-                  </AnimatePresence>
-                </div>
-                <button onClick={clearChat} className="aiagent-clear-btn"><Trash2 size={22} /></button>
               </div>
               <button onClick={handleSendMessage} disabled={isLoading || Boolean(pendingHostAction) || !canSendCurrentSource || (!input.trim() && !uploadedImages.length && !uploadedFiles.length)} className="aiagent-send-btn">
                 {isLoading ? <Loader2 size={24} className="spin" /> : <Send size={24} />}

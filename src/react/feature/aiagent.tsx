@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Bot, Trash2, Volume2, VolumeX, Check,
-  Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Wand2, Link, ChevronDown, Wrench, Brain, Crop
+  Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Link, ChevronDown, Wrench, Brain, Crop
 } from "lucide-react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
@@ -133,8 +133,6 @@ interface Message {
   requestedModel?: string;
   usage?: { inputTokens?: number; outputTokens?: number; totalTokens?: number };
   timestamp: Date;
-  imageData?: string;
-  imageMimeType?: string;
   images?: { data: string; mimeType: string }[];
   files?: { name: string; content: string }[];
   error?: boolean;
@@ -690,9 +688,6 @@ const getErrorMessage = (error: unknown): string => {
   if (message.includes("CORS")) {
     return "Error: CORS security issue. Try using VPN or different browser.";
   }
-  if (message.includes("Pollinations") || message.includes("image failed")) {
-    return "Error: Failed to generate image. Try a different prompt.";
-  }
   if (message.includes("timeout") || message.includes("TIMEOUT")) {
     return "Error: Request timed out. Try again with shorter message.";
   }
@@ -833,8 +828,6 @@ const AIAgent: React.FC = () => {
     const stripAttachments = (message: Message): Message => {
       const textOnly = { ...message };
       delete textOnly.images;
-      delete textOnly.imageData;
-      delete textOnly.imageMimeType;
       delete textOnly.files;
       return textOnly;
     };
@@ -937,7 +930,6 @@ const AIAgent: React.FC = () => {
   const [uploadNotice, setUploadNotice] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isUploadDropdownOpen, setIsUploadDropdownOpen] = useState(false);
-  const [imageGenEnabled, setImageGenEnabled] = useState(false);
   const [, setRetryingMessageId] = useState<string | null>(null);
   const [userDisplayName, setUserDisplayName] = useState<string>("User");
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
@@ -1709,25 +1701,6 @@ const AIAgent: React.FC = () => {
     return { text, model: agentLocal.modelId || "ai-local", requestedModel: agentLocal.modelId || "ai-local", attachments: localAttachments };
   };
 
-  const generateImage = async (prompt: string): Promise<string> => {
-    const encoded = encodeURIComponent(prompt);
-    const url = `https://image.pollinations.ai/prompt/${encoded}?width=768&height=768&nologo=true&seed=${Date.now()}`;
-    try {
-      await new Promise<void>((resolve, reject) => {
-        const img = new window.Image();
-        const timeout = setTimeout(() => {
-          reject(new Error("Pollinations image generation timed out"));
-        }, 30000);
-        img.onload = () => { clearTimeout(timeout); resolve(); };
-        img.onerror = () => { clearTimeout(timeout); reject(new Error("Pollinations image failed to load")); };
-        img.src = url;
-      });
-      return url;
-    } catch (error) {
-      console.error("Image generation error:", error);
-      throw error;
-    }
-  };
 
   const sendMessage = async (messageText: string, images: UploadedImage[], files: UploadedFile[], retryModelIndex = 0, isRetry = false, modelSequence: string[] = requestModelOptions, requestOwnerUid: string | null = currentUserUid, suppliedRequestId?: number) => {
     if (!requestOwnerUid || currentUserUidRef.current !== requestOwnerUid || messagesOwnerUid !== requestOwnerUid) return;
@@ -1749,41 +1722,6 @@ const AIAgent: React.FC = () => {
       setMessages(prev => [...prev, userMsg]);
     }
 
-    if (imageGenEnabled && messageText.trim() && !images.length) {
-      try {
-        const imgDataUrl = await generateImage(messageText);
-        if (!isCurrentRequest()) return;
-        setMessages(prev => [...prev, {
-          id: (Date.now() + 1).toString(),
-          role: "bot",
-          content: "",
-          model: "pollinations",
-          timestamp: new Date(),
-          imageData: imgDataUrl,
-          imageMimeType: "image/png",
-        }]);
-      } catch (error: unknown) {
-        if (!isCurrentRequest()) return;
-        const friendlyError = getErrorMessage(error);
-        setMessages(prev => [...prev, {
-          id: (Date.now() + 1).toString(),
-          role: "bot",
-          content: friendlyError,
-          model: "pollinations",
-          timestamp: new Date(),
-          error: true,
-          errorDetails: getErrorText(error)
-        }]);
-      } finally {
-        if (activeRequestIdRef.current === requestId) {
-          activeRequestIdRef.current = null;
-          setIsLoading(false);
-          setRetryingMessageId(null);
-          setStreamActivity(null);
-        }
-      }
-      return;
-    }
 
     try {
       // Riwayat bersama (cloud + lokal) — sumber kebenaran yang sama dengan
@@ -2065,7 +2003,7 @@ const AIAgent: React.FC = () => {
                       <div className="aiagent-bot-header">
                         <div className="aiagent-bot-header-left">
                           <span className="aiagent-model-name">
-                            {msg.model === 'pollinations' ? 'Pollinations' : (msg.model || selectedModel)}
+                            {msg.model || selectedModel}
                           </span>
                           {msg.error && (
                             <button
@@ -2077,31 +2015,29 @@ const AIAgent: React.FC = () => {
                             </button>
                           )}
                         </div>
-                        {!msg.imageData && (
-                          <div className="aiagent-bot-actions">
-                            <button
-                              onClick={() => {
-                                const textToSpeak = msg.error ? getFullErrorText(msg) : msg.content;
-                                speakText(textToSpeak, msg.id);
-                              }}
-                              className="aiagent-speak-btn"
-                              title={msg.error ? "Audio error message" : "Audio"}
-                            >
-                              {isSpeaking && currentSpeakingId === msg.id ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                              <span>Audio</span>
-                            </button>
-                            <button
-                              onClick={() => {
-                                const textToCopy = msg.error ? getFullErrorText(msg) : msg.content;
-                                copyMessage(textToCopy);
-                              }}
-                              className="aiagent-copy-btn"
-                              title={msg.error ? "Copy error message" : "Copy"}
-                            >
-                              <Copy size={14} /> Copy
-                            </button>
-                          </div>
-                        )}
+                        <div className="aiagent-bot-actions">
+                          <button
+                            onClick={() => {
+                              const textToSpeak = msg.error ? getFullErrorText(msg) : msg.content;
+                              speakText(textToSpeak, msg.id);
+                            }}
+                            className="aiagent-speak-btn"
+                            title={msg.error ? "Audio error message" : "Audio"}
+                          >
+                            {isSpeaking && currentSpeakingId === msg.id ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                            <span>Audio</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              const textToCopy = msg.error ? getFullErrorText(msg) : msg.content;
+                              copyMessage(textToCopy);
+                            }}
+                            className="aiagent-copy-btn"
+                            title={msg.error ? "Copy error message" : "Copy"}
+                          >
+                            <Copy size={14} /> Copy
+                          </button>
+                        </div>
                       </div>
                     )}
                     {msg.role === "bot" && ((msg.requestedModel && msg.requestedModel !== msg.model) || (!msg.error && msg.usage)) && (
@@ -2118,14 +2054,6 @@ const AIAgent: React.FC = () => {
                         )}
                       </div>
                     )}
-                    {msg.role === "bot" && msg.imageData && msg.model?.startsWith("pollinations") && (
-                      <img
-                        src={msg.imageData}
-                        alt="Generated"
-                        className="aiagent-generated-image"
-                        onClick={() => window.open(msg.imageData, "_blank")}
-                      />
-                    )}
                     {msg.role === "bot" && msg.files && msg.files.length > 0 && (
                       <div className="aiagent-message-bubble">
                         <div className="aiagent-message-files">
@@ -2135,74 +2063,70 @@ const AIAgent: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    {!(msg.role === "bot" && msg.model?.startsWith("pollinations") && msg.imageData) && (
-                      <>
-                        {msg.role === "bot" ? (
-                          msg.error ? (
-                            <div className="aiagent-message-bubble error-bubble">
-                              <div className="aiagent-error-content">
-                                {msg.content}
-                                {msg.errorDetails && (
-                                  <div className="aiagent-error-details">
-                                    Detail: {msg.errorDetails}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ) : (
-                            <>
-                              {(() => {
-                                const parts = splitMarkdown(msg.content);
-                                return parts.map((part, index) => {
-                                  if (part.type === 'code') {
-                                    // Blok ```ui berisi JSON struktur -> render sebagai komponen
-                                    // React (kartu, alur, grafik, dsb), bukan sebagai kode.
-                                    if ((part.language || '').toLowerCase() === 'ui') {
-                                      return <UiBlock key={index} raw={part.content} />;
-                                    }
-                                    return (
-                                      <div key={index} className="aiagent-code-block-wrapper">
-                                        <CodeBlock language={part.language || ''} code={part.content} />
-                                      </div>
-                                    );
-                                  } else if (part.type === 'table') {
-                                    return <TableBlock key={index} content={part.content} />;
-                                  } else {
-                                    return (
-                                      <div key={index} className="aiagent-message-bubble">
-                                        <ReactMarkdown components={MarkdownComponents}>
-                                          {part.content}
-                                        </ReactMarkdown>
-                                      </div>
-                                    );
-                                  }
-                                });
-                              })()}
-                            </>
-                          )
-                        ) : (
-                          <div className="aiagent-message-bubble aiagent-user-bubble">
-                            {msg.images && msg.images.length > 0 && (
-                              <div className="aiagent-message-images">
-                                {msg.images.map((img, idx) => (
-                                  <div key={idx} className="aiagent-message-image">
-                                    <img src={`data:${img.mimeType};base64,${img.data}`} alt={`Uploaded ${idx + 1}`} />
-                                  </div>
-                                ))}
+                    {msg.role === "bot" ? (
+                      msg.error ? (
+                        <div className="aiagent-message-bubble error-bubble">
+                          <div className="aiagent-error-content">
+                            {msg.content}
+                            {msg.errorDetails && (
+                              <div className="aiagent-error-details">
+                                Detail: {msg.errorDetails}
                               </div>
                             )}
-                            {msg.files && msg.files.length > 0 && (
-                              <div className="aiagent-message-files">
-                                {msg.files.map((f, idx) => (
-                                  <div key={idx} className="file-chip"><FileText size={14} /> {f.name}</div>
-                                ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          {(() => {
+                            const parts = splitMarkdown(msg.content);
+                            return parts.map((part, index) => {
+                              if (part.type === 'code') {
+                                // Blok ```ui berisi JSON struktur -> render sebagai komponen
+                                // React (kartu, alur, grafik, dsb), bukan sebagai kode.
+                                if ((part.language || '').toLowerCase() === 'ui') {
+                                  return <UiBlock key={index} raw={part.content} />;
+                                }
+                                return (
+                                  <div key={index} className="aiagent-code-block-wrapper">
+                                    <CodeBlock language={part.language || ''} code={part.content} />
+                                  </div>
+                                );
+                              } else if (part.type === 'table') {
+                                return <TableBlock key={index} content={part.content} />;
+                              } else {
+                                return (
+                                  <div key={index} className="aiagent-message-bubble">
+                                    <ReactMarkdown components={MarkdownComponents}>
+                                      {part.content}
+                                    </ReactMarkdown>
+                                  </div>
+                                );
+                              }
+                            });
+                          })()}
+                        </>
+                      )
+                    ) : (
+                      <div className="aiagent-message-bubble aiagent-user-bubble">
+                        {msg.images && msg.images.length > 0 && (
+                          <div className="aiagent-message-images">
+                            {msg.images.map((img, idx) => (
+                              <div key={idx} className="aiagent-message-image">
+                                <img src={`data:${img.mimeType};base64,${img.data}`} alt={`Uploaded ${idx + 1}`} />
                               </div>
-                            )}
-                            <p className="aiagent-user-text">{msg.content}</p>
+                            ))}
                           </div>
                         )}
-                      </>
-                    )}
+                        {msg.files && msg.files.length > 0 && (
+                          <div className="aiagent-message-files">
+                            {msg.files.map((f, idx) => (
+                              <div key={idx} className="file-chip"><FileText size={14} /> {f.name}</div>
+                            ))}
+                          </div>
+                        )}
+                        <p className="aiagent-user-text">{msg.content}</p>
+                          </div>
+                        )}
                     {msg.role === "bot" && msg.searchImages && msg.searchImages.length > 0 && (
                       <div className="aiagent-search-images">
                         {msg.searchImages.map((url, idx) => (
@@ -2280,19 +2204,19 @@ const AIAgent: React.FC = () => {
                 <div key={`img-${idx}`} className="aiagent-image-preview">
                   <img src={img.preview} alt={`Preview ${idx + 1}`} />
                   <button type="button" onClick={() => setCropTarget({ index: idx, src: img.preview, name: img.name })} className="aiagent-image-crop" aria-label={`Crop image ${idx + 1}`} title="Potong 1:1"><Crop size={15} /></button>
-                  <button type="button" onClick={() => removeImage(idx)} className="aiagent-image-remove global-icon-button" aria-label={`Remove image ${idx + 1}`}><X size={16} /></button>
+                  <button type="button" onClick={() => removeImage(idx)} className="aiagent-image-remove" aria-label={`Remove image ${idx + 1}`}><X size={16} /></button>
                 </div>
               ))}
               {uploadedFiles.map((file, idx) => (
                 <div key={`file-${idx}`} className="aiagent-file-preview">
                   <FileText size={14} />
                   <span>{file.kagglePath || file.stageOnKaggle ? `${file.name.length > 24 ? file.name.slice(0, 21) + "..." : file.name} · Kaggle` : (file.name.length > 30 ? file.name.substring(0, 27) + "..." : file.name)}</span>
-                  <button type="button" onClick={() => removeFile(idx)} className="global-icon-button" aria-label={`Remove ${file.name}`}><X size={16} /></button>
+                  <button type="button" onClick={() => removeFile(idx)} aria-label={`Remove ${file.name}`}><X size={16} /></button>
                 </div>
               ))}
             </div>
           )}
-          {uploadNotice && <div role="status" style={{ fontSize: "var(--global-font-size-12px)", padding: "0 12px 8px", color: "var(--global-color-text-muted, #666)" }}>{uploadNotice}</div>}
+          {uploadNotice && <div role="status" style={{ fontSize: "var(--global-font-size-12px)", padding: "10px 12px 8px", color: "var(--global-color-text-muted, #666)" }}>{uploadNotice}</div>}
           {cropTarget && (
             <ImageCropper src={cropTarget.src} fileName={cropTarget.name} onDone={handleCropDone} onCancel={() => setCropTarget(null)} />
           )}
@@ -2512,13 +2436,6 @@ const AIAgent: React.FC = () => {
                     )}
                   </AnimatePresence>
                 </div>
-                <button
-                  className={`aiagent-icon-btn wand2-btn${imageGenEnabled ? " image-gen-active" : ""}`}
-                  onClick={() => setImageGenEnabled(v => !v)}
-                  title={imageGenEnabled ? "Image Gen ON" : "Image Gen OFF"}
-                >
-                  <Wand2 size={22} />
-                </button>
                 <button onClick={clearChat} className="aiagent-clear-btn"><Trash2 size={22} /></button>
               </div>
               <button onClick={handleSendMessage} disabled={isLoading || Boolean(pendingHostAction) || !canSendCurrentSource || (!input.trim() && !uploadedImages.length && !uploadedFiles.length)} className="aiagent-send-btn">

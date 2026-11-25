@@ -153,7 +153,6 @@ const techItems: TechItem[] = [
     items: [
       "Account-Scoped AI Agent",
       "Hermes Agent",
-      "Pollinations",
       "OpenSubtitles Extractor",
       "Video Metadata Extractor",
     ],

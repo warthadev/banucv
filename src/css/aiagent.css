@@ -719,20 +719,6 @@
   object-fit: contain;
 }
 
-.aiagent-generated-image {
-  max-width: 320px;
-  width: 100%;
-  border-radius: 16px;
-  border: 1px solid var(--global-color-border);
-  display: block;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.aiagent-generated-image:hover {
-  transform: scale(1.02);
-  box-shadow: 0 8px 24px var(--global-color-shadow);
-}
 
 .aiagent-search-images {
   display: flex;
@@ -961,7 +947,7 @@
   position: absolute;
   top: 4px;
   right: 4px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 50%;
   width: 28px;
@@ -981,7 +967,7 @@
   position: absolute;
   bottom: 4px;
   left: 4px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 50%;
   width: 28px;
@@ -995,7 +981,7 @@
   transition: background 0.15s;
 }
 
-.aiagent-image-crop:hover { background: rgba(0, 0, 0, 0.8); }
+.aiagent-image-crop:hover { background: rgba(0, 0, 0, 0.95); }
 
 .aiagent-file-preview {
   position: relative;
@@ -1012,7 +998,7 @@
   padding: 10px 8px;
   font-size: 0.65rem;
   font-weight: 500;
-  border: 1px solid var(--global-color-border);
+  border: 1.5px solid var(--global-color-accent);
   color: var(--global-color-text-secondary);
   font-family: inherit;
   overflow: hidden;
@@ -1028,11 +1014,11 @@
   position: absolute;
   top: 4px;
   right: 4px;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   justify-content: center;
   padding: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 50%;
   cursor: pointer;
@@ -1181,20 +1167,6 @@
   transform: scale(0.94);
 }
 
-.aiagent-icon-btn.image-gen-active {
-  background: var(--global-color-accent);
-  border: none;
-  color: var(--global-color-on-accent);
-}
-
-.aiagent-icon-btn.image-gen-active:hover {
-  background: rgba(var(--global-color-accent-rgb), 0.9);
-  color: var(--global-color-on-accent);
-}
-
-.aiagent-icon-btn.image-gen-active:active {
-  transform: scale(0.94);
-}
 
 .aiagent-clear-btn {
   background: var(--global-color-accent);
@@ -1694,7 +1666,6 @@
     max-height: 200px;
   }
   .aiagent-search-image { max-width: 65px; max-height: 65px; }
-  .aiagent-generated-image { max-width: 260px; }
   .aiagent-bot-actions span { display: none; }
   .aiagent-speak-btn,
   .aiagent-copy-btn,
@@ -2088,3 +2059,12 @@
 .aiagent-message.user .aiagent-message-bubble .aiagent-message-files { justify-content: flex-end; }
 .aiagent-message.user .aiagent-message-bubble .file-chip { background: rgba(255,255,255,0.16); border-color: transparent; color: var(--global-color-on-accent); }
 .file-chip { max-width: 100%; overflow-wrap: anywhere; border-radius: 0; }
+
+/* Ikon di tombol atas foto/file harus putih — paksa di SVG-nya langsung,
+   supaya tidak ada aturan global lain yang menimpa warnanya. */
+.aiagent-image-remove svg,
+.aiagent-image-crop svg,
+.aiagent-file-preview button svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}

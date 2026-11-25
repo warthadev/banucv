@@ -3,7 +3,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Bot, Trash2, Volume2, VolumeX, Check,
-  Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, Home, MapPin, Plus, User, Link, ChevronDown, Wrench, Brain, Crop
+  Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, Home, MapPin, Plus, User, Link, ChevronDown, Wrench, Brain, Crop,
+  FileSpreadsheet, FileCode, FileArchive, FileAudio, FileVideo, Presentation, FileImage
 } from "lucide-react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
@@ -134,7 +135,7 @@ interface Message {
   usage?: { inputTokens?: number; outputTokens?: number; totalTokens?: number };
   timestamp: Date;
   images?: { data: string; mimeType: string }[];
-  files?: { name: string; content: string }[];
+  files?: { name: string; content: string; size?: number }[];
   error?: boolean;
   errorDetails?: string;
   sources?: { title: string; url: string }[];
@@ -161,6 +162,49 @@ interface UploadedImage {
   name?: string;
   blob?: File;
   kagglePath?: string;
+}
+
+// Ikon file berdasarkan ekstensi, untuk kartu file terkirim.
+const fileIconForName = (name: string) => {
+  const ext = name.split(".").pop()?.toLowerCase() ?? "";
+  if (["xls", "xlsx", "csv", "ods"].includes(ext)) return FileSpreadsheet;
+  if (["py", "js", "ts", "tsx", "jsx", "json", "html", "css", "java", "c", "cpp", "h", "sql", "sh", "rs", "go"].includes(ext)) return FileCode;
+  if (["zip", "rar", "7z", "tar", "gz"].includes(ext)) return FileArchive;
+  if (["mp3", "wav", "ogg", "m4a", "flac"].includes(ext)) return FileAudio;
+  if (["mp4", "mov", "avi", "mkv", "webm"].includes(ext)) return FileVideo;
+  if (["ppt", "pptx", "key"].includes(ext)) return Presentation;
+  if (["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"].includes(ext)) return FileImage;
+  return FileText;
+};
+
+const formatFileSize = (size?: number): string | null => {
+  if (size === undefined || size === null) return null;
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+// Kartu file terkirim: tile ikon + nama + ukuran/tipe, dan tombol download
+// kalau ada tautan (lampiran dari AI).
+function FileCard({ name, size, href, external }: { name: string; size?: number; href?: string; external?: boolean }) {
+  const Icon = fileIconForName(name);
+  const ext = name.includes(".") ? (name.split(".").pop() || "").toUpperCase() : "";
+  const meta = [formatFileSize(size), ext || null].filter(Boolean).join(" · ");
+  const inner = (
+    <>
+      <span className="file-chip-icon"><Icon size={18} /></span>
+      <span className="file-chip-text">
+        <span className="file-chip-name">{name}</span>
+        {meta ? <span className="file-chip-meta">{meta}</span> : null}
+      </span>
+      {href ? <Download size={16} className="file-chip-action" /> : null}
+    </>
+  );
+  return href ? (
+    <a className="file-chip file-chip-download" href={href} download={name} target={external ? "_blank" : undefined} rel={external ? "noopener noreferrer" : undefined} title="Download">{inner}</a>
+  ) : (
+    <div className="file-chip">{inner}</div>
+  );
 }
 
 const readBlobAsDataUrl = (blob: Blob): Promise<string> => new Promise((resolve, reject) => {
@@ -1718,7 +1762,7 @@ const AIAgent: React.FC = () => {
         content: messageText || (images.length ? `[${images.length} image(s)]` : files.length ? `[${files.length} file(s)]` : ""),
         timestamp: new Date(),
         images: images.map(img => ({ data: img.data, mimeType: img.mimeType })),
-        files: files.map(f => ({ name: f.name, content: f.content }))
+        files: files.map(f => ({ name: f.name, content: f.content, size: f.blob?.size }))
       };
       setMessages(prev => [...prev, userMsg]);
     }
@@ -2299,7 +2343,7 @@ const AIAgent: React.FC = () => {
                       <div className="aiagent-message-bubble">
                         <div className="aiagent-message-files">
                           {msg.files.map((f, idx) => (
-                            <div key={idx} className="file-chip"><FileText size={14} /> {f.name}</div>
+                            <FileCard key={idx} name={f.name} size={f.size} />
                           ))}
                         </div>
                       </div>
@@ -2353,7 +2397,7 @@ const AIAgent: React.FC = () => {
                           <div className="aiagent-message-images">
                             {msg.images.map((img, idx) => (
                               <div key={idx} className="aiagent-message-image">
-                                <img src={`data:${img.mimeType};base64,${img.data}`} alt={`Uploaded ${idx + 1}`} />
+                                <img src={`data:${img.mimeType};base64,${img.data}`} alt={`Uploaded ${idx + 1}`} onClick={() => window.open(`data:${img.mimeType};base64,${img.data}`, "_blank")} />
                               </div>
                             ))}
                           </div>
@@ -2363,7 +2407,7 @@ const AIAgent: React.FC = () => {
                             {msg.files && msg.files.length > 0 && (
                               <div className="aiagent-message-files">
                                 {msg.files.map((f, idx) => (
-                                  <div key={idx} className="file-chip"><FileText size={14} /> {f.name}</div>
+                                  <FileCard key={idx} name={f.name} size={f.size} />
                                 ))}
                               </div>
                             )}
@@ -2390,13 +2434,7 @@ const AIAgent: React.FC = () => {
                       <div className="aiagent-message-bubble">
                         <div className="aiagent-attachments">
                         {msg.attachments.filter(a => !(a.dataUrl && a.mimeType.startsWith("image/"))).map((a, idx) => (
-                          (a.url || a.dataUrl) ? (
-                            <a key={`att-file-${idx}`} className="file-chip file-chip-download" href={a.url || a.dataUrl} download={a.name} target={a.url ? "_blank" : undefined} rel={a.url ? "noopener noreferrer" : undefined} title="Download">
-                              <FileText size={14} /> {a.name}{a.size ? ` (${(a.size / 1024).toFixed(1)} kB)` : ""} <Download size={12} />
-                            </a>
-                          ) : (
-                            <div key={`att-file-${idx}`} className="file-chip"><FileText size={14} /> {a.name}{a.size ? ` (${(a.size / 1024).toFixed(1)} kB)` : ""}</div>
-                          )
+                          <FileCard key={`att-file-${idx}`} name={a.name} size={a.size} href={(a.url || a.dataUrl) || undefined} external={!!a.url} />
                         ))}
                         </div>
                       </div>

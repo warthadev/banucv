@@ -784,19 +784,19 @@
 }
 
 /* Gambar terkirim: carousel mentok (full-bleed) TANPA pembungkus bubble.
-   Gambar berdampingan, 2-3 kelihatan sekaligus: tiap slide tingginya
-   dibatasi (maks 280-320px HP / 360px tablet / 400px desktop), lebar ngikutin
-   rasio foto, slide nempel tanpa jarak. Geser terkunci per gambar
-   (scroll snap). Margin negatif membatalkan padding kolom pesan supaya
-   carousel nempel ke tepi layar/kolom. File tetap dibungkus bubble.
-   Tanpa border/radius: gambar tampil selebar slide, tanpa bar hitam. */
+   Filmstrip kartu: tiap gambar dibatasi tingginya (maks 320px HP kecil /
+   340px HP besar / 380px tablet / 420px desktop), lebar ngikutin rasio
+   foto, antar kartu ada jarak 10px, sudut 16px, rata tengah. Geser
+   terkunci per gambar (scroll snap). Margin negatif membatalkan padding
+   kolom pesan supaya carousel nempel ke tepi layar/kolom. File tetap
+   dibungkus bubble. Tanpa border: gambar tampil selebar slide. */
 .aiagent-message.user .aiagent-message-images,
 .aiagent-message.bot .aiagent-message-images {
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: thin;
-  gap: 0;
+  gap: 10px;
   margin: 0 -16px 6px;
   padding: 0 0 4px;
   width: calc(100% + 32px);
@@ -804,7 +804,7 @@
   box-sizing: border-box;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .aiagent-message.user .aiagent-message-images .aiagent-message-image,
@@ -812,7 +812,7 @@
   flex: 0 0 auto;
   max-width: 100%;
   margin-bottom: 0;
-  border-radius: 0;
+  border-radius: 16px;
   overflow: hidden;
   border: none;
   box-sizing: border-box;
@@ -823,10 +823,11 @@
 .aiagent-message.bot .aiagent-message-images .aiagent-message-image img {
   width: auto;
   height: auto;
-  max-width: 420px;
-  max-height: 400px;
+  max-width: 440px;
+  max-height: 420px;
   object-fit: contain;
   display: block;
+  cursor: pointer;
 }
 
 /* Lampiran gambar dari AI: carousel mentok tanpa bubble (seperti
@@ -834,7 +835,7 @@
    Aturan ini ditaruh di sini (sebelum media query) supaya override
    lebar/tinggi per breakpoint di bawah tetap menang. */
 .aiagent-attachments.aiagent-attachments--images {
-  gap: 0;
+  gap: 10px;
   margin: 0 -16px 6px;
   padding: 0 0 4px;
   width: calc(100% + 32px);
@@ -842,20 +843,41 @@
   box-sizing: border-box;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .aiagent-attachment-image {
   flex: 0 0 auto;
   width: auto;
-  max-width: 420px;
-  max-height: 400px;
+  max-width: 440px;
+  max-height: 420px;
   height: auto;
-  border-radius: 0;
+  border-radius: 16px;
   cursor: pointer;
   object-fit: contain;
   box-sizing: border-box;
   scroll-snap-align: start;
+}
+
+/* Satu gambar saja: tampil penuh selebar carousel, tinggi asli (tanpa batas). */
+.aiagent-message.user .aiagent-message-images .aiagent-message-image:only-child,
+.aiagent-message.bot .aiagent-message-images .aiagent-message-image:only-child {
+  flex: 0 0 100%;
+}
+.aiagent-message.user .aiagent-message-images .aiagent-message-image:only-child img,
+.aiagent-message.bot .aiagent-message-images .aiagent-message-image:only-child img {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  max-height: none;
+}
+.aiagent-attachments.aiagent-attachments--images .aiagent-attachment-image:only-child {
+  flex: 0 0 100%;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  max-height: none;
+  border-radius: 16px;
 }
 
 
@@ -973,20 +995,64 @@
   text-decoration: underline;
 }
 
-.aiagent-message-files { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.aiagent-message-files { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 8px; margin-bottom: 6px; }
 
+/* Kartu file terkirim: baris penuh berisi tile ikon + nama + ukuran/tipe.
+   Bentuk tetap persegi panjang (radius 0), sesuai permintaan. */
 .file-chip {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   background: var(--global-color-accent-alpha);
   border: 1px solid var(--global-color-border);
-  border-radius: 16px;
-  padding: 4px 10px;
-  font-size: var(--global-font-size-0-72rem);
+  border-radius: 0;
+  padding: 10px 12px;
+  font-size: 0.875rem;
   font-weight: 500;
-  color: var(--global-color-text-secondary);
+  color: var(--global-color-text);
   font-family: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+.file-chip-icon {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--global-color-accent);
+  color: var(--global-color-on-accent);
+  border-radius: 0;
+}
+.file-chip-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.file-chip-name {
+  font-weight: 600;
+  color: var(--global-color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.file-chip-meta {
+  font-size: var(--global-font-size-0-72rem);
+  font-weight: 400;
+  color: var(--global-color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.file-chip-action {
+  flex: 0 0 auto;
+  color: var(--global-color-text-secondary);
 }
 
 .aiagent-message-footer {
@@ -1697,8 +1763,8 @@
   .aiagent-message.user .aiagent-message-images .aiagent-message-image img,
   .aiagent-message.bot .aiagent-message-images .aiagent-message-image img,
   .aiagent-attachment-image {
-    max-height: 360px;
-    max-width: 380px;
+    max-height: 380px;
+    max-width: 400px;
   }
   .aiagent-search-image { max-width: 100px; max-height: 100px; }
 }
@@ -1721,7 +1787,7 @@
   .aiagent-message.user .aiagent-message-images .aiagent-message-image img,
   .aiagent-message.bot .aiagent-message-images .aiagent-message-image img,
   .aiagent-attachment-image {
-    max-height: 400px;
+    max-height: 420px;
   }
   .aiagent-search-image { max-width: 140px; max-height: 140px; }
 }
@@ -1768,8 +1834,8 @@
   .aiagent-message.user .aiagent-message-images .aiagent-message-image img,
   .aiagent-message.bot .aiagent-message-images .aiagent-message-image img,
   .aiagent-attachment-image {
-    max-height: 320px;
-    max-width: 340px;
+    max-height: 340px;
+    max-width: 360px;
   }
   .aiagent-typing { padding: 4px 0; margin-left: 0; }
   .aiagent-messages::-webkit-scrollbar {
@@ -1823,8 +1889,8 @@
   .aiagent-message.user .aiagent-message-images .aiagent-message-image img,
   .aiagent-message.bot .aiagent-message-images .aiagent-message-image img,
   .aiagent-attachment-image {
-    max-height: 280px;
-    max-width: 300px;
+    max-height: 320px;
+    max-width: 320px;
   }
   .aiagent-search-image { max-width: 65px; max-height: 65px; }
   .aiagent-bot-actions span { display: none; }
@@ -2205,10 +2271,14 @@
 .aiagent-message.bot .aiagent-message-images,
 .aiagent-attachments.aiagent-attachments--images { max-width: none; }
 .aiagent-attachments { width: 100%; }
-.aiagent-message-bubble .aiagent-attachments { margin-top: 0; }
+.aiagent-message-bubble .aiagent-attachments { margin-top: 0; flex-direction: column; overflow-x: visible; }
 .aiagent-message-bubble .aiagent-message-files:last-child { margin-bottom: 0; }
 .aiagent-message.user .aiagent-message-bubble .aiagent-message-files { justify-content: flex-end; }
-.aiagent-message.user .aiagent-message-bubble .file-chip { background: rgba(255,255,255,0.16); border-color: transparent; color: var(--global-color-on-accent); }
+.aiagent-message.user .aiagent-message-bubble .file-chip { background: rgba(255,255,255,0.16); border-color: var(--global-color-border); color: var(--global-color-on-accent); }
+.aiagent-message.user .aiagent-message-bubble .file-chip-name { color: var(--global-color-on-accent); }
+.aiagent-message.user .aiagent-message-bubble .file-chip-meta { color: var(--global-color-on-accent); opacity: 0.75; }
+.aiagent-message.user .aiagent-message-bubble .file-chip-icon { background: var(--global-color-border); color: var(--global-color-text); }
+.aiagent-message.user .aiagent-message-bubble .file-chip-action { color: var(--global-color-on-accent); opacity: 0.75; }
 .file-chip { max-width: 100%; overflow-wrap: anywhere; border-radius: 0; }
 
 /* Ikon di tombol atas foto/file harus putih — paksa di SVG-nya langsung,

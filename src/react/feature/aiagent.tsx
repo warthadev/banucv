@@ -3,11 +3,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Bot, Trash2, Volume2, VolumeX, Check,
-  Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Wand2, Link, ChevronDown
+  Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Wand2, Link, ChevronDown, Wrench, Brain
 } from "lucide-react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
-import useAgentLocal, { type AgentLocalCheck, type AgentLocalStep } from "@hook/useagentlocal";
+import useAgentLocal, { type AgentLocalCheck, type AgentLocalStep, type AgentProcessStep } from "@hook/useagentlocal";
 import { AI_AGENT_API_BASE } from "@config/api";
 import { saveOpenRouterCredentials } from "@config/routerhelper";
 import { saveKaggleCredentials } from "@config/kagglecredentials";
@@ -28,58 +28,54 @@ import { confirmHostAction, type HostActionPreview } from "@config/agentworkspac
 import { RouterAuthModal } from "./routerauthmodal";
 
 const STREAM_MESSAGE_ID = "streaming";
+const PROCESS_OUTPUT_KEEP = 400;
+const PROCESS_STEPS_KEEP = 60;
 
-/** Natural rotating status lines so the wait feels alive (not a static model name). */
-const NATURAL_THINKING_PHRASES = [
-  "Sedang berpikir…",
-  "Memahami permintaan…",
-  "Menyusun jawaban…",
-  "Membaca konteks…",
-  "Memeriksa detail…",
-  "Merangkai respons…",
-  "Menyiapkan struktur…",
-  "Mengolah informasi…",
-];
+type ProcessStep = AgentProcessStep;
+type ProcessStepPatch = Partial<ProcessStep> & { id: string };
 
-const STRUCTURE_THINKING_PHRASES = [
-  "Membaca struktur folder…",
-  "Menelusuri file…",
-  "Menyusun pohon direktori…",
-  "Mengumpulkan daftar lengkap…",
-  "Memastikan tidak ada yang terlewat…",
-];
-
-const pickThinkingPhrase = (seed: number, preferStructure = false): string => {
-  const list = preferStructure ? STRUCTURE_THINKING_PHRASES : NATURAL_THINKING_PHRASES;
-  return list[Math.abs(seed) % list.length];
-};
-
-/** Client-side progressive reveal so local (non-stream) replies still appear token-by-token. */
-const revealTextProgressively = (
-  fullText: string,
-  onChunk: (partial: string) => void,
-  isStillCurrent: () => boolean,
-  options?: { charsPerTick?: number; tickMs?: number },
-): Promise<void> => {
-  const charsPerTick = options?.charsPerTick ?? 14;
-  const tickMs = options?.tickMs ?? 14;
-  return new Promise((resolve) => {
-    let index = 0;
-    const step = () => {
-      if (!isStillCurrent()) {
-        resolve();
-        return;
-      }
-      index = Math.min(fullText.length, index + charsPerTick);
-      onChunk(fullText.slice(0, index));
-      if (index >= fullText.length) {
-        resolve();
-        return;
-      }
-      window.setTimeout(step, tickMs);
-    };
-    step();
-  });
+// Blok proses: pesan berjalan (berpikir / tool) yang terpisah dari jawaban akhir dan bisa dibuka-tutup.
+const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolean; onToggle: () => void }> = ({ steps, live, open, onToggle }) => {
+  const running = steps.filter((step) => step.status === "running");
+  const failed = steps.filter((step) => step.status === "error").length;
+  const toolCount = steps.filter((step) => step.kind === "tool").length;
+  const title = live
+    ? (running[running.length - 1]?.title || "Bekerja…")
+    : `Proses · ${toolCount > 0 ? `${toolCount} tool` : `${steps.length} langkah`}${failed ? ` · ${failed} gagal` : ""}`;
+  return (
+    <div className={`aiagent-process${live ? " live" : ""}`}>
+      <button type="button" className="aiagent-process-toggle" onClick={onToggle} aria-expanded={open}>
+        {live ? <Loader2 size={14} className="aiagent-process-spin" /> : failed ? <X size={14} /> : <Check size={14} />}
+        <span className="aiagent-process-title">{title}</span>
+        <ChevronDown size={14} className={`aiagent-process-chevron${open ? " open" : ""}`} />
+      </button>
+      {open && (
+        <ol className="aiagent-process-list">
+          {steps.map((step) => (
+            <li key={step.id} className={`aiagent-process-step ${step.status}`}>
+              <span className="aiagent-process-icon">
+                {step.status === "running" ? <Loader2 size={13} className="aiagent-process-spin" />
+                  : step.status === "error" ? <X size={13} />
+                  : step.kind === "tool" ? <Wrench size={13} /> : <Brain size={13} />}
+              </span>
+              <div className="aiagent-process-body">
+                <div className="aiagent-process-step-title">
+                  {step.title}
+                  {step.detail ? <span className="aiagent-process-detail"> {step.detail}</span> : null}
+                </div>
+                {step.output ? (
+                  <details className="aiagent-process-output">
+                    <summary>{step.kind === "thinking" ? "Lihat pikiran" : "Lihat hasil"}</summary>
+                    <pre>{step.output}</pre>
+                  </details>
+                ) : null}
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
 };
 
 const ROOT_CONFIRM_LABELS = {
@@ -114,6 +110,9 @@ interface Message {
   sources?: { title: string; url: string }[];
   searchImages?: string[];
   attachments?: { name: string; path: string; mimeType: string; size?: number; dataUrl?: string; url?: string }[];
+  // Pesan proses (berpikir / tool) yang terpisah dari jawaban akhir.
+  process?: ProcessStep[];
+  processLive?: boolean;
 }
 
 interface UploadedFile {
@@ -771,7 +770,9 @@ const AIAgent: React.FC = () => {
         const parsed = JSON.parse(saved) as Array<Omit<Message, "timestamp"> & { timestamp: string | number }>;
         return parsed.map((msg) => ({
           ...msg,
-          timestamp: new Date(msg.timestamp)
+          timestamp: new Date(msg.timestamp),
+          // Proses yang dulu belum selesai saat halaman ditutup jangan tampil berputar selamanya.
+          ...(msg.process ? { processLive: false, process: msg.process.map((step) => step.status === "running" ? { ...step, status: "done" as const } : step) } : {}),
         }));
       }
     } catch (e) {
@@ -919,6 +920,51 @@ const AIAgent: React.FC = () => {
   const activeRequestIdRef = useRef<number | null>(null);
 
   useEffect(() => { messagesRef.current = messages; }, [messages]);
+
+  const processIdRef = useRef<string | null>(null);
+  const [processOpen, setProcessOpen] = useState<Record<string, boolean>>({});
+
+  // Tambah / perbarui langkah pada pesan proses milik request yang sedang berjalan (dibuat saat langkah pertama datang).
+  const mergeProcessSteps = (incoming: ProcessStepPatch[]) => {
+    const pid = processIdRef.current;
+    if (!pid || incoming.length === 0) return;
+    setMessages(prev => {
+      const index = prev.findIndex(m => m.id === pid);
+      const merged = new Map<string, ProcessStep>((index >= 0 ? prev[index].process || [] : []).map(step => [step.id, step]));
+      for (const patch of incoming) {
+        const current = merged.get(patch.id) || { id: patch.id, kind: "info" as const, title: "", status: "running" as const };
+        merged.set(patch.id, { ...current, ...patch });
+      }
+      const process = Array.from(merged.values());
+      if (index >= 0) {
+        const next = prev.slice();
+        next[index] = { ...prev[index], process, processLive: true };
+        return next;
+      }
+      const created: Message = { id: pid, role: "bot", content: "", model: "Proses", timestamp: new Date(), process, processLive: true };
+      const streamIndex = prev.findIndex(m => m.id === STREAM_MESSAGE_ID);
+      if (streamIndex >= 0) return [...prev.slice(0, streamIndex), created, ...prev.slice(streamIndex)];
+      return [...prev, created];
+    });
+  };
+
+  // Request selesai: hentikan animasi, rapikan langkah yang masih "running", pangkas output agar riwayat tetap kecil.
+  const finishProcess = (outcome: "done" | "error") => {
+    const pid = processIdRef.current;
+    processIdRef.current = null;
+    if (!pid) return;
+    setMessages(prev => prev.flatMap(m => {
+      if (m.id !== pid) return [m];
+      const steps = (m.process || [])
+        .slice(-PROCESS_STEPS_KEEP)
+        .map(step => ({
+          ...step,
+          status: step.status === "running" ? outcome : step.status,
+          output: step.output && step.output.length > PROCESS_OUTPUT_KEEP ? `${step.output.slice(0, PROCESS_OUTPUT_KEEP)}…` : step.output,
+        }));
+      return steps.length ? [{ ...m, process: steps, processLive: false }] : [];
+    }));
+  };
 
   useEffect(() => {
     if (!currentUserUid) {
@@ -1275,11 +1321,11 @@ const AIAgent: React.FC = () => {
     modelSequence: string[],
     requestOwnerUid: string,
     requestId: number,
-  ): Promise<{ text: string; model: string; requestedModel: string; usage?: Message["usage"]; sources?: { title: string; url: string }[]; searchImages?: string[]; pendingHostAction?: HostActionPreview }> => {
+  ): Promise<{ text: string; model: string; requestedModel: string; usage?: Message["usage"]; sources?: { title: string; url: string }[]; searchImages?: string[]; pendingHostAction?: HostActionPreview; attachments?: Message["attachments"] }> => {
     const modelName = modelSequence[modelIndex];
     if (!modelName) throw new Error("Model not found");
     const originallyRequestedModel = modelSequence[0] || modelName;
-    const priorMessages = currentMessages.filter(m => !m.error && !(isRetry && m.role === "user" && m.content === originalUserMessage));
+    const priorMessages = currentMessages.filter(m => !m.error && !m.process && !(isRetry && m.role === "user" && m.content === originalUserMessage));
     const history = buildModelScopedHistory(priorMessages, modelName);
     const textContext = messageText + buildContextFromFiles(files);
     const firebaseAuth = await getAuth();
@@ -1352,6 +1398,8 @@ const AIAgent: React.FC = () => {
     let buffer = "";
     let final: AgentStreamFinal = { text: "", model: modelName, requestedModel: originallyRequestedModel };
     let streamedAnything = false;
+    let toolStepCounter = 0;
+    const openToolSteps: { name: string; id: string }[] = [];
     const appendToken = (delta: string) => {
       if (!delta) return;
       streamedAnything = true;
@@ -1397,8 +1445,16 @@ const AIAgent: React.FC = () => {
           appendToken(event.delta);
         } else if (event.type === "tool_call" && typeof event.name === "string") {
           setStreamActivity(`Memakai tool: ${event.name}`);
+          const toolStepId = `t${++toolStepCounter}`;
+          openToolSteps.push({ name: event.name, id: toolStepId });
+          mergeProcessSteps([{ id: toolStepId, kind: "tool", tool: event.name, title: `Memakai tool: ${event.name}`, status: "running" }]);
         } else if (event.type === "tool_result" && typeof event.name === "string") {
           setStreamActivity(`Tool ${event.name} selesai`);
+          const openIndex = openToolSteps.findIndex(item => item.name === event.name);
+          if (openIndex >= 0) {
+            const [finished] = openToolSteps.splice(openIndex, 1);
+            mergeProcessSteps([{ id: finished.id, status: "done" }]);
+          }
         } else if (event.type === "status" && typeof event.status === "string") {
           setStreamActivity(event.status === "thinking" ? "Sedang berpikir…" : event.status);
         } else if (event.type === "final" && typeof event.result === "object" && event.result !== null) {
@@ -1446,21 +1502,25 @@ const AIAgent: React.FC = () => {
     const textContext = messageText + imageNote + buildContextFromFiles(files);
     const prompt = textContext || (images.length ? "Describe these images" : "");
     const visionImages = images.filter((image) => image.data.length > 0 && image.data.length <= 9_000_000);
-    const wantsStructure = /struktur|structure|tree|pohon|direktori|directory|folder|arsip|archive|lengkap|complete|full list|daftar lengkap|extract/i.test(messageText);
-    let phraseIndex = 0;
-    setStreamActivity(pickThinkingPhrase(phraseIndex, wantsStructure));
-    const activityTimer = window.setInterval(() => {
-      phraseIndex += 1;
-      void agentLocal.pollActivity?.().then((line) => {
-        if (line && line.trim()) {
-          setStreamActivity(line.trim());
-        } else {
-          setStreamActivity(pickThinkingPhrase(phraseIndex, wantsStructure));
-        }
-      }).catch(() => {
-        setStreamActivity(pickThinkingPhrase(phraseIndex, wantsStructure));
-      });
-    }, 1600);
+    setStreamActivity("Memahami permintaan…");
+    // Pesan proses langsung muncul, lalu diisi langkah asli dari worker (berpikir / tool) lewat polling.
+    mergeProcessSteps([{ id: "c0", kind: "thinking", title: "Memahami permintaan", status: "running" }]);
+    let sinceSeq = 0;
+    let syncing = false;
+    const syncProcess = async () => {
+      if (syncing) return;
+      syncing = true;
+      try {
+        const data = await agentLocal.pollProcess(sinceSeq);
+        if (!data) return;
+        sinceSeq = data.seq;
+        if (data.activity) setStreamActivity(data.activity);
+        if (data.steps.length > 0) mergeProcessSteps([{ id: "c0", status: "done" }, ...data.steps]);
+      } finally {
+        syncing = false;
+      }
+    };
+    const activityTimer = window.setInterval(() => { void syncProcess(); }, 1000);
     let content: string;
     let localAttachments: Message["attachments"] = undefined;
     try {
@@ -1469,6 +1529,8 @@ const AIAgent: React.FC = () => {
       localAttachments = result.attachments && result.attachments.length > 0 ? result.attachments : undefined;
     } finally {
       window.clearInterval(activityTimer);
+      syncing = false;
+      await syncProcess().catch(() => undefined);
     }
     if (currentUserUidRef.current !== requestOwnerUid || activeRequestIdRef.current !== requestId) {
       throw new Error("The signed-in account changed while this AI request was running");
@@ -1504,8 +1566,7 @@ const AIAgent: React.FC = () => {
     activeRequestIdRef.current = requestId;
     const isCurrentRequest = () => currentUserUidRef.current === requestOwnerUid && activeRequestIdRef.current === requestId && messagesOwnerUid === requestOwnerUid;
     setIsLoading(true);
-    const wantsStructure = /struktur|structure|tree|pohon|direktori|directory|folder|arsip|archive|lengkap|complete|full list|daftar lengkap|extract/i.test(messageText);
-    setStreamActivity(pickThinkingPhrase(Date.now(), wantsStructure));
+    processIdRef.current = `process-${requestId}`;
 
     if (!isRetry) {
       const userMsg: Message = {
@@ -1568,83 +1629,25 @@ const AIAgent: React.FC = () => {
         setMessages(prev => prev.filter(m => m.id !== STREAM_MESSAGE_ID));
         return;
       }
-      const finalizeMessage = (msg: Message): Message => ({
-        ...msg,
-        content: response.text,
-        model: response.model,
-        requestedModel: response.requestedModel,
-        usage: response.usage,
-        sources: response.sources && response.sources.length > 0 ? response.sources : undefined,
-        attachments: response.attachments && response.attachments.length > 0 ? response.attachments : undefined,
-      });
-      const hadStreamTokens = messagesRef.current.some(
-        (m) => m.id === STREAM_MESSAGE_ID && m.role === "bot" && Boolean(m.content?.trim()),
-      );
-      // Local (and non-streaming fallback) arrives as one blob — reveal progressively so the chat feels live.
-      if (!hadStreamTokens && response.text.length > 40) {
-        setStreamActivity("Menulis jawaban…");
-        setMessages((prev) => {
-          const withoutStream = prev.filter((m) => m.id !== STREAM_MESSAGE_ID);
-          return [
-            ...withoutStream,
-            {
-              id: STREAM_MESSAGE_ID,
-              role: "bot" as const,
-              content: "",
-              model: response.model,
-              requestedModel: response.requestedModel,
-              timestamp: new Date(),
-            },
-          ];
-        });
-        await revealTextProgressively(
-          response.text,
-          (partial) => {
-            if (!isCurrentRequest()) return;
-            setMessages((prev) => {
-              const last = prev[prev.length - 1];
-              if (last && last.id === STREAM_MESSAGE_ID && last.role === "bot") {
-                return [...prev.slice(0, -1), { ...last, content: partial }];
-              }
-              return [
-                ...prev,
-                {
-                  id: STREAM_MESSAGE_ID,
-                  role: "bot" as const,
-                  content: partial,
-                  model: response.model,
-                  requestedModel: response.requestedModel,
-                  timestamp: new Date(),
-                },
-              ];
-            });
-          },
-          isCurrentRequest,
-          { charsPerTick: response.text.length > 2000 ? 28 : 14, tickMs: 12 },
-        );
-        if (!isCurrentRequest()) return;
-      }
-      setMessages((prev) => {
+      const finalizeMessage = (msg: Message): Message => ({ ...msg, content: response.text, model: response.model, requestedModel: response.requestedModel, usage: response.usage, sources: response.sources && response.sources.length > 0 ? response.sources : undefined, attachments: response.attachments && response.attachments.length > 0 ? response.attachments : undefined });
+      setMessages(prev => {
         const last = prev[prev.length - 1];
         if (last && last.id === STREAM_MESSAGE_ID && last.role === "bot") {
           return [...prev.slice(0, -1), finalizeMessage({ ...last, id: (Date.now() + 1).toString() })];
         }
-        return [
-          ...prev,
-          finalizeMessage({
-            id: (Date.now() + 1).toString(),
-            role: "bot",
-            content: response.text,
-            model: response.model,
-            requestedModel: response.requestedModel,
-            usage: response.usage,
-            timestamp: new Date(),
-          }),
-        ];
+        return [...prev, finalizeMessage({
+          id: (Date.now() + 1).toString(),
+          role: "bot",
+          content: response.text,
+          model: response.model,
+          requestedModel: response.requestedModel,
+          usage: response.usage,
+          timestamp: new Date(),
+        })];
       });
       setStreamActivity(null);
 
-      if (aiMode === "auto") {
+      if (aiMode === 'auto') {
         speakText(response.text, (Date.now() + 1).toString());
       }
     } catch (error: unknown) {
@@ -1663,6 +1666,7 @@ const AIAgent: React.FC = () => {
         return;
       }
 
+      finishProcess("error");
       setMessages(prev => prev.filter(m => !(m.id === STREAM_MESSAGE_ID && !m.content.trim())) );
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
@@ -1684,6 +1688,7 @@ const AIAgent: React.FC = () => {
       });
     } finally {
       if (activeRequestIdRef.current === requestId) {
+        finishProcess("done");
         activeRequestIdRef.current = null;
         setIsLoading(false);
         setRetryingMessageId(null);
@@ -1734,7 +1739,9 @@ const AIAgent: React.FC = () => {
     if (!requestOwnerUid || requestOwnerUid !== currentUserUid || messagesOwnerUid !== requestOwnerUid || isLoading || !canSendCurrentSource) return;
     const errorIndex = messages.findIndex(m => m.id === messageId);
     if (errorIndex <= 0) return;
-    const userMsg = messages[errorIndex - 1];
+    let userIndex = errorIndex - 1;
+    while (userIndex > 0 && messages[userIndex].process) userIndex -= 1;
+    const userMsg = messages[userIndex];
     if (userMsg.role !== "user") return;
     setRetryingMessageId(messageId);
     setMessages(prev => prev.filter(m => m.id !== messageId));
@@ -1864,7 +1871,18 @@ const AIAgent: React.FC = () => {
               </div>
             )}
             <AnimatePresence>
-              {messages.map((msg) => (
+              {messages.map((msg) => msg.process ? (
+                <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className="aiagent-message bot">
+                  <div className="aiagent-message-content">
+                    <ProcessBlock
+                      steps={msg.process}
+                      live={msg.processLive === true}
+                      open={processOpen[msg.id] ?? (msg.processLive === true)}
+                      onToggle={() => setProcessOpen(prev => ({ ...prev, [msg.id]: !(prev[msg.id] ?? (msg.processLive === true)) }))}
+                    />
+                  </div>
+                </motion.div>
+              ) : (
                 <motion.div key={msg.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={`aiagent-message ${msg.role === "user" ? "user" : "bot"}`}>
                   {msg.role === "user" && <div className="aiagent-user-avatar">{userAvatar ? <img src={userAvatar} alt="Avatar" /> : <User size={24} />}</div>}
                   <div className="aiagent-message-content">
@@ -2057,17 +2075,10 @@ const AIAgent: React.FC = () => {
                 </motion.div>
               ))}
             </AnimatePresence>
-            {isLoading && !messages.some((m) => m.id === STREAM_MESSAGE_ID && Boolean(m.content?.trim())) && (
-              <div className="aiagent-typing" role="status" aria-live="polite">
-                <div className="aiagent-typing-content aiagent-thinking-live">
-                  <div className="aiagent-thinking-pulse" aria-hidden="true" />
-                  <div className="aiagent-typing-header">
-                    <span className="aiagent-thinking-label">{streamActivity || "Sedang berpikir…"}</span>
-                    <div className="aiagent-typing-dots" aria-hidden="true"><span></span><span></span><span></span></div>
-                  </div>
-                  {selectedModel && (
-                    <div className="aiagent-thinking-model">{selectedModel}</div>
-                  )}
+            {isLoading && !messages.some(m => m.processLive) && (
+              <div className="aiagent-typing">
+                <div className="aiagent-typing-content">
+                  <div className="aiagent-typing-header"><span>{streamActivity || selectedModel}</span><div className="aiagent-typing-dots"><span></span><span></span><span></span></div></div>
                 </div>
               </div>
             )}

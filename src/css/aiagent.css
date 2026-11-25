@@ -14,6 +14,8 @@
   width: 100%;
   max-width: 860px;
   bottom: 0;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--global-color-background);
@@ -125,6 +127,7 @@
   flex-shrink: 0;
   width: 40px;
   height: 40px;
+  padding: 0;
   border-radius: 50%;
   border: 0;
   background: transparent;
@@ -142,6 +145,31 @@
 }
 
 .aiagent-player-clear:active { transform: scale(0.94); }
+
+/* Tombol Home di bar atas, di sebelah tombol hapus: kembali ke dashboard.
+   Ukurannya sama dengan tombol + (40px, ikon 22px). */
+.aiagent-player-home {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  border: 0;
+  background: transparent;
+  color: var(--global-color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.aiagent-player-home:hover {
+  background: var(--global-color-accent-alpha);
+  color: var(--global-color-accent);
+}
+
+.aiagent-player-home:active { transform: scale(0.94); }
 
 .aiagent-messages {
   flex: 1;
@@ -269,7 +297,7 @@
   padding: 0 !important;
   margin: 0 !important;
   max-width: 100%;
-  width: auto;
+  width: 100%;
 }
 
 .aiagent-message.bot .aiagent-message-content {
@@ -755,90 +783,74 @@
   background: var(--global-color-accent-alpha);
 }
 
-.aiagent-message.user .aiagent-message-images {
-  display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: thin;
-  gap: 8px;
-  margin-bottom: 6px;
-  padding-bottom: 4px;
-  width: 100%;
-  flex-direction: row;
-  justify-content: flex-end;
-}
-
-.aiagent-message.user .aiagent-message-images .aiagent-message-image {
-  flex: 0 0 auto;
-  max-width: 100%;
-  margin-bottom: 0;
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid var(--global-color-border);
-}
-
-.aiagent-message.user .aiagent-message-images .aiagent-message-image img {
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 320px;
-  object-fit: contain;
-  display: block;
-}
-
+/* Gambar terkirim: carousel mentok (full-bleed) TANPA pembungkus bubble.
+   Satu gambar = satu slide selebar carousel; geser terkunci per gambar
+   (scroll snap). Margin negatif membatalkan padding kolom pesan supaya
+   carousel nempel ke tepi layar/kolom. File tetap dibungkus bubble. */
+.aiagent-message.user .aiagent-message-images,
 .aiagent-message.bot .aiagent-message-images {
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: thin;
-  gap: 8px;
-  margin-bottom: 6px;
-  padding-bottom: 4px;
-  width: 100%;
-  flex-direction: row;
-  justify-content: flex-start;
+  gap: 0;
+  margin: 0 -16px 6px;
+  padding: 0 0 4px;
+  width: calc(100% + 32px);
+  max-width: none;
+  box-sizing: border-box;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
 }
 
+.aiagent-message.user .aiagent-message-images .aiagent-message-image,
 .aiagent-message.bot .aiagent-message-images .aiagent-message-image {
-  flex: 0 0 auto;
+  flex: 0 0 100%;
   max-width: 100%;
   margin-bottom: 0;
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--global-color-border);
+  box-sizing: border-box;
+  scroll-snap-align: start;
 }
 
+.aiagent-message.user .aiagent-message-images .aiagent-message-image img,
 .aiagent-message.bot .aiagent-message-images .aiagent-message-image img {
-  width: auto;
+  width: 100%;
   height: auto;
   max-width: 100%;
-  max-height: 320px;
+  max-height: 480px;
   object-fit: contain;
   display: block;
 }
 
-.aiagent-message.user .aiagent-message-image {
-  margin-bottom: 6px;
-  display: flex;
-  justify-content: flex-end;
+/* Lampiran gambar dari AI: carousel mentok tanpa bubble (seperti
+   .aiagent-message-images). Lampiran file tetap di dalam bubble.
+   Aturan ini ditaruh di sini (sebelum media query) supaya override
+   lebar/tinggi per breakpoint di bawah tetap menang. */
+.aiagent-attachments.aiagent-attachments--images {
+  gap: 0;
+  margin: 0 -16px 6px;
+  padding: 0 0 4px;
+  width: calc(100% + 32px);
+  max-width: none;
+  box-sizing: border-box;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
 }
 
-.aiagent-message.user .aiagent-message-image img {
+.aiagent-attachment-image {
+  flex: 0 0 100%;
+  width: 100%;
   max-width: 100%;
-  max-height: 320px;
+  max-height: 480px;
+  height: auto;
   border-radius: 16px;
+  cursor: pointer;
   object-fit: contain;
-}
-
-.aiagent-message.bot .aiagent-message-image {
-  margin-bottom: 6px;
-}
-
-.aiagent-message.bot .aiagent-message-image img {
-  max-width: 100%;
-  max-height: 320px;
-  border-radius: 16px;
-  object-fit: contain;
+  box-sizing: border-box;
+  scroll-snap-align: start;
 }
 
 
@@ -1040,17 +1052,22 @@
   30% { transform: translateY(-5px); opacity: 1; }
 }
 
+/* Preview strip: full-bleed, selebar container (mentok). Strip ini sekarang
+   anak langsung .aiagent-container, bukan isi kartu composer — jadi lebarnya
+   tidak lagi dipotong margin/padding kartu. */
 .aiagent-previews {
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: thin;
   gap: 8px;
-  padding: 0;
-  margin-bottom: 10px;
+  padding: 0 0 4px;
+  margin: 0 0 10px;
   flex-direction: row;
   width: 100%;
   box-sizing: border-box;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
 }
 
 .aiagent-image-preview {
@@ -1062,6 +1079,7 @@
   border: 1.5px solid var(--global-color-accent);
   box-shadow: 0 2px 8px var(--global-color-shadow);
   flex-shrink: 0;
+  scroll-snap-align: start;
 }
 
 .aiagent-image-preview img { width: 100%; height: 100%; object-fit: cover; }
@@ -1073,8 +1091,8 @@
   background: rgba(0, 0, 0, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -1094,8 +1112,8 @@
   background: rgba(0, 0, 0, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -1129,6 +1147,7 @@
   overflow: hidden;
   text-align: center;
   box-sizing: border-box;
+  scroll-snap-align: start;
 }
 
 .aiagent-file-preview > svg { width: 22px; height: 22px; flex: none; }
@@ -1139,8 +1158,8 @@
   position: absolute;
   top: 4px;
   right: 4px;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   justify-content: center;
   padding: 0;
   background: rgba(0, 0, 0, 0.8);
@@ -1663,9 +1682,17 @@
   .aiagent-message-content { width: 100%; max-width: 100%; }
   .aiagent-messages::-webkit-scrollbar { display: none; }
   .aiagent-messages { scrollbar-width: none; -ms-overflow-style: none; }
+  .aiagent-message.user .aiagent-message-images,
+  .aiagent-message.bot .aiagent-message-images,
+  .aiagent-attachments.aiagent-attachments--images {
+    margin-left: -20px;
+    margin-right: -20px;
+    width: calc(100% + 40px);
+  }
   .aiagent-message.user .aiagent-message-images .aiagent-message-image img,
-  .aiagent-message.bot .aiagent-message-images .aiagent-message-image img {
-    max-height: 280px;
+  .aiagent-message.bot .aiagent-message-images .aiagent-message-image img,
+  .aiagent-attachment-image {
+    max-height: 440px;
   }
   .aiagent-search-image { max-width: 100px; max-height: 100px; }
 }
@@ -1678,18 +1705,34 @@
   .aiagent-message-content { width: 100%; max-width: 100%; }
   .aiagent-messages::-webkit-scrollbar { display: none; }
   .aiagent-messages { scrollbar-width: none; -ms-overflow-style: none; }
+  .aiagent-message.user .aiagent-message-images,
+  .aiagent-message.bot .aiagent-message-images,
+  .aiagent-attachments.aiagent-attachments--images {
+    margin-left: -24px;
+    margin-right: -24px;
+    width: calc(100% + 48px);
+  }
   .aiagent-message.user .aiagent-message-images .aiagent-message-image img,
-  .aiagent-message.bot .aiagent-message-images .aiagent-message-image img {
-    max-height: 320px;
+  .aiagent-message.bot .aiagent-message-images .aiagent-message-image img,
+  .aiagent-attachment-image {
+    max-height: 480px;
   }
   .aiagent-search-image { max-width: 140px; max-height: 140px; }
 }
 
 @media (max-width: 639px) {
+  /* Fullscreen kayak player musik di HP: halaman AI Agent nutupin navbar
+     global (z-index navbar 1100, floating player 10000), tinggi 100dvh
+     penuh, tanpa padding-top 70px. Jalan keluarnya tombol Home di bar atas. */
   .aiagent-container {
     max-width: 100%;
     left: 0;
     transform: none;
+    height: 100vh;
+    height: 100dvh;
+    height: -webkit-fill-available;
+    z-index: 12000;
+    padding-top: env(safe-area-inset-top, 0px);
   }
   .aiagent-messages { padding: 16px 14px 12px 14px; gap: 14px; }
   .aiagent-message-content { width: 100%; max-width: 100%; }
@@ -1699,19 +1742,28 @@
   .aiagent-player-bar { padding: 8px 12px; }
   .aiagent-player-avatar { width: 36px; height: 36px; }
   .aiagent-player-clear { width: 36px; height: 36px; }
+  .aiagent-player-home { width: 36px; height: 36px; }
   .aiagent-input-buttons .aiagent-send-btn { width: 44px; height: 44px; }
   .aiagent-input-buttons { gap: 5px; }
   .aiagent-model-picker-popover { width: min(360px, calc(100vw - 60px)); max-height: min(68vh, 520px); }
   .aiagent-user-avatar { width: 30px; height: 30px; }
   .aiagent-welcome h3 { font-size: var(--global-font-size-1-25rem); }
   .aiagent-welcome-icon { width: 72px; height: 72px; border-radius: 16px; }
-  .aiagent-previews { padding: 0; gap: 6px; margin-bottom: 8px; }
+  .aiagent-previews { padding: 0 0 4px; gap: 6px; margin-bottom: 8px; }
   .aiagent-image-preview { width: 84px; height: 84px; }
   .aiagent-file-preview { width: 84px; height: 84px; }
+  .aiagent-message.user .aiagent-message-images,
+  .aiagent-message.bot .aiagent-message-images,
+  .aiagent-attachments.aiagent-attachments--images {
+    margin-left: -14px;
+    margin-right: -14px;
+    width: calc(100% + 28px);
+  }
   .aiagent-message.user .aiagent-message-images .aiagent-message-image img,
-  .aiagent-message.bot .aiagent-message-images .aiagent-message-image img {
+  .aiagent-message.bot .aiagent-message-images .aiagent-message-image img,
+  .aiagent-attachment-image {
     max-width: 100%;
-    max-height: 240px;
+    max-height: 62dvh;
   }
   .aiagent-typing { padding: 4px 0; margin-left: 0; }
   .aiagent-messages::-webkit-scrollbar {
@@ -1763,9 +1815,10 @@
   .aiagent-image-preview { width: 76px; height: 76px; }
   .aiagent-file-preview { width: 76px; height: 76px; }
   .aiagent-message.user .aiagent-message-images .aiagent-message-image img,
-  .aiagent-message.bot .aiagent-message-images .aiagent-message-image img {
+  .aiagent-message.bot .aiagent-message-images .aiagent-message-image img,
+  .aiagent-attachment-image {
     max-width: 100%;
-    max-height: 200px;
+    max-height: 62dvh;
   }
   .aiagent-search-image { max-width: 65px; max-height: 65px; }
   .aiagent-bot-actions span { display: none; }
@@ -1958,17 +2011,6 @@
   padding-bottom: 4px;
 }
 
-.aiagent-attachment-image {
-  max-width: 100%;
-  max-height: 320px;
-  width: auto;
-  height: auto;
-  border-radius: 16px;
-  cursor: pointer;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
 .aiagent-typing-header span {
   font-style: italic;
 }
@@ -2143,14 +2185,19 @@
 .aiagent-message-bubble { transition: border-color 0.3s ease; }
 .aiagent-message.streaming .aiagent-message-bubble { border-color: var(--global-color-accent); }
 
-/* File terkirim dibungkus seperti chat: baris file/gambar hidup di dalam bubble,
+/* File terkirim dibungkus seperti chat: baris file hidup di dalam bubble,
    bukan sebagai baris lepas di luar. Bubble membatasi lebar (max-width 100%),
    jadi baris file tidak bisa lagi mendorong kolom pesan lebih lebar dari layar —
-   itulah yang membuat pembungkusnya kegeser saat file banyak. */
+   itulah yang membuat pembungkusnya kegeser saat file banyak.
+   PENGECUALIAN: gambar terkirim tidak lagi dibungkus bubble — gambar jadi
+   carousel mentok (full-bleed) tanpa bubble, lihat aturan di atas. */
 .aiagent-message-files,
 .aiagent-attachments,
 .aiagent-message-images,
 .aiagent-search-images { max-width: 100%; min-width: 0; box-sizing: border-box; }
+.aiagent-message.user .aiagent-message-images,
+.aiagent-message.bot .aiagent-message-images,
+.aiagent-attachments.aiagent-attachments--images { max-width: none; }
 .aiagent-attachments { width: 100%; }
 .aiagent-message-bubble .aiagent-attachments { margin-top: 0; }
 .aiagent-message-bubble .aiagent-message-files:last-child { margin-bottom: 0; }
@@ -2165,5 +2212,7 @@
 .aiagent-file-preview button svg {
   color: #ffffff !important;
   stroke: #ffffff !important;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
 }

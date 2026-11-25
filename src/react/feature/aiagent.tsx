@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Bot, Trash2, Volume2, VolumeX, Check,
-  Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Link, ChevronDown, Wrench, Brain, Crop
+  Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, Home, MapPin, Plus, User, Link, ChevronDown, Wrench, Brain, Crop
 } from "lucide-react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
@@ -2205,7 +2205,8 @@ const AIAgent: React.FC = () => {
                 )}
               </AnimatePresence>
             </div>
-            <button type="button" onClick={clearChat} className="aiagent-player-clear" title="Clear chat" aria-label="Clear chat"><Trash2 size={20} /></button>
+            <button type="button" onClick={() => navigate("/dashboard")} className="aiagent-player-home" title="Back to dashboard" aria-label="Back to dashboard"><Home size={22} /></button>
+            <button type="button" onClick={clearChat} className="aiagent-player-clear" title="Clear chat" aria-label="Clear chat"><Trash2 size={22} /></button>
           </header>
           {modelSource === "cloud" && !cloudModelOptions.length && (
             <div className="aiagent-catalog-status" role={catalogError ? "alert" : "status"}>
@@ -2347,7 +2348,7 @@ const AIAgent: React.FC = () => {
                         </>
                       )
                     ) : (
-                      <div className="aiagent-message-bubble aiagent-user-bubble">
+                      <>
                         {msg.images && msg.images.length > 0 && (
                           <div className="aiagent-message-images">
                             {msg.images.map((img, idx) => (
@@ -2357,15 +2358,19 @@ const AIAgent: React.FC = () => {
                             ))}
                           </div>
                         )}
-                        {msg.files && msg.files.length > 0 && (
-                          <div className="aiagent-message-files">
-                            {msg.files.map((f, idx) => (
-                              <div key={idx} className="file-chip"><FileText size={14} /> {f.name}</div>
-                            ))}
+                        {(msg.content || (msg.files && msg.files.length > 0)) && (
+                          <div className="aiagent-message-bubble aiagent-user-bubble">
+                            {msg.files && msg.files.length > 0 && (
+                              <div className="aiagent-message-files">
+                                {msg.files.map((f, idx) => (
+                                  <div key={idx} className="file-chip"><FileText size={14} /> {f.name}</div>
+                                ))}
+                              </div>
+                            )}
+                            {msg.content ? <p className="aiagent-user-text">{msg.content}</p> : null}
                           </div>
                         )}
-                        <p className="aiagent-user-text">{msg.content}</p>
-                          </div>
+                      </>
                         )}
                     {msg.role === "bot" && msg.searchImages && msg.searchImages.length > 0 && (
                       <div className="aiagent-search-images">
@@ -2374,12 +2379,16 @@ const AIAgent: React.FC = () => {
                         ))}
                       </div>
                     )}
-                    {msg.role === "bot" && msg.attachments && msg.attachments.length > 0 && (
-                      <div className="aiagent-message-bubble">
-                        <div className="aiagent-attachments">
+                    {msg.role === "bot" && msg.attachments && msg.attachments.some(a => a.dataUrl && a.mimeType.startsWith("image/")) && (
+                      <div className="aiagent-attachments aiagent-attachments--images">
                         {msg.attachments.filter(a => a.dataUrl && a.mimeType.startsWith("image/")).map((a, idx) => (
                           <img key={`att-img-${idx}`} src={a.dataUrl} alt={a.name} className="aiagent-attachment-image" onClick={() => window.open(a.dataUrl, "_blank")} />
                         ))}
+                      </div>
+                    )}
+                    {msg.role === "bot" && msg.attachments && msg.attachments.some(a => !(a.dataUrl && a.mimeType.startsWith("image/"))) && (
+                      <div className="aiagent-message-bubble">
+                        <div className="aiagent-attachments">
                         {msg.attachments.filter(a => !(a.dataUrl && a.mimeType.startsWith("image/"))).map((a, idx) => (
                           (a.url || a.dataUrl) ? (
                             <a key={`att-file-${idx}`} className="file-chip file-chip-download" href={a.url || a.dataUrl} download={a.name} target={a.url ? "_blank" : undefined} rel={a.url ? "noopener noreferrer" : undefined} title="Download">
@@ -2442,26 +2451,27 @@ const AIAgent: React.FC = () => {
             <ImageCropper src={cropTarget.src} fileName={cropTarget.name} onDone={handleCropDone} onCancel={() => setCropTarget(null)} />
           )}
 
+          {(uploadedImages.length > 0 || uploadedFiles.length > 0) && (
+            <div className="aiagent-previews">
+              {uploadedImages.map((img, idx) => (
+                <div key={`img-${idx}`} className="aiagent-image-preview">
+                  <img src={img.preview} alt={`Preview ${idx + 1}`} />
+                  <button type="button" onClick={() => setCropTarget({ index: idx, src: img.preview, name: img.name })} className="aiagent-image-crop" aria-label={`Crop image ${idx + 1}`} title="Potong 1:1"><Crop size={22} /></button>
+                  <button type="button" onClick={() => removeImage(idx)} className="aiagent-image-remove" aria-label={`Remove image ${idx + 1}`}><X size={22} /></button>
+                </div>
+              ))}
+              {uploadedFiles.map((file, idx) => (
+                <div key={`file-${idx}`} className="aiagent-file-preview">
+                  <FileText size={14} />
+                  <span>{file.kagglePath || file.stageOnKaggle ? `${file.name.length > 24 ? file.name.slice(0, 21) + "..." : file.name} · Kaggle` : (file.name.length > 30 ? file.name.substring(0, 27) + "..." : file.name)}</span>
+                  <button type="button" onClick={() => removeFile(idx)} aria-label={`Remove ${file.name}`}><X size={22} /></button>
+                </div>
+              ))}
+            </div>
+          )}
+          {uploadNotice && <div role="status" style={{ fontSize: "var(--global-font-size-12px)", padding: "4px 16px 8px", color: "var(--global-color-text-muted, #666)" }}>{uploadNotice}</div>}
+
           <div className="aiagent-input-container">
-            {(uploadedImages.length > 0 || uploadedFiles.length > 0) && (
-              <div className="aiagent-previews">
-                {uploadedImages.map((img, idx) => (
-                  <div key={`img-${idx}`} className="aiagent-image-preview">
-                    <img src={img.preview} alt={`Preview ${idx + 1}`} />
-                    <button type="button" onClick={() => setCropTarget({ index: idx, src: img.preview, name: img.name })} className="aiagent-image-crop" aria-label={`Crop image ${idx + 1}`} title="Potong 1:1"><Crop size={20} /></button>
-                    <button type="button" onClick={() => removeImage(idx)} className="aiagent-image-remove" aria-label={`Remove image ${idx + 1}`}><X size={20} /></button>
-                  </div>
-                ))}
-                {uploadedFiles.map((file, idx) => (
-                  <div key={`file-${idx}`} className="aiagent-file-preview">
-                    <FileText size={14} />
-                    <span>{file.kagglePath || file.stageOnKaggle ? `${file.name.length > 24 ? file.name.slice(0, 21) + "..." : file.name} · Kaggle` : (file.name.length > 30 ? file.name.substring(0, 27) + "..." : file.name)}</span>
-                    <button type="button" onClick={() => removeFile(idx)} aria-label={`Remove ${file.name}`}><X size={20} /></button>
-                  </div>
-                ))}
-              </div>
-            )}
-            {uploadNotice && <div role="status" style={{ fontSize: "var(--global-font-size-12px)", padding: "4px 2px 8px", color: "var(--global-color-text-muted, #666)" }}>{uploadNotice}</div>}
             <textarea
               ref={textareaRef}
               className="aiagent-input-textarea"

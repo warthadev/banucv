@@ -11,6 +11,7 @@ import useAgentLocal, { type AgentLocalCheck, type AgentLocalStep, type AgentPro
 import { AI_AGENT_API_BASE } from "@config/api";
 import { saveOpenRouterCredentials } from "@config/routerhelper";
 import { saveKaggleCredentials } from "@config/kagglecredentials";
+import { detectAgentLanguage, getAgentProcessStrings } from "@config/agentlanguage";
 import { canSendAgentModel, shouldShowRouterAuthModal } from "@config/agentauthflow";
 import { isLocalAgentModel, isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
 import { CloudModalKaggle } from "./cloudmodalkaggle";
@@ -36,12 +37,14 @@ type ProcessStepPatch = Partial<ProcessStep> & { id: string };
 
 // Blok proses: pesan berjalan (berpikir / tool) yang terpisah dari jawaban akhir dan bisa dibuka-tutup.
 const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolean; onToggle: () => void }> = ({ steps, live, open, onToggle }) => {
+  const lang = detectAgentLanguage();
+  const strings = getAgentProcessStrings(lang);
   const running = steps.filter((step) => step.status === "running");
   const failed = steps.filter((step) => step.status === "error").length;
   const toolCount = steps.filter((step) => step.kind === "tool").length;
   const title = live
-    ? (running[running.length - 1]?.title || "Bekerja…")
-    : `Proses · ${toolCount > 0 ? `${toolCount} tool` : `${steps.length} langkah`}${failed ? ` · ${failed} gagal` : ""}`;
+    ? (running[running.length - 1]?.title || strings.working)
+    : `${strings.process} · ${toolCount > 0 ? `${toolCount} tool${lang === "en" && toolCount > 1 ? "s" : ""}` : `${steps.length} ${strings.steps}`}${failed ? ` · ${failed} ${strings.failed}` : ""}`;
   return (
     <div className={`aiagent-process${live ? " live" : ""}`}>
       <button type="button" className="aiagent-process-toggle" onClick={onToggle} aria-expanded={open}>
@@ -65,7 +68,7 @@ const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolea
                 </div>
                 {step.output ? (
                   <details className="aiagent-process-output">
-                    <summary>{step.kind === "thinking" ? "Lihat pikiran" : "Lihat hasil"}</summary>
+                    <summary>{step.kind === "thinking" ? strings.viewThought : strings.viewResult}</summary>
                     <pre>{step.output}</pre>
                   </details>
                 ) : null}
@@ -954,7 +957,7 @@ const AIAgent: React.FC = () => {
         next[index] = { ...prev[index], process, processLive: true };
         return next;
       }
-      const created: Message = { id: pid, role: "bot", content: "", model: "Proses", timestamp: new Date(), process, processLive: true };
+      const created: Message = { id: pid, role: "bot", content: "", model: getAgentProcessStrings(detectAgentLanguage()).process, timestamp: new Date(), process, processLive: true };
       const streamIndex = prev.findIndex(m => m.id === STREAM_MESSAGE_ID);
       if (streamIndex >= 0) return [...prev.slice(0, streamIndex), created, ...prev.slice(streamIndex)];
       return [...prev, created];

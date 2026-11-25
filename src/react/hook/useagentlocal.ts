@@ -3,6 +3,7 @@ import { onAuthStateChanged, type User } from "firebase/auth";
 import { getAuth } from "@config/firebase";
 import { AI_AGENT_API_BASE } from "@config/api";
 import { loadKaggleCredentials } from "@config/kagglecredentials";
+import { detectAgentLanguage } from "@config/agentlanguage";
 
 export type AgentLocalStatus =
   | "checking-credentials"
@@ -407,7 +408,7 @@ export const useAgentLocal = () => {
     try {
       const data = await authedFetch("/agent/local/chat", {
         method: "POST",
-        body: JSON.stringify({ prompt, images: images.map((img) => ({ mime_type: img.mimeType, data: img.data })) }),
+        body: JSON.stringify({ prompt, images: images.map((img) => ({ mime_type: img.mimeType, data: img.data })), language: detectAgentLanguage() }),
       });
       const content = data?.data?.result?.content;
       if (typeof content !== "string" || !content) throw new Error("AI Local returned an empty response");

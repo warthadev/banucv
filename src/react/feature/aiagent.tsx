@@ -2448,15 +2448,15 @@ const AIAgent: React.FC = () => {
                 {uploadedImages.map((img, idx) => (
                   <div key={`img-${idx}`} className="aiagent-image-preview">
                     <img src={img.preview} alt={`Preview ${idx + 1}`} />
-                    <button type="button" onClick={() => setCropTarget({ index: idx, src: img.preview, name: img.name })} className="aiagent-image-crop" aria-label={`Crop image ${idx + 1}`} title="Potong 1:1"><Crop size={15} /></button>
-                    <button type="button" onClick={() => removeImage(idx)} className="aiagent-image-remove" aria-label={`Remove image ${idx + 1}`}><X size={16} /></button>
+                    <button type="button" onClick={() => setCropTarget({ index: idx, src: img.preview, name: img.name })} className="aiagent-image-crop" aria-label={`Crop image ${idx + 1}`} title="Potong 1:1"><Crop size={20} /></button>
+                    <button type="button" onClick={() => removeImage(idx)} className="aiagent-image-remove" aria-label={`Remove image ${idx + 1}`}><X size={20} /></button>
                   </div>
                 ))}
                 {uploadedFiles.map((file, idx) => (
                   <div key={`file-${idx}`} className="aiagent-file-preview">
                     <FileText size={14} />
                     <span>{file.kagglePath || file.stageOnKaggle ? `${file.name.length > 24 ? file.name.slice(0, 21) + "..." : file.name} · Kaggle` : (file.name.length > 30 ? file.name.substring(0, 27) + "..." : file.name)}</span>
-                    <button type="button" onClick={() => removeFile(idx)} aria-label={`Remove ${file.name}`}><X size={16} /></button>
+                    <button type="button" onClick={() => removeFile(idx)} aria-label={`Remove ${file.name}`}><X size={20} /></button>
                   </div>
                 ))}
               </div>

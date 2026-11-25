@@ -1,8 +1,13 @@
-export const LOCAL_AGENT_MODEL = "mimo-v2.6:latest";
-export const LOCAL_AGENT_MODEL_ALIAS = "openai-compatible-chat-0082e0a8-8fc6-41da-99d3-3c9f2f986404/mimo-v2.6:latest";
-
-export const isLocalAgentModel = (model: string): boolean =>
-  model.trim().toLowerCase().split("/").at(-1) === LOCAL_AGENT_MODEL;
+// AI Local runs on the Kaggle GPU worker. There is no placeholder model
+// name anymore: the worker reports the model by its real GGUF filename
+// (e.g. "model-Q4_K_M.gguf"), and the local chat path falls back to the
+// "ai-local" sentinel. Both are the local model.
+export const isLocalAgentModel = (model: string): boolean => {
+  const normalized = model.trim().toLowerCase();
+  if (!normalized) return false;
+  if (normalized === "ai-local") return true;
+  return normalized.endsWith(".gguf");
+};
 
 export const shouldRetryWithNextAgentModel = (
   model: string,

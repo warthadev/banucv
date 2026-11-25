@@ -1,4 +1,4 @@
-import { LOCAL_AGENT_MODEL } from "./agentrouting.ts";
+import { isLocalAgentModel } from "./agentrouting.ts";
 import type { AgentModel } from "./agentmodels.ts";
 
 export type AgentMode = "auto" | "thinking" | "fast" | "other";
@@ -13,15 +13,10 @@ type StoredConversationMessage = {
   error?: boolean;
 };
 
-// Reject the legacy Ollama identity even if it appears in a stale client cache.
+// Single source of truth is isLocalAgentModel: it recognises the runtime
+// GGUF filename reported by the Kaggle worker and the "ai-local" sentinel.
 export const isLocalInferenceAgentModel = (model: string): boolean =>
-  (model.trim().toLowerCase().split("/").at(-1) || "") === LOCAL_AGENT_MODEL.toLowerCase();
-
-export const isVerifiedFreeAgentModel = (model: string): boolean => {
-  const normalized = model.trim().toLowerCase();
-  return normalized === "openrouter/openrouter/free" ||
-    (normalized.startsWith("openrouter/") && normalized.endsWith(":free"));
-};
+  isLocalAgentModel(model);
 
 const findCatalogModel = (model: string, catalog: readonly AgentModel[]): AgentModel | undefined =>
   catalog.find((entry) => entry.id === model);
@@ -158,7 +153,7 @@ export const parseAgentModeSettings = (value: string | null): AgentModeSettings 
     return {
       mode,
       webSearchEnabled: parsed.webSearchEnabled === true,
-      // Drop legacy local model selections and preferences from Local mode.
+      // Local model selections are not stored as a cloud mode preference.
       model: isLocalInferenceAgentModel(model) ? "" : model,
     };
   } catch {

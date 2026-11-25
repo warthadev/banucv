@@ -1395,12 +1395,10 @@ const AIAgent: React.FC = () => {
     const decoder = new TextDecoder();
     let buffer = "";
     let final: AgentStreamFinal = { text: "", model: modelName, requestedModel: originallyRequestedModel };
-    let streamedAnything = false;
     let toolStepCounter = 0;
     const openToolSteps: { name: string; id: string }[] = [];
     const appendToken = (delta: string) => {
       if (!delta) return;
-      streamedAnything = true;
       final.text += delta;
       if (currentUserUidRef.current !== requestOwnerUid || activeRequestIdRef.current !== requestId) return;
       setMessages(prev => {

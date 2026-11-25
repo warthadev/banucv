@@ -13,6 +13,7 @@ export type AgentLocalStatus =
   | "connecting"
   | "booting"
   | "ready"
+  | "stopping"
   | "error";
 
 export interface AgentLocalStep {
@@ -121,7 +122,8 @@ interface AgentLocalStatusResponse {
   boot_elapsed?: number | null;
   connected?: boolean;
   session_id?: string;
-  status?: "booting" | "ready" | "error" | "offline";
+  status?: "booting" | "ready" | "stopping" | "error" | "offline";
+  idle_timeout_hours?: number;
   model_id?: string | null;
   error?: string | null;
   alive?: boolean;
@@ -131,8 +133,8 @@ interface AgentLocalStatusResponse {
 
 const BOOT_POLL_MS = 4000;
 const READY_WATCH_MS = 20000;
-// Boot GPU + load model normalnya 1-3 menit. Lewat ini dianggap gagal, jangan muter selamanya.
-const BOOT_MAX_MS = 9 * 60 * 1000;
+// Boot GPU + load model normalnya 1-3 menit (antrean GPU Kaggle bisa lebih lama). Lewat ini dianggap gagal, jangan muter selamanya.
+const BOOT_MAX_MS = 15 * 60 * 1000;
 
 // While a start is in flight the UI polls faster; a stopped worker is rechecked only on demand.
 const TICK_MS = 1000;
@@ -177,15 +179,15 @@ export const useAgentLocal = () => {
   const [checks, setChecks] = useState<AgentLocalCheck[]>([]);
   const [kernelExists, setKernelExists] = useState<boolean | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [autoStarting, setAutoStarting] = useState(false);
   const [activity, setActivity] = useState<string | null>(null);
-  // Armed only while the Local tab is open: lets ONE status check start a stopped worker by itself.
-  const autoStartArmedRef = useRef(false);
-  const connectRef = useRef<((force?: boolean) => Promise<void>) | null>(null);
+  const [idleHours, setIdleHours] = useState<number | null>(null);
+  // Worker TIDAK pernah dinyalakan otomatis (F5 / buka tab / kembali ke tab hanya MEMERIKSA status).
+  // Hanya klik tombol Run / Restart yang boleh menyentuh Kaggle.
   const pollRef = useRef<number | null>(null);
   const mountedRef = useRef(true);
   const bootStartedAtRef = useRef<number | null>(null);
   const statusRef = useRef<AgentLocalStatus>("checking-credentials");
+  const busyRef = useRef(false); // cegah klik ganda Run/Restart/Stop
   const setStatusTracked = useCallback((next: AgentLocalStatus) => {
     statusRef.current = next;
     setStatus(next);
@@ -222,12 +224,19 @@ export const useAgentLocal = () => {
       if (!mountedRef.current) return;
       setKaggleState(data.kaggle_state ?? null);
       setSteps(Array.isArray(data.steps) ? data.steps : []);
+      if (typeof data.idle_timeout_hours === "number") setIdleHours(data.idle_timeout_hours);
+
+      if (data.status === "stopping") {
+        bootStartedAtRef.current = null;
+        setModelId(null);
+        setStatusTracked("stopping");
+        setError(null);
+        pollRef.current = window.setTimeout(() => { void refreshStatus(); }, 2000);
+        return;
+      }
 
       if (data.status === "ready" && data.model_id) {
         bootStartedAtRef.current = null;
-        setAutoStarting(false);
-        // A worker that was running and later stops (Kaggle idle) must NOT silently restart and burn GPU quota.
-        autoStartArmedRef.current = false;
         setStatusTracked("ready");
         setModelId(data.model_id);
         setError(null);
@@ -241,7 +250,6 @@ export const useAgentLocal = () => {
 
       if (data.status === "error") {
         bootStartedAtRef.current = null;
-        setAutoStarting(false);
         setStatusTracked("error");
         setError(data.error || "The AI Local worker failed to run.");
         return;
@@ -257,7 +265,7 @@ export const useAgentLocal = () => {
         if (Date.now() - bootStartedAtRef.current > BOOT_MAX_MS) {
           bootStartedAtRef.current = null;
           setStatusTracked("error");
-          setError("The Kaggle worker took too long to load (over 9 minutes). Try restarting it.");
+          setError("The Kaggle worker took too long to load (over 15 minutes). You can stop it or restart it.");
           return;
         }
         setStatusTracked("booting");
@@ -291,17 +299,10 @@ export const useAgentLocal = () => {
         setStatusTracked("disconnected");
         setError(null);
       }
-      // Preflight passed (we only get here when nothing blocks a start), so a missing or stopped
-      // worker is simply recreated. Disarm first so a failed start can never loop.
-      if (autoStartArmedRef.current) {
-        autoStartArmedRef.current = false;
-        setAutoStarting(true);
-        void connectRef.current?.(false);
-      }
+      // Sengaja TIDAK menyalakan worker di sini: user yang menekan Run.
     } catch (err) {
       if (!mountedRef.current) return;
       bootStartedAtRef.current = null;
-      autoStartArmedRef.current = false;
       setStatusTracked("error");
       setError(err instanceof Error ? err.message : "Could not check the AI Local status.");
     }
@@ -334,14 +335,17 @@ export const useAgentLocal = () => {
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState !== "visible") return;
-      if (["ready", "booting", "offline", "disconnected", "blocked"].includes(statusRef.current)) void refreshStatus();
+      if (["ready", "booting", "stopping", "offline", "disconnected", "blocked"].includes(statusRef.current)) void refreshStatus();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [refreshStatus]);
 
-  // force=true is the manual "Restart Kaggle": drop the current session and push a fresh run.
-  const connect = useCallback(async (force = false) => {
+  // Run / Restart: satu jalur. Backend SELALU memeriksa dulu apakah worker sudah ada (di backend dan di Kaggle)
+  // dan memakainya lagi; worker baru hanya dibuat kalau memang tidak ada.
+  const launch = useCallback(async (path: "/agent/local/connect" | "/agent/local/restart") => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     stopPolling();
     setStatusTracked("connecting");
     setError(null);
@@ -349,25 +353,52 @@ export const useAgentLocal = () => {
     setKaggleState(null);
     bootStartedAtRef.current = Date.now();
     try {
-      await authedFetch("/agent/local/connect", { method: "POST", body: JSON.stringify({ force }) });
+      await authedFetch(path, { method: "POST", body: JSON.stringify({}) });
       if (!mountedRef.current) return;
       setStatusTracked("booting");
       pollRef.current = window.setTimeout(() => { void refreshStatus(); }, 1500);
     } catch (err) {
       if (!mountedRef.current) return;
       bootStartedAtRef.current = null;
-      setAutoStarting(false);
       setStatusTracked("error");
       setError(err instanceof Error ? err.message : "Could not start AI Local.");
+    } finally {
+      busyRef.current = false;
     }
   }, [refreshStatus, stopPolling, setStatusTracked]);
-  connectRef.current = connect;
 
-  const armAutoStart = useCallback((armed: boolean) => {
-    autoStartArmedRef.current = armed;
-  }, []);
+  const connect = useCallback(() => launch("/agent/local/connect"), [launch]);
+  const restart = useCallback(() => launch("/agent/local/restart"), [launch]);
 
-  const restart = useCallback(() => connect(true), [connect]);
+  // Stop: hentikan sesi worker di Kaggle (GPU dilepas). Bisa dipakai saat booting maupun saat sudah siap.
+  const stop = useCallback(async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    stopPolling();
+    bootStartedAtRef.current = null;
+    setModelId(null);
+    setSteps([]);
+    setError(null);
+    setStatusTracked("stopping");
+    try {
+      const data = await authedFetch("/agent/local/stop", { method: "POST", body: JSON.stringify({}) });
+      if (!mountedRef.current) return;
+      if (data?.status === "offline") {
+        setStatusTracked("disconnected");
+        setError(null);
+        busyRef.current = false;
+        void refreshStatus();
+        return;
+      }
+      pollRef.current = window.setTimeout(() => { void refreshStatus(); }, 2000);
+    } catch (err) {
+      if (!mountedRef.current) return;
+      setStatusTracked("error");
+      setError(err instanceof Error ? err.message : "Could not stop the AI Local worker.");
+    } finally {
+      busyRef.current = false;
+    }
+  }, [refreshStatus, stopPolling, setStatusTracked]);
 
   const sendLocalChat = useCallback(async (prompt: string, images: { mimeType: string; data: string }[]) => {
     try {
@@ -448,8 +479,8 @@ export const useAgentLocal = () => {
   }, []);
 
   return {
-    status, modelId, error, kaggleState, steps, checks, kernelExists, elapsedSeconds, autoStarting, activity,
-    armAutoStart, checkCredentials, connect, restart, refreshStatus, pollActivity, pollProcess, sendLocalChat, uploadLocalFile,
+    status, modelId, error, kaggleState, steps, checks, kernelExists, elapsedSeconds, activity, idleHours,
+    checkCredentials, connect, restart, stop, refreshStatus, pollActivity, pollProcess, sendLocalChat, uploadLocalFile,
   };
 };
 

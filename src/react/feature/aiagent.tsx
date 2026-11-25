@@ -1615,6 +1615,7 @@ const AIAgent: React.FC = () => {
     files: UploadedFile[],
     requestOwnerUid: string,
     requestId: number,
+    history: Array<{ role: string; content: string }> = [],
   ): Promise<{ text: string; model: string; requestedModel: string; usage?: Message["usage"]; sources?: { title: string; url: string }[]; searchImages?: string[]; pendingHostAction?: HostActionPreview; attachments?: Message["attachments"] }> => {
     const imagePaths = images.filter((image) => image.kagglePath).map((image) => `- ${image.kagglePath} (${image.name || "image"})`);
     const imageNote = imagePaths.length
@@ -1691,6 +1692,7 @@ const AIAgent: React.FC = () => {
           streamText += delta;
           applyStreamText();
         },
+        history,
       );
       content = result.content;
       localAttachments = result.attachments && result.attachments.length > 0 ? result.attachments : undefined;
@@ -1784,8 +1786,11 @@ const AIAgent: React.FC = () => {
     }
 
     try {
+      // Riwayat bersama (cloud + lokal) — sumber kebenaran yang sama dengan
+      // yang dipakai cloud, supaya worker lokal paham pembahasan di luar gilirannya.
+      const sharedHistory = buildModelScopedHistory(messagesRef.current.filter(m => !m.error && !m.process && !(isRetry && m.role === "user" && m.content === messageText)), selectedModel);
       const response = modelSource === "local"
-        ? await callLocalAI(messageText, images, files, requestOwnerUid, requestId)
+        ? await callLocalAI(messageText, images, files, requestOwnerUid, requestId, sharedHistory)
         : await callAI(messageText, images, files, retryModelIndex, messagesRef.current, isRetry, messageText, modelSequence, requestOwnerUid, requestId);
       if (!isCurrentRequest()) return;
       if (response.pendingHostAction) {

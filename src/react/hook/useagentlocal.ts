@@ -409,11 +409,11 @@ export const useAgentLocal = () => {
     }
   }, [refreshStatus, stopPolling, setStatusTracked]);
 
-  const sendLocalChat = useCallback(async (prompt: string, images: { mimeType: string; data: string }[]) => {
+  const sendLocalChat = useCallback(async (prompt: string, images: { mimeType: string; data: string }[], history: Array<{ role: string; content: string }> = []) => {
     try {
       const data = await authedFetch("/agent/local/chat", {
         method: "POST",
-        body: JSON.stringify({ prompt, images: images.map((img) => ({ mime_type: img.mimeType, data: img.data })), language: detectAgentLanguage(), context: detectUserContext() }),
+        body: JSON.stringify({ prompt, images: images.map((img) => ({ mime_type: img.mimeType, data: img.data })), language: detectAgentLanguage(), context: detectUserContext(), history }),
       });
       const content = data?.data?.result?.content;
       if (typeof content !== "string" || !content) throw new Error("AI Local returned an empty response");
@@ -433,11 +433,12 @@ export const useAgentLocal = () => {
     prompt: string,
     images: { mimeType: string; data: string }[],
     onToken: (delta: string, segment: number) => void,
+    history: Array<{ role: string; content: string }> = [],
   ) => {
     try {
       const response = await authedFetchRaw("/agent/local/chat-stream", {
         method: "POST",
-        body: JSON.stringify({ prompt, images: images.map((img) => ({ mime_type: img.mimeType, data: img.data })), language: detectAgentLanguage(), context: detectUserContext() }),
+        body: JSON.stringify({ prompt, images: images.map((img) => ({ mime_type: img.mimeType, data: img.data })), language: detectAgentLanguage(), context: detectUserContext(), history }),
       });
       if (!response.ok) {
         const data = await response.json().catch(() => null);

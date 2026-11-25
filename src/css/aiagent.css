@@ -786,7 +786,8 @@
 /* Gambar terkirim: carousel mentok (full-bleed) TANPA pembungkus bubble.
    Satu gambar = satu slide selebar carousel; geser terkunci per gambar
    (scroll snap). Margin negatif membatalkan padding kolom pesan supaya
-   carousel nempel ke tepi layar/kolom. File tetap dibungkus bubble. */
+   carousel nempel ke tepi layar/kolom. File tetap dibungkus bubble.
+   Tanpa border/radius dan tanpa max-height: gambar tampil selebar slide. */
 .aiagent-message.user .aiagent-message-images,
 .aiagent-message.bot .aiagent-message-images {
   display: flex;
@@ -808,9 +809,9 @@
   flex: 0 0 100%;
   max-width: 100%;
   margin-bottom: 0;
-  border-radius: 16px;
+  border-radius: 0;
   overflow: hidden;
-  border: 1px solid var(--global-color-border);
+  border: none;
   box-sizing: border-box;
   scroll-snap-align: start;
 }
@@ -820,7 +821,7 @@
   width: 100%;
   height: auto;
   max-width: 100%;
-  max-height: 480px;
+  max-height: none;
   object-fit: contain;
   display: block;
 }
@@ -844,9 +845,9 @@
   flex: 0 0 100%;
   width: 100%;
   max-width: 100%;
-  max-height: 480px;
+  max-height: none;
   height: auto;
-  border-radius: 16px;
+  border-radius: 0;
   cursor: pointer;
   object-fit: contain;
   box-sizing: border-box;
@@ -1692,7 +1693,7 @@
   .aiagent-message.user .aiagent-message-images .aiagent-message-image img,
   .aiagent-message.bot .aiagent-message-images .aiagent-message-image img,
   .aiagent-attachment-image {
-    max-height: 440px;
+    max-height: none;
   }
   .aiagent-search-image { max-width: 100px; max-height: 100px; }
 }
@@ -1715,7 +1716,7 @@
   .aiagent-message.user .aiagent-message-images .aiagent-message-image img,
   .aiagent-message.bot .aiagent-message-images .aiagent-message-image img,
   .aiagent-attachment-image {
-    max-height: 480px;
+    max-height: none;
   }
   .aiagent-search-image { max-width: 140px; max-height: 140px; }
 }
@@ -1763,7 +1764,7 @@
   .aiagent-message.bot .aiagent-message-images .aiagent-message-image img,
   .aiagent-attachment-image {
     max-width: 100%;
-    max-height: 62dvh;
+    max-height: none;
   }
   .aiagent-typing { padding: 4px 0; margin-left: 0; }
   .aiagent-messages::-webkit-scrollbar {
@@ -1818,7 +1819,7 @@
   .aiagent-message.bot .aiagent-message-images .aiagent-message-image img,
   .aiagent-attachment-image {
     max-width: 100%;
-    max-height: 62dvh;
+    max-height: none;
   }
   .aiagent-search-image { max-width: 65px; max-height: 65px; }
   .aiagent-bot-actions span { display: none; }

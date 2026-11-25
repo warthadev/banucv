@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Bot, Trash2, Volume2, VolumeX, Check,
-  Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Wand2, Link, ChevronDown, Wrench, Brain
+  Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Wand2, Link, ChevronDown, Wrench, Brain, Play, Square, RotateCw
 } from "lucide-react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
@@ -851,13 +851,11 @@ const AIAgent: React.FC = () => {
   const canSendCurrentSource = modelSource === "cloud"
     ? canSendAgentModel(isConfigured, isLocalAgentModel(selectedModel)) && Boolean(selectedModel) && modelOptions.includes(selectedModel) && requestModelOptions.length > 0
     : isLocalSourceReady;
-  // Every time the Local tab opens, re-check whether the Kaggle worker is still alive.
-  // If the worker or its notebook is gone, opening the tab starts it again automatically (once per open).
+  // Membuka tab Local (atau F5) hanya MEMERIKSA status worker. Tidak pernah menyalakan Kaggle otomatis:
+  // user harus menekan Run. Worker yang sedang boot/siap di Kaggle langsung terbaca dan dipakai lagi.
   useEffect(() => {
     if (modelSource !== "local") return;
-    agentLocal.armAutoStart(true);
-    if (["ready", "offline", "disconnected", "blocked"].includes(agentLocal.status)) void agentLocal.refreshStatus();
-    return () => agentLocal.armAutoStart(false);
+    if (["ready", "booting", "stopping", "offline", "disconnected", "blocked"].includes(agentLocal.status)) void agentLocal.refreshStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelSource]);
   const [isKaggleModalOpen, setIsKaggleModalOpen] = useState(false);
@@ -2239,12 +2237,13 @@ const AIAgent: React.FC = () => {
                                 <>
                                   <p>
                                     {agentLocal.kernelExists === false
-                                      ? "No worker notebook exists on your Kaggle account yet. Starting will create it automatically — the first start takes a few minutes."
-                                      : "AI Local is not running."}
+                                      ? "No worker notebook exists on your Kaggle account yet. Run will create it automatically — the first run takes a few minutes."
+                                      : "AI Local is not running. Nothing starts until you press Run."}
                                   </p>
                                   {agentLocal.checks.length > 0 && <LocalChecklist checks={agentLocal.checks} />}
                                   <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.connect()}>
-                                    {agentLocal.kernelExists === false ? "Create & start on Kaggle" : "Start on Kaggle"}
+                                    <Play size={15} aria-hidden="true" />
+                                    {agentLocal.kernelExists === false ? "Create & run on Kaggle" : "Run on Kaggle"}
                                   </button>
                                 </>
                               )}
@@ -2252,29 +2251,38 @@ const AIAgent: React.FC = () => {
                                 <>
                                   <p>
                                     {agentLocal.status === "connecting"
-                                      ? (agentLocal.autoStarting ? "The worker was not running, so it is starting automatically…" : "Contacting Kaggle…")
-                                      : `${agentLocal.autoStarting ? "The worker was not running, so it was started automatically. " : ""}Starting your Kaggle GPU worker. This usually takes 1–3 minutes, longer on the first run.`}
+                                      ? "Checking Kaggle for an existing worker…"
+                                      : "Starting your Kaggle GPU worker. This usually takes 1–3 minutes, longer on the first run or when Kaggle is busy."}
                                   </p>
                                   <LocalBootProgress steps={agentLocal.steps} connecting={agentLocal.status === "connecting"} />
                                   <small>
                                     Elapsed {formatElapsed(agentLocal.elapsedSeconds)}
                                     {agentLocal.kaggleState ? ` · Kaggle kernel: ${agentLocal.kaggleState.replace("_", " ")}` : ""}
                                   </small>
-                                  {agentLocal.status === "booting" && agentLocal.elapsedSeconds > 180 && (
-                                    <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.restart()}>
-                                      Restart Kaggle
+                                  <small>Refreshing this page will not restart the worker.</small>
+                                  {agentLocal.status === "booting" && (
+                                    <button type="button" className="aiagent-model-option aiagent-local-connect-btn aiagent-local-danger-btn" onClick={() => void agentLocal.stop()}>
+                                      <Square size={14} aria-hidden="true" />
+                                      Stop worker
                                     </button>
                                   )}
                                 </>
                               )}
+                              {agentLocal.status === "stopping" && (
+                                <>
+                                  <p>Stopping the Kaggle worker and releasing the GPU…</p>
+                                  <small>This takes a few seconds. You can run it again afterwards.</small>
+                                </>
+                              )}
                               {agentLocal.status === "offline" && (
                                 <>
-                                  <p>The Kaggle worker is stopped (the session went idle, slept, or was stopped).</p>
+                                  <p>The Kaggle worker is not running (it was stopped, or Kaggle ended the session).</p>
                                   {agentLocal.error && <small>{agentLocal.error}</small>}
-                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.restart()}>
-                                    Restart Kaggle
+                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.connect()}>
+                                    <Play size={15} aria-hidden="true" />
+                                    Run on Kaggle
                                   </button>
-                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.refreshStatus()}>
+                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn aiagent-local-secondary-btn" onClick={() => void agentLocal.refreshStatus()}>
                                     Check status
                                   </button>
                                 </>
@@ -2282,11 +2290,16 @@ const AIAgent: React.FC = () => {
                               {agentLocal.status === "error" && (
                                 <>
                                   <p className="aiagent-local-error">{agentLocal.error || "AI Local failed to connect."}</p>
-                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.restart()}>
-                                    Restart Kaggle
+                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.connect()}>
+                                    <Play size={15} aria-hidden="true" />
+                                    Run on Kaggle
                                   </button>
-                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void agentLocal.refreshStatus()}>
+                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn aiagent-local-secondary-btn" onClick={() => void agentLocal.refreshStatus()}>
                                     Check status
+                                  </button>
+                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn aiagent-local-danger-btn" onClick={() => void agentLocal.stop()}>
+                                    <Square size={14} aria-hidden="true" />
+                                    Stop worker
                                   </button>
                                 </>
                               )}
@@ -2309,9 +2322,19 @@ const AIAgent: React.FC = () => {
                                 </button>
                               ))}
                               {agentLocal.status === "ready" && (
-                                <button type="button" className="aiagent-model-option aiagent-local-connect-btn aiagent-local-secondary-btn" onClick={() => void agentLocal.restart()}>
-                                  Restart Kaggle
-                                </button>
+                                <>
+                                  <small>
+                                    Stays on while idle for up to {agentLocal.idleHours ?? 4} hours, so the model is not rebuilt.
+                                  </small>
+                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn aiagent-local-secondary-btn" onClick={() => void agentLocal.restart()}>
+                                    <RotateCw size={15} aria-hidden="true" />
+                                    Restart model
+                                  </button>
+                                  <button type="button" className="aiagent-model-option aiagent-local-connect-btn aiagent-local-danger-btn" onClick={() => void agentLocal.stop()}>
+                                    <Square size={14} aria-hidden="true" />
+                                    Stop worker
+                                  </button>
+                                </>
                               )}
                             </div>
                           )}

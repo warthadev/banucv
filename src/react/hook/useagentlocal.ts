@@ -123,7 +123,6 @@ interface AgentLocalStatusResponse {
   connected?: boolean;
   session_id?: string;
   status?: "booting" | "ready" | "stopping" | "error" | "offline";
-  idle_timeout_hours?: number;
   model_id?: string | null;
   error?: string | null;
   alive?: boolean;
@@ -180,7 +179,6 @@ export const useAgentLocal = () => {
   const [kernelExists, setKernelExists] = useState<boolean | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [activity, setActivity] = useState<string | null>(null);
-  const [idleHours, setIdleHours] = useState<number | null>(null);
   // Worker TIDAK pernah dinyalakan otomatis (F5 / buka tab / kembali ke tab hanya MEMERIKSA status).
   // Hanya klik tombol Run / Restart yang boleh menyentuh Kaggle.
   const pollRef = useRef<number | null>(null);
@@ -224,7 +222,6 @@ export const useAgentLocal = () => {
       if (!mountedRef.current) return;
       setKaggleState(data.kaggle_state ?? null);
       setSteps(Array.isArray(data.steps) ? data.steps : []);
-      if (typeof data.idle_timeout_hours === "number") setIdleHours(data.idle_timeout_hours);
 
       if (data.status === "stopping") {
         bootStartedAtRef.current = null;
@@ -367,8 +364,13 @@ export const useAgentLocal = () => {
     }
   }, [refreshStatus, stopPolling, setStatusTracked]);
 
-  const connect = useCallback(() => launch("/agent/local/connect"), [launch]);
-  const restart = useCallback(() => launch("/agent/local/restart"), [launch]);
+  // Satu tombol Run untuk semua keadaan: worker sudah ready -> muat ulang model
+  // di worker yang sama (restart); belum ada / belum ready -> pakai lagi kalau
+  // ada, kalau tidak ada buat worker baru. Tidak ada lagi tombol Restart terpisah.
+  const run = useCallback(() => {
+    if (statusRef.current === "ready") return launch("/agent/local/restart");
+    return launch("/agent/local/connect");
+  }, [launch]);
 
   // Stop: hentikan sesi worker di Kaggle (GPU dilepas). Bisa dipakai saat booting maupun saat sudah siap.
   const stop = useCallback(async () => {
@@ -384,10 +386,11 @@ export const useAgentLocal = () => {
       const data = await authedFetch("/agent/local/stop", { method: "POST", body: JSON.stringify({}) });
       if (!mountedRef.current) return;
       if (data?.status === "offline") {
+        // Kembali ke awal: tampilkan tombol Run lagi. Tidak ada refresh
+        // otomatis — user yang menekan Run kalau mau jalanin worker lagi.
         setStatusTracked("disconnected");
         setError(null);
         busyRef.current = false;
-        void refreshStatus();
         return;
       }
       pollRef.current = window.setTimeout(() => { void refreshStatus(); }, 2000);
@@ -479,8 +482,8 @@ export const useAgentLocal = () => {
   }, []);
 
   return {
-    status, modelId, error, kaggleState, steps, checks, kernelExists, elapsedSeconds, activity, idleHours,
-    checkCredentials, connect, restart, stop, refreshStatus, pollActivity, pollProcess, sendLocalChat, uploadLocalFile,
+    status, modelId, error, kaggleState, steps, checks, kernelExists, elapsedSeconds, activity,
+    checkCredentials, run, stop, refreshStatus, pollActivity, pollProcess, sendLocalChat, uploadLocalFile,
   };
 };
 

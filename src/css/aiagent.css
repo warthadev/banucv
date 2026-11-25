@@ -875,46 +875,16 @@
   align-self: flex-start;
   padding: 4px 0;
   margin-left: 0;
-  max-width: min(420px, 92%);
 }
 
 .aiagent-typing-content {
   background: var(--global-color-surface);
-  padding: 12px 16px;
+  padding: 10px 16px;
   border-radius: 4px 18px 18px 18px;
   border: 1px solid var(--global-color-border);
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  position: relative;
-  overflow: hidden;
-}
-
-.aiagent-typing-content.aiagent-thinking-live {
-  border-color: color-mix(in srgb, var(--global-color-accent) 45%, var(--global-color-border));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--global-color-accent) 12%, transparent),
-    0 4px 18px color-mix(in srgb, var(--global-color-accent) 10%, transparent);
-}
-
-.aiagent-thinking-pulse {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    105deg,
-    transparent 0%,
-    color-mix(in srgb, var(--global-color-accent) 8%, transparent) 45%,
-    transparent 70%
-  );
-  background-size: 200% 100%;
-  animation: thinkingShimmer 2.4s ease-in-out infinite;
-}
-
-@keyframes thinkingShimmer {
-  0% { background-position: 120% 0; opacity: 0.35; }
-  50% { opacity: 0.85; }
-  100% { background-position: -40% 0; opacity: 0.35; }
+  align-items: center;
+  gap: 10px;
 }
 
 .aiagent-typing-header {
@@ -925,38 +895,8 @@
   font-weight: 600;
   color: var(--global-color-text-secondary);
   font-family: inherit;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  position: relative;
-  z-index: 1;
-}
-
-.aiagent-thinking-label {
-  font-style: italic;
-  font-weight: 600;
-  color: var(--global-color-text);
-  letter-spacing: 0.01em;
-  text-transform: none;
-  animation: thinkingLabelFade 0.35s ease;
-}
-
-@keyframes thinkingLabelFade {
-  from { opacity: 0.45; transform: translateY(2px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.aiagent-thinking-model {
-  position: relative;
-  z-index: 1;
-  font-size: var(--global-font-size-0-65rem, 0.65rem);
-  font-weight: 500;
-  color: var(--global-color-text-secondary);
-  opacity: 0.75;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .aiagent-typing-dots { display: flex; gap: 4px; align-items: center; }
@@ -1908,7 +1848,71 @@
   object-fit: cover;
 }
 
-.aiagent-typing-header span,
-.aiagent-thinking-label {
+.aiagent-typing-header span {
   font-style: italic;
+}
+
+/* Blok proses (berpikir / tool): pesan berjalan terpisah dari jawaban akhir, bisa dibuka-tutup */
+.aiagent-process {
+  align-self: flex-start;
+  max-width: 100%;
+  background: var(--global-color-surface);
+  border: 1px solid var(--global-color-border);
+  border-radius: 4px 18px 18px 18px;
+  overflow: hidden;
+}
+.aiagent-process.live { border-color: var(--global-color-accent); }
+.aiagent-process-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 14px;
+  background: transparent;
+  border: 0;
+  color: var(--global-color-text-secondary);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: left;
+  cursor: pointer;
+}
+.aiagent-process-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aiagent-process-chevron { flex: none; transition: transform 0.2s ease; }
+.aiagent-process-chevron.open { transform: rotate(180deg); }
+.aiagent-process-spin { flex: none; animation: aiagentProcessSpin 0.9s linear infinite; color: var(--global-color-accent); }
+@keyframes aiagentProcessSpin { to { transform: rotate(360deg); } }
+.aiagent-process-list {
+  list-style: none;
+  margin: 0;
+  padding: 2px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 340px;
+  overflow-y: auto;
+  border-top: 1px solid var(--global-color-border);
+}
+.aiagent-process-step { display: flex; gap: 8px; padding-top: 8px; font-size: 0.78rem; color: var(--global-color-text); }
+.aiagent-process-icon { flex: none; display: inline-flex; padding-top: 2px; color: var(--global-color-text-secondary); }
+.aiagent-process-step.error .aiagent-process-icon,
+.aiagent-process-step.error .aiagent-process-step-title { color: #d64545; }
+.aiagent-process-body { min-width: 0; flex: 1; }
+.aiagent-process-step-title { font-weight: 600; word-break: break-word; }
+.aiagent-process-detail { font-weight: 400; color: var(--global-color-text-secondary); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.72rem; }
+.aiagent-process-output { margin-top: 4px; }
+.aiagent-process-output summary { cursor: pointer; font-size: 0.72rem; color: var(--global-color-text-secondary); }
+.aiagent-process-output pre {
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  max-height: 180px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  background: var(--global-color-background, rgba(127, 127, 127, 0.08));
+  border: 1px solid var(--global-color-border);
+  border-radius: 8px;
 }

@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Bot, Trash2, Volume2, VolumeX, Check,
-  Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Wand2, Link, ChevronDown, Wrench, Brain
+  Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, MapPin, Plus, User, Wand2, Link, ChevronDown, Wrench, Brain, Crop
 } from "lucide-react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import useAgentModels, { ROUTER_CREDENTIAL_UPDATED_EVENT } from "@hook/useagentmodels";
@@ -26,6 +26,8 @@ import { getAuth, getDb } from "@config/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { confirmHostAction, type HostActionPreview } from "@config/agentworkspace";
+import { UiBlock } from "./agentuiblocks";
+import { ImageCropper, type CroppedImage } from "./agentimagecropper";
 import { RouterAuthModal } from "./routerauthmodal";
 
 const STREAM_MESSAGE_ID = "streaming";
@@ -36,9 +38,26 @@ type ProcessStep = AgentProcessStep;
 type ProcessStepPatch = Partial<ProcessStep> & { id: string };
 
 // Blok proses: pesan berjalan (berpikir / tool) yang terpisah dari jawaban akhir dan bisa dibuka-tutup.
-const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolean; onToggle: () => void }> = ({ steps, live, open, onToggle }) => {
+const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolean; onToggle: () => void; onStop?: () => void }> = ({ steps, live, open, onToggle, onStop }) => {
   const lang = detectAgentLanguage();
   const strings = getAgentProcessStrings(lang);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const copyStepOutput = async (step: ProcessStep) => {
+    const text = step.output || "";
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const area = document.createElement("textarea");
+      area.value = text;
+      document.body.appendChild(area);
+      area.select();
+      try { document.execCommand("copy"); } catch { /* abaikan */ }
+      document.body.removeChild(area);
+    }
+    setCopiedId(step.id);
+    window.setTimeout(() => setCopiedId((current) => (current === step.id ? null : current)), 1500);
+  };
   const running = steps.filter((step) => step.status === "running");
   const failed = steps.filter((step) => step.status === "error").length;
   const toolCount = steps.filter((step) => step.kind === "tool").length;
@@ -47,11 +66,18 @@ const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolea
     : `${strings.process} · ${toolCount > 0 ? `${toolCount} tool${lang === "en" && toolCount > 1 ? "s" : ""}` : `${steps.length} ${strings.steps}`}${failed ? ` · ${failed} ${strings.failed}` : ""}`;
   return (
     <div className={`aiagent-process${live ? " live" : ""}`}>
-      <button type="button" className="aiagent-process-toggle" onClick={onToggle} aria-expanded={open}>
-        {live ? <Loader2 size={14} className="aiagent-process-spin" /> : failed ? <X size={14} /> : <Check size={14} />}
-        <span className="aiagent-process-title">{title}</span>
-        <ChevronDown size={14} className={`aiagent-process-chevron${open ? " open" : ""}`} />
-      </button>
+      <div className="aiagent-process-header">
+        <button type="button" className="aiagent-process-toggle" onClick={onToggle} aria-expanded={open}>
+          {live ? <Loader2 size={14} className="aiagent-process-spin" /> : failed ? <X size={14} /> : <Check size={14} />}
+          <span className="aiagent-process-title">{title}</span>
+          <ChevronDown size={14} className={`aiagent-process-chevron${open ? " open" : ""}`} />
+        </button>
+        {live && onStop ? (
+          <button type="button" className="aiagent-process-stop" onClick={onStop}>
+            {strings.stop}
+          </button>
+        ) : null}
+      </div>
       {open && (
         <ol className="aiagent-process-list">
           {steps.map((step) => (
@@ -69,6 +95,9 @@ const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolea
                 {step.output ? (
                   <details className="aiagent-process-output">
                     <summary>{step.kind === "thinking" ? strings.viewThought : strings.viewResult}</summary>
+                    <button type="button" className="aiagent-process-copy" onClick={() => void copyStepOutput(step)}>
+                      {copiedId === step.id ? strings.copied : strings.copy}
+                    </button>
                     <pre>{step.output}</pre>
                   </details>
                 ) : null}
@@ -904,6 +933,7 @@ const AIAgent: React.FC = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentSpeakingId, setCurrentSpeakingId] = useState<string | null>(null);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const [cropTarget, setCropTarget] = useState<{ index: number; src: string; name?: string } | null>(null);
   const [uploadNotice, setUploadNotice] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isUploadDropdownOpen, setIsUploadDropdownOpen] = useState(false);
@@ -938,6 +968,22 @@ const AIAgent: React.FC = () => {
   useEffect(() => { messagesRef.current = messages; }, [messages]);
 
   const processIdRef = useRef<string | null>(null);
+  // Batching update stream: banyak token per detik digabung jadi satu render
+  // per frame (requestAnimationFrame) supaya teks dan bubble muncul mulus,
+  // bukan berkedip tiap token. Dipakai streaming cloud dan lokal.
+  const streamRafRef = useRef<number | null>(null);
+  const streamPendingRef = useRef<(() => void) | null>(null);
+  const scheduleStreamUpdate = (apply: () => void) => {
+    streamPendingRef.current = apply;
+    if (streamRafRef.current === null) {
+      streamRafRef.current = requestAnimationFrame(() => {
+        streamRafRef.current = null;
+        const fn = streamPendingRef.current;
+        streamPendingRef.current = null;
+        fn?.();
+      });
+    }
+  };
   const [processOpen, setProcessOpen] = useState<Record<string, boolean>>({});
 
   // Tambah / perbarui langkah pada pesan proses milik request yang sedang berjalan (dibuat saat langkah pertama datang).
@@ -1308,6 +1354,16 @@ const AIAgent: React.FC = () => {
     setUploadedImages(prev => prev.filter((_, i) => i !== index));
     setUploadNotice(null);
   };
+  // Hasil crop 1:1 menggantikan gambar yang di-staging (file asli tidak diubah).
+  const handleCropDone = (result: CroppedImage) => {
+    if (!cropTarget) return;
+    const { index, name } = cropTarget;
+    const fileName = name || "cropped.jpg";
+    setUploadedImages((prev) => prev.map((img, i) => i === index
+      ? { data: result.dataUrl.split(",", 2)[1] || "", mimeType: "image/jpeg", preview: result.dataUrl, name: fileName, blob: new File([result.blob], fileName, { type: "image/jpeg" }) }
+      : img));
+    setCropTarget(null);
+  };
 
   const removeFile = (index: number) => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
@@ -1419,20 +1475,22 @@ const AIAgent: React.FC = () => {
       if (!delta) return;
       final.text += delta;
       if (currentUserUidRef.current !== requestOwnerUid || activeRequestIdRef.current !== requestId) return;
-      setMessages(prev => {
-        const last = prev[prev.length - 1];
-        if (last && last.id === STREAM_MESSAGE_ID && last.role === "bot") {
-          const updated = { ...last, content: cleanMarkdown(final.text) };
-          return [...prev.slice(0, -1), updated];
-        }
-        return [...prev, {
-          id: STREAM_MESSAGE_ID,
-          role: "bot",
-          content: cleanMarkdown(final.text),
-          model: final.model || modelName,
-          requestedModel: originallyRequestedModel,
-          timestamp: new Date(),
-        }];
+      scheduleStreamUpdate(() => {
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last && last.id === STREAM_MESSAGE_ID && last.role === "bot") {
+            const updated = { ...last, content: cleanMarkdown(final.text) };
+            return [...prev.slice(0, -1), updated];
+          }
+          return [...prev, {
+            id: STREAM_MESSAGE_ID,
+            role: "bot",
+            content: cleanMarkdown(final.text),
+            model: final.model || modelName,
+            requestedModel: originallyRequestedModel,
+            timestamp: new Date(),
+          }];
+        });
       });
     };
     while (true) {
@@ -1521,6 +1579,20 @@ const AIAgent: React.FC = () => {
     mergeProcessSteps([{ id: "c0", kind: "thinking", title: "Memahami permintaan", status: "running" }]);
     let sinceSeq = 0;
     let syncing = false;
+    // Sapaan pembuka dari worker: tampil sekali sebagai pesan chat, sebelum blok Proses.
+    let openingShown = false;
+    const showOpening = (opening: string) => {
+      if (openingShown) return;
+      openingShown = true;
+      const openingMessage: Message = { id: `opening-${requestId}`, role: "bot", content: cleanMarkdown(opening), model: agentLocal.modelId || "ai-local", timestamp: new Date() };
+      setMessages(prev => {
+        if (prev.some(m => m.id === openingMessage.id)) return prev;
+        const pid = processIdRef.current;
+        const anchorIndex = pid ? prev.findIndex(m => m.id === pid) : prev.findIndex(m => m.id === STREAM_MESSAGE_ID);
+        if (anchorIndex >= 0) return [...prev.slice(0, anchorIndex), openingMessage, ...prev.slice(anchorIndex)];
+        return [...prev, openingMessage];
+      });
+    };
     const syncProcess = async () => {
       if (syncing) return;
       syncing = true;
@@ -1529,6 +1601,7 @@ const AIAgent: React.FC = () => {
         if (!data) return;
         sinceSeq = data.seq;
         if (data.activity) setStreamActivity(data.activity);
+        if (data.opening) showOpening(data.opening);
         if (data.steps.length > 0) mergeProcessSteps([{ id: "c0", status: "done" }, ...data.steps]);
       } finally {
         syncing = false;
@@ -1537,8 +1610,39 @@ const AIAgent: React.FC = () => {
     const activityTimer = window.setInterval(() => { void syncProcess(); }, 1000);
     let content: string;
     let localAttachments: Message["attachments"] = undefined;
+    // Teks jawaban mengalir live (SSE): segmen baru (sapaan -> jawaban akhir)
+    // mengganti isi bubble streaming; event final menggantinya dengan jawaban lengkap.
+    let streamText = "";
+    let streamSegment = -1;
+    const applyStreamText = () => {
+      const text = cleanMarkdown(streamText);
+      scheduleStreamUpdate(() => {
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last && last.id === STREAM_MESSAGE_ID && last.role === "bot") {
+            return [...prev.slice(0, -1), { ...last, content: text }];
+          }
+          return [...prev, {
+            id: STREAM_MESSAGE_ID,
+            role: "bot",
+            content: text,
+            model: agentLocal.modelId || "ai-local",
+            requestedModel: agentLocal.modelId || "ai-local",
+            timestamp: new Date(),
+          }];
+        });
+      });
+    };
     try {
-      const result = await agentLocal.sendLocalChat(prompt, visionImages.map((image) => ({ mimeType: image.mimeType, data: image.data })));
+      const result = await agentLocal.sendLocalChatStream(
+        prompt,
+        visionImages.map((image) => ({ mimeType: image.mimeType, data: image.data })),
+        (delta, segment) => {
+          if (segment !== streamSegment) { streamSegment = segment; streamText = ""; }
+          streamText += delta;
+          applyStreamText();
+        },
+      );
       content = result.content;
       localAttachments = result.attachments && result.attachments.length > 0 ? result.attachments : undefined;
     } finally {
@@ -1893,11 +1997,12 @@ const AIAgent: React.FC = () => {
                       live={msg.processLive === true}
                       open={processOpen[msg.id] ?? (msg.processLive === true)}
                       onToggle={() => setProcessOpen(prev => ({ ...prev, [msg.id]: !(prev[msg.id] ?? (msg.processLive === true)) }))}
+                      onStop={msg.processLive === true ? () => void agentLocal.cancelLocalChat() : undefined}
                     />
                   </div>
                 </motion.div>
               ) : (
-                <motion.div key={msg.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={`aiagent-message ${msg.role === "user" ? "user" : "bot"}`}>
+                <motion.div key={msg.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={`aiagent-message ${msg.role === "user" ? "user" : "bot"}${msg.id === STREAM_MESSAGE_ID ? " streaming" : ""}`}>
                   {msg.role === "user" && <div className="aiagent-user-avatar">{userAvatar ? <img src={userAvatar} alt="Avatar" /> : <User size={24} />}</div>}
                   <div className="aiagent-message-content">
                     {msg.role === "user" && <div className="aiagent-username">{userDisplayName}</div>}
@@ -2002,6 +2107,11 @@ const AIAgent: React.FC = () => {
                                 const parts = splitMarkdown(msg.content);
                                 return parts.map((part, index) => {
                                   if (part.type === 'code') {
+                                    // Blok ```ui berisi JSON struktur -> render sebagai komponen
+                                    // React (kartu, alur, grafik, dsb), bukan sebagai kode.
+                                    if ((part.language || '').toLowerCase() === 'ui') {
+                                      return <UiBlock key={index} raw={part.content} />;
+                                    }
                                     return (
                                       <div key={index} className="aiagent-code-block-wrapper">
                                         <CodeBlock language={part.language || ''} code={part.content} />
@@ -2103,6 +2213,7 @@ const AIAgent: React.FC = () => {
               {uploadedImages.map((img, idx) => (
                 <div key={`img-${idx}`} className="aiagent-image-preview">
                   <img src={img.preview} alt={`Preview ${idx + 1}`} />
+                  <button type="button" onClick={() => setCropTarget({ index: idx, src: img.preview, name: img.name })} className="aiagent-image-crop" aria-label={`Crop image ${idx + 1}`} title="Potong 1:1"><Crop size={15} /></button>
                   <button type="button" onClick={() => removeImage(idx)} className="aiagent-image-remove global-icon-button" aria-label={`Remove image ${idx + 1}`}><X size={16} /></button>
                 </div>
               ))}
@@ -2116,6 +2227,9 @@ const AIAgent: React.FC = () => {
             </div>
           )}
           {uploadNotice && <div role="status" style={{ fontSize: "var(--global-font-size-12px)", padding: "0 12px 8px", color: "var(--global-color-text-muted, #666)" }}>{uploadNotice}</div>}
+          {cropTarget && (
+            <ImageCropper src={cropTarget.src} fileName={cropTarget.name} onDone={handleCropDone} onCancel={() => setCropTarget(null)} />
+          )}
 
           <div className="aiagent-input-container">
             <textarea

@@ -3,7 +3,7 @@ import { onAuthStateChanged, type User } from "firebase/auth";
 import { getAuth } from "@config/firebase";
 import { AI_AGENT_API_BASE } from "@config/api";
 import { loadKaggleCredentials } from "@config/kagglecredentials";
-import { detectAgentLanguage } from "@config/agentlanguage";
+import { detectAgentLanguage, detectUserContext } from "@config/agentlanguage";
 
 export type AgentLocalStatus =
   | "checking-credentials"
@@ -139,7 +139,8 @@ const BOOT_MAX_MS = 15 * 60 * 1000;
 // While a start is in flight the UI polls faster; a stopped worker is rechecked only on demand.
 const TICK_MS = 1000;
 
-const authedFetch = async (path: string, init?: RequestInit) => {
+// Fetch mentah dengan token Firebase (untuk SSE: body dibaca sebagai stream).
+const authedFetchRaw = async (path: string, init?: RequestInit) => {
   const firebaseAuth = await getAuth();
   let user = firebaseAuth.currentUser;
   if (!user) {
@@ -153,7 +154,7 @@ const authedFetch = async (path: string, init?: RequestInit) => {
   }
   if (!user) throw new Error("Sign in to use AI Local.");
   const idToken = await user.getIdToken();
-  const response = await fetch(`${AI_AGENT_API_BASE}${path}`, {
+  return fetch(`${AI_AGENT_API_BASE}${path}`, {
     ...init,
     headers: {
       ...(init?.headers || {}),
@@ -162,6 +163,10 @@ const authedFetch = async (path: string, init?: RequestInit) => {
     },
     cache: "no-store",
   });
+};
+
+const authedFetch = async (path: string, init?: RequestInit) => {
+  const response = await authedFetchRaw(path, init);
   const data = await response.json().catch(() => null);
   if (!response.ok) {
     const detail = typeof data?.detail === "string" ? data.detail : `AI Local request failed (${response.status})`;
@@ -408,7 +413,7 @@ export const useAgentLocal = () => {
     try {
       const data = await authedFetch("/agent/local/chat", {
         method: "POST",
-        body: JSON.stringify({ prompt, images: images.map((img) => ({ mime_type: img.mimeType, data: img.data })), language: detectAgentLanguage() }),
+        body: JSON.stringify({ prompt, images: images.map((img) => ({ mime_type: img.mimeType, data: img.data })), language: detectAgentLanguage(), context: detectUserContext() }),
       });
       const content = data?.data?.result?.content;
       if (typeof content !== "string" || !content) throw new Error("AI Local returned an empty response");
@@ -420,6 +425,76 @@ export const useAgentLocal = () => {
       throw err;
     }
   }, [refreshStatus]);
+
+  // Chat live stream: token mengalir lewat SSE selagi model menulis, bukan
+  // menunggu jawaban selesai. onToken(delta, segment) dipanggil per potongan;
+  // segmen baru = panggilan model baru (sapaan -> jawaban akhir).
+  const sendLocalChatStream = useCallback(async (
+    prompt: string,
+    images: { mimeType: string; data: string }[],
+    onToken: (delta: string, segment: number) => void,
+  ) => {
+    try {
+      const response = await authedFetchRaw("/agent/local/chat-stream", {
+        method: "POST",
+        body: JSON.stringify({ prompt, images: images.map((img) => ({ mime_type: img.mimeType, data: img.data })), language: detectAgentLanguage(), context: detectUserContext() }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        const detail = typeof data?.detail === "string" ? data.detail : `AI Local request failed (${response.status})`;
+        throw new Error(detail);
+      }
+      if (!response.body) throw new Error("Streaming is not supported by this browser");
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let finalContent = "";
+      let finalAttachments: ReturnType<typeof normalizeLocalAttachments> | undefined;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          const raw = trimmed.slice(5).trim();
+          if (!raw) continue;
+          let event: Record<string, unknown>;
+          try {
+            event = JSON.parse(raw) as Record<string, unknown>;
+          } catch {
+            continue;
+          }
+          if (event.type === "token" && typeof event.delta === "string" && event.delta) {
+            onToken(event.delta, typeof event.segment === "number" ? event.segment : 0);
+          } else if (event.type === "final" && typeof event.result === "object" && event.result !== null) {
+            const result = event.result as Record<string, unknown>;
+            finalContent = typeof result.content === "string" ? result.content : "";
+            finalAttachments = normalizeLocalAttachments(result.attachments);
+          } else if (event.type === "error") {
+            throw new Error(typeof event.message === "string" && event.message ? event.message : "AI Local request failed");
+          }
+        }
+      }
+      if (!finalContent) throw new Error("AI Local returned an empty response");
+      return { content: finalContent as string, attachments: finalAttachments };
+    } catch (err) {
+      void refreshStatus();
+      throw err;
+    }
+  }, [refreshStatus]);
+
+  // Batalkan jawaban yang sedang berjalan tanpa mematikan worker.
+  const cancelLocalChat = useCallback(async () => {
+    try {
+      await authedFetch("/agent/local/cancel", { method: "POST", body: JSON.stringify({}) });
+    } catch {
+      // Permintaan cancel yang gagal tidak mengubah apa-apa; jawaban yang
+      // sedang berjalan tetap selesai sendiri.
+    }
+  }, []);
 
   const uploadLocalFile = useCallback(async (file: File, name = file.name) => {
     if (file.size > 20 * 1024 * 1024) throw new Error(`${name} exceeds the 20 MB limit`);
@@ -476,6 +551,7 @@ export const useAgentLocal = () => {
         seq: typeof data?.seq === "number" ? data.seq : 0,
         activity: typeof data?.activity === "string" && data.activity.trim() ? (data.activity as string).trim() : null,
         steps: normalizeProcessSteps(data?.steps),
+        opening: typeof data?.opening === "string" && data.opening.trim() ? (data.opening as string).trim() : null,
       };
     } catch {
       return null;
@@ -484,7 +560,7 @@ export const useAgentLocal = () => {
 
   return {
     status, modelId, error, kaggleState, steps, checks, kernelExists, elapsedSeconds, activity,
-    checkCredentials, run, stop, refreshStatus, pollActivity, pollProcess, sendLocalChat, uploadLocalFile,
+    checkCredentials, run, stop, refreshStatus, pollActivity, pollProcess, sendLocalChat, sendLocalChatStream, cancelLocalChat, uploadLocalFile,
   };
 };
 

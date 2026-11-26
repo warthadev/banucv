@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
-import { AlertCircle, Brain, CheckCircle, LoaderCircle, Plus, Save, Trash2 } from "lucide-react";
+import { AlertCircle, Brain, CheckCircle, Circle, LoaderCircle, Plus, Save, Trash2 } from "lucide-react";
 import { getAuth } from "@config/firebase";
 import {
   addAgentMemory,
   deleteAgentMemory,
   loadAgentMemory,
   saveAgentInstructions,
+  saveAgentPlan,
   type AgentMemoryEntry,
+  type AgentPlanItem,
 } from "@config/agentmemory";
 
 interface SettingMemoryProps {
@@ -27,7 +29,10 @@ const SettingMemory: React.FC<SettingMemoryProps> = ({ onLoadingChange = ignoreL
   const [loading, setLoading] = useState(true);
   const [instructions, setInstructions] = useState("");
   const [memories, setMemories] = useState<AgentMemoryEntry[]>([]);
+  const [plan, setPlan] = useState<AgentPlanItem[]>([]);
   const [newMemory, setNewMemory] = useState("");
+  const [newPlanStep, setNewPlanStep] = useState("");
+  const [savingPlan, setSavingPlan] = useState(false);
   const [savingInstructions, setSavingInstructions] = useState(false);
   const [addingMemory, setAddingMemory] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -46,6 +51,7 @@ const SettingMemory: React.FC<SettingMemoryProps> = ({ onLoadingChange = ignoreL
     if (!user) {
       setInstructions("");
       setMemories([]);
+      setPlan([]);
       setLoading(false);
       return;
     }
@@ -54,10 +60,12 @@ const SettingMemory: React.FC<SettingMemoryProps> = ({ onLoadingChange = ignoreL
       if (requestId !== requestIdRef.current) return;
       setInstructions(saved.instructions);
       setMemories(saved.memories);
+      setPlan(saved.plan);
     } catch (error) {
       if (requestId === requestIdRef.current) {
         setInstructions("");
         setMemories([]);
+        setPlan([]);
         setSettingsError(error instanceof Error ? error.message : "Unable to load AI memory.");
       }
     } finally {
@@ -129,6 +137,42 @@ const SettingMemory: React.FC<SettingMemoryProps> = ({ onLoadingChange = ignoreL
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleSavePlan = async (next: AgentPlanItem[]) => {
+    setSavingPlan(true);
+    setFeedback(null);
+    try {
+      const saved = await saveAgentPlan(next);
+      setPlan(saved);
+      setFeedback({ status: "saved", message: "Plan saved. The AI will remind you what is done and what is left." });
+    } catch (error) {
+      setFeedback({ status: "error", message: error instanceof Error ? error.message : "Could not save plan." });
+      void refresh(currentUser);
+    } finally {
+      setSavingPlan(false);
+    }
+  };
+
+  const handleTogglePlanStep = (index: number) => {
+    const next = plan.map((item, i) => (i === index ? { ...item, done: !item.done } : item));
+    setPlan(next);
+    void handleSavePlan(next);
+  };
+
+  const handleAddPlanStep = () => {
+    const text = newPlanStep.trim();
+    if (!text) return;
+    const next = [...plan, { text, done: false }];
+    setPlan(next);
+    setNewPlanStep("");
+    void handleSavePlan(next);
+  };
+
+  const handleDeletePlanStep = (index: number) => {
+    const next = plan.filter((_, i) => i !== index);
+    setPlan(next);
+    void handleSavePlan(next);
   };
 
   if (loading) {
@@ -251,6 +295,77 @@ const SettingMemory: React.FC<SettingMemoryProps> = ({ onLoadingChange = ignoreL
                 {addingMemory ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Plus size={16} aria-hidden="true" />}
               </button>
             </div>
+          </div>
+
+          <div className="setting-agent-form">
+            <label className="setting-agent-label" htmlFor="setting-ai-plan-new">
+              Current plan ({plan.filter((item) => item.done).length}/{plan.length} done)
+            </label>
+            {plan.length === 0 ? (
+              <p className="setting-agent-note">No running plan. When the AI saves a plan for multi-step work, it shows here — and the AI reminds you of it in every chat, even a new one.</p>
+            ) : (
+              <div>
+                {plan.map((item, index) => (
+                  <div className="su-list-item" key={`${item.text}-${index}`}>
+                    <button
+                      className="global-icon-button"
+                      type="button"
+                      onClick={() => handleTogglePlanStep(index)}
+                      disabled={savingPlan}
+                      aria-label={item.done ? `Mark not done: ${item.text}` : `Mark done: ${item.text}`}
+                      title={item.done ? "Mark as not done" : "Mark as done"}
+                    >
+                      {item.done ? <CheckCircle size={16} aria-hidden="true" /> : <Circle size={16} aria-hidden="true" />}
+                    </button>
+                    <span style={item.done ? { textDecoration: "line-through", opacity: 0.6 } : undefined}>{item.text}</span>
+                    <button
+                      className="global-icon-button"
+                      type="button"
+                      onClick={() => handleDeletePlanStep(index)}
+                      disabled={savingPlan}
+                      aria-label={`Delete plan step: ${item.text}`}
+                      title="Delete this step"
+                    >
+                      <Trash2 size={16} aria-hidden="true" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="su-list-item">
+              <input
+                id="setting-ai-plan-new"
+                className="setting-agent-input"
+                type="text"
+                name="ai-plan-new"
+                value={newPlanStep}
+                onChange={(event) => {
+                  setNewPlanStep(event.target.value);
+                  setFeedback(null);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    handleAddPlanStep();
+                  }
+                }}
+                placeholder="Add a plan step, e.g. Update the AI rules"
+                maxLength={200}
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <button
+                className="global-icon-button"
+                type="button"
+                onClick={handleAddPlanStep}
+                disabled={savingPlan || !newPlanStep.trim()}
+                aria-label="Add plan step"
+                title="Add plan step"
+              >
+                {savingPlan ? <LoaderCircle size={16} className="setting-agent-spinner" /> : <Plus size={16} aria-hidden="true" />}
+              </button>
+            </div>
+            <p className="setting-agent-note">The running plan is sent to the AI in every chat. Max 20 steps.</p>
           </div>
 
           {feedback && (

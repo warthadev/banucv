@@ -27,7 +27,7 @@ import { getAuth, getDb } from "@config/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { confirmHostAction, type HostActionPreview } from "@config/agentworkspace";
-import { UiBlock, isUiJson, extractUiJson } from "./agentuiblocks";
+import { UiBlock, isUiJson, extractUiJson, parsePartialUi } from "./agentuiblocks";
 import { ImageCropper, type CroppedImage } from "./agentimagecropper";
 import { RouterAuthModal } from "./routerauthmodal";
 
@@ -876,7 +876,7 @@ const splitTextParts = (text: string) => {
 };
 
 const splitMarkdown = (content: string) => {
-  const parts: { type: 'text' | 'code' | 'table'; content: string; language?: string }[] = [];
+  const parts: { type: 'text' | 'code' | 'table'; content: string; language?: string; partial?: boolean }[] = [];
   // Pagar boleh sebaris isinya: ```ui {"type":...}``` dulu gagal karena
   // regex lama mewajibkan newline persis setelah label bahasa.
   const codeBlockRegex = /```(\w+)?[ \t]*\r?\n?([\s\S]*?)```/g;
@@ -898,7 +898,20 @@ const splitMarkdown = (content: string) => {
 
   if (lastIndex < content.length) {
     const textContent = content.substring(lastIndex);
-    parts.push(...splitTextParts(textContent));
+    // Pagar yang belum ketutup (jawaban masih mengalir): jangan lempar ke
+    // ReactMarkdown — dia render pagar terbuka sebagai code block hitam.
+    // Perlakukan isinya sebagai blok kode partial, supaya blok Ui langsung
+    // jadi komponen selagi token masuk.
+    const openFence = /```(\w+)?[ \t]*\r?\n?([\s\S]*)$/.exec(textContent);
+    if (openFence) {
+      const before = textContent.substring(0, openFence.index);
+      if (before) parts.push(...splitTextParts(before));
+      if (openFence[2].trim() !== "") {
+        parts.push({ type: 'code', language: openFence[1] || '', content: openFence[2].trim(), partial: true });
+      }
+    } else {
+      parts.push(...splitTextParts(textContent));
+    }
   }
 
   // Buang sampah render: blok kode yang isinya cuma "undefined"/"null"
@@ -1068,6 +1081,22 @@ const AIAgent: React.FC = () => {
   const activeRequestIdRef = useRef<number | null>(null);
 
   useEffect(() => { messagesRef.current = messages; }, [messages]);
+
+  // Kalau chat dihapus di tab lain, tab ini ikut bersih — supaya riwayat lama
+  // yang masih tersimpan di state tab ini tidak keikut kekirim ke AI lagi.
+  useEffect(() => {
+    if (!currentUserUid) return;
+    const key = getAgentMessagesStorageKey(currentUserUid);
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== key) return;
+      if (event.newValue === null || event.newValue === "[]") {
+        messagesRef.current = [];
+        setMessages([]);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [currentUserUid]);
 
   const processIdRef = useRef<string | null>(null);
   // Id pesan streaming milik request yang sedang berjalan (unik per request),
@@ -2167,6 +2196,9 @@ const AIAgent: React.FC = () => {
   const copyMessage = (content: string) => navigator.clipboard.writeText(content);
 
   const clearChat = () => {
+    // Hapus total: bersihkan juga ref yang dipakai saat mengirim, supaya
+    // giliran berikutnya tidak bisa lagi membawa riwayat lama ke AI.
+    messagesRef.current = [];
     setMessages([]);
     if (currentUserUid) {
       try {
@@ -2585,6 +2617,22 @@ const AIAgent: React.FC = () => {
                                     // Local tidak selalu menulis label `ui` dengan benar.
                                     if ((part.language || '').toLowerCase() === 'ui' || isUiJson(part.content)) {
                                       return <UiBlock key={index} raw={part.content} />;
+                                    }
+                                    // Pagar yang masih mengalir: parse awalan valid terpanjang
+                                    // supaya blok Ui langsung jadi komponen selagi token masuk,
+                                    // bukan menunggu pagar penutup sebagai code block hitam.
+                                    if (part.partial && msg.streaming === true) {
+                                      const partialUi = parsePartialUi(part.content);
+                                      if (partialUi) {
+                                        return (
+                                          <React.Fragment key={index}>
+                                            <UiBlock raw={partialUi.json} />
+                                            {index === parts.length - 1 && (
+                                              <span className="aiagent-stream-caret" aria-hidden="true" />
+                                            )}
+                                          </React.Fragment>
+                                        );
+                                      }
                                     }
                                     return (
                                       <div key={index} className="aiagent-code-block-wrapper">

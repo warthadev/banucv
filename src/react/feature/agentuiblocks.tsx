@@ -91,7 +91,82 @@ const tryParseUi = (text: string): UiData | null => {
   return tryOnce(trimmed)
     // Model kadang menyisakan koma di akhir sebelum } atau ] — JSON strict
     // gagal, tapi isinya tetap bisa dibaca setelah koma itu dibuang.
-    ?? tryOnce(trimmed.replace(/,\s*([}\]])/g, "$1"));
+    ?? tryOnce(trimmed.replace(/,\s*([}\]])/g, "$1"))
+    // Model kadang menyelipkan newline mentah di dalam string, atau
+    // jawabannya kepotong sebelum kurungnya ketutup — tutup string dan
+    // kurungnya, lalu coba lagi.
+    ?? tryOnce(closeUiJson(trimmed));
+};
+
+// Tutup JSON yang belum selesai: buang newline mentah (tidak boleh ada di
+// dalam string JSON), tutup string yang masih terbuka, lalu tutup kurung
+// dan kurung siku yang belum ketutup — dari yang paling dalam.
+const closeUiJson = (raw: string): string => {
+  let text = raw.replace(/\r?\n/g, " ").trim().replace(/,\s*$/, "");
+  const stack: string[] = [];
+  let inStr = false;
+  let esc = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === "\\") esc = true;
+      else if (c === '"') inStr = false;
+    } else if (c === '"') {
+      inStr = true;
+    } else if (c === "{" || c === "[") {
+      stack.push(c);
+    } else if (c === "}" || c === "]") {
+      const open = stack[stack.length - 1];
+      if ((c === "}" && open === "{") || (c === "]" && open === "[")) stack.pop();
+    }
+  }
+  if (inStr) text += '"';
+  while (stack.length) text += stack.pop() === "{" ? "}" : "]";
+  return text;
+};
+
+// Posisi koma terakhir yang ada di luar string — pemisah elemen terakhir,
+// yang biasanya belum lengkap saat JSON masih mengalir.
+const lastCommaOutsideString = (text: string): number => {
+  let last = -1;
+  let inStr = false;
+  let esc = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === "\\") esc = true;
+      else if (c === '"') inStr = false;
+    } else if (c === '"') {
+      inStr = true;
+    } else if (c === ",") {
+      last = i;
+    }
+  }
+  return last;
+};
+
+// Parse JSON Ui yang MASIH mengalir (streaming): ambil awalan valid terpanjang
+// dengan memotong elemen terakhir yang belum lengkap, lalu tutup kurungnya.
+// Dipakai supaya blok Ui langsung jadi komponen selagi token masuk, bukan
+// menunggu pagar penutup — dan supaya JSON final yang kepotong tetap tampil
+// dengan item-item yang sudah lengkap, bukan jatuh ke code block hitam.
+export const parsePartialUi = (
+  raw: string,
+): { json: string; data: UiData } | null => {
+  if (!raw || raw.trim().length > MAX_RAW) return null;
+  const direct = tryParseUi(raw);
+  if (direct) return { json: raw.trim(), data: direct };
+  let candidate = closeUiJson(raw);
+  for (let n = 0; n < 12; n++) {
+    const parsed = tryParseUi(candidate);
+    if (parsed) return { json: candidate, data: parsed };
+    const cut = lastCommaOutsideString(candidate);
+    if (cut < 0) return null;
+    candidate = closeUiJson(candidate.slice(0, cut));
+  }
+  return null;
 };
 
 const parseUi = (raw: string): UiData | null => {

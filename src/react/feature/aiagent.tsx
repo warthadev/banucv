@@ -2041,17 +2041,16 @@ const AIAgent: React.FC = () => {
     const userMsg = messages[userIndex];
     if (userMsg.role !== "user") return;
     setRetryingMessageId(messageId);
-    // Hapus seluruh giliran lama setelah pesan user (blok Proses + jawaban,
-    // termasuk sapaan pembuka kalau ada) supaya saat reload, blok Proses
-    // lama hilang dan diganti blok Proses baru — bukan menumpuk. Pesan user
-    // tetap ada; giliran baru dikirim ulang oleh sendMessage di bawah.
+    // Rewind: hapus SEMUA pesan setelah pesan user ini (blok Proses + jawaban
+    // turn ini, plus semua giliran yang lebih baru — termasuk pesan user
+    // sesudahnya) supaya percakapan kembali ke giliran ini. Pesan user tetap
+    // ada; jawaban baru dikirim ulang oleh sendMessage di bawah. Penyimpanan
+    // lokal ikut kepotong karena saveMessages menulis ulang seluruh array.
     const userMsgId = userMsg.id;
     setMessages(prev => {
       const ui = prev.findIndex(m => m.id === userMsgId);
       if (ui < 0) return prev.filter(m => m.id !== messageId);
-      let end = ui + 1;
-      while (end < prev.length && prev[end].role !== "user") end += 1;
-      return prev.filter((_, i) => i <= ui || i >= end);
+      return prev.filter((_, i) => i <= ui);
     });
     const recoveredImages: UploadedImage[] = userMsg.images?.map(img => ({ data: img.data, mimeType: img.mimeType, preview: `data:${img.mimeType};base64,${img.data}` })) || [];
     const recoveredFiles: UploadedFile[] = userMsg.files?.map(f => ({ name: f.name, content: f.content, type: "" })) || [];

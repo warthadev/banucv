@@ -2274,10 +2274,10 @@
 .aiagent-message-bubble .aiagent-attachments { margin-top: 0; flex-direction: column; overflow-x: visible; }
 .aiagent-message-bubble .aiagent-message-files:last-child { margin-bottom: 0; }
 .aiagent-message.user .aiagent-message-bubble .aiagent-message-files { justify-content: flex-end; }
-.aiagent-message.user .aiagent-message-bubble .file-chip { background: rgba(255,255,255,0.16); border-color: var(--global-color-border); color: var(--global-color-on-accent); }
+.aiagent-message.user .aiagent-message-bubble .file-chip { background: transparent; border: none; color: var(--global-color-on-accent); }
 .aiagent-message.user .aiagent-message-bubble .file-chip-name { color: var(--global-color-on-accent); }
 .aiagent-message.user .aiagent-message-bubble .file-chip-meta { color: var(--global-color-on-accent); opacity: 0.75; }
-.aiagent-message.user .aiagent-message-bubble .file-chip-icon { background: var(--global-color-border); color: var(--global-color-text); }
+.aiagent-message.user .aiagent-message-bubble .file-chip-icon { background: transparent; color: var(--global-color-on-accent); }
 .aiagent-message.user .aiagent-message-bubble .file-chip-action { color: var(--global-color-on-accent); opacity: 0.75; }
 .file-chip { max-width: 100%; overflow-wrap: anywhere; border-radius: 0; }
 

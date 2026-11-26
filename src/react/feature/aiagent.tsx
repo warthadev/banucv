@@ -1463,6 +1463,9 @@ const AIAgent: React.FC = () => {
     }
     const prompt = textContext || (images.length ? "Describe these images" : "");
     const route = resolveAgentModelRoute(modelName, AI_AGENT_API_BASE);
+    // Blok Proses langsung muncul seperti di lokal: langkah "Memahami
+    // permintaan…" jalan sampai jawaban (atau tool pertama) mulai mengalir.
+    mergeProcessSteps([{ id: "c0", kind: "thinking", title: cloudStrings.understanding, status: "running" }]);
     let response: Response;
     try {
       response = await fetch(`${route.apiBase}/agent/chat/stream`, {
@@ -1539,9 +1542,16 @@ const AIAgent: React.FC = () => {
     let final: AgentStreamFinal = { text: "", model: modelName, requestedModel: originallyRequestedModel };
     let toolStepCounter = 0;
     let sawToolActivity = false;
+    let understood = false;
+    const markUnderstood = () => {
+      if (understood) return;
+      understood = true;
+      mergeProcessSteps([{ id: "c0", status: "done" }]);
+    };
     const openToolSteps: { name: string; id: string }[] = [];
     const appendToken = (delta: string) => {
       if (!delta) return;
+      markUnderstood();
       final.text += delta;
       if (currentUserUidRef.current !== requestOwnerUid || activeRequestIdRef.current !== requestId) return;
       scheduleStreamUpdate(() => {
@@ -1597,6 +1607,7 @@ const AIAgent: React.FC = () => {
         } else if (event.type === "tool_call" && typeof event.name === "string") {
           const toolTitle = describeAgentTool(event.name, detectAgentLanguage()) ?? `${cloudStrings.usingTool}: ${event.name}`;
           sawToolActivity = true;
+          markUnderstood();
           setStreamActivity(toolTitle);
           const toolStepId = `t${++toolStepCounter}`;
           openToolSteps.push({ name: event.name, id: toolStepId });

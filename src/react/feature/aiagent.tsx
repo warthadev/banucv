@@ -1589,7 +1589,7 @@ const AIAgent: React.FC = () => {
           web_search: false,
           search_query: "",
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta",
-          context: detectUserContext(),
+          context: detectUserContext(userDisplayName, userLocation),
           history,
           images: images.map((image) => ({ mime_type: image.mimeType, data: image.data })),
         }),
@@ -1614,7 +1614,7 @@ const AIAgent: React.FC = () => {
             web_search: false,
             search_query: "",
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta",
-            context: detectUserContext(),
+            context: detectUserContext(userDisplayName, userLocation),
             history,
             images: images.map((image) => ({ mime_type: image.mimeType, data: image.data })),
           }),
@@ -1823,6 +1823,8 @@ const AIAgent: React.FC = () => {
           applyStreamText();
         },
         history,
+        userDisplayName,
+        userLocation,
       );
       content = result.content;
       localAttachments = result.attachments && result.attachments.length > 0 ? result.attachments : undefined;

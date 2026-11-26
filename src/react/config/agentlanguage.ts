@@ -73,9 +73,17 @@ export interface AgentUserContext {
   timezone: string;
   local_time: string;
   locale: string;
+  // Tanggal & jam yang sudah bisa dibaca manusia (mis. "Thursday, 26 November
+  // 2026", "11:03") supaya AI bisa langsung menjawab pertanyaan tanggal/jam
+  // tanpa harus mengurai ISO. Nama + lokasi user — AI harus tahu keduanya
+  // dari awal, di tiap giliran chat.
+  date: string;
+  time: string;
+  user_name: string;
+  user_location: string;
 }
 
-export const detectUserContext = (): AgentUserContext => {
+export const detectUserContext = (userName = "", userLocation = ""): AgentUserContext => {
   const now = new Date();
   let timezone = "UTC";
   try {
@@ -93,10 +101,27 @@ export const detectUserContext = (): AgentUserContext => {
     `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}` +
     `T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}` +
     `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
+  const locale = typeof navigator !== "undefined" ? (navigator.language || "") : "";
+  // Tanggal & jam yang bisa dibaca manusia, mengikuti locale browser.
+  let date = "";
+  let time = "";
+  try {
+    date = now.toLocaleDateString(locale || undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    time = now.toLocaleTimeString(locale || undefined, { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    date = "";
+    time = "";
+  }
+  // "User" / "Unknown" adalah nilai placeholder saat nama/lokasi belum
+  // ketemu — jangan dikirim sebagai nama/lokasi beneran.
   return {
     timezone,
     local_time: localISO,
-    locale: typeof navigator !== "undefined" ? (navigator.language || "") : "",
+    locale,
+    date,
+    time,
+    user_name: userName && userName !== "User" ? userName : "",
+    user_location: userLocation && userLocation !== "Unknown" ? userLocation : "",
   };
 };
 

@@ -71,13 +71,15 @@ const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolea
         <button type="button" className="aiagent-process-toggle" onClick={onToggle} aria-expanded={open}>
           {live ? <Loader2 size={14} className="aiagent-process-spin" /> : failed ? <X size={14} /> : <Check size={14} />}
           <span className="aiagent-process-title">{title}</span>
-          <ChevronDown size={14} className={`aiagent-process-chevron${open ? " open" : ""}`} />
         </button>
         {live && onStop ? (
           <button type="button" className="aiagent-process-stop" onClick={onStop}>
             {strings.stop}
           </button>
         ) : null}
+        <button type="button" className="aiagent-process-chevron-btn" onClick={onToggle} aria-expanded={open} aria-label={open ? (lang === "id" ? "Tutup proses" : "Collapse process") : (lang === "id" ? "Buka proses" : "Expand process")}>
+          <ChevronDown size={14} className={`aiagent-process-chevron${open ? " open" : ""}`} />
+        </button>
       </div>
       {open && (
         <ol className="aiagent-process-list">
@@ -1008,6 +1010,9 @@ const AIAgent: React.FC = () => {
   // AbortController untuk request cloud yang sedang streaming, supaya tombol
   // Berhenti di blok Proses bisa menghentikan cloud sama seperti lokal.
   const cloudAbortRef = useRef<AbortController | null>(null);
+  // Berhenti ditekan di blok Proses: giliran ini dibuang tanpa pesan
+  // "Dibatalkan oleh user." dan tanpa pesan Proses (cloud + lokal).
+  const cancelRequestedRef = useRef(false);
   // Batching update stream: banyak token per detik digabung jadi satu render
   // per frame (requestAnimationFrame) supaya teks dan bubble muncul mulus,
   // bukan berkedip tiap token. Dipakai streaming cloud dan lokal.
@@ -1789,6 +1794,15 @@ const AIAgent: React.FC = () => {
     const isCurrentRequest = () => currentUserUidRef.current === requestOwnerUid && activeRequestIdRef.current === requestId && messagesOwnerUid === requestOwnerUid;
     setIsLoading(true);
     processIdRef.current = `process-${requestId}`;
+    if (!isRetry) cancelRequestedRef.current = false;
+    // Giliran yang diberhentikan: buang pesan streaming + pesan Proses,
+    // jangan tampilkan jawaban "Dibatalkan oleh user." sama sekali.
+    const discardCancelledTurn = () => {
+      const pid = processIdRef.current;
+      processIdRef.current = null;
+      flushStreamUpdate();
+      setMessages(prev => prev.filter(m => m.id !== STREAM_MESSAGE_ID && m.id !== pid));
+    };
 
     if (!isRetry) {
       const userMsg: Message = {
@@ -1811,6 +1825,10 @@ const AIAgent: React.FC = () => {
         ? await callLocalAI(messageText, images, files, requestOwnerUid, requestId, sharedHistory)
         : await callAI(messageText, images, files, retryModelIndex, messagesRef.current, isRetry, messageText, modelSequence, requestOwnerUid, requestId);
       if (!isCurrentRequest()) return;
+      if (cancelRequestedRef.current) {
+        discardCancelledTurn();
+        return;
+      }
       if (response.pendingHostAction) {
         setPendingHostAction(response.pendingHostAction);
         setHostActionError("");
@@ -1850,6 +1868,10 @@ const AIAgent: React.FC = () => {
       }
     } catch (error: unknown) {
       if (!isCurrentRequest()) return;
+      if (cancelRequestedRef.current) {
+        discardCancelledTurn();
+        return;
+      }
       const errorType = getErrorType(error);
       const friendlyError = getErrorMessage(error);
       const errorMessage = getErrorText(error);
@@ -1888,7 +1910,7 @@ const AIAgent: React.FC = () => {
     } finally {
       if (activeRequestIdRef.current === requestId) {
         cloudAbortRef.current = null;
-        finishProcess("done");
+        if (!cancelRequestedRef.current) finishProcess("done");
         activeRequestIdRef.current = null;
         setIsLoading(false);
         setRetryingMessageId(null);
@@ -2319,7 +2341,7 @@ const AIAgent: React.FC = () => {
                       live={msg.processLive === true}
                       open={processOpen[msg.id] ?? (msg.processLive === true)}
                       onToggle={() => setProcessOpen(prev => ({ ...prev, [msg.id]: !(prev[msg.id] ?? (msg.processLive === true)) }))}
-                      onStop={msg.processLive === true ? () => { if (cloudAbortRef.current) cloudAbortRef.current.abort(); else void agentLocal.cancelLocalChat(); } : undefined}
+                      onStop={msg.processLive === true ? () => { cancelRequestedRef.current = true; if (cloudAbortRef.current) cloudAbortRef.current.abort(); else void agentLocal.cancelLocalChat(); } : undefined}
                     />
                   </div>
                 </motion.div>
@@ -2369,18 +2391,9 @@ const AIAgent: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    {msg.role === "bot" && ((msg.requestedModel && msg.requestedModel !== msg.model) || (!msg.error && msg.usage)) && (
+                    {msg.role === "bot" && msg.requestedModel && msg.requestedModel !== msg.model && (
                       <div className="aiagent-message-metadata">
-                        {msg.requestedModel && msg.requestedModel !== msg.model && <span>{msg.error ? "Started with" : "Requested"}: {msg.requestedModel}</span>}
-                        {!msg.error && msg.usage && (
-                          <span>
-                            Usage: {[
-                              msg.usage.inputTokens !== undefined ? `${msg.usage.inputTokens.toLocaleString()} input` : "",
-                              msg.usage.outputTokens !== undefined ? `${msg.usage.outputTokens.toLocaleString()} output` : "",
-                              msg.usage.totalTokens !== undefined ? `${msg.usage.totalTokens.toLocaleString()} total tokens` : "",
-                            ].filter(Boolean).join(" · ")}
-                          </span>
-                        )}
+                        <span>{msg.error ? "Started with" : "Requested"}: {msg.requestedModel}</span>
                       </div>
                     )}
                     {msg.role === "bot" && msg.files && msg.files.length > 0 && (

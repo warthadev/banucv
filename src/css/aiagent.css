@@ -2034,12 +2034,25 @@
   font-weight: 600;
   cursor: pointer;
 }
+.aiagent-process-chevron-btn {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--global-color-text-secondary);
+  cursor: pointer;
+}
 .aiagent-process-toggle {
   display: flex;
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 9px 14px;
+  padding: 16px 14px;
   background: transparent;
   border: 0;
   color: var(--global-color-text-secondary);
@@ -2049,6 +2062,10 @@
   letter-spacing: 0.02em;
   text-align: left;
   cursor: pointer;
+}
+/* Bubble chat di tablet/desktop padding 14px (di HP 12px): samakan tinggi bar Proses. */
+@media (min-width: 640px) {
+  .aiagent-process-toggle { padding: 18px 14px; }
 }
 .aiagent-process-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .aiagent-process-chevron { flex: none; transition: transform 0.2s ease; }

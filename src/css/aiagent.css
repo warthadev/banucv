@@ -626,49 +626,6 @@
   overflow-y: auto;
 }
 
-.aiagent-colab-pair {
-  border-top: 1px solid var(--global-color-border);
-  margin-top: 12px;
-  padding-top: 12px;
-}
-
-.aiagent-colab-pair-note {
-  color: var(--global-color-text-secondary);
-}
-
-.aiagent-colab-code-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 8px 0;
-}
-
-.aiagent-colab-code {
-  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: 4px;
-  background: var(--global-color-accent-alpha);
-  border-radius: 8px;
-  padding: 8px 12px;
-}
-
-.aiagent-model-option.aiagent-colab-notebook-link {
-  text-decoration: none;
-  justify-content: center;
-}
-
-.aiagent-colab-steps {
-  margin: 8px 0 0 0;
-  padding-left: 20px;
-  font-size: var(--global-font-size-0-7rem);
-  color: var(--global-color-text-secondary);
-}
-
-.aiagent-colab-steps li {
-  margin: 2px 0;
-}
-
 .aiagent-user-bubble {
   background: var(--global-color-accent);
   color: var(--global-color-on-accent);

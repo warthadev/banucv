@@ -129,7 +129,6 @@ interface AgentLocalStatusResponse {
   alive?: boolean;
   kaggle_state?: string | null;
   resumable?: boolean;
-  runtime?: "kaggle" | "colab" | null;
 }
 
 const BOOT_POLL_MS = 4000;
@@ -179,7 +178,6 @@ const authedFetch = async (path: string, init?: RequestInit) => {
 export const useAgentLocal = () => {
   const [status, setStatus] = useState<AgentLocalStatus>("checking-credentials");
   const [modelId, setModelId] = useState<string | null>(null);
-  const [runtime, setRuntime] = useState<"kaggle" | "colab" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [kaggleState, setKaggleState] = useState<string | null>(null);
   const [steps, setSteps] = useState<AgentLocalStep[]>([]);
@@ -229,7 +227,6 @@ export const useAgentLocal = () => {
       if (!mountedRef.current) return;
       setKaggleState(data.kaggle_state ?? null);
       setSteps(Array.isArray(data.steps) ? data.steps : []);
-      setRuntime(data.runtime === "colab" ? "colab" : data.runtime === "kaggle" ? "kaggle" : null);
 
       if (data.status === "stopping") {
         bootStartedAtRef.current = null;
@@ -555,26 +552,9 @@ export const useAgentLocal = () => {
     }
   }, []);
 
-  // Pair a Colab worker: the app mints a one-time 6-letter code, the Colab
-  // notebook trades it for a session. No ngrok — the Colab worker polls the
-  // backend exactly like the Kaggle worker.
-  const pairColab = useCallback(async () => {
-    const data = await authedFetch("/agent/local/colab-pair", { method: "POST", body: JSON.stringify({}) });
-    if (!data || typeof data.code !== "string" || !data.code) {
-      throw new Error("Could not create a Colab pairing code.");
-    }
-    return {
-      code: data.code as string,
-      expiresInSeconds: typeof data.expires_in_seconds === "number" ? data.expires_in_seconds : 900,
-      notebookUrl: typeof data.notebook_url === "string" && data.notebook_url
-        ? data.notebook_url as string
-        : "https://colab.research.google.com/github/warthadev/warthadev-backend/blob/main/colab/wartha-colab.ipynb",
-    };
-  }, []);
-
   return {
-    status, modelId, runtime, error, kaggleState, steps, checks, kernelExists, elapsedSeconds,
-    checkCredentials, run, stop, refreshStatus, pollProcess, sendLocalChatStream, cancelLocalChat, uploadLocalFile, pairColab,
+    status, modelId, error, kaggleState, steps, checks, kernelExists, elapsedSeconds,
+    checkCredentials, run, stop, refreshStatus, pollProcess, sendLocalChatStream, cancelLocalChat, uploadLocalFile,
   };
 };
 

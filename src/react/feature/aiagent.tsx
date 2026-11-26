@@ -2027,14 +2027,30 @@ const AIAgent: React.FC = () => {
   const retryMessage = async (messageId: string) => {
     const requestOwnerUid = currentUserUidRef.current;
     if (!requestOwnerUid || requestOwnerUid !== currentUserUid || messagesOwnerUid !== requestOwnerUid || isLoading || !canSendCurrentSource) return;
-    const errorIndex = messages.findIndex(m => m.id === messageId);
-    if (errorIndex <= 0) return;
-    let userIndex = errorIndex - 1;
-    while (userIndex > 0 && messages[userIndex].process) userIndex -= 1;
+    const targetIndex = messages.findIndex(m => m.id === messageId);
+    if (targetIndex <= 0) return;
+    // Cari pesan user yang memulai giliran ini — lewati semua pesan di
+    // giliran yang sama (blok Proses, sapaan pembuka lokal) sampai ketemu
+    // pesan user. Cara lama cuma melewati blok Proses, jadi Reload pada
+    // jawaban lokal yang punya sapaan pembuka tidak menemukan pesan user
+    // dan diam-diam tidak jalan.
+    let userIndex = targetIndex - 1;
+    while (userIndex > 0 && messages[userIndex].role !== "user") userIndex -= 1;
     const userMsg = messages[userIndex];
     if (userMsg.role !== "user") return;
     setRetryingMessageId(messageId);
-    setMessages(prev => prev.filter(m => m.id !== messageId));
+    // Hapus seluruh giliran lama setelah pesan user (blok Proses + jawaban,
+    // termasuk sapaan pembuka kalau ada) supaya saat reload, blok Proses
+    // lama hilang dan diganti blok Proses baru — bukan menumpuk. Pesan user
+    // tetap ada; giliran baru dikirim ulang oleh sendMessage di bawah.
+    const userMsgId = userMsg.id;
+    setMessages(prev => {
+      const ui = prev.findIndex(m => m.id === userMsgId);
+      if (ui < 0) return prev.filter(m => m.id !== messageId);
+      let end = ui + 1;
+      while (end < prev.length && prev[end].role !== "user") end += 1;
+      return prev.filter((_, i) => i <= ui || i >= end);
+    });
     const recoveredImages: UploadedImage[] = userMsg.images?.map(img => ({ data: img.data, mimeType: img.mimeType, preview: `data:${img.mimeType};base64,${img.data}` })) || [];
     const recoveredFiles: UploadedFile[] = userMsg.files?.map(f => ({ name: f.name, content: f.content, type: "" })) || [];
     const modelSequence = modelSource === "local"

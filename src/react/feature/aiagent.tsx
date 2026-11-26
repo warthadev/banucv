@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Bot, Trash2, Volume2, VolumeX, Check,
-  Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, Home, MapPin, Plus, User, Link, ChevronDown, Wrench, Brain, Crop,
+  Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, Home, MapPin, Plus, Link, ChevronDown, Wrench, Brain, Crop,
   FileSpreadsheet, FileCode, FileArchive, FileAudio, FileVideo, Presentation, FileImage
 } from "lucide-react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
@@ -981,8 +981,6 @@ const AIAgent: React.FC = () => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isUploadDropdownOpen, setIsUploadDropdownOpen] = useState(false);
   const [, setRetryingMessageId] = useState<string | null>(null);
-  const [userDisplayName, setUserDisplayName] = useState<string>("User");
-  const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<string>("Unknown");
   const [uploadDropdownPos, setUploadDropdownPos] = useState<{ bottom: number; left: number; maxHeight: number }>({ bottom: 0, left: 0, maxHeight: 0 });
   const [modelPickerPos, setModelPickerPos] = useState<{ bottom: number; left: number; maxHeight: number }>({ bottom: 0, left: 0, maxHeight: 0 });
@@ -1165,8 +1163,6 @@ const AIAgent: React.FC = () => {
       setConfirmLabelChoice("A");
       setCustomConfirmLabel("");
           if (!user) {
-            setUserDisplayName("User");
-            setUserAvatar(null);
             setUserLocation("Unknown");
             return;
           }
@@ -1177,12 +1173,7 @@ const AIAgent: React.FC = () => {
             if (disposed || auth.currentUser?.uid !== user.uid) return;
             if (userSnap.exists()) {
               const data = userSnap.data();
-              setUserDisplayName(data.displayName || user.displayName || user.email?.split('@')[0] || "User");
-              setUserAvatar(data.photoURL || user.photoURL || null);
               if (data.lastLocation) setUserLocation(`${data.lastLocation.city}, ${data.lastLocation.country}`);
-            } else {
-              setUserDisplayName(user.displayName || user.email?.split('@')[0] || "User");
-              setUserAvatar(user.photoURL || null);
             }
           }
         });
@@ -2105,6 +2096,9 @@ const AIAgent: React.FC = () => {
   const totalUploads = uploadedImages.length + uploadedFiles.length;
 
   // Top bar "now playing": nama model + status sumber saat ini.
+  const playerModelName = modelSource === "local"
+    ? (agentLocal.modelId || selectedModel || "AI Local")
+    : (selectedModel || "AI Agent");
   const playerStatusText = modelSource === "local"
     ? agentLocal.status === "ready" ? "Local · Ready"
     : agentLocal.status === "connecting" || agentLocal.status === "booting" ? "Local · Starting…"
@@ -2177,6 +2171,7 @@ const AIAgent: React.FC = () => {
                   <span className={`aiagent-player-dot aiagent-player-dot--${playerStatusTone}`} />
                 </span>
                 <span className="aiagent-player-meta">
+                  <span className="aiagent-player-name">{playerModelName}</span>
                   <span className="aiagent-player-sub">{playerStatusText}</span>
                 </span>
                 <ChevronDown size={16} aria-hidden="true" className="aiagent-player-chevron" />
@@ -2356,7 +2351,7 @@ const AIAgent: React.FC = () => {
             {!messages.length && (
               <div className="aiagent-welcome">
                 <div className="aiagent-welcome-icon"><Sparkles size={56} /></div>
-                <h3>Hello, {userDisplayName}!</h3>
+                <h3>Hello!</h3>
                 <p>Ask me anything or upload files</p>
               </div>
             )}
@@ -2375,9 +2370,7 @@ const AIAgent: React.FC = () => {
                 </motion.div>
               ) : (
                 <motion.div key={msg.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={`aiagent-message ${msg.role === "user" ? "user" : "bot"}${msg.streaming === true ? " streaming" : ""}`}>
-                  {msg.role === "user" && <div className="aiagent-user-avatar">{userAvatar ? <img src={userAvatar} alt="Avatar" /> : <User size={24} />}</div>}
                   <div className="aiagent-message-content">
-                    {msg.role === "user" && <div className="aiagent-username">{userDisplayName}</div>}
                     {msg.role === "bot" && (
                       <div className="aiagent-bot-header">
                         <div className="aiagent-bot-header-left">
@@ -2446,30 +2439,45 @@ const AIAgent: React.FC = () => {
                         <>
                           {(() => {
                             const parts = splitMarkdown(msg.content);
-                            return parts.map((part, index) => {
-                              if (part.type === 'code') {
-                                // Blok ```ui berisi JSON struktur -> render sebagai komponen
-                                // React (kartu, alur, grafik, dsb), bukan sebagai kode.
-                                if ((part.language || '').toLowerCase() === 'ui') {
-                                  return <UiBlock key={index} raw={part.content} />;
-                                }
-                                return (
-                                  <div key={index} className="aiagent-code-block-wrapper">
-                                    <CodeBlock language={part.language || ''} code={part.content} />
-                                  </div>
-                                );
-                              } else if (part.type === 'table') {
-                                return <TableBlock key={index} content={part.content} />;
-                              } else {
-                                return (
-                                  <div key={index} className="aiagent-message-bubble">
-                                    <ReactMarkdown components={MarkdownComponents}>
-                                      {part.content}
-                                    </ReactMarkdown>
-                                  </div>
-                                );
-                              }
-                            });
+                            // Indeks bagian teks terakhir — caret streaming
+                            // ditempel di akhir bagian itu (bukan di setiap
+                            // bagian), supaya kursor mengetik terlihat di
+                            // ujung teks yang sedang mengalir.
+                            const lastTextIndex = parts.reduce((acc, p, i) => (p.type !== 'code' && p.type !== 'table' ? i : acc), -1);
+                            return (
+                              <>
+                                {parts.map((part, index) => {
+                                  if (part.type === 'code') {
+                                    // Blok ```ui berisi JSON struktur -> render sebagai komponen
+                                    // React (kartu, alur, grafik, dsb), bukan sebagai kode.
+                                    if ((part.language || '').toLowerCase() === 'ui') {
+                                      return <UiBlock key={index} raw={part.content} />;
+                                    }
+                                    return (
+                                      <div key={index} className="aiagent-code-block-wrapper">
+                                        <CodeBlock language={part.language || ''} code={part.content} />
+                                      </div>
+                                    );
+                                  } else if (part.type === 'table') {
+                                    return <TableBlock key={index} content={part.content} />;
+                                  } else {
+                                    return (
+                                      <div key={index} className="aiagent-message-bubble">
+                                        <ReactMarkdown components={MarkdownComponents}>
+                                          {part.content}
+                                        </ReactMarkdown>
+                                        {msg.streaming === true && index === lastTextIndex && (
+                                          <span className="aiagent-stream-caret" aria-hidden="true" />
+                                        )}
+                                      </div>
+                                    );
+                                  }
+                                })}
+                                {msg.streaming === true && lastTextIndex < 0 && (
+                                  <span className="aiagent-stream-caret" aria-hidden="true" />
+                                )}
+                              </>
+                            );
                           })()}
                         </>
                       )

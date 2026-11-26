@@ -50,6 +50,23 @@ const terminalCommand = (detail?: string): string => {
 const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolean; onToggle: () => void; onStop?: () => void }> = ({ steps, live, open, onToggle, onStop }) => {
   const lang = detectAgentLanguage();
   const strings = getAgentProcessStrings(lang);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const copyStepOutput = async (step: ProcessStep) => {
+    const text = step.output || "";
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const area = document.createElement("textarea");
+      area.value = text;
+      document.body.appendChild(area);
+      area.select();
+      try { document.execCommand("copy"); } catch { /* abaikan */ }
+      document.body.removeChild(area);
+    }
+    setCopiedId(step.id);
+    window.setTimeout(() => setCopiedId((current) => (current === step.id ? null : current)), 1500);
+  };
   const running = steps.filter((step) => step.status === "running");
   const failed = steps.filter((step) => step.status === "error").length;
   const toolCount = steps.filter((step) => step.kind === "tool").length;
@@ -95,10 +112,18 @@ const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolea
                 ) : null}
                 {step.output ? (
                   step.kind === "tool" ? (
-                    <pre className="aiagent-process-terminal">{step.output}</pre>
+                    <div className="aiagent-process-terminal-wrap">
+                      <button type="button" className="aiagent-process-copy" onClick={() => void copyStepOutput(step)}>
+                        {copiedId === step.id ? strings.copied : strings.copy}
+                      </button>
+                      <pre className="aiagent-process-terminal">{step.output}</pre>
+                    </div>
                   ) : (
                     <details className="aiagent-process-output">
                       <summary>{strings.viewThought}</summary>
+                      <button type="button" className="aiagent-process-copy" onClick={() => void copyStepOutput(step)}>
+                        {copiedId === step.id ? strings.copied : strings.copy}
+                      </button>
                       <pre>{step.output}</pre>
                     </details>
                   )
@@ -139,9 +164,6 @@ interface Message {
   files?: { name: string; content: string; size?: number }[];
   error?: boolean;
   errorDetails?: string;
-  // Log sistem dari worker saat Local mati di tengah request (FATAL /
-  // ekor log llama-server), ditampilkan sebagai blok System log di kotak error.
-  systemLog?: string;
   sources?: { title: string; url: string }[];
   searchImages?: string[];
   attachments?: { name: string; path: string; mimeType: string; size?: number; dataUrl?: string; url?: string }[];
@@ -290,23 +312,6 @@ const normalizeAgentSources = (value: unknown): { title: string; url: string }[]
   }).slice(0, 8);
 };
 
-interface AgentRequest {
-  kind: string;
-  question: string;
-  options: string[];
-}
-
-const normalizeAgentRequest = (value: unknown): AgentRequest | undefined => {
-  if (!value || typeof value !== "object") return undefined;
-  const req = value as Record<string, unknown>;
-  if (typeof req.kind !== "string" || typeof req.question !== "string" || !req.question.trim()) return undefined;
-  return {
-    kind: req.kind,
-    question: req.question,
-    options: Array.isArray(req.options) ? (req.options as unknown[]).filter((o): o is string => typeof o === "string") : [],
-  };
-};
-
 interface AgentStreamFinal {
   text: string;
   model?: string;
@@ -316,7 +321,6 @@ interface AgentStreamFinal {
   searchImages?: string[];
   attachments?: { name: string; path: string; mimeType: string; size?: number; dataUrl?: string; url?: string }[];
   pendingHostAction?: HostActionPreview;
-  pendingRequest?: AgentRequest;
 }
 
 const AIAGENT_POPOVER_TRIGGER_GAP = 8;
@@ -798,9 +802,6 @@ const getFullErrorText = (msg: Message): string => {
   if (msg.errorDetails) {
     text += "\n\nError Details: " + msg.errorDetails;
   }
-  if (msg.systemLog) {
-    text += "\n\nSystem log:\n" + msg.systemLog;
-  }
   return text;
 };
 
@@ -988,11 +989,6 @@ const AIAgent: React.FC = () => {
   const handleRouterAuthSave = async (apiKey: string) => {
     await saveOpenRouterCredentials(apiKey);
     window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
-    if (pendingRequest?.kind === "openrouter") {
-      setPendingRequest(null);
-      setForceRouterAuthModal(false);
-      void sendMessage("OpenRouter key saved. Please continue.", [], []);
-    }
   };
   const handleRouterAuthClose = () => navigate("/dashboard", { replace: true });
   const [messages, setMessages] = useState<Message[]>([]);
@@ -1027,17 +1023,12 @@ const AIAgent: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelSource]);
   const [isKaggleModalOpen, setIsKaggleModalOpen] = useState(false);
-  const [forceRouterAuthModal, setForceRouterAuthModal] = useState(false);
   const [isSavingKaggleCredentials, setIsSavingKaggleCredentials] = useState(false);
   const handleSaveKaggleCredentials = async (username: string, apiToken: string) => {
     setIsSavingKaggleCredentials(true);
     try {
       await saveKaggleCredentials(username, apiToken);
       await agentLocal.checkCredentials();
-      if (pendingRequest?.kind === "kaggle") {
-        setPendingRequest(null);
-        void sendMessage("Kaggle credentials saved. Please continue.", [], []);
-      }
     } finally {
       setIsSavingKaggleCredentials(false);
     }
@@ -1047,7 +1038,7 @@ const AIAgent: React.FC = () => {
     userUid: currentUserUid,
     isConfigured,
     configurationError,
-  }) || forceRouterAuthModal;
+  });
   useEffect(() => {
     if (!isModelPickerOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -1071,7 +1062,6 @@ const AIAgent: React.FC = () => {
   const [textareaOverflow, setTextareaOverflow] = useState<"hidden" | "auto">("hidden");
   const [sourcesVisibility, setSourcesVisibility] = useState<Record<string, boolean>>({});
   const [pendingHostAction, setPendingHostAction] = useState<HostActionPreview | null>(null);
-  const [pendingRequest, setPendingRequest] = useState<AgentRequest | null>(null);
   const [confirmingHostAction, setConfirmingHostAction] = useState(false);
   const [hostActionError, setHostActionError] = useState("");
   const [confirmLabelChoice, setConfirmLabelChoice] = useState<"A" | "B" | "C" | "custom">("A");
@@ -1630,7 +1620,7 @@ const AIAgent: React.FC = () => {
     modelSequence: string[],
     requestOwnerUid: string,
     requestId: number,
-  ): Promise<{ text: string; model: string; requestedModel: string; usage?: Message["usage"]; sources?: { title: string; url: string }[]; searchImages?: string[]; pendingHostAction?: HostActionPreview; pendingRequest?: AgentRequest; attachments?: Message["attachments"] }> => {
+  ): Promise<{ text: string; model: string; requestedModel: string; usage?: Message["usage"]; sources?: { title: string; url: string }[]; searchImages?: string[]; pendingHostAction?: HostActionPreview; attachments?: Message["attachments"] }> => {
     const modelName = modelSequence[modelIndex];
     if (!modelName) throw new Error("Model not found");
     const originallyRequestedModel = modelSequence[0] || modelName;
@@ -1742,7 +1732,6 @@ const AIAgent: React.FC = () => {
         searchImages: Array.isArray(result.search_images)
           ? (result.search_images as unknown[]).filter((u): u is string => typeof u === "string")
           : [],
-        pendingRequest: normalizeAgentRequest(result.pending_request),
       };
     }
     if (!response.ok) {
@@ -1839,7 +1828,6 @@ const AIAgent: React.FC = () => {
               : final.searchImages,
             attachments,
             pendingHostAction: pending && pending.confirmationRequired === true && typeof pending.actionId === "string" && pending.action ? pending : undefined,
-            pendingRequest: normalizeAgentRequest(result.pending_request),
           };
           mergeTokenStep(final.usage);
         } else if (event.type === "error") {
@@ -1865,7 +1853,7 @@ const AIAgent: React.FC = () => {
     requestOwnerUid: string,
     requestId: number,
     history: Array<{ role: string; content: string }> = [],
-  ): Promise<{ text: string; model: string; requestedModel: string; usage?: Message["usage"]; sources?: { title: string; url: string }[]; searchImages?: string[]; pendingHostAction?: HostActionPreview; pendingRequest?: AgentRequest; attachments?: Message["attachments"] }> => {
+  ): Promise<{ text: string; model: string; requestedModel: string; usage?: Message["usage"]; sources?: { title: string; url: string }[]; searchImages?: string[]; pendingHostAction?: HostActionPreview; attachments?: Message["attachments"] }> => {
     const imagePaths = images.filter((image) => image.kagglePath).map((image) => `- ${image.kagglePath} (${image.name || "image"})`);
     const imageNote = imagePaths.length
       ? `\n\nGambar juga disimpan di disk Kaggle. Untuk OCR gunakan read_document. Untuk melihat gambar gunakan inspect_image.\n${imagePaths.join("\n")}\n`
@@ -1947,7 +1935,7 @@ const AIAgent: React.FC = () => {
     }
     const text = cleanMarkdown(content);
     if (!text) throw new Error("AI Local returned an empty response");
-    return { text, model: agentLocal.modelId || "ai-local", requestedModel: agentLocal.modelId || "ai-local", attachments: localAttachments, searchImages: localSearchImages, pendingRequest: result.pendingRequest };
+    return { text, model: agentLocal.modelId || "ai-local", requestedModel: agentLocal.modelId || "ai-local", attachments: localAttachments, searchImages: localSearchImages };
   };
 
 
@@ -2040,9 +2028,6 @@ const AIAgent: React.FC = () => {
         })];
       });
       setStreamActivity(null);
-      if (response.pendingRequest) {
-        setPendingRequest(response.pendingRequest);
-      }
 
       if (aiMode === 'auto') {
         speakText(response.text, finalizedId);
@@ -2057,10 +2042,6 @@ const AIAgent: React.FC = () => {
       const friendlyError = getErrorMessage(error);
       const errorMessage = getErrorText(error);
       const errorObject = error instanceof Error ? error : new Error(errorMessage);
-      // Detail System log dari worker (dibawa hook Local lewat properti
-      // `detail` pada Error) — tampil di kotak error, bukan cuma di console.
-      const systemLog = (error as { detail?: unknown }).detail;
-      const systemLogText = typeof systemLog === "string" && systemLog.trim() ? systemLog : undefined;
       const isRetryableFailure = isRetryableAgentFailure(error, images.length > 0);
 
       const attemptedModel = modelSequence[retryModelIndex] || selectedModel;
@@ -2083,8 +2064,7 @@ const AIAgent: React.FC = () => {
         requestedModel: modelSequence[0] || attemptedModel,
         timestamp: new Date(),
         error: true,
-        errorDetails: errorObject.message,
-        systemLog: systemLogText
+        errorDetails: errorObject.message
       }]);
 
       console.error("API Error Details:", {
@@ -2108,7 +2088,7 @@ const AIAgent: React.FC = () => {
 
   const handleSendMessage = async () => {
     const requestOwnerUid = currentUserUidRef.current;
-    if (!requestOwnerUid || requestOwnerUid !== currentUserUid || messagesOwnerUid !== requestOwnerUid || pendingHostAction || pendingRequest || (!input.trim() && !uploadedImages.length && !uploadedFiles.length) || isLoading || !canSendCurrentSource) return;
+    if (!requestOwnerUid || requestOwnerUid !== currentUserUid || messagesOwnerUid !== requestOwnerUid || pendingHostAction || (!input.trim() && !uploadedImages.length && !uploadedFiles.length) || isLoading || !canSendCurrentSource) return;
     const currentInput = input, currentImages = [...uploadedImages], currentFiles = [...uploadedFiles];
     let filesToSend = currentFiles;
     let imagesToSend = currentImages;
@@ -2213,27 +2193,6 @@ const AIAgent: React.FC = () => {
     setHostActionError("");
   };
 
-  const answerPendingRequest = (text: string) => {
-    if (!pendingRequest) return;
-    setPendingRequest(null);
-    void sendMessage(text, [], []);
-  };
-
-  const dismissPendingRequest = () => {
-    if (!pendingRequest) return;
-    const kind = pendingRequest.kind;
-    setPendingRequest(null);
-    void sendMessage(kind === "confirm" ? "No." : "Not now.", [], []);
-  };
-
-  const openPendingRequestCredential = () => {
-    if (pendingRequest?.kind === "kaggle") {
-      setIsKaggleModalOpen(true);
-    } else if (pendingRequest?.kind === "openrouter") {
-      setForceRouterAuthModal(true);
-    }
-  };
-
   const copyMessage = (content: string) => navigator.clipboard.writeText(content);
 
   const clearChat = () => {
@@ -2331,13 +2290,7 @@ const AIAgent: React.FC = () => {
       <RouterAuthModal
         isOpen
         onSave={handleRouterAuthSave}
-        onClose={() => {
-          if (forceRouterAuthModal) {
-            setForceRouterAuthModal(false);
-          } else {
-            handleRouterAuthClose();
-          }
-        }}
+        onClose={handleRouterAuthClose}
         hasSavedKey={hasSavedKey}
       />
     );
@@ -2642,12 +2595,6 @@ const AIAgent: React.FC = () => {
                                 Detail: {msg.errorDetails}
                               </div>
                             )}
-                            {msg.systemLog && (
-                              <div className="aiagent-error-syslog-wrap">
-                                <div className="aiagent-error-syslog-title">System log</div>
-                                <pre className="aiagent-error-syslog">{msg.systemLog}</pre>
-                              </div>
-                            )}
                           </div>
                         </div>
                       ) : (
@@ -2818,7 +2765,7 @@ const AIAgent: React.FC = () => {
               {uploadedImages.map((img, idx) => (
                 <div key={`img-${idx}`} className="aiagent-image-preview">
                   <img src={img.preview} alt={`Preview ${idx + 1}`} />
-                  <button type="button" onClick={() => setCropTarget({ index: idx, src: img.preview, name: img.name })} className="aiagent-image-crop" aria-label={`Crop image ${idx + 1}`} title="Potong bebas"><Crop size={22} /></button>
+                  <button type="button" onClick={() => setCropTarget({ index: idx, src: img.preview, name: img.name })} className="aiagent-image-crop" aria-label={`Crop image ${idx + 1}`} title="Potong 1:1"><Crop size={22} /></button>
                   <button type="button" onClick={() => removeImage(idx)} className="aiagent-image-remove" aria-label={`Remove image ${idx + 1}`}><X size={22} /></button>
                 </div>
               ))}
@@ -2858,7 +2805,7 @@ const AIAgent: React.FC = () => {
                   </AnimatePresence>
                 </div>
               </div>
-              <button onClick={handleSendMessage} disabled={isLoading || Boolean(pendingHostAction) || Boolean(pendingRequest) || !canSendCurrentSource || (!input.trim() && !uploadedImages.length && !uploadedFiles.length)} className="aiagent-send-btn">
+              <button onClick={handleSendMessage} disabled={isLoading || Boolean(pendingHostAction) || !canSendCurrentSource || (!input.trim() && !uploadedImages.length && !uploadedFiles.length)} className="aiagent-send-btn">
                 {isLoading ? <Loader2 size={22} className="spin" /> : <ArrowUp size={22} />}
               </button>
             </div>
@@ -2892,29 +2839,6 @@ const AIAgent: React.FC = () => {
                 <div className="aiagent-host-action-actions">
                   <button type="button" className="aiagent-icon-btn" onClick={dismissPendingHostAction} disabled={confirmingHostAction}>Batalkan</button>
                   <button type="button" className="aiagent-send-btn" onClick={() => void confirmPendingHostAction()} disabled={confirmingHostAction || (confirmLabelChoice === "custom" && !customConfirmLabel.trim())}>{confirmingHostAction ? "Menjalankan…" : confirmLabelChoice === "custom" ? customConfirmLabel.trim() : ROOT_CONFIRM_LABELS[confirmLabelChoice]}</button>
-                </div>
-              </section>
-            </div>
-          )}
-          {pendingRequest && (
-            <div className="aiagent-host-action-overlay" role="dialog" aria-modal="true" aria-labelledby="agent-request-title">
-              <section className="aiagent-host-action-dialog">
-                <h3 id="agent-request-title">{pendingRequest.kind === "kaggle" ? "Connect Kaggle" : pendingRequest.kind === "openrouter" ? "Connect OpenRouter" : pendingRequest.kind === "choice" ? "Choose an option" : pendingRequest.kind === "confirm" ? "Confirmation" : "Request from the AI"}</h3>
-                <p className="aiagent-request-question">{pendingRequest.question}</p>
-                {pendingRequest.kind === "choice" && pendingRequest.options.length > 0 && (
-                  <div className="aiagent-request-options">
-                    {pendingRequest.options.map((option) => (
-                      <button key={option} type="button" className="aiagent-request-option" onClick={() => answerPendingRequest(option)}>{option}</button>
-                    ))}
-                  </div>
-                )}
-                <div className="aiagent-host-action-actions">
-                  <button type="button" className="aiagent-icon-btn" onClick={dismissPendingRequest}>{pendingRequest.kind === "confirm" ? "No" : "Not now"}</button>
-                  {pendingRequest.kind === "confirm" ? (
-                    <button type="button" className="aiagent-send-btn" onClick={() => answerPendingRequest("Yes.")}>Yes</button>
-                  ) : (pendingRequest.kind === "kaggle" || pendingRequest.kind === "openrouter") ? (
-                    <button type="button" className="aiagent-send-btn" onClick={openPendingRequestCredential}>{pendingRequest.kind === "kaggle" ? "Connect Kaggle" : "Connect OpenRouter"}</button>
-                  ) : null}
                 </div>
               </section>
             </div>

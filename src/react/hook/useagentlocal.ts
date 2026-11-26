@@ -434,7 +434,6 @@ export const useAgentLocal = () => {
       let finalContent = "";
       let finalAttachments: ReturnType<typeof normalizeLocalAttachments> | undefined;
       let finalSearchImages: string[] | undefined;
-      let finalPendingRequest: { kind: string; question: string; options: string[] } | undefined;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -461,33 +460,13 @@ export const useAgentLocal = () => {
             finalSearchImages = Array.isArray(result.search_images)
               ? (result.search_images as unknown[]).filter((u): u is string => typeof u === "string")
               : undefined;
-            const rawReq = result.pending_request;
-            if (rawReq && typeof rawReq === "object") {
-              const req = rawReq as Record<string, unknown>;
-              if (typeof req.kind === "string" && typeof req.question === "string" && req.question.trim()) {
-                finalPendingRequest = {
-                  kind: req.kind,
-                  question: req.question,
-                  options: Array.isArray(req.options)
-                    ? (req.options as unknown[]).filter((o): o is string => typeof o === "string")
-                    : [],
-                };
-              }
-            }
           } else if (event.type === "error") {
-            const err = new Error(typeof event.message === "string" && event.message ? event.message : "AI Local request failed");
-            // Penyebab dari worker (System log) ikut dibawa supaya kotak error
-            // di chat bisa menampilkannya, bukan cuma pesan generik.
-            const detail = (event as { detail?: unknown }).detail;
-            if (typeof detail === "string" && detail.trim()) {
-              (err as Error & { detail?: string }).detail = detail;
-            }
-            throw err;
+            throw new Error(typeof event.message === "string" && event.message ? event.message : "AI Local request failed");
           }
         }
       }
       if (!finalContent) throw new Error("AI Local returned an empty response");
-      return { content: finalContent as string, attachments: finalAttachments, searchImages: finalSearchImages, pendingRequest: finalPendingRequest };
+      return { content: finalContent as string, attachments: finalAttachments, searchImages: finalSearchImages };
     } catch (err) {
       void refreshStatus();
       throw err;

@@ -599,6 +599,33 @@
   word-break: break-all;
 }
 
+.aiagent-error-syslog-wrap {
+  margin-top: 10px;
+}
+
+.aiagent-error-syslog-title {
+  font-size: var(--global-font-size-0-7rem);
+  font-weight: 600;
+  color: var(--global-color-text-secondary);
+  margin-bottom: 4px;
+}
+
+.aiagent-error-syslog {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 0;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
 .aiagent-user-bubble {
   background: var(--global-color-accent);
   color: var(--global-color-on-accent);

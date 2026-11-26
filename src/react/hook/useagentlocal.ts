@@ -475,7 +475,14 @@ export const useAgentLocal = () => {
               }
             }
           } else if (event.type === "error") {
-            throw new Error(typeof event.message === "string" && event.message ? event.message : "AI Local request failed");
+            const err = new Error(typeof event.message === "string" && event.message ? event.message : "AI Local request failed");
+            // Penyebab dari worker (System log) ikut dibawa supaya kotak error
+            // di chat bisa menampilkannya, bukan cuma pesan generik.
+            const detail = (event as { detail?: unknown }).detail;
+            if (typeof detail === "string" && detail.trim()) {
+              (err as Error & { detail?: string }).detail = detail;
+            }
+            throw err;
           }
         }
       }

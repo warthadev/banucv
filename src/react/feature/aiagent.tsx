@@ -139,6 +139,9 @@ interface Message {
   files?: { name: string; content: string; size?: number }[];
   error?: boolean;
   errorDetails?: string;
+  // Log sistem dari worker saat Local mati di tengah request (FATAL /
+  // ekor log llama-server), ditampilkan sebagai blok System log di kotak error.
+  systemLog?: string;
   sources?: { title: string; url: string }[];
   searchImages?: string[];
   attachments?: { name: string; path: string; mimeType: string; size?: number; dataUrl?: string; url?: string }[];
@@ -794,6 +797,9 @@ const getFullErrorText = (msg: Message): string => {
   let text = msg.content || "";
   if (msg.errorDetails) {
     text += "\n\nError Details: " + msg.errorDetails;
+  }
+  if (msg.systemLog) {
+    text += "\n\nSystem log:\n" + msg.systemLog;
   }
   return text;
 };
@@ -2051,6 +2057,10 @@ const AIAgent: React.FC = () => {
       const friendlyError = getErrorMessage(error);
       const errorMessage = getErrorText(error);
       const errorObject = error instanceof Error ? error : new Error(errorMessage);
+      // Detail System log dari worker (dibawa hook Local lewat properti
+      // `detail` pada Error) — tampil di kotak error, bukan cuma di console.
+      const systemLog = (error as { detail?: unknown }).detail;
+      const systemLogText = typeof systemLog === "string" && systemLog.trim() ? systemLog : undefined;
       const isRetryableFailure = isRetryableAgentFailure(error, images.length > 0);
 
       const attemptedModel = modelSequence[retryModelIndex] || selectedModel;
@@ -2073,7 +2083,8 @@ const AIAgent: React.FC = () => {
         requestedModel: modelSequence[0] || attemptedModel,
         timestamp: new Date(),
         error: true,
-        errorDetails: errorObject.message
+        errorDetails: errorObject.message,
+        systemLog: systemLogText
       }]);
 
       console.error("API Error Details:", {
@@ -2629,6 +2640,12 @@ const AIAgent: React.FC = () => {
                             {msg.errorDetails && (
                               <div className="aiagent-error-details">
                                 Detail: {msg.errorDetails}
+                              </div>
+                            )}
+                            {msg.systemLog && (
+                              <div className="aiagent-error-syslog-wrap">
+                                <div className="aiagent-error-syslog-title">System log</div>
+                                <pre className="aiagent-error-syslog">{msg.systemLog}</pre>
                               </div>
                             )}
                           </div>

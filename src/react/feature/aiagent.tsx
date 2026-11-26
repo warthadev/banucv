@@ -557,6 +557,9 @@ const MarkdownComponents: Components = {
     void node;
     const match = /language-(\w+)/.exec(className || "");
     const code = String(children).replace(/\n$/, "");
+    // Blok kode yang isinya cuma "undefined"/"null" (sampah model Local) jangan
+    // dirender sama sekali — berlaku untuk blok, bukan `kode` inline.
+    if (match && ["undefined", "null", "none", ""].includes(code.trim().toLowerCase())) return null;
     // Safety net kedua: blok kode yang lolos dari splitMarkdown (mis. pagar
     // tidak tertutup saat streaming) tapi isinya JSON Ui tetap jadi UiBlock.
     if (isUiJson(code)) return <UiBlock raw={code} />;
@@ -855,7 +858,10 @@ const splitTextAndTables = (text: string) => {
 // sendiri, sisanya tetap dipecah jadi teks/tabel seperti biasa.
 const splitTextParts = (text: string) => {
   const parts: { type: 'text' | 'code' | 'table'; content: string; language?: string }[] = [];
-  let rest = text;
+  // Sisa format tool-call model Local (</parameter> </function> </tool_call>)
+  // yang lolos ke teks jawaban — buang, supaya tidak jadi bubble sendiri.
+  // Ini juga membersihkan chat lama yang tersimpan sebelum worker dibersihkan.
+  let rest = text.replace(/<\/?(?:tool_call|function|parameter)(?:\s[^>]*|=[^>]*)?>/gi, "");
   while (rest) {
     const found = extractUiJson(rest);
     if (!found) {
@@ -895,7 +901,14 @@ const splitMarkdown = (content: string) => {
     parts.push(...splitTextParts(textContent));
   }
 
-  return parts;
+  // Buang sampah render: blok kode yang isinya cuma "undefined"/"null"
+  // (model Local selipkan ini di tiap jawaban) dan bagian teks kosong sisa
+  // pembersihan tag — keduanya sebelumnya jadi blok hitam / bubble kosong.
+  return parts.filter((p) => {
+    const c = p.content.trim();
+    if (p.type === 'code') return !["undefined", "null", "none", ""].includes(c.toLowerCase());
+    return c !== "";
+  });
 };
 
 const AIAgent: React.FC = () => {

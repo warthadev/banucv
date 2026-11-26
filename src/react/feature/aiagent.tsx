@@ -1024,6 +1024,20 @@ const AIAgent: React.FC = () => {
       });
     }
   };
+  // Jalankan update stream yang masih tertunda sekarang juga (batalkan rAF),
+  // supaya pesan streaming sudah ada sebelum finalize. Tanpa ini, jawaban
+  // yang datang dalam satu chunk (token + final sekaligus) bisa jadi double:
+  // finalize menambahkan jawaban final, lalu rAF yang tertunda menambahkan
+  // pesan streaming kedua dengan isi yang sama.
+  const flushStreamUpdate = () => {
+    if (streamRafRef.current !== null) {
+      cancelAnimationFrame(streamRafRef.current);
+      streamRafRef.current = null;
+    }
+    const fn = streamPendingRef.current;
+    streamPendingRef.current = null;
+    fn?.();
+  };
   const [processOpen, setProcessOpen] = useState<Record<string, boolean>>({});
 
   // Tambah / perbarui langkah pada pesan proses milik request yang sedang berjalan (dibuat saat langkah pertama datang).
@@ -1792,14 +1806,22 @@ const AIAgent: React.FC = () => {
         setHostActionError("");
         setConfirmLabelChoice("A");
         setCustomConfirmLabel("");
+        flushStreamUpdate();
         setMessages(prev => prev.filter(m => m.id !== STREAM_MESSAGE_ID));
         return;
       }
       const finalizeMessage = (msg: Message): Message => ({ ...msg, content: response.text, model: response.model, requestedModel: response.requestedModel, usage: response.usage, sources: response.sources && response.sources.length > 0 ? response.sources : undefined, attachments: response.attachments && response.attachments.length > 0 ? response.attachments : undefined });
+      // Pastikan pesan streaming sudah terpasang sebelum finalize, lalu ganti
+      // pesan itu di posisinya (bukan hanya kalau dia pesan terakhir) — kalau
+      // tidak, jawaban final ditambahkan sebagai pesan baru dan update stream
+      // yang tertunda menambahkan pesan streaming kedua.
+      flushStreamUpdate();
       setMessages(prev => {
-        const last = prev[prev.length - 1];
-        if (last && last.id === STREAM_MESSAGE_ID && last.role === "bot") {
-          return [...prev.slice(0, -1), finalizeMessage({ ...last, id: (Date.now() + 1).toString() })];
+        const streamIndex = prev.findIndex(m => m.id === STREAM_MESSAGE_ID && m.role === "bot");
+        if (streamIndex >= 0) {
+          const next = prev.slice();
+          next[streamIndex] = finalizeMessage({ ...prev[streamIndex], id: (Date.now() + 1).toString() });
+          return next;
         }
         return [...prev, finalizeMessage({
           id: (Date.now() + 1).toString(),
@@ -1833,6 +1855,7 @@ const AIAgent: React.FC = () => {
       }
 
       finishProcess("error");
+      flushStreamUpdate();
       setMessages(prev => prev.filter(m => !(m.id === STREAM_MESSAGE_ID && !m.content.trim())) );
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),

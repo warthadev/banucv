@@ -1288,11 +1288,11 @@
   transition: all 0.15s ease;
 }
 
-/* Di composer, kirim adalah tombol "play" bundar 48px. */
+/* Di composer, kirim adalah tombol bundar 40px — sama besar dengan tombol +. */
 .aiagent-input-buttons .aiagent-send-btn {
   border-radius: 50%;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   justify-content: center;
 }
@@ -1658,7 +1658,6 @@
   .aiagent-player-avatar { width: 36px; height: 36px; }
   .aiagent-player-clear { width: 36px; height: 36px; }
   .aiagent-player-home { width: 36px; height: 36px; }
-  .aiagent-input-buttons .aiagent-send-btn { width: 44px; height: 44px; }
   .aiagent-input-buttons { gap: 5px; }
   .aiagent-model-picker-popover { width: min(360px, calc(100vw - 60px)); max-height: min(68vh, 520px); }
   .aiagent-welcome h3 { font-size: var(--global-font-size-1-25rem); }

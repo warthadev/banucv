@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Send, Bot, Trash2, Volume2, VolumeX, Check,
+  ArrowUp, Bot, Trash2, Volume2, VolumeX, Check,
   Image as ImageIcon, X, Loader2, Sparkles, RotateCw, FileText, Copy, Download, Folder, Home, MapPin, Plus, Link, ChevronDown, Wrench, Brain, Crop,
   FileSpreadsheet, FileCode, FileArchive, FileAudio, FileVideo, Presentation, FileImage
 } from "lucide-react";
@@ -1589,7 +1589,7 @@ const AIAgent: React.FC = () => {
           web_search: false,
           search_query: "",
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta",
-          context: detectUserContext(),
+          context: detectUserContext(userDisplayName, userLocation),
           history,
           images: images.map((image) => ({ mime_type: image.mimeType, data: image.data })),
         }),
@@ -1614,7 +1614,7 @@ const AIAgent: React.FC = () => {
             web_search: false,
             search_query: "",
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta",
-            context: detectUserContext(),
+            context: detectUserContext(userDisplayName, userLocation),
             history,
             images: images.map((image) => ({ mime_type: image.mimeType, data: image.data })),
           }),
@@ -1823,6 +1823,8 @@ const AIAgent: React.FC = () => {
           applyStreamText();
         },
         history,
+        userDisplayName,
+        userLocation,
       );
       content = result.content;
       localAttachments = result.attachments && result.attachments.length > 0 ? result.attachments : undefined;
@@ -2686,7 +2688,7 @@ const AIAgent: React.FC = () => {
                 </div>
               </div>
               <button onClick={handleSendMessage} disabled={isLoading || Boolean(pendingHostAction) || !canSendCurrentSource || (!input.trim() && !uploadedImages.length && !uploadedFiles.length)} className="aiagent-send-btn">
-                {isLoading ? <Loader2 size={24} className="spin" /> : <Send size={24} />}
+                {isLoading ? <Loader2 size={22} className="spin" /> : <ArrowUp size={22} />}
               </button>
             </div>
           </div>

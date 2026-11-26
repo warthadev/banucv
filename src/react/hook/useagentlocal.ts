@@ -414,11 +414,13 @@ export const useAgentLocal = () => {
     images: { mimeType: string; data: string }[],
     onToken: (delta: string, segment: number) => void,
     history: Array<{ role: string; content: string }> = [],
+    userName = "",
+    userLocation = "",
   ) => {
     try {
       const response = await authedFetchRaw("/agent/local/chat-stream", {
         method: "POST",
-        body: JSON.stringify({ prompt, images: images.map((img) => ({ mime_type: img.mimeType, data: img.data })), language: detectAgentLanguage(), context: detectUserContext(), history }),
+        body: JSON.stringify({ prompt, images: images.map((img) => ({ mime_type: img.mimeType, data: img.data })), language: detectAgentLanguage(), context: detectUserContext(userName, userLocation), history }),
       });
       if (!response.ok) {
         const data = await response.json().catch(() => null);

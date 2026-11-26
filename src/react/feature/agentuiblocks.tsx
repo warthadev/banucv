@@ -37,12 +37,22 @@ const ICONS: Record<string, LucideIcon> = {
 const iconFor = (name: unknown, fallback: LucideIcon): LucideIcon =>
   (typeof name === "string" && ICONS[name.toLowerCase()]) || fallback;
 
+// Teks di dalam blok UI adalah teks polos, bukan markdown: model kadang
+// menulis **tebal**, __garis bawah__, `kode`, atau [tautan](url) di dalam
+// JSON — tanpa strip ini bintang-bintangnya ikut tampil apa adanya.
+const stripUiMarkdown = (s: string): string =>
+  s
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+
 const str = (v: unknown, fallback = ""): string =>
-  typeof v === "string" ? v.slice(0, MAX_TEXT) : fallback;
+  typeof v === "string" ? stripUiMarkdown(v.slice(0, MAX_TEXT)) : fallback;
 
 const strArr = (v: unknown, max = MAX_ITEMS): string[] =>
   Array.isArray(v)
-    ? v.filter((x): x is string => typeof x === "string").slice(0, max).map((s) => s.slice(0, MAX_TEXT))
+    ? v.filter((x): x is string => typeof x === "string").slice(0, max).map((s) => stripUiMarkdown(s.slice(0, MAX_TEXT)))
     : [];
 
 const numArr = (v: unknown, max = MAX_ITEMS): number[] =>
@@ -57,16 +67,74 @@ const objArr = (v: unknown, max = MAX_ITEMS): Record<string, unknown>[] =>
 
 type UiData = { type: string; [key: string]: unknown };
 
+// Tipe blok UI yang dikenal. Dipakai sebagai safety net di aiagent.tsx:
+// JSON apa pun (pagar ```json, tanpa label, sebaris, bahkan tanpa pagar)
+// yang isinya salah satu tipe ini langsung di-render sebagai UiBlock,
+// bukan sebagai code block hitam.
+export const UI_TYPES = new Set([
+  "card", "steps", "flow", "timeline", "compare", "chart", "checklist", "stats",
+]);
+
+const tryParseUi = (text: string): UiData | null => {
+  const tryOnce = (candidate: string): UiData | null => {
+    try {
+      const data: unknown = JSON.parse(candidate);
+      if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+      if (typeof (data as UiData).type !== "string") return null;
+      if (!UI_TYPES.has((data as UiData).type.toLowerCase())) return null;
+      return data as UiData;
+    } catch {
+      return null;
+    }
+  };
+  const trimmed = text.trim();
+  return tryOnce(trimmed)
+    // Model kadang menyisakan koma di akhir sebelum } atau ] — JSON strict
+    // gagal, tapi isinya tetap bisa dibaca setelah koma itu dibuang.
+    ?? tryOnce(trimmed.replace(/,\s*([}\]])/g, "$1"));
+};
+
 const parseUi = (raw: string): UiData | null => {
   if (!raw || raw.length > MAX_RAW) return null;
-  try {
-    const data: unknown = JSON.parse(raw);
-    if (!data || typeof data !== "object" || Array.isArray(data)) return null;
-    if (typeof (data as UiData).type !== "string") return null;
-    return data as UiData;
-  } catch {
-    return null;
+  return tryParseUi(raw);
+};
+
+export const isUiJson = (raw: string): boolean =>
+  !!raw && raw.trim().length <= MAX_RAW && tryParseUi(raw) !== null;
+
+// Cari SATU objek JSON Ui di dalam teks bebas (mis. model mengirim JSON
+// tanpa pagar sama sekali). Scan diseimbangkan dengan kurung kurawal dan
+// menghormati string ber-escape, supaya { di dalam teks biasa tidak salah
+// potong. Kembalikan posisi + JSON-nya, atau null kalau tidak ada.
+export const extractUiJson = (
+  text: string,
+): { json: string; start: number; end: number } | null => {
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] !== "{") continue;
+    let depth = 0;
+    let inStr = false;
+    let esc = false;
+    for (let j = i; j < text.length; j++) {
+      const c = text[j];
+      if (inStr) {
+        if (esc) esc = false;
+        else if (c === "\\") esc = true;
+        else if (c === '"') inStr = false;
+      } else if (c === '"') {
+        inStr = true;
+      } else if (c === "{") {
+        depth++;
+      } else if (c === "}") {
+        depth--;
+        if (depth === 0) {
+          const candidate = text.slice(i, j + 1);
+          if (tryParseUi(candidate)) return { json: candidate, start: i, end: j + 1 };
+          break;
+        }
+      }
+    }
   }
+  return null;
 };
 
 const UiTitle = ({ title }: { title: string }) =>

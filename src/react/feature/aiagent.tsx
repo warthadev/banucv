@@ -27,7 +27,7 @@ import { getAuth, getDb } from "@config/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { confirmHostAction, type HostActionPreview } from "@config/agentworkspace";
-import { UiBlock } from "./agentuiblocks";
+import { UiBlock, isUiJson, extractUiJson } from "./agentuiblocks";
 import { ImageCropper, type CroppedImage } from "./agentimagecropper";
 import { RouterAuthModal } from "./routerauthmodal";
 
@@ -557,6 +557,9 @@ const MarkdownComponents: Components = {
     void node;
     const match = /language-(\w+)/.exec(className || "");
     const code = String(children).replace(/\n$/, "");
+    // Safety net kedua: blok kode yang lolos dari splitMarkdown (mis. pagar
+    // tidak tertutup saat streaming) tapi isinya JSON Ui tetap jadi UiBlock.
+    if (isUiJson(code)) return <UiBlock raw={code} />;
     return className && match ? <CodeBlock language={match[1]} code={code} /> : <code className={className} {...props}>{children}</code>;
   },
   a({ href, children }) { return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>; },
@@ -847,17 +850,37 @@ const splitTextAndTables = (text: string) => {
   return parts;
 };
 
+// Teks di luar pagar kode: pisahkan JSON Ui telanjang (model kadang
+// mengirim {"type":"compare",...} tanpa pagar sama sekali) jadi bagiannya
+// sendiri, sisanya tetap dipecah jadi teks/tabel seperti biasa.
+const splitTextParts = (text: string) => {
+  const parts: { type: 'text' | 'code' | 'table'; content: string; language?: string }[] = [];
+  let rest = text;
+  while (rest) {
+    const found = extractUiJson(rest);
+    if (!found) {
+      parts.push(...splitTextAndTables(rest));
+      break;
+    }
+    if (found.start > 0) parts.push(...splitTextAndTables(rest.slice(0, found.start)));
+    parts.push({ type: 'code', language: 'ui', content: found.json });
+    rest = rest.slice(found.end);
+  }
+  return parts;
+};
+
 const splitMarkdown = (content: string) => {
   const parts: { type: 'text' | 'code' | 'table'; content: string; language?: string }[] = [];
-  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+  // Pagar boleh sebaris isinya: ```ui {"type":...}``` dulu gagal karena
+  // regex lama mewajibkan newline persis setelah label bahasa.
+  const codeBlockRegex = /```(\w+)?[ \t]*\r?\n?([\s\S]*?)```/g;
   let lastIndex = 0;
   let match;
 
   while ((match = codeBlockRegex.exec(content)) !== null) {
     if (match.index > lastIndex) {
       const textContent = content.substring(lastIndex, match.index);
-      const tableParts = splitTextAndTables(textContent);
-      parts.push(...tableParts);
+      parts.push(...splitTextParts(textContent));
     }
     parts.push({
       type: 'code',
@@ -869,8 +892,7 @@ const splitMarkdown = (content: string) => {
 
   if (lastIndex < content.length) {
     const textContent = content.substring(lastIndex);
-    const tableParts = splitTextAndTables(textContent);
-    parts.push(...tableParts);
+    parts.push(...splitTextParts(textContent));
   }
 
   return parts;
@@ -2545,7 +2567,10 @@ const AIAgent: React.FC = () => {
                                   if (part.type === 'code') {
                                     // Blok ```ui berisi JSON struktur -> render sebagai komponen
                                     // React (kartu, alur, grafik, dsb), bukan sebagai kode.
-                                    if ((part.language || '').toLowerCase() === 'ui') {
+                                    // Safety net: bahasa pagar apa pun (json, kosong, sebaris)
+                                    // yang isinya JSON Ui valid ikut jadi UiBlock — model
+                                    // Local tidak selalu menulis label `ui` dengan benar.
+                                    if ((part.language || '').toLowerCase() === 'ui' || isUiJson(part.content)) {
                                       return <UiBlock key={index} raw={part.content} />;
                                     }
                                     return (

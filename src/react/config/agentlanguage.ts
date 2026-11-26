@@ -133,6 +133,7 @@ export const AGENT_TOOL_LABELS: Record<string, Record<AgentLanguage, string>> = 
   write_file: { id: "Menulis file…", en: "Writing file…" },
   run_bash: { id: "Menjalankan perintah…", en: "Running command…" },
   web_search: { id: "Mencari di web…", en: "Searching the web…" },
+  web_image_search: { id: "Mencari gambar…", en: "Searching images…" },
   web_fetch: { id: "Mengambil halaman web…", en: "Fetching web page…" },
   inspect_image: { id: "Menganalisis gambar…", en: "Analyzing image…" },
   read_document: { id: "Membaca dokumen…", en: "Reading document…" },

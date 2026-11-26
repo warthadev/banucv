@@ -2155,6 +2155,11 @@
 .aiagent-message.user .aiagent-message-bubble .file-chip-meta { color: var(--global-color-on-accent); opacity: 0.75; }
 .aiagent-message.user .aiagent-message-bubble .file-chip-icon { background: transparent; color: var(--global-color-on-accent); }
 .aiagent-message.user .aiagent-message-bubble .file-chip-action { color: var(--global-color-on-accent); opacity: 0.75; }
+/* Kartu file dari AI dibuat rata seperti kartu file user: tanpa tile abu-abu,
+   tanpa garis border, tanpa tile hitam di ikon — ikon + nama + ukuran mengikuti
+   warna bubble (gelap di bubble bot yang putih). Ikon download tetap ada. */
+.aiagent-message.bot .aiagent-message-bubble .file-chip { background: transparent; border: none; }
+.aiagent-message.bot .aiagent-message-bubble .file-chip-icon { background: transparent; color: var(--global-color-text); }
 .file-chip { max-width: 100%; overflow-wrap: anywhere; border-radius: 0; }
 
 /* Ikon di tombol atas foto/file harus putih — paksa di SVG-nya langsung,

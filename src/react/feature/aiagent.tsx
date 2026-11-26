@@ -293,6 +293,7 @@ interface AgentStreamFinal {
   requestedModel: string;
   usage?: Message["usage"];
   sources?: { title: string; url: string }[];
+  searchImages?: string[];
   attachments?: { name: string; path: string; mimeType: string; size?: number; dataUrl?: string; url?: string }[];
   pendingHostAction?: HostActionPreview;
 }
@@ -1639,7 +1640,9 @@ const AIAgent: React.FC = () => {
         requestedModel: originallyRequestedModel,
         usage: fallbackUsage,
         sources: normalizeAgentSources(result.sources),
-        searchImages: [],
+        searchImages: Array.isArray(result.search_images)
+          ? (result.search_images as unknown[]).filter((u): u is string => typeof u === "string")
+          : [],
       };
     }
     if (!response.ok) {
@@ -1731,6 +1734,9 @@ const AIAgent: React.FC = () => {
             model: typeof result.model === "string" && result.model ? result.model : final.model,
             usage: normalizeTokenUsage(result.usage),
             sources: normalizeAgentSources(result.sources),
+            searchImages: Array.isArray(result.search_images)
+              ? (result.search_images as unknown[]).filter((u): u is string => typeof u === "string")
+              : final.searchImages,
             attachments,
             pendingHostAction: pending && pending.confirmationRequired === true && typeof pending.actionId === "string" && pending.action ? pending : undefined,
           };
@@ -1748,7 +1754,7 @@ const AIAgent: React.FC = () => {
       return { text: "", model: final.model || modelName, requestedModel: originallyRequestedModel, usage: final.usage, sources: final.sources, searchImages: [], pendingHostAction: final.pendingHostAction };
     }
     if (!final.text.trim()) throw new Error("AI Agent returned an empty response");
-    return { text: final.text, model: final.model || modelName, requestedModel: originallyRequestedModel, usage: final.usage, sources: final.sources, searchImages: [], attachments: final.attachments };
+    return { text: final.text, model: final.model || modelName, requestedModel: originallyRequestedModel, usage: final.usage, sources: final.sources, searchImages: final.searchImages ?? [], attachments: final.attachments };
   };
 
   const callLocalAI = async (
@@ -1803,6 +1809,7 @@ const AIAgent: React.FC = () => {
     const activityTimer = window.setInterval(() => { void syncProcess(); }, 1000);
     let content: string;
     let localAttachments: Message["attachments"] = undefined;
+    let localSearchImages: string[] | undefined;
     // Teks jawaban mengalir live (SSE): segmen baru (sapaan -> jawaban akhir)
     // mengganti isi bubble streaming; event final menggantinya dengan jawaban lengkap.
     let streamText = "";
@@ -1828,6 +1835,7 @@ const AIAgent: React.FC = () => {
       );
       content = result.content;
       localAttachments = result.attachments && result.attachments.length > 0 ? result.attachments : undefined;
+      localSearchImages = result.searchImages && result.searchImages.length > 0 ? result.searchImages : undefined;
     } finally {
       window.clearInterval(activityTimer);
       syncing = false;
@@ -1838,7 +1846,7 @@ const AIAgent: React.FC = () => {
     }
     const text = cleanMarkdown(content);
     if (!text) throw new Error("AI Local returned an empty response");
-    return { text, model: agentLocal.modelId || "ai-local", requestedModel: agentLocal.modelId || "ai-local", attachments: localAttachments };
+    return { text, model: agentLocal.modelId || "ai-local", requestedModel: agentLocal.modelId || "ai-local", attachments: localAttachments, searchImages: localSearchImages };
   };
 
 
@@ -1902,7 +1910,7 @@ const AIAgent: React.FC = () => {
         setMessages(prev => prev.filter(m => m.id !== streamIdRef.current));
         return;
       }
-      const finalizeMessage = (msg: Message): Message => ({ ...msg, content: response.text, model: response.model, requestedModel: response.requestedModel, usage: response.usage, sources: response.sources && response.sources.length > 0 ? response.sources : undefined, attachments: response.attachments && response.attachments.length > 0 ? response.attachments : undefined });
+      const finalizeMessage = (msg: Message): Message => ({ ...msg, content: response.text, model: response.model, requestedModel: response.requestedModel, usage: response.usage, sources: response.sources && response.sources.length > 0 ? response.sources : undefined, searchImages: response.searchImages && response.searchImages.length > 0 ? response.searchImages : undefined, attachments: response.attachments && response.attachments.length > 0 ? response.attachments : undefined });
       // Finalize di tempat: bubble streaming yang sama diperbarui (id tetap,
       // streaming: false) supaya bubble tidak hilang lalu muncul lagi sebagai
       // pesan lain. Id pesan streaming unik per request, jadi tidak bentrok
@@ -2571,7 +2579,7 @@ const AIAgent: React.FC = () => {
                     {msg.role === "bot" && msg.searchImages && msg.searchImages.length > 0 && (
                       <div className="aiagent-search-images">
                         {msg.searchImages.map((url, idx) => (
-                          <img key={idx} src={url} alt={`Search result ${idx+1}`} className="aiagent-search-image" />
+                          <img key={idx} src={url} alt={`Search result ${idx+1}`} className="aiagent-search-image" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                         ))}
                       </div>
                     )}

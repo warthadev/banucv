@@ -433,6 +433,7 @@ export const useAgentLocal = () => {
       let buffer = "";
       let finalContent = "";
       let finalAttachments: ReturnType<typeof normalizeLocalAttachments> | undefined;
+      let finalSearchImages: string[] | undefined;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -456,13 +457,16 @@ export const useAgentLocal = () => {
             const result = event.result as Record<string, unknown>;
             finalContent = typeof result.content === "string" ? result.content : "";
             finalAttachments = normalizeLocalAttachments(result.attachments);
+            finalSearchImages = Array.isArray(result.search_images)
+              ? (result.search_images as unknown[]).filter((u): u is string => typeof u === "string")
+              : undefined;
           } else if (event.type === "error") {
             throw new Error(typeof event.message === "string" && event.message ? event.message : "AI Local request failed");
           }
         }
       }
       if (!finalContent) throw new Error("AI Local returned an empty response");
-      return { content: finalContent as string, attachments: finalAttachments };
+      return { content: finalContent as string, attachments: finalAttachments, searchImages: finalSearchImages };
     } catch (err) {
       void refreshStatus();
       throw err;

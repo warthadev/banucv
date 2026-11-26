@@ -184,7 +184,6 @@ export const useAgentLocal = () => {
   const [checks, setChecks] = useState<AgentLocalCheck[]>([]);
   const [kernelExists, setKernelExists] = useState<boolean | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [activity, setActivity] = useState<string | null>(null);
   // Worker TIDAK pernah dinyalakan otomatis (F5 / buka tab / kembali ke tab hanya MEMERIKSA status).
   // Hanya klik tombol Run / Restart yang boleh menyentuh Kaggle.
   const pollRef = useRef<number | null>(null);
@@ -243,8 +242,6 @@ export const useAgentLocal = () => {
         setStatusTracked("ready");
         setModelId(data.model_id);
         setError(null);
-        if (typeof data.activity === "string" && data.activity.trim()) setActivity(data.activity.trim());
-        else setActivity(null);
         // Keep watching: if Kaggle sleeps or stops, the UI must notice and offer "Restart Kaggle".
         pollRef.current = window.setTimeout(() => { void refreshStatus(); }, READY_WATCH_MS);
         return;
@@ -409,23 +406,6 @@ export const useAgentLocal = () => {
     }
   }, [refreshStatus, stopPolling, setStatusTracked]);
 
-  const sendLocalChat = useCallback(async (prompt: string, images: { mimeType: string; data: string }[], history: Array<{ role: string; content: string }> = []) => {
-    try {
-      const data = await authedFetch("/agent/local/chat", {
-        method: "POST",
-        body: JSON.stringify({ prompt, images: images.map((img) => ({ mime_type: img.mimeType, data: img.data })), language: detectAgentLanguage(), context: detectUserContext(), history }),
-      });
-      const content = data?.data?.result?.content;
-      if (typeof content !== "string" || !content) throw new Error("AI Local returned an empty response");
-      const attachments = normalizeLocalAttachments(data?.data?.result?.attachments);
-      return { content: content as string, attachments };
-    } catch (err) {
-      // 409/503/504 biasanya berarti worker Kaggle sudah mati -> perbarui UI supaya muncul tombol "Jalankan ulang".
-      void refreshStatus();
-      throw err;
-    }
-  }, [refreshStatus]);
-
   // Chat live stream: token mengalir lewat SSE selagi model menulis, bukan
   // menunggu jawaban selesai. onToken(delta, segment) dipanggil per potongan;
   // segmen baru = panggilan model baru (sapaan -> jawaban akhir).
@@ -530,20 +510,6 @@ export const useAgentLocal = () => {
     }
   }, [refreshStatus]);
 
-  const pollActivity = useCallback(async () => {
-    try {
-      const data = (await authedFetch("/agent/local/status")) as AgentLocalStatusResponse;
-      if (typeof data.activity === "string" && data.activity.trim()) {
-        setActivity(data.activity.trim());
-        return data.activity.trim();
-      }
-      setActivity(null);
-      return null;
-    } catch {
-      return null;
-    }
-  }, []);
-
   // Log langkah proses (berpikir / tool) yang sedang berjalan. `since` = seq terakhir yang sudah diterima.
   const pollProcess = useCallback(async (since: number) => {
     try {
@@ -560,8 +526,8 @@ export const useAgentLocal = () => {
   }, []);
 
   return {
-    status, modelId, error, kaggleState, steps, checks, kernelExists, elapsedSeconds, activity,
-    checkCredentials, run, stop, refreshStatus, pollActivity, pollProcess, sendLocalChat, sendLocalChatStream, cancelLocalChat, uploadLocalFile,
+    status, modelId, error, kaggleState, steps, checks, kernelExists, elapsedSeconds,
+    checkCredentials, run, stop, refreshStatus, pollProcess, sendLocalChatStream, cancelLocalChat, uploadLocalFile,
   };
 };
 

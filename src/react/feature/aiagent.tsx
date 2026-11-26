@@ -1463,6 +1463,19 @@ const AIAgent: React.FC = () => {
       searchImages: [] as string[],
     });
     const isAbortError = (err: unknown) => err instanceof DOMException && err.name === "AbortError";
+    // Langkah info "Token dipakai: …" di blok Proses — rincian input/output/total
+    // seperti baris Usage di bawah pesan (tampil tiap giliran, bukan cuma saat pakai tool).
+    const mergeTokenStep = (usage: Message["usage"]) => {
+      if (!usage || (usage.inputTokens === undefined && usage.outputTokens === undefined && usage.totalTokens === undefined)) return;
+      const locale = detectAgentLanguage() === "id" ? "id-ID" : "en-US";
+      const fmt = (n: number) => n.toLocaleString(locale);
+      const hasBreakdown = usage.inputTokens !== undefined || usage.outputTokens !== undefined;
+      const parts: string[] = [];
+      if (usage.inputTokens !== undefined) parts.push(`${fmt(usage.inputTokens)} input`);
+      if (usage.outputTokens !== undefined) parts.push(`${fmt(usage.outputTokens)} output`);
+      if (usage.totalTokens !== undefined) parts.push(hasBreakdown ? `${fmt(usage.totalTokens)} total` : fmt(usage.totalTokens));
+      mergeProcessSteps([{ id: "tokens", kind: "info", title: `${cloudStrings.tokensUsed}: ${parts.join(" · ")}`, status: "done" }]);
+    };
     const priorMessages = currentMessages.filter(m => !m.error && !m.process && !(isRetry && m.role === "user" && m.content === originalUserMessage));
     const history = buildModelScopedHistory(priorMessages, modelName);
     const textContext = messageText + buildContextFromFiles(files);
@@ -1535,11 +1548,13 @@ const AIAgent: React.FC = () => {
       if (currentUserUidRef.current !== requestOwnerUid || activeRequestIdRef.current !== requestId) {
         throw new Error("The signed-in account changed while this AI request was running");
       }
+      const fallbackUsage = normalizeTokenUsage(result.usage);
+      mergeTokenStep(fallbackUsage);
       return {
         text,
         model: typeof result.model === "string" && result.model ? result.model : modelName,
         requestedModel: originallyRequestedModel,
-        usage: normalizeTokenUsage(result.usage),
+        usage: fallbackUsage,
         sources: normalizeAgentSources(result.sources),
         searchImages: [],
       };
@@ -1555,7 +1570,6 @@ const AIAgent: React.FC = () => {
     let buffer = "";
     let final: AgentStreamFinal = { text: "", model: modelName, requestedModel: originallyRequestedModel };
     let toolStepCounter = 0;
-    let sawToolActivity = false;
     let understood = false;
     const markUnderstood = () => {
       if (understood) return;
@@ -1620,7 +1634,6 @@ const AIAgent: React.FC = () => {
           appendToken(event.delta);
         } else if (event.type === "tool_call" && typeof event.name === "string") {
           const toolTitle = describeAgentTool(event.name, detectAgentLanguage()) ?? `${cloudStrings.usingTool}: ${event.name}`;
-          sawToolActivity = true;
           markUnderstood();
           setStreamActivity(toolTitle);
           const toolStepId = `t${++toolStepCounter}`;
@@ -1651,10 +1664,7 @@ const AIAgent: React.FC = () => {
             attachments,
             pendingHostAction: pending && pending.confirmationRequired === true && typeof pending.actionId === "string" && pending.action ? pending : undefined,
           };
-          if (final.usage?.totalTokens !== undefined && sawToolActivity) {
-            const formatted = final.usage.totalTokens.toLocaleString(detectAgentLanguage() === "id" ? "id-ID" : "en-US");
-            mergeProcessSteps([{ id: "tokens", kind: "info", title: `${cloudStrings.tokensUsed}: ${formatted}`, status: "done" }]);
-          }
+          mergeTokenStep(final.usage);
         } else if (event.type === "error") {
           const detail = typeof event.message === "string" ? event.message : `AI Agent request failed: ${event.status ?? ""}`;
           throw new AgentRequestError(detail, typeof event.status === "number" ? event.status : 502, typeof event.code === "string" ? event.code : undefined);

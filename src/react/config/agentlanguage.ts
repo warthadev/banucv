@@ -139,6 +139,7 @@ export const AGENT_TOOL_LABELS: Record<string, Record<AgentLanguage, string>> = 
   web_fetch: { id: "Mengambil halaman web…", en: "Fetching web page…" },
   inspect_image: { id: "Menganalisis gambar…", en: "Analyzing image…" },
   read_document: { id: "Membaca dokumen…", en: "Reading document…" },
+  remember: { id: "Mengingat…", en: "Remembering…" },
 };
 
 export const describeAgentTool = (name: string, lang: AgentLanguage): string | null => {

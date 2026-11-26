@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import SettingAudio from './settingaudio';
+import SettingMemory from './settingmemory';
 import SettingVisual from './settingvisual';
 import SettingUser from './settinguser';
 
@@ -41,6 +42,7 @@ const SettingsPage: React.FC = () => {
           <SettingUser onLoadingChange={setIsProfileLoading} />
           <SettingVisual />
           <SettingAudio />
+          <SettingMemory />
         </div>
 
         <footer className="settings-footer">

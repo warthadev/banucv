@@ -99,15 +99,6 @@
   gap: 1px;
 }
 
-.aiagent-player-name {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .aiagent-player-sub {
   font-size: 0.75rem;
   font-weight: 400;
@@ -346,17 +337,6 @@
   gap: 8px;
   flex-shrink: 1;
   min-width: 0;
-}
-
-.aiagent-model-name {
-  overflow-wrap: anywhere;
-  min-width: 0;
-  font-weight: 600;
-  font-size: 0.75rem;
-  color: var(--global-color-accent);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-family: inherit;
 }
 
 .aiagent-message-metadata {
@@ -2008,7 +1988,6 @@
   border-radius: 16px;
   overflow: hidden;
 }
-.aiagent-process.live { border-color: var(--global-color-accent); }
 .aiagent-process-header { display: flex; align-items: center; gap: 4px; padding-right: 8px; }
 .aiagent-process-stop {
   flex: none;
@@ -2178,11 +2157,11 @@
 .aiagent-crop-actions button { padding: 8px 14px; border-radius: 16px; border: 1px solid var(--global-color-border); background: var(--global-color-surface); color: var(--global-color-text); font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
 .aiagent-crop-actions button.primary { background: var(--global-color-accent); border-color: var(--global-color-accent); color: #fff; }
 
-/* Kemunculan mulus: langkah proses masuk dengan fade, bubble yang sedang
-   streaming ditandai border aksen (transisi halus, bukan lompat). */
+/* Kemunculan mulus: langkah proses masuk dengan fade. Border tidak berubah
+   saat proses mulai/berhenti maupun saat jawaban streaming (permintaan user):
+   bubble Proses dan bubble chat selalu pakai warna border standar. */
 @keyframes aiagentFadeSlideIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 .aiagent-message-bubble { transition: border-color 0.3s ease; }
-.aiagent-message.streaming .aiagent-message-bubble { border-color: var(--global-color-accent); }
 
 /* File terkirim dibungkus seperti chat: baris file hidup di dalam bubble,
    bukan sebagai baris lepas di luar. Bubble membatasi lebar (max-width 100%),

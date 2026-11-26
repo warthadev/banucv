@@ -31,7 +31,6 @@ import { UiBlock } from "./agentuiblocks";
 import { ImageCropper, type CroppedImage } from "./agentimagecropper";
 import { RouterAuthModal } from "./routerauthmodal";
 
-const STREAM_MESSAGE_ID = "streaming";
 const PROCESS_OUTPUT_KEEP = 400;
 const PROCESS_STEPS_KEEP = 60;
 
@@ -146,6 +145,10 @@ interface Message {
   // Pesan proses (berpikir / tool) yang terpisah dari jawaban akhir.
   process?: ProcessStep[];
   processLive?: boolean;
+  // Bubble jawaban yang masih streaming (teks mengalir). Dipakai untuk
+  // class "streaming" — bukan id — supaya finalize tidak perlu ganti id
+  // dan bubble tidak hilang lalu muncul lagi sebagai pesan lain.
+  streaming?: boolean;
 }
 
 interface UploadedFile {
@@ -1007,6 +1010,12 @@ const AIAgent: React.FC = () => {
   useEffect(() => { messagesRef.current = messages; }, [messages]);
 
   const processIdRef = useRef<string | null>(null);
+  // Id pesan streaming milik request yang sedang berjalan (unik per request),
+  // supaya finalize bisa memperbarui bubble yang sama tanpa ganti id.
+  const streamIdRef = useRef<string | null>(null);
+  // Apakah update stream sudah pernah dijadwalkan di giliran ini (artinya
+  // pesan streaming pasti ada begitu update tertunda dijalankan).
+  const streamCreatedRef = useRef(false);
   // AbortController untuk request cloud yang sedang streaming, supaya tombol
   // Berhenti di blok Proses bisa menghentikan cloud sama seperti lokal.
   const cloudAbortRef = useRef<AbortController | null>(null);
@@ -1063,7 +1072,8 @@ const AIAgent: React.FC = () => {
         return next;
       }
       const created: Message = { id: pid, role: "bot", content: "", model: getAgentProcessStrings(detectAgentLanguage()).process, timestamp: new Date(), process, processLive: true };
-      const streamIndex = prev.findIndex(m => m.id === STREAM_MESSAGE_ID);
+      const streamId = streamIdRef.current;
+      const streamIndex = streamId ? prev.findIndex(m => m.id === streamId) : -1;
       if (streamIndex >= 0) return [...prev.slice(0, streamIndex), created, ...prev.slice(streamIndex)];
       return [...prev, created];
     });
@@ -1587,20 +1597,25 @@ const AIAgent: React.FC = () => {
       markUnderstood();
       final.text += delta;
       if (currentUserUidRef.current !== requestOwnerUid || activeRequestIdRef.current !== requestId) return;
+      const sid = streamIdRef.current;
+      if (!sid) return;
+      streamCreatedRef.current = true;
       scheduleStreamUpdate(() => {
         setMessages(prev => {
-          const last = prev[prev.length - 1];
-          if (last && last.id === STREAM_MESSAGE_ID && last.role === "bot") {
-            const updated = { ...last, content: cleanMarkdown(final.text) };
-            return [...prev.slice(0, -1), updated];
+          const streamIndex = prev.findIndex(m => m.id === sid && m.role === "bot");
+          if (streamIndex >= 0) {
+            const next = prev.slice();
+            next[streamIndex] = { ...prev[streamIndex], content: cleanMarkdown(final.text), streaming: true };
+            return next;
           }
           return [...prev, {
-            id: STREAM_MESSAGE_ID,
+            id: sid,
             role: "bot",
             content: cleanMarkdown(final.text),
             model: final.model || modelName,
             requestedModel: originallyRequestedModel,
             timestamp: new Date(),
+            streaming: true,
           }];
         });
       });
@@ -1715,7 +1730,8 @@ const AIAgent: React.FC = () => {
       setMessages(prev => {
         if (prev.some(m => m.id === openingMessage.id)) return prev;
         const pid = processIdRef.current;
-        const anchorIndex = pid ? prev.findIndex(m => m.id === pid) : prev.findIndex(m => m.id === STREAM_MESSAGE_ID);
+        const sid = streamIdRef.current;
+        const anchorIndex = pid ? prev.findIndex(m => m.id === pid) : sid ? prev.findIndex(m => m.id === sid) : -1;
         if (anchorIndex >= 0) return [...prev.slice(0, anchorIndex), openingMessage, ...prev.slice(anchorIndex)];
         return [...prev, openingMessage];
       });
@@ -1743,19 +1759,25 @@ const AIAgent: React.FC = () => {
     let streamSegment = -1;
     const applyStreamText = () => {
       const text = cleanMarkdown(streamText);
+      const sid = streamIdRef.current;
+      if (!sid) return;
+      streamCreatedRef.current = true;
       scheduleStreamUpdate(() => {
         setMessages(prev => {
-          const last = prev[prev.length - 1];
-          if (last && last.id === STREAM_MESSAGE_ID && last.role === "bot") {
-            return [...prev.slice(0, -1), { ...last, content: text }];
+          const streamIndex = prev.findIndex(m => m.id === sid && m.role === "bot");
+          if (streamIndex >= 0) {
+            const next = prev.slice();
+            next[streamIndex] = { ...prev[streamIndex], content: text, streaming: true };
+            return next;
           }
           return [...prev, {
-            id: STREAM_MESSAGE_ID,
+            id: sid,
             role: "bot",
             content: text,
             model: agentLocal.modelId || "ai-local",
             requestedModel: agentLocal.modelId || "ai-local",
             timestamp: new Date(),
+            streaming: true,
           }];
         });
       });
@@ -1794,14 +1816,17 @@ const AIAgent: React.FC = () => {
     const isCurrentRequest = () => currentUserUidRef.current === requestOwnerUid && activeRequestIdRef.current === requestId && messagesOwnerUid === requestOwnerUid;
     setIsLoading(true);
     processIdRef.current = `process-${requestId}`;
+    streamIdRef.current = `stream-${requestId}`;
+    streamCreatedRef.current = false;
     if (!isRetry) cancelRequestedRef.current = false;
     // Giliran yang diberhentikan: buang pesan streaming + pesan Proses,
     // jangan tampilkan jawaban "Dibatalkan oleh user." sama sekali.
     const discardCancelledTurn = () => {
       const pid = processIdRef.current;
+      const sid = streamIdRef.current;
       processIdRef.current = null;
       flushStreamUpdate();
-      setMessages(prev => prev.filter(m => m.id !== STREAM_MESSAGE_ID && m.id !== pid));
+      setMessages(prev => prev.filter(m => m.id !== sid && m.id !== pid));
     };
 
     if (!isRetry) {
@@ -1816,6 +1841,9 @@ const AIAgent: React.FC = () => {
       setMessages(prev => [...prev, userMsg]);
     }
 
+    // Blok Proses langsung muncul begitu pesan dikirim (sebelum auth/stream),
+    // jadi indikator ketik berisi nama model tidak sempat tampil.
+    mergeProcessSteps([{ id: "c0", kind: "thinking", title: getAgentProcessStrings(detectAgentLanguage()).understanding, status: "running" }]);
 
     try {
       // Riwayat bersama (cloud + lokal) — sumber kebenaran yang sama dengan
@@ -1835,24 +1863,28 @@ const AIAgent: React.FC = () => {
         setConfirmLabelChoice("A");
         setCustomConfirmLabel("");
         flushStreamUpdate();
-        setMessages(prev => prev.filter(m => m.id !== STREAM_MESSAGE_ID));
+        setMessages(prev => prev.filter(m => m.id !== streamIdRef.current));
         return;
       }
       const finalizeMessage = (msg: Message): Message => ({ ...msg, content: response.text, model: response.model, requestedModel: response.requestedModel, usage: response.usage, sources: response.sources && response.sources.length > 0 ? response.sources : undefined, attachments: response.attachments && response.attachments.length > 0 ? response.attachments : undefined });
-      // Pastikan pesan streaming sudah terpasang sebelum finalize, lalu ganti
-      // pesan itu di posisinya (bukan hanya kalau dia pesan terakhir) — kalau
-      // tidak, jawaban final ditambahkan sebagai pesan baru dan update stream
-      // yang tertunda menambahkan pesan streaming kedua.
+      // Finalize di tempat: bubble streaming yang sama diperbarui (id tetap,
+      // streaming: false) supaya bubble tidak hilang lalu muncul lagi sebagai
+      // pesan lain. Id pesan streaming unik per request, jadi tidak bentrok
+      // dengan giliran berikutnya.
       flushStreamUpdate();
+      const finalizedId = streamCreatedRef.current && streamIdRef.current
+        ? streamIdRef.current
+        : (Date.now() + 1).toString();
       setMessages(prev => {
-        const streamIndex = prev.findIndex(m => m.id === STREAM_MESSAGE_ID && m.role === "bot");
+        const sid = streamIdRef.current;
+        const streamIndex = sid ? prev.findIndex(m => m.id === sid && m.role === "bot") : -1;
         if (streamIndex >= 0) {
           const next = prev.slice();
-          next[streamIndex] = finalizeMessage({ ...prev[streamIndex], id: (Date.now() + 1).toString() });
+          next[streamIndex] = { ...finalizeMessage(prev[streamIndex]), streaming: false };
           return next;
         }
         return [...prev, finalizeMessage({
-          id: (Date.now() + 1).toString(),
+          id: finalizedId,
           role: "bot",
           content: response.text,
           model: response.model,
@@ -1864,7 +1896,7 @@ const AIAgent: React.FC = () => {
       setStreamActivity(null);
 
       if (aiMode === 'auto') {
-        speakText(response.text, (Date.now() + 1).toString());
+        speakText(response.text, finalizedId);
       }
     } catch (error: unknown) {
       if (!isCurrentRequest()) return;
@@ -1888,7 +1920,7 @@ const AIAgent: React.FC = () => {
 
       finishProcess("error");
       flushStreamUpdate();
-      setMessages(prev => prev.filter(m => !(m.id === STREAM_MESSAGE_ID && !m.content.trim())) );
+      setMessages(prev => prev.filter(m => !(m.id === streamIdRef.current && !m.content.trim())) );
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: "bot",
@@ -2073,9 +2105,6 @@ const AIAgent: React.FC = () => {
   const totalUploads = uploadedImages.length + uploadedFiles.length;
 
   // Top bar "now playing": nama model + status sumber saat ini.
-  const playerModelName = modelSource === "local"
-    ? (agentLocal.modelId || selectedModel || "AI Local")
-    : (selectedModel || "AI Agent");
   const playerStatusText = modelSource === "local"
     ? agentLocal.status === "ready" ? "Local · Ready"
     : agentLocal.status === "connecting" || agentLocal.status === "booting" ? "Local · Starting…"
@@ -2148,7 +2177,6 @@ const AIAgent: React.FC = () => {
                   <span className={`aiagent-player-dot aiagent-player-dot--${playerStatusTone}`} />
                 </span>
                 <span className="aiagent-player-meta">
-                  <span className="aiagent-player-name">{playerModelName}</span>
                   <span className="aiagent-player-sub">{playerStatusText}</span>
                 </span>
                 <ChevronDown size={16} aria-hidden="true" className="aiagent-player-chevron" />
@@ -2346,16 +2374,13 @@ const AIAgent: React.FC = () => {
                   </div>
                 </motion.div>
               ) : (
-                <motion.div key={msg.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={`aiagent-message ${msg.role === "user" ? "user" : "bot"}${msg.id === STREAM_MESSAGE_ID ? " streaming" : ""}`}>
+                <motion.div key={msg.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={`aiagent-message ${msg.role === "user" ? "user" : "bot"}${msg.streaming === true ? " streaming" : ""}`}>
                   {msg.role === "user" && <div className="aiagent-user-avatar">{userAvatar ? <img src={userAvatar} alt="Avatar" /> : <User size={24} />}</div>}
                   <div className="aiagent-message-content">
                     {msg.role === "user" && <div className="aiagent-username">{userDisplayName}</div>}
                     {msg.role === "bot" && (
                       <div className="aiagent-bot-header">
                         <div className="aiagent-bot-header-left">
-                          <span className="aiagent-model-name">
-                            {msg.model || selectedModel}
-                          </span>
                           {msg.error && (
                             <button
                               onClick={() => retryMessage(msg.id)}
@@ -2536,7 +2561,7 @@ const AIAgent: React.FC = () => {
             {isLoading && !messages.some(m => m.processLive) && (
               <div className="aiagent-typing">
                 <div className="aiagent-typing-content">
-                  <div className="aiagent-typing-header"><span>{streamActivity || selectedModel}</span><div className="aiagent-typing-dots"><span></span><span></span><span></span></div></div>
+                  <div className="aiagent-typing-header">{streamActivity ? <span>{streamActivity}</span> : null}<div className="aiagent-typing-dots"><span></span><span></span><span></span></div></div>
                 </div>
               </div>
             )}

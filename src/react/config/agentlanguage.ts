@@ -1,15 +1,13 @@
-// Bahasa tampilan AI Local mengikuti bahasa yang dipakai user, diambil dari
-// bahasa browser (navigator.language). Didukung: Indonesia (id) dan Inggris (en).
+// Tampilan AI Agent selalu berbahasa Inggris (permintaan user 2026-11-26):
+// semua label Proses, tombol, dan info token pakai Inggris, apa pun bahasa
+// browser. Bahasa JAWABAN AI tetap mengikuti bahasa yang dipakai user di
+// chat (aturan "Reply in the user's language" di system prompt) — kalau
+// jawaban juga mau dipaksa Inggris, itu perubahan terpisah di system prompt.
 // Bahasa lain jatuh ke Inggris. Tambah bahasa baru = tambah satu entri di
 // AGENT_PROCESS_STRINGS (dan AGENT_STRINGS di workerlocal.py untuk label tool).
-
 export type AgentLanguage = "id" | "en";
 
 export const detectAgentLanguage = (): AgentLanguage => {
-  const raw = typeof navigator !== "undefined" ? (navigator.language || "") : "";
-  const lang = raw.trim().toLowerCase();
-  if (lang.startsWith("id")) return "id";
-  if (lang.startsWith("en")) return "en";
   return "en";
 };
 

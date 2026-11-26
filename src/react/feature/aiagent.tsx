@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Bot, Trash2, Volume2, VolumeX, Check,
-  Image as ImageIcon, X, Loader2, Sparkles, RefreshCw, FileText, Copy, Download, Folder, Home, MapPin, Plus, Link, ChevronDown, Wrench, Brain, Crop,
+  Image as ImageIcon, X, Loader2, Sparkles, RotateCw, FileText, Copy, Download, Folder, Home, MapPin, Plus, Link, ChevronDown, Wrench, Brain, Crop,
   FileSpreadsheet, FileCode, FileArchive, FileAudio, FileVideo, Presentation, FileImage
 } from "lucide-react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
@@ -981,6 +981,7 @@ const AIAgent: React.FC = () => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isUploadDropdownOpen, setIsUploadDropdownOpen] = useState(false);
   const [, setRetryingMessageId] = useState<string | null>(null);
+  const [userDisplayName, setUserDisplayName] = useState<string>("User");
   const [userLocation, setUserLocation] = useState<string>("Unknown");
   const [uploadDropdownPos, setUploadDropdownPos] = useState<{ bottom: number; left: number; maxHeight: number }>({ bottom: 0, left: 0, maxHeight: 0 });
   const [modelPickerPos, setModelPickerPos] = useState<{ bottom: number; left: number; maxHeight: number }>({ bottom: 0, left: 0, maxHeight: 0 });
@@ -1049,6 +1050,78 @@ const AIAgent: React.FC = () => {
     const fn = streamPendingRef.current;
     streamPendingRef.current = null;
     fn?.();
+  };
+  // Reveal pesan stream (typewriter): teks yang diterima tidak langsung
+  // ditampilkan utuh — ditampilkan bertahap supaya alur stream kelihatan,
+  // walau seluruh jawaban datang dalam satu chunk (jawaban pendek sering
+  // tiba sekaligus, lalu rAF batching menampilkannya dalam satu frame,
+  // sehingga terlihat muncul langsung tanpa stream). Setiap frame, teks
+  // yang ditampilkan maju mendekati teks yang diterima (sisa dibagi 24),
+  // jadi tampilan mengejar teks yang diterima dalam ~400ms dan tidak pernah
+  // tertinggal jauh. Dipakai streaming cloud dan lokal.
+  const streamRevealRef = useRef({ received: "", shown: 0, raf: null as number | null, model: "", requestedModel: "" });
+  // Terapkan isi (teks yang sudah direveal) ke pesan streaming milik request
+  // yang sedang berjalan — buat pesannya kalau belum ada, perbarui kalau ada.
+  const applyStreamContent = (content: string, model: string, requestedModel: string) => {
+    const sid = streamIdRef.current;
+    if (!sid) return;
+    scheduleStreamUpdate(() => {
+      setMessages(prev => {
+        const streamIndex = prev.findIndex(m => m.id === sid && m.role === "bot");
+        if (streamIndex >= 0) {
+          const next = prev.slice();
+          next[streamIndex] = { ...prev[streamIndex], content, streaming: true };
+          return next;
+        }
+        return [...prev, {
+          id: sid,
+          role: "bot",
+          content,
+          model,
+          requestedModel,
+          timestamp: new Date(),
+          streaming: true,
+        }];
+      });
+    });
+  };
+  // Satu langkah reveal: majukan teks yang ditampilkan, lalu jadwalkan
+  // langkah berikutnya selama masih ada teks yang belum ditampilkan.
+  // Langkah = total teks yang diterima / 24, jadi tampilan selesai dalam
+  // ~24 frame (~400ms) berapa pun panjang teksnya — tanpa ekor yang
+  // merangkak satu karakter per frame.
+  const revealStep = () => {
+    const reveal = streamRevealRef.current;
+    reveal.raf = null;
+    if (reveal.shown >= reveal.received.length) return;
+    const step = Math.max(1, Math.ceil(reveal.received.length / 24));
+    reveal.shown = Math.min(reveal.received.length, reveal.shown + step);
+    applyStreamContent(cleanMarkdown(reveal.received.slice(0, reveal.shown)), reveal.model, reveal.requestedModel);
+    if (reveal.shown < reveal.received.length) {
+      reveal.raf = requestAnimationFrame(revealStep);
+    }
+  };
+  // Terima teks baru (seluruh teks yang sudah diterima sejauh ini) dan
+  // jalankan reveal kalau belum berjalan.
+  const kickReveal = (received: string, model: string, requestedModel: string) => {
+    const reveal = streamRevealRef.current;
+    reveal.received = received;
+    reveal.model = model;
+    reveal.requestedModel = requestedModel;
+    if (reveal.raf === null) {
+      reveal.raf = requestAnimationFrame(revealStep);
+    }
+  };
+  // Hentikan reveal (dipakai saat finalize, batal, atau error) supaya tidak
+  // ada update stream yang jalan setelah giliran selesai.
+  const cancelReveal = () => {
+    const reveal = streamRevealRef.current;
+    if (reveal.raf !== null) {
+      cancelAnimationFrame(reveal.raf);
+      reveal.raf = null;
+    }
+    reveal.received = "";
+    reveal.shown = 0;
   };
   const [processOpen, setProcessOpen] = useState<Record<string, boolean>>({});
 
@@ -1163,6 +1236,7 @@ const AIAgent: React.FC = () => {
       setConfirmLabelChoice("A");
       setCustomConfirmLabel("");
           if (!user) {
+            setUserDisplayName("User");
             setUserLocation("Unknown");
             return;
           }
@@ -1173,7 +1247,10 @@ const AIAgent: React.FC = () => {
             if (disposed || auth.currentUser?.uid !== user.uid) return;
             if (userSnap.exists()) {
               const data = userSnap.data();
+              setUserDisplayName(data.displayName || user.displayName || user.email?.split('@')[0] || "User");
               if (data.lastLocation) setUserLocation(`${data.lastLocation.city}, ${data.lastLocation.country}`);
+            } else {
+              setUserDisplayName(user.displayName || user.email?.split('@')[0] || "User");
             }
           }
         });
@@ -1591,25 +1668,7 @@ const AIAgent: React.FC = () => {
       const sid = streamIdRef.current;
       if (!sid) return;
       streamCreatedRef.current = true;
-      scheduleStreamUpdate(() => {
-        setMessages(prev => {
-          const streamIndex = prev.findIndex(m => m.id === sid && m.role === "bot");
-          if (streamIndex >= 0) {
-            const next = prev.slice();
-            next[streamIndex] = { ...prev[streamIndex], content: cleanMarkdown(final.text), streaming: true };
-            return next;
-          }
-          return [...prev, {
-            id: sid,
-            role: "bot",
-            content: cleanMarkdown(final.text),
-            model: final.model || modelName,
-            requestedModel: originallyRequestedModel,
-            timestamp: new Date(),
-            streaming: true,
-          }];
-        });
-      });
+      kickReveal(final.text, final.model || modelName, originallyRequestedModel);
     };
     const readChunk = async (): Promise<ReadableStreamReadResult<Uint8Array> | null> => {
       try {
@@ -1749,29 +1808,10 @@ const AIAgent: React.FC = () => {
     let streamText = "";
     let streamSegment = -1;
     const applyStreamText = () => {
-      const text = cleanMarkdown(streamText);
       const sid = streamIdRef.current;
       if (!sid) return;
       streamCreatedRef.current = true;
-      scheduleStreamUpdate(() => {
-        setMessages(prev => {
-          const streamIndex = prev.findIndex(m => m.id === sid && m.role === "bot");
-          if (streamIndex >= 0) {
-            const next = prev.slice();
-            next[streamIndex] = { ...prev[streamIndex], content: text, streaming: true };
-            return next;
-          }
-          return [...prev, {
-            id: sid,
-            role: "bot",
-            content: text,
-            model: agentLocal.modelId || "ai-local",
-            requestedModel: agentLocal.modelId || "ai-local",
-            timestamp: new Date(),
-            streaming: true,
-          }];
-        });
-      });
+      kickReveal(streamText, agentLocal.modelId || "ai-local", agentLocal.modelId || "ai-local");
     };
     try {
       const result = await agentLocal.sendLocalChatStream(
@@ -1809,6 +1849,7 @@ const AIAgent: React.FC = () => {
     processIdRef.current = `process-${requestId}`;
     streamIdRef.current = `stream-${requestId}`;
     streamCreatedRef.current = false;
+    cancelReveal();
     if (!isRetry) cancelRequestedRef.current = false;
     // Giliran yang diberhentikan: buang pesan streaming + pesan Proses,
     // jangan tampilkan jawaban "Dibatalkan oleh user." sama sekali.
@@ -1816,6 +1857,7 @@ const AIAgent: React.FC = () => {
       const pid = processIdRef.current;
       const sid = streamIdRef.current;
       processIdRef.current = null;
+      cancelReveal();
       flushStreamUpdate();
       setMessages(prev => prev.filter(m => m.id !== sid && m.id !== pid));
     };
@@ -1853,6 +1895,7 @@ const AIAgent: React.FC = () => {
         setHostActionError("");
         setConfirmLabelChoice("A");
         setCustomConfirmLabel("");
+        cancelReveal();
         flushStreamUpdate();
         setMessages(prev => prev.filter(m => m.id !== streamIdRef.current));
         return;
@@ -1862,6 +1905,7 @@ const AIAgent: React.FC = () => {
       // streaming: false) supaya bubble tidak hilang lalu muncul lagi sebagai
       // pesan lain. Id pesan streaming unik per request, jadi tidak bentrok
       // dengan giliran berikutnya.
+      cancelReveal();
       flushStreamUpdate();
       const finalizedId = streamCreatedRef.current && streamIdRef.current
         ? streamIdRef.current
@@ -1910,6 +1954,7 @@ const AIAgent: React.FC = () => {
       }
 
       finishProcess("error");
+      cancelReveal();
       flushStreamUpdate();
       setMessages(prev => prev.filter(m => !(m.id === streamIdRef.current && !m.content.trim())) );
       setMessages(prev => [...prev, {
@@ -2117,7 +2162,7 @@ const AIAgent: React.FC = () => {
       <div className="aiagent-container global-page">
         <div className="aiagent-catalog-status" role="alert">
           <p>Unable to check this account&apos;s OpenRouter key: {configurationError}</p>
-          <button type="button" className="aiagent-icon-btn" onClick={() => window.location.reload()}>Retry</button>
+          <button type="button" className="aiagent-icon-btn" onClick={() => window.location.reload()}>Reload</button>
           <RouterLink className="aiagent-settings-link" to="/dashboard">Cancel and return to Dashboard</RouterLink>
         </div>
       </div>
@@ -2351,7 +2396,7 @@ const AIAgent: React.FC = () => {
             {!messages.length && (
               <div className="aiagent-welcome">
                 <div className="aiagent-welcome-icon"><Sparkles size={56} /></div>
-                <h3>Hello!</h3>
+                <h3>Hello, {userDisplayName}!</h3>
                 <p>Ask me anything or upload files</p>
               </div>
             )}
@@ -2374,17 +2419,17 @@ const AIAgent: React.FC = () => {
                     {msg.role === "bot" && (
                       <div className="aiagent-bot-header">
                         <div className="aiagent-bot-header-left">
-                          {msg.error && (
-                            <button
-                              onClick={() => retryMessage(msg.id)}
-                              className="aiagent-retry-btn-header"
-                              title="Retry from the current selection, using this account's fallback models on 429/503"
-                            >
-                              <RefreshCw size={12} /> Retry
-                            </button>
-                          )}
                         </div>
                         <div className="aiagent-bot-actions">
+                          {msg.content && msg.streaming !== true && (
+                            <button
+                              onClick={() => retryMessage(msg.id)}
+                              className="aiagent-reload-btn"
+                              title="Reload this answer"
+                            >
+                              <RotateCw size={14} /> Reload
+                            </button>
+                          )}
                           <button
                             onClick={() => {
                               const textToSpeak = msg.error ? getFullErrorText(msg) : msg.content;

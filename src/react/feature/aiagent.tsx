@@ -639,6 +639,72 @@ const LocalStopButton = ({ onStop }: { onStop: () => void }) => (
   </button>
 );
 
+// Pair a Colab worker (no ngrok): the app mints a one-time code, the Colab
+// notebook trades it for a session and polls the backend like Kaggle does.
+const ColabPairBox = ({ onPair }: { onPair: () => Promise<{ code: string; expiresInSeconds: number; notebookUrl: string }> }) => {
+  const [pair, setPair] = useState<{ code: string; expiresInSeconds: number; notebookUrl: string } | null>(null);
+  const [pairing, setPairing] = useState(false);
+  const [pairError, setPairError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const createPair = async () => {
+    setPairing(true);
+    setPairError(null);
+    setCopied(false);
+    try {
+      setPair(await onPair());
+    } catch (err) {
+      setPairError(err instanceof Error ? err.message : "Could not create a pairing code.");
+    } finally {
+      setPairing(false);
+    }
+  };
+  const copyCode = async () => {
+    if (!pair) return;
+    try {
+      await navigator.clipboard.writeText(pair.code);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  };
+  return (
+    <div className="aiagent-colab-pair">
+      {!pair ? (
+        <>
+          <p className="aiagent-colab-pair-note">Kaggle queue slow? Run the worker on Colab instead — same model from your Kaggle dataset, no Kaggle GPU queue.</p>
+          <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void createPair()} disabled={pairing}>
+            {pairing ? "Creating pairing code…" : "Run on Colab instead"}
+          </button>
+          {pairError && <p className="aiagent-local-error">{pairError}</p>}
+        </>
+      ) : (
+        <>
+          <p>Open the notebook, set the runtime to GPU, and fill in this pairing code:</p>
+          <div className="aiagent-colab-code-row">
+            <code className="aiagent-colab-code">{pair.code}</code>
+            <button type="button" className="aiagent-copy-btn" onClick={() => void copyCode()}>
+              <Copy size={14} /> {copied ? "Copied" : "Copy"}
+            </button>
+          </div>
+          <small>Valid for {Math.max(1, Math.round(pair.expiresInSeconds / 60))} minutes, one use only.</small>
+          <a className="aiagent-model-option aiagent-local-connect-btn aiagent-colab-notebook-link" href={pair.notebookUrl} target="_blank" rel="noreferrer">
+            Open notebook in Colab
+          </a>
+          <ol className="aiagent-colab-steps">
+            <li>Open the notebook link above.</li>
+            <li>Runtime → Change runtime type → T4 GPU.</li>
+            <li>Fill in the pairing code and your Kaggle API token.</li>
+            <li>Run the cell — the worker connects by itself.</li>
+          </ol>
+          <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => { setPair(null); void createPair(); }}>
+            Get a new code
+          </button>
+        </>
+      )}
+    </div>
+  );
+};
+
 const stripMarkdownForSpeech = (text: string, codeBlockLabel = "code block") => text
   .replace(/```[\s\S]*?```/g, codeBlockLabel)
   .replace(/`[^`]+`/g, "")
@@ -2302,11 +2368,12 @@ const AIAgent: React.FC = () => {
   const playerModelName = modelSource === "local"
     ? (agentLocal.modelId || selectedModel || "AI Local")
     : (selectedModel || "AI Agent");
+  const localRuntimeName = agentLocal.runtime === "colab" ? "Colab" : "Local";
   const playerStatusText = modelSource === "local"
-    ? agentLocal.status === "ready" ? "Local · Ready"
-    : agentLocal.status === "connecting" || agentLocal.status === "booting" ? "Local · Starting…"
-    : agentLocal.status === "stopping" ? "Local · Stopping…"
-    : "Local · Offline"
+    ? agentLocal.status === "ready" ? `${localRuntimeName} · Ready`
+    : agentLocal.status === "connecting" || agentLocal.status === "booting" ? `${localRuntimeName} · Starting…`
+    : agentLocal.status === "stopping" ? `${localRuntimeName} · Stopping…`
+    : `${localRuntimeName} · Offline`
     : "Cloud · Online";
   const playerStatusTone = modelSource === "local"
     ? agentLocal.status === "ready" ? "ready"
@@ -2526,7 +2593,7 @@ const AIAgent: React.FC = () => {
                             >
                               <span className="aiagent-model-option-copy aiagent-popover">
                                 <strong>{model}</strong>
-                                <small>Local · Kaggle GPU</small>
+                                <small>{agentLocal.runtime === "colab" ? "Local · Colab GPU" : "Local · Kaggle GPU"}</small>
                               </span>
                               {model === selectedModel && <Check size={17} aria-hidden="true" />}
                             </button>
@@ -2534,11 +2601,16 @@ const AIAgent: React.FC = () => {
                           {agentLocal.status === "ready" && (
                             <>
                               <small>
-                                Stays on until you press Stop, or Kaggle ends the session.
+                                {agentLocal.runtime === "colab"
+                                  ? "Stays on until you press Stop, or Colab ends the session."
+                                  : "Stays on until you press Stop, or Kaggle ends the session."}
                               </small>
                               <LocalRunButton label="Run On Kaggle" onRun={agentLocal.run} />
                               <LocalStopButton onStop={agentLocal.stop} />
                             </>
+                          )}
+                          {["offline", "disconnected", "booting", "connecting", "error"].includes(agentLocal.status) && (
+                            <ColabPairBox onPair={agentLocal.pairColab} />
                           )}
                         </div>
                       )}

@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowUp, Bot, Trash2, Volume2, VolumeX, Check,
-  Image as ImageIcon, X, Loader2, Sparkles, RotateCw, FileText, Copy, Download, Folder, Home, MapPin, Plus, Link, ChevronDown, Wrench, Brain, Crop,
+  Image as ImageIcon, X, Loader2, Sparkles, RotateCw, FileText, Copy, Download, Folder, Home, MapPin, Plus, Link, ChevronDown, Wrench, Brain, Crop, Terminal,
   FileSpreadsheet, FileCode, FileArchive, FileAudio, FileVideo, Presentation, FileImage
 } from "lucide-react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
@@ -31,13 +31,22 @@ import { UiBlock } from "./agentuiblocks";
 import { ImageCropper, type CroppedImage } from "./agentimagecropper";
 import { RouterAuthModal } from "./routerauthmodal";
 
-const PROCESS_OUTPUT_KEEP = 400;
+const PROCESS_OUTPUT_KEEP = 1500;
 const PROCESS_STEPS_KEEP = 60;
 
 type ProcessStep = AgentProcessStep;
 type ProcessStepPatch = Partial<ProcessStep> & { id: string };
 
 // Blok proses: pesan berjalan (berpikir / tool) yang terpisah dari jawaban akhir dan bisa dibuka-tutup.
+// Perintah bash datang sebagai detail "(free -h…)": kupas kurungnya supaya
+// tampil sebagai baris terminal `$ free -h`, bukan teks kecil abu-abu.
+const terminalCommand = (detail?: string): string => {
+  if (!detail) return "";
+  let cmd = detail.trim();
+  if (cmd.startsWith("(") && cmd.endsWith(")")) cmd = cmd.slice(1, -1);
+  return cmd.trim();
+};
+
 const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolean; onToggle: () => void; onStop?: () => void }> = ({ steps, live, open, onToggle, onStop }) => {
   const lang = detectAgentLanguage();
   const strings = getAgentProcessStrings(lang);
@@ -92,16 +101,32 @@ const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolea
               <div className="aiagent-process-body">
                 <div className="aiagent-process-step-title">
                   {step.title}
-                  {step.detail ? <span className="aiagent-process-detail"> {step.detail}</span> : null}
+                  {step.detail && step.tool !== "run_bash" ? <span className="aiagent-process-detail"> {step.detail}</span> : null}
                 </div>
+                {step.tool === "run_bash" && terminalCommand(step.detail) ? (
+                  <div className="aiagent-process-command">
+                    <Terminal size={13} className="aiagent-process-command-icon" />
+                    <span className="aiagent-process-command-prompt">$</span>
+                    <code>{terminalCommand(step.detail)}</code>
+                  </div>
+                ) : null}
                 {step.output ? (
-                  <details className="aiagent-process-output">
-                    <summary>{step.kind === "thinking" ? strings.viewThought : strings.viewResult}</summary>
-                    <button type="button" className="aiagent-process-copy" onClick={() => void copyStepOutput(step)}>
-                      {copiedId === step.id ? strings.copied : strings.copy}
-                    </button>
-                    <pre>{step.output}</pre>
-                  </details>
+                  step.kind === "tool" ? (
+                    <div className="aiagent-process-terminal-wrap">
+                      <button type="button" className="aiagent-process-copy" onClick={() => void copyStepOutput(step)}>
+                        {copiedId === step.id ? strings.copied : strings.copy}
+                      </button>
+                      <pre className="aiagent-process-terminal">{step.output}</pre>
+                    </div>
+                  ) : (
+                    <details className="aiagent-process-output">
+                      <summary>{strings.viewThought}</summary>
+                      <button type="button" className="aiagent-process-copy" onClick={() => void copyStepOutput(step)}>
+                        {copiedId === step.id ? strings.copied : strings.copy}
+                      </button>
+                      <pre>{step.output}</pre>
+                    </details>
+                  )
                 ) : null}
               </div>
             </li>
@@ -1711,14 +1736,14 @@ const AIAgent: React.FC = () => {
           setStreamActivity(toolTitle);
           const toolStepId = `t${++toolStepCounter}`;
           openToolSteps.push({ name: event.name, id: toolStepId });
-          mergeProcessSteps([{ id: toolStepId, kind: "tool", tool: event.name, title: toolTitle, status: "running" }]);
+          mergeProcessSteps([{ id: toolStepId, kind: "tool", tool: event.name, title: toolTitle, detail: typeof event.detail === "string" ? event.detail : undefined, status: "running" }]);
         } else if (event.type === "tool_result" && typeof event.name === "string") {
           const toolLabel = describeAgentTool(event.name, detectAgentLanguage()) ?? `Tool ${event.name}`;
           setStreamActivity(`${toolLabel} ${cloudStrings.toolDone}`);
           const openIndex = openToolSteps.findIndex(item => item.name === event.name);
           if (openIndex >= 0) {
             const [finished] = openToolSteps.splice(openIndex, 1);
-            mergeProcessSteps([{ id: finished.id, status: "done" }]);
+            mergeProcessSteps([{ id: finished.id, status: "done", output: typeof event.output === "string" ? event.output : undefined }]);
           }
         } else if (event.type === "status" && typeof event.status === "string") {
           setStreamActivity(event.status === "thinking" ? cloudStrings.working : event.status);

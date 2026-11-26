@@ -12,7 +12,8 @@ import {
   ShieldCheck, ArrowDown, ArrowRight, Check, X, Minus, Circle, Flag, Heart,
   GraduationCap, Code, ListChecks, TrendingUp, Layers, Timer, GitBranch,
   Folder, FileText, MapPin, Brain, Sparkles, Wrench, User, Link, Download,
-  Image as ImageIcon, type LucideIcon,
+  Image as ImageIcon, Cpu, MemoryStick, Gauge, Activity, Terminal, Wifi,
+  Battery, HardDrive, Server, type LucideIcon,
 } from "lucide-react";
 
 const MAX_ITEMS = 12;
@@ -28,7 +29,9 @@ const ICONS: Record<string, LucideIcon> = {
   school: GraduationCap, code: Code, list: ListChecks, chart: TrendingUp,
   layers: Layers, timer: Timer, branch: GitBranch, folder: Folder, file: FileText,
   pin: MapPin, brain: Brain, sparkles: Sparkles, wrench: Wrench, user: User,
-  link: Link, download: Download, image: ImageIcon,
+  link: Link, download: Download, image: ImageIcon, cpu: Cpu, memory: MemoryStick,
+  gauge: Gauge, activity: Activity, terminal: Terminal, wifi: Wifi,
+  battery: Battery, harddrive: HardDrive, server: Server,
 };
 
 const iconFor = (name: unknown, fallback: LucideIcon): LucideIcon =>
@@ -78,7 +81,7 @@ const UiCard = ({ data }: { data: UiData }) => {
   const Icon = iconFor(data.icon, TONE_ICON[tone]);
   return (
     <div className={`aiagent-ui-card tone-${tone}`}>
-      <span className="aiagent-ui-card-icon"><Icon size={18} /></span>
+      <span className="aiagent-ui-card-icon"><Icon size={20} /></span>
       <div className="aiagent-ui-card-body">
         {str(data.title) ? <div className="aiagent-ui-card-title">{str(data.title)}</div> : null}
         {str(data.body) ? <div className="aiagent-ui-card-text">{str(data.body)}</div> : null}

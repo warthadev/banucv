@@ -11,9 +11,9 @@ export const useAgentModels = () => {
   // `isLoading` = login Firebase belum beres (halaman masih <Loading />).
   // `checking` = cek akun Cloud manual sedang berjalan (popover tetap tampil).
   const [checking, setChecking] = useState(false);
-  // Akun Cloud TIDAK pernah dicek otomatis: login / buka halaman tidak menyentuh
-  // apa-apa. Cek hanya saat pengguna menekan "Check Cloud account", atau saat
-  // key baru disimpan (RouterAuthModal / Settings).
+  // Akun Cloud dicek OTOMATIS saat login Firebase (auth): halaman tetap tampil,
+  // hasil cek muncul di popover (Checking… lalu daftar model / Connect OpenRouter).
+  // Tombol "Check Cloud account" di popover hanya untuk cek ulang manual.
   const [checked, setChecked] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
   const [hasSavedKey, setHasSavedKey] = useState(false);
@@ -88,9 +88,9 @@ export const useAgentModels = () => {
     }
   }, []);
 
-  // Cek akun Cloud secara manual: hanya ini yang boleh memanggil refreshAccount
-  // dari UI (tombol "Check Cloud account" di popover). Simpan key baru juga
-  // memicu refreshAccount lewat event di bawah.
+  // Cek ulang akun Cloud secara manual (tombol "Check Cloud account" di popover).
+  // Cek otomatisnya terjadi saat login lewat effect auth di bawah; simpan key
+  // baru juga memicu refreshAccount lewat event di bawah.
   const checkAccount = useCallback(() => {
     void refreshAccount(userRef.current);
   }, [refreshAccount]);
@@ -105,20 +105,15 @@ export const useAgentModels = () => {
 
     getAuth().then((firebaseAuth) => {
       if (disposed) return;
-      // Login saja tidak mengecek akun Cloud: catat user-nya, kosongkan hasil
-      // cek lama, lalu selesai loading. Halaman agent tampil tanpa tahu
-      // status Cloud sampai pengguna mengecek manual.
+      // Login langsung mengecek akun Cloud secara otomatis: catat user-nya,
+      // tampilkan halaman (loading selesai), lalu jalankan refreshAccount.
+      // Halaman agent tetap tampil walau Cloud belum terkonfigurasi, supaya
+      // Local tetap bisa dipakai tanpa OpenRouter key.
       unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
         userRef.current = user;
         if (!mountedRef.current) return;
-        setChecked(false);
-        setRouterModels([]);
-        setIsConfigured(false);
-        setHasSavedKey(false);
-        setProvider(null);
-        setCatalogError(null);
-        setConfigurationError(null);
         setIsLoading(false);
+        void refreshAccount(user);
       });
     }).catch((error: unknown) => {
       if (!mountedRef.current) return;

@@ -1022,27 +1022,15 @@ const AIAgent: React.FC = () => {
   const canSendCurrentSource = modelSource === "cloud"
     ? canSendAgentModel(isConfigured, isLocalAgentModel(selectedModel)) && Boolean(selectedModel) && modelOptions.includes(selectedModel) && requestModelOptions.length > 0
     : isLocalSourceReady;
-  // Membuka tab Local (atau F5) TIDAK memeriksa apa-apa: tidak ada cek akun Kaggle,
-  // tidak ada cek status worker. Cek akun terjadi sekali saat tombol Run pertama
-  // kali muncul (popover Local dibuka), dan sebagai pengaman saat Run ditekan.
+  // Local itu MANUAL: membuka tab Local (atau F5) dan membuka popover TIDAK
+  // memeriksa apa-apa — tidak ada cek akun Kaggle, tidak ada cek status worker.
+  // Cek akun Kaggle HANYA terjadi saat tombol Run ditekan (di run()).
   // Cek ulang otomatis hanya kalau worker lagi jalan/bertransisi.
   useEffect(() => {
     if (modelSource !== "local") return;
     if (["ready", "booting", "stopping", "offline"].includes(agentLocal.status)) void agentLocal.refreshStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelSource]);
-  // Tombol Run pertama kali muncul (popover Local dibuka) -> cek akun Kaggle sekali,
-  // supaya tombol langsung tampil sesuai keadaan akun (Run / Connect Kaggle / siap).
-  // Hanya sekali per buka halaman; buka tab / F5 tidak mengecek apa-apa.
-  const localRunCheckedRef = useRef(false);
-  useEffect(() => {
-    if (!isModelPickerOpen || modelSource !== "local") return;
-    if (localRunCheckedRef.current) return;
-    if (agentLocal.status !== "disconnected") return;
-    localRunCheckedRef.current = true;
-    void agentLocal.checkCredentials();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isModelPickerOpen, modelSource, agentLocal.status]);
   const [isKaggleModalOpen, setIsKaggleModalOpen] = useState(false);
   const [isSavingKaggleCredentials, setIsSavingKaggleCredentials] = useState(false);
   const handleSaveKaggleCredentials = async (username: string, apiToken: string) => {

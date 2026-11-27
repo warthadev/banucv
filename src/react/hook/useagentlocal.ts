@@ -371,10 +371,9 @@ export const useAgentLocal = () => {
   }, [refreshStatus, stopPolling, setStatusTracked]);
 
   // Satu tombol Run untuk semua keadaan: worker sudah ready -> muat ulang model
-  // di worker yang sama (restart); belum ada / belum ready -> cek akun Kaggle dulu,
+  // di worker yang sama (restart); belum ada / belum ready -> cek akun Kaggle dulu
+  // (MANUAL: cek ini hanya terjadi saat Run ditekan, bukan saat popover dibuka),
   // lalu backend cek live Kaggle (pakai lagi kalau ada, buat baru kalau tidak ada).
-  // Cek akun utama terjadi saat tombol Run pertama kali muncul; di sini sebagai
-  // pengaman kalau status masih belum dicek.
   const run = useCallback(async () => {
     if (busyRef.current) return;
     if (statusRef.current === "ready") return launch("/agent/local/restart");

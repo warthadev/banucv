@@ -18,8 +18,6 @@ export interface AgentProcessStrings {
   failed: string;
   viewThought: string;
   viewResult: string;
-  copy: string;
-  copied: string;
   stop: string;
   tokensUsed: string;
   cancelled: string;
@@ -36,8 +34,6 @@ export const AGENT_PROCESS_STRINGS: Record<AgentLanguage, AgentProcessStrings> =
     failed: "gagal",
     viewThought: "Lihat pikiran",
     viewResult: "Lihat hasil",
-    copy: "Salin",
-    copied: "Disalin",
     stop: "Berhenti",
     tokensUsed: "Token dipakai",
     cancelled: "Dibatalkan oleh user.",
@@ -52,8 +48,6 @@ export const AGENT_PROCESS_STRINGS: Record<AgentLanguage, AgentProcessStrings> =
     failed: "failed",
     viewThought: "View thought",
     viewResult: "View result",
-    copy: "Copy",
-    copied: "Copied",
     stop: "Stop",
     tokensUsed: "Tokens used",
     cancelled: "Cancelled by user.",

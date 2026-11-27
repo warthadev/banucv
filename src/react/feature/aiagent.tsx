@@ -50,23 +50,6 @@ const terminalCommand = (detail?: string): string => {
 const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolean; onToggle: () => void; onStop?: () => void }> = ({ steps, live, open, onToggle, onStop }) => {
   const lang = detectAgentLanguage();
   const strings = getAgentProcessStrings(lang);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const copyStepOutput = async (step: ProcessStep) => {
-    const text = step.output || "";
-    if (!text) return;
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      const area = document.createElement("textarea");
-      area.value = text;
-      document.body.appendChild(area);
-      area.select();
-      try { document.execCommand("copy"); } catch { /* abaikan */ }
-      document.body.removeChild(area);
-    }
-    setCopiedId(step.id);
-    window.setTimeout(() => setCopiedId((current) => (current === step.id ? null : current)), 1500);
-  };
   const running = steps.filter((step) => step.status === "running");
   const failed = steps.filter((step) => step.status === "error").length;
   const toolCount = steps.filter((step) => step.kind === "tool").length;
@@ -113,17 +96,11 @@ const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolea
                 {step.output ? (
                   step.kind === "tool" ? (
                     <div className="aiagent-process-terminal-wrap">
-                      <button type="button" className="aiagent-process-copy" onClick={() => void copyStepOutput(step)}>
-                        {copiedId === step.id ? strings.copied : strings.copy}
-                      </button>
                       <pre className="aiagent-process-terminal">{step.output}</pre>
                     </div>
                   ) : (
                     <details className="aiagent-process-output">
                       <summary>{strings.viewThought}</summary>
-                      <button type="button" className="aiagent-process-copy" onClick={() => void copyStepOutput(step)}>
-                        {copiedId === step.id ? strings.copied : strings.copy}
-                      </button>
                       <pre>{step.output}</pre>
                     </details>
                   )

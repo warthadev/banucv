@@ -1015,11 +1015,12 @@ const AIAgent: React.FC = () => {
   const canSendCurrentSource = modelSource === "cloud"
     ? canSendAgentModel(isConfigured, isLocalAgentModel(selectedModel)) && Boolean(selectedModel) && modelOptions.includes(selectedModel) && requestModelOptions.length > 0
     : isLocalSourceReady;
-  // Membuka tab Local (atau F5) hanya MEMERIKSA status worker. Tidak pernah menyalakan Kaggle otomatis:
-  // user harus menekan Run. Worker yang sedang boot/siap di Kaggle langsung terbaca dan dipakai lagi.
+  // Membuka tab Local (atau F5) TIDAK memeriksa apa-apa: tidak ada cek akun Kaggle,
+  // tidak ada cek status worker. Semua pengecekan terjadi di tombol Run.
+  // Cek ulang otomatis hanya kalau worker lagi jalan/bertransisi.
   useEffect(() => {
     if (modelSource !== "local") return;
-    if (["ready", "booting", "stopping", "offline", "disconnected", "blocked"].includes(agentLocal.status)) void agentLocal.refreshStatus();
+    if (["ready", "booting", "stopping", "offline"].includes(agentLocal.status)) void agentLocal.refreshStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelSource]);
   const [isKaggleModalOpen, setIsKaggleModalOpen] = useState(false);

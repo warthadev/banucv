@@ -503,6 +503,30 @@ export const useAgentLocal = () => {
     }
   }, []);
 
+  // Laporan rollback giliran yang baru dibatalkan (sekali baca di backend):
+  // file apa saja yang dikembalikan worker. null kalau belum ada / tidak ada.
+  const fetchLastRollback = useCallback(async () => {
+    try {
+      const data = await authedFetch("/agent/local/last-rollback");
+      const report = (data as { rollback?: unknown } | null)?.rollback as
+        { reverted?: unknown; not_undone?: unknown } | null | undefined;
+      if (!report || typeof report !== "object") return null;
+      const reverted = Array.isArray(report.reverted)
+        ? (report.reverted as unknown[]).filter((x): x is string => typeof x === "string")
+        : [];
+      const notUndone = Array.isArray(report.not_undone)
+        ? (report.not_undone as unknown[])
+          .map((x) => x as { item?: unknown; reason?: unknown })
+          .filter((x) => typeof x?.item === "string")
+          .map((x) => ({ item: x.item as string, reason: typeof x.reason === "string" ? x.reason : "" }))
+        : [];
+      if (reverted.length === 0 && notUndone.length === 0) return null;
+      return { reverted, notUndone };
+    } catch {
+      return null;
+    }
+  }, []);
+
   const uploadLocalFile = useCallback(async (file: File, name = file.name) => {
     if (file.size > 20 * 1024 * 1024) throw new Error(`${name} exceeds the 20 MB limit`);
     const contentBase64 = await new Promise<string>((resolve, reject) => {
@@ -553,7 +577,7 @@ export const useAgentLocal = () => {
 
   return {
     status, modelId, error, kaggleState, steps, checks, kernelExists, elapsedSeconds,
-    checkCredentials, run, stop, refreshStatus, pollProcess, sendLocalChatStream, cancelLocalChat, uploadLocalFile,
+    checkCredentials, run, stop, refreshStatus, pollProcess, sendLocalChatStream, cancelLocalChat, fetchLastRollback, uploadLocalFile,
   };
 };
 

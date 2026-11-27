@@ -1206,8 +1206,12 @@ const AIAgent: React.FC = () => {
   const stopActiveTurn = () => {
     if (activeRequestIdRef.current !== null) {
       cancelRequestedRef.current = true;
+      // Sinyal batal harus sampai ke agent-nya juga, bukan cuma matiin
+      // fetch di layar: Cloud berhenti + rollback lewat flag cancel backend,
+      // Local berhenti + rollback lewat worker. Tanpa ini Stop di Cloud
+      // tidak menghentikan kerjaan di backend sama sekali.
       if (cloudAbortRef.current) cloudAbortRef.current.abort();
-      else void agentLocal.cancelLocalChat();
+      void agentLocal.cancelLocalChat();
       activeRequestIdRef.current = null;
       setIsLoading(false);
       setStreamActivity(null);
@@ -1990,6 +1994,31 @@ const AIAgent: React.FC = () => {
       flushStreamUpdate();
       setMessages(prev => prev.filter(m => m.id !== sid && m.id !== pid));
     };
+    // Ringkasan rollback setelah Berhenti/Trash: tanya backend apa yang
+    // dikembalikan worker dari giliran yang dibatalkan. Jalan di latar
+    // (rollback bisa selesai beberapa detik sesudah giliran berhenti),
+    // muncul hanya kalau ada yang benar-benar dikembalikan — dan hanya
+    // kalau chat tidak ikut dihapus (Trash = chat kosong, tanpa ringkasan).
+    const maybeShowRollbackSummary = () => {
+      void (async () => {
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const report = await agentLocal.fetchLastRollback();
+          if (report) {
+            const parts: string[] = [];
+            if (report.reverted.length > 0) parts.push(`dikembalikan: ${report.reverted.join(", ")}`);
+            if (report.notUndone.length > 0) parts.push(`tidak bisa dikembalikan: ${report.notUndone.map((x) => x.item).join(", ")}`);
+            if (parts.length === 0) return;
+            const summary: Message = { id: `rollback-${Date.now()}`, role: "bot", content: `Dibatalkan — ${parts.join(". ")}.`, timestamp: new Date() };
+            setMessages((prev) => {
+              if (!prev.some((m) => m.role === "user")) return prev;
+              return [...prev, summary];
+            });
+            return;
+          }
+          await new Promise((resolve) => window.setTimeout(resolve, 2000));
+        }
+      })();
+    };
 
     if (!isRetry) {
       const userMsg: Message = {
@@ -2017,6 +2046,7 @@ const AIAgent: React.FC = () => {
       if (!isCurrentRequest()) return;
       if (cancelRequestedRef.current) {
         discardCancelledTurn();
+        maybeShowRollbackSummary();
         return;
       }
       if (response.pendingHostAction) {
@@ -2066,6 +2096,7 @@ const AIAgent: React.FC = () => {
       if (!isCurrentRequest()) return;
       if (cancelRequestedRef.current) {
         discardCancelledTurn();
+        maybeShowRollbackSummary();
         return;
       }
       const errorType = getErrorType(error);
@@ -2562,7 +2593,7 @@ const AIAgent: React.FC = () => {
                       live={msg.processLive === true}
                       open={processOpen[msg.id] ?? (msg.processLive === true)}
                       onToggle={() => setProcessOpen(prev => ({ ...prev, [msg.id]: !(prev[msg.id] ?? (msg.processLive === true)) }))}
-                      onStop={msg.processLive === true ? () => { cancelRequestedRef.current = true; if (cloudAbortRef.current) cloudAbortRef.current.abort(); else void agentLocal.cancelLocalChat(); } : undefined}
+                      onStop={msg.processLive === true ? () => { cancelRequestedRef.current = true; if (cloudAbortRef.current) cloudAbortRef.current.abort(); void agentLocal.cancelLocalChat(); } : undefined}
                     />
                   </div>
                 </motion.div>

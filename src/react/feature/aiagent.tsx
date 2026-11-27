@@ -50,6 +50,23 @@ const terminalCommand = (detail?: string): string => {
 const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolean; onToggle: () => void; onStop?: () => void }> = ({ steps, live, open, onToggle, onStop }) => {
   const lang = detectAgentLanguage();
   const strings = getAgentProcessStrings(lang);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const copyStepOutput = async (step: ProcessStep) => {
+    const text = step.output || "";
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const area = document.createElement("textarea");
+      area.value = text;
+      document.body.appendChild(area);
+      area.select();
+      try { document.execCommand("copy"); } catch { /* abaikan */ }
+      document.body.removeChild(area);
+    }
+    setCopiedId(step.id);
+    window.setTimeout(() => setCopiedId((current) => (current === step.id ? null : current)), 1500);
+  };
   const running = steps.filter((step) => step.status === "running");
   const failed = steps.filter((step) => step.status === "error").length;
   const toolCount = steps.filter((step) => step.kind === "tool").length;
@@ -96,11 +113,17 @@ const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolea
                 {step.output ? (
                   step.kind === "tool" ? (
                     <div className="aiagent-process-terminal-wrap">
+                      <button type="button" className="aiagent-process-copy" onClick={() => void copyStepOutput(step)}>
+                        {copiedId === step.id ? strings.copied : strings.copy}
+                      </button>
                       <pre className="aiagent-process-terminal">{step.output}</pre>
                     </div>
                   ) : (
                     <details className="aiagent-process-output">
                       <summary>{strings.viewThought}</summary>
+                      <button type="button" className="aiagent-process-copy" onClick={() => void copyStepOutput(step)}>
+                        {copiedId === step.id ? strings.copied : strings.copy}
+                      </button>
                       <pre>{step.output}</pre>
                     </details>
                   )
@@ -992,12 +1015,11 @@ const AIAgent: React.FC = () => {
   const canSendCurrentSource = modelSource === "cloud"
     ? canSendAgentModel(isConfigured, isLocalAgentModel(selectedModel)) && Boolean(selectedModel) && modelOptions.includes(selectedModel) && requestModelOptions.length > 0
     : isLocalSourceReady;
-  // Membuka tab Local (atau F5) TIDAK memeriksa apa-apa: tidak ada cek akun Kaggle,
-  // tidak ada cek status worker. Semua pengecekan terjadi di tombol Run.
-  // Cek ulang otomatis hanya kalau worker lagi jalan/bertransisi.
+  // Membuka tab Local (atau F5) hanya MEMERIKSA status worker. Tidak pernah menyalakan Kaggle otomatis:
+  // user harus menekan Run. Worker yang sedang boot/siap di Kaggle langsung terbaca dan dipakai lagi.
   useEffect(() => {
     if (modelSource !== "local") return;
-    if (["ready", "booting", "stopping", "offline"].includes(agentLocal.status)) void agentLocal.refreshStatus();
+    if (["ready", "booting", "stopping", "offline", "disconnected", "blocked"].includes(agentLocal.status)) void agentLocal.refreshStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelSource]);
   const [isKaggleModalOpen, setIsKaggleModalOpen] = useState(false);
@@ -1059,6 +1081,22 @@ const AIAgent: React.FC = () => {
   const activeRequestIdRef = useRef<number | null>(null);
 
   useEffect(() => { messagesRef.current = messages; }, [messages]);
+
+  // Kalau chat dihapus di tab lain, tab ini ikut bersih — supaya riwayat lama
+  // yang masih tersimpan di state tab ini tidak keikut kekirim ke AI lagi.
+  useEffect(() => {
+    if (!currentUserUid) return;
+    const key = getAgentMessagesStorageKey(currentUserUid);
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== key) return;
+      if (event.newValue === null || event.newValue === "[]") {
+        messagesRef.current = [];
+        setMessages([]);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [currentUserUid]);
 
   const processIdRef = useRef<string | null>(null);
   // Id pesan streaming milik request yang sedang berjalan (unik per request),
@@ -1175,55 +1213,6 @@ const AIAgent: React.FC = () => {
     reveal.received = "";
     reveal.shown = 0;
   };
-  // Hentikan giliran yang sedang berjalan + semua update visualnya, supaya
-  // tidak ada lagi token, langkah Proses, atau jawaban final yang muncul
-  // setelah chat dihapus. Dipakai tombol trash dan hapus dari tab lain.
-  // Giliran yang sedang jalan jadi bukan giliran aktif lagi, jadi semua
-  // callback-nya (finalize, error, retry) langsung berhenti tanpa menambah pesan.
-  const stopActiveTurn = () => {
-    if (activeRequestIdRef.current !== null) {
-      cancelRequestedRef.current = true;
-      // Sinyal batal harus sampai ke agent-nya juga, bukan cuma matiin
-      // fetch di layar: Cloud berhenti + rollback lewat flag cancel backend,
-      // Local berhenti + rollback lewat worker. Tanpa ini Stop di Cloud
-      // tidak menghentikan kerjaan di backend sama sekali.
-      if (cloudAbortRef.current) cloudAbortRef.current.abort();
-      void agentLocal.cancelLocalChat();
-      activeRequestIdRef.current = null;
-      setIsLoading(false);
-      setStreamActivity(null);
-      setRetryingMessageId(null);
-    }
-    cancelReveal();
-    if (streamRafRef.current !== null) {
-      cancelAnimationFrame(streamRafRef.current);
-      streamRafRef.current = null;
-    }
-    streamPendingRef.current = null;
-    streamCreatedRef.current = false;
-    processIdRef.current = null;
-    streamIdRef.current = null;
-  };
-
-  // Kalau chat dihapus di tab lain, tab ini ikut bersih — supaya riwayat lama
-  // yang masih tersimpan di state tab ini tidak keikut kekirim ke AI lagi,
-  // dan giliran yang sedang jalan di tab ini ikut berhenti.
-  useEffect(() => {
-    if (!currentUserUid) return;
-    const key = getAgentMessagesStorageKey(currentUserUid);
-    const onStorage = (event: StorageEvent) => {
-      if (event.key !== key) return;
-      if (event.newValue === null || event.newValue === "[]") {
-        stopActiveTurn();
-        messagesRef.current = [];
-        setMessages([]);
-      }
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUserUid]);
-
   const [processOpen, setProcessOpen] = useState<Record<string, boolean>>({});
 
   // Tambah / perbarui langkah pada pesan proses milik request yang sedang berjalan (dibuat saat langkah pertama datang).
@@ -1971,31 +1960,6 @@ const AIAgent: React.FC = () => {
       flushStreamUpdate();
       setMessages(prev => prev.filter(m => m.id !== sid && m.id !== pid));
     };
-    // Ringkasan rollback setelah Berhenti/Trash: tanya backend apa yang
-    // dikembalikan worker dari giliran yang dibatalkan. Jalan di latar
-    // (rollback bisa selesai beberapa detik sesudah giliran berhenti),
-    // muncul hanya kalau ada yang benar-benar dikembalikan — dan hanya
-    // kalau chat tidak ikut dihapus (Trash = chat kosong, tanpa ringkasan).
-    const maybeShowRollbackSummary = () => {
-      void (async () => {
-        for (let attempt = 0; attempt < 5; attempt++) {
-          const report = await agentLocal.fetchLastRollback();
-          if (report) {
-            const parts: string[] = [];
-            if (report.reverted.length > 0) parts.push(`dikembalikan: ${report.reverted.join(", ")}`);
-            if (report.notUndone.length > 0) parts.push(`tidak bisa dikembalikan: ${report.notUndone.map((x) => x.item).join(", ")}`);
-            if (parts.length === 0) return;
-            const summary: Message = { id: `rollback-${Date.now()}`, role: "bot", content: `Dibatalkan — ${parts.join(". ")}.`, timestamp: new Date() };
-            setMessages((prev) => {
-              if (!prev.some((m) => m.role === "user")) return prev;
-              return [...prev, summary];
-            });
-            return;
-          }
-          await new Promise((resolve) => window.setTimeout(resolve, 2000));
-        }
-      })();
-    };
 
     if (!isRetry) {
       const userMsg: Message = {
@@ -2023,7 +1987,6 @@ const AIAgent: React.FC = () => {
       if (!isCurrentRequest()) return;
       if (cancelRequestedRef.current) {
         discardCancelledTurn();
-        maybeShowRollbackSummary();
         return;
       }
       if (response.pendingHostAction) {
@@ -2073,7 +2036,6 @@ const AIAgent: React.FC = () => {
       if (!isCurrentRequest()) return;
       if (cancelRequestedRef.current) {
         discardCancelledTurn();
-        maybeShowRollbackSummary();
         return;
       }
       const errorType = getErrorType(error);
@@ -2234,19 +2196,13 @@ const AIAgent: React.FC = () => {
   const copyMessage = (content: string) => navigator.clipboard.writeText(content);
 
   const clearChat = () => {
-    // Berhentiin dulu giliran yang sedang berjalan, supaya tidak ada lagi
-    // update (token, langkah Proses, jawaban final) yang mengembalikan pesan.
-    stopActiveTurn();
     // Hapus total: bersihkan juga ref yang dipakai saat mengirim, supaya
     // giliran berikutnya tidak bisa lagi membawa riwayat lama ke AI.
     messagesRef.current = [];
     setMessages([]);
-    // Pakai ref uid (terisi sinkron saat login) supaya hapus simpanan tidak
-    // ke-skip kalau state uid belum sempat terisi.
-    const uid = currentUserUidRef.current ?? currentUserUid;
-    if (uid) {
+    if (currentUserUid) {
       try {
-        localStorage.removeItem(getAgentMessagesStorageKey(uid));
+        localStorage.removeItem(getAgentMessagesStorageKey(currentUserUid));
       } catch (error) {
         console.warn("Failed to clear this account's chat history:", error);
       }
@@ -2570,7 +2526,7 @@ const AIAgent: React.FC = () => {
                       live={msg.processLive === true}
                       open={processOpen[msg.id] ?? (msg.processLive === true)}
                       onToggle={() => setProcessOpen(prev => ({ ...prev, [msg.id]: !(prev[msg.id] ?? (msg.processLive === true)) }))}
-                      onStop={msg.processLive === true ? () => { cancelRequestedRef.current = true; if (cloudAbortRef.current) cloudAbortRef.current.abort(); void agentLocal.cancelLocalChat(); } : undefined}
+                      onStop={msg.processLive === true ? () => { cancelRequestedRef.current = true; if (cloudAbortRef.current) cloudAbortRef.current.abort(); else void agentLocal.cancelLocalChat(); } : undefined}
                     />
                   </div>
                 </motion.div>

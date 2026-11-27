@@ -1952,6 +1952,18 @@
   font-weight: 600;
   cursor: pointer;
 }
+.aiagent-process-copy {
+  margin-top: 6px;
+  padding: 3px 9px;
+  background: transparent;
+  border: 1px solid var(--global-color-border);
+  border-radius: 999px;
+  color: var(--global-color-text-secondary);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+}
 .aiagent-process-chevron-btn {
   flex: none;
   display: flex;
@@ -2045,6 +2057,7 @@
 .aiagent-process-command-prompt { flex: none; color: #7ee2a8; font-weight: 700; }
 .aiagent-process-command code { font: inherit; color: inherit; white-space: pre-wrap; word-break: break-all; }
 .aiagent-process-terminal-wrap { margin-top: 6px; }
+.aiagent-process-terminal-wrap .aiagent-process-copy { margin: 0 0 6px auto; display: block; }
 .aiagent-process-terminal {
   margin: 0;
   padding: 10px 12px;

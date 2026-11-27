@@ -176,7 +176,7 @@ const authedFetch = async (path: string, init?: RequestInit) => {
 };
 
 export const useAgentLocal = () => {
-  const [status, setStatus] = useState<AgentLocalStatus>("disconnected");
+  const [status, setStatus] = useState<AgentLocalStatus>("checking-credentials");
   const [modelId, setModelId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [kaggleState, setKaggleState] = useState<string | null>(null);
@@ -184,13 +184,12 @@ export const useAgentLocal = () => {
   const [checks, setChecks] = useState<AgentLocalCheck[]>([]);
   const [kernelExists, setKernelExists] = useState<boolean | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  // Worker TIDAK pernah dinyalakan otomatis, dan akun Kaggle TIDAK pernah dicek otomatis
-  // (buka tab / F5 / kembali ke tab tidak menyentuh apa-apa saat idle).
-  // Semua pengecekan terjadi di tombol Run. Hanya klik tombol Run / Restart yang boleh menyentuh Kaggle.
+  // Worker TIDAK pernah dinyalakan otomatis (F5 / buka tab / kembali ke tab hanya MEMERIKSA status).
+  // Hanya klik tombol Run / Restart yang boleh menyentuh Kaggle.
   const pollRef = useRef<number | null>(null);
   const mountedRef = useRef(true);
   const bootStartedAtRef = useRef<number | null>(null);
-  const statusRef = useRef<AgentLocalStatus>("disconnected");
+  const statusRef = useRef<AgentLocalStatus>("checking-credentials");
   const busyRef = useRef(false); // cegah klik ganda Run/Restart/Stop
   const setStatusTracked = useCallback((next: AgentLocalStatus) => {
     statusRef.current = next;
@@ -327,18 +326,16 @@ export const useAgentLocal = () => {
   }, [refreshStatus]);
 
   useEffect(() => {
-    // Sengaja TIDAK memeriksa akun Kaggle atau status worker saat mount:
-    // pengecekan hanya terjadi saat user menekan Run (atau menyimpan kredensial di modal).
+    void checkCredentials();
     return () => stopPolling();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Kembali ke tab/aplikasi setelah lama ditinggal -> cek ulang hanya kalau worker
-  // lagi jalan/bertransisi; kalau idle, jangan sentuh apa-apa.
+  // Kembali ke tab/aplikasi setelah lama ditinggal -> langsung cek ulang, jangan nunggu timer.
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState !== "visible") return;
-      if (["ready", "booting", "stopping", "offline"].includes(statusRef.current)) void refreshStatus();
+      if (["ready", "booting", "stopping", "offline", "disconnected", "blocked"].includes(statusRef.current)) void refreshStatus();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
@@ -371,29 +368,12 @@ export const useAgentLocal = () => {
   }, [refreshStatus, stopPolling, setStatusTracked]);
 
   // Satu tombol Run untuk semua keadaan: worker sudah ready -> muat ulang model
-  // di worker yang sama (restart); belum ada / belum ready -> cek akun Kaggle dulu,
-  // lalu backend cek live Kaggle (pakai lagi kalau ada, buat baru kalau tidak ada).
-  // Cek akun Kaggle HANYA terjadi di sini, tidak pernah otomatis.
-  const run = useCallback(async () => {
-    if (busyRef.current) return;
+  // di worker yang sama (restart); belum ada / belum ready -> pakai lagi kalau
+  // ada, kalau tidak ada buat worker baru. Tidak ada lagi tombol Restart terpisah.
+  const run = useCallback(() => {
     if (statusRef.current === "ready") return launch("/agent/local/restart");
-    setStatusTracked("checking-credentials");
-    setError(null);
-    try {
-      const credentials = await loadKaggleCredentials();
-      if (!mountedRef.current) return;
-      if (!credentials) {
-        setStatusTracked("needs-credentials");
-        return;
-      }
-    } catch (err) {
-      if (!mountedRef.current) return;
-      setStatusTracked("error");
-      setError(err instanceof Error ? err.message : "Could not check the Kaggle credentials.");
-      return;
-    }
     return launch("/agent/local/connect");
-  }, [launch, setStatusTracked]);
+  }, [launch]);
 
   // Stop: hentikan sesi worker di Kaggle (GPU dilepas). Bisa dipakai saat booting maupun saat sudah siap.
   const stop = useCallback(async () => {
@@ -503,30 +483,6 @@ export const useAgentLocal = () => {
     }
   }, []);
 
-  // Laporan rollback giliran yang baru dibatalkan (sekali baca di backend):
-  // file apa saja yang dikembalikan worker. null kalau belum ada / tidak ada.
-  const fetchLastRollback = useCallback(async () => {
-    try {
-      const data = await authedFetch("/agent/local/last-rollback");
-      const report = (data as { rollback?: unknown } | null)?.rollback as
-        { reverted?: unknown; not_undone?: unknown } | null | undefined;
-      if (!report || typeof report !== "object") return null;
-      const reverted = Array.isArray(report.reverted)
-        ? (report.reverted as unknown[]).filter((x): x is string => typeof x === "string")
-        : [];
-      const notUndone = Array.isArray(report.not_undone)
-        ? (report.not_undone as unknown[])
-          .map((x) => x as { item?: unknown; reason?: unknown })
-          .filter((x) => typeof x?.item === "string")
-          .map((x) => ({ item: x.item as string, reason: typeof x.reason === "string" ? x.reason : "" }))
-        : [];
-      if (reverted.length === 0 && notUndone.length === 0) return null;
-      return { reverted, notUndone };
-    } catch {
-      return null;
-    }
-  }, []);
-
   const uploadLocalFile = useCallback(async (file: File, name = file.name) => {
     if (file.size > 20 * 1024 * 1024) throw new Error(`${name} exceeds the 20 MB limit`);
     const contentBase64 = await new Promise<string>((resolve, reject) => {
@@ -577,7 +533,7 @@ export const useAgentLocal = () => {
 
   return {
     status, modelId, error, kaggleState, steps, checks, kernelExists, elapsedSeconds,
-    checkCredentials, run, stop, refreshStatus, pollProcess, sendLocalChatStream, cancelLocalChat, fetchLastRollback, uploadLocalFile,
+    checkCredentials, run, stop, refreshStatus, pollProcess, sendLocalChatStream, cancelLocalChat, uploadLocalFile,
   };
 };
 

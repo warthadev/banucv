@@ -714,12 +714,13 @@
 }
 
 /* Gambar terkirim: carousel mentok (full-bleed) TANPA pembungkus bubble.
-   Filmstrip kartu: tiap gambar dibatasi tingginya (maks 320px HP kecil /
-   340px HP besar / 380px tablet / 420px desktop), lebar ngikutin rasio
-   foto, antar kartu ada jarak 10px, sudut 16px, rata tengah. Geser
-   terkunci per gambar (scroll snap). Margin negatif membatalkan padding
-   kolom pesan supaya carousel nempel ke tepi layar/kolom. File tetap
-   dibungkus bubble. Tanpa border: gambar tampil selebar slide. */
+   Semua gambar tampil sebagai kartu kotak seragam (gambar mengisi penuh),
+   satu maupun banyak — tidak ada lagi yang tampil full selebar carousel,
+   dan ukurannya tidak belang-belang. Antar kartu ada jarak 10px, sudut
+   16px, rata tengah. Geser terkunci per gambar (scroll snap). Margin
+   negatif membatalkan padding kolom pesan supaya carousel nempel ke tepi
+   layar/kolom. File tetap dibungkus bubble. Tanpa border: gambar tampil
+   selebar slide. */
 .aiagent-message.user .aiagent-message-images,
 .aiagent-message.bot .aiagent-message-images {
   display: flex;
@@ -727,7 +728,7 @@
   overflow-x: auto;
   scrollbar-width: thin;
   gap: 10px;
-  margin: 0 -16px 6px;
+  margin: 0 -16px 4px;
   padding: 0 0 4px;
   width: calc(100% + 32px);
   max-width: none;
@@ -766,7 +767,7 @@
    lebar/tinggi per breakpoint di bawah tetap menang. */
 .aiagent-attachments.aiagent-attachments--images {
   gap: 10px;
-  margin: 0 -16px 6px;
+  margin: 0 -16px 4px;
   padding: 0 0 4px;
   width: calc(100% + 32px);
   max-width: none;
@@ -789,18 +790,6 @@
   scroll-snap-align: start;
 }
 
-/* Satu gambar saja: tampil penuh selebar carousel, tinggi asli (tanpa batas). */
-.aiagent-message.user .aiagent-message-images .aiagent-message-image:only-child,
-.aiagent-message.bot .aiagent-message-images .aiagent-message-image:only-child {
-  flex: 0 0 100%;
-}
-.aiagent-message.user .aiagent-message-images .aiagent-message-image:only-child img,
-.aiagent-message.bot .aiagent-message-images .aiagent-message-image:only-child img {
-  width: 100%;
-  height: auto;
-  max-width: 100%;
-  max-height: none;
-}
 .aiagent-attachments.aiagent-attachments--images .aiagent-attachment-image:only-child {
   flex: 0 0 100%;
   width: 100%;
@@ -808,6 +797,27 @@
   max-width: 100%;
   max-height: none;
   border-radius: 16px;
+}
+
+/* Semua gambar terkirim: tiap kartu ukuran SAMA (kotak seragam, bukan full
+   gambar) — satu gambar maupun banyak. Gambar mengisi penuh kartu (cover)
+   supaya tidak ada bar hitam dan semua kartu benar-benar sama besar, apa
+   pun rasio fotonya. Ukuran per breakpoint di bawah (260 desktop / 220
+   tablet / 180 HP / 160 HP kecil) supaya tetap 2-3 kartu terlihat
+   sekaligus. */
+.aiagent-message.user .aiagent-message-images .aiagent-message-image,
+.aiagent-message.bot .aiagent-message-images .aiagent-message-image {
+  flex: 0 0 260px;
+  width: 260px;
+  height: 260px;
+}
+.aiagent-message.user .aiagent-message-images .aiagent-message-image img,
+.aiagent-message.bot .aiagent-message-images .aiagent-message-image img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
 }
 
 
@@ -925,7 +935,7 @@
   text-decoration: underline;
 }
 
-.aiagent-message-files { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 8px; margin-bottom: 6px; }
+.aiagent-message-files { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 6px; margin-bottom: 4px; }
 
 /* Kartu file terkirim: baris penuh berisi tile ikon + nama + ukuran/tipe.
    Bentuk tetap persegi panjang (radius 0), sesuai permintaan. */
@@ -1606,6 +1616,12 @@
     max-height: 380px;
     max-width: 400px;
   }
+  .aiagent-message.user .aiagent-message-images .aiagent-message-image,
+  .aiagent-message.bot .aiagent-message-images .aiagent-message-image {
+    flex: 0 0 220px;
+    width: 220px;
+    height: 220px;
+  }
   .aiagent-search-image { max-width: 100px; max-height: 100px; }
 }
 
@@ -1678,6 +1694,12 @@
     max-height: 340px;
     max-width: 360px;
   }
+  .aiagent-message.user .aiagent-message-images .aiagent-message-image,
+  .aiagent-message.bot .aiagent-message-images .aiagent-message-image {
+    flex: 0 0 180px;
+    width: 180px;
+    height: 180px;
+  }
   .aiagent-typing { padding: 4px 0; margin-left: 0; }
   .aiagent-messages::-webkit-scrollbar {
     display: block;
@@ -1732,6 +1754,12 @@
   .aiagent-attachment-image {
     max-height: 320px;
     max-width: 320px;
+  }
+  .aiagent-message.user .aiagent-message-images .aiagent-message-image,
+  .aiagent-message.bot .aiagent-message-images .aiagent-message-image {
+    flex: 0 0 160px;
+    width: 160px;
+    height: 160px;
   }
   .aiagent-search-image { max-width: 65px; max-height: 65px; }
   .aiagent-bot-actions span { display: none; }
@@ -2127,6 +2155,8 @@
 .aiagent-crop-viewport:active { cursor: grabbing; }
 .aiagent-crop-viewport img { position: absolute; left: 0; top: 0; will-change: transform; user-select: none; pointer-events: none; max-width: none; max-height: none; }
 .aiagent-crop-grid { position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(to right, rgba(255,255,255,0.35) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.35) 1px, transparent 1px); background-size: 33.333% 100%, 100% 33.333%; }
+.aiagent-crop-dim { position: absolute; background: rgba(0, 0, 0, 0.55); pointer-events: none; }
+.aiagent-crop-frame { position: absolute; border: 2px solid #ffffff; box-sizing: border-box; pointer-events: none; }
 .aiagent-crop-controls { display: flex; align-items: center; gap: 10px; margin-top: 12px; color: var(--global-color-text-secondary); }
 .aiagent-crop-controls input[type="range"] { flex: 1; min-width: 0; accent-color: var(--global-color-accent); }
 .aiagent-crop-ratio-label, .aiagent-crop-ratio-value { flex: none; font-size: 0.72rem; color: var(--global-color-text-secondary); }
@@ -2136,7 +2166,9 @@
 
 /* Kursor mengetik di ujung teks yang sedang streaming: batang aksen yang
    memudar halus bolak-balik (alternate), bukan berkedip kasar. Hanya tampil
-   selama pesan masih streaming; hilang begitu jawaban selesai. */
+   selama pesan masih streaming; hilang begitu jawaban selesai. Paragraf
+   terakhir bubble yang sedang streaming jadi inline supaya kursor nempel
+   di ujung kata terakhir, bukan jatuh ke baris sendiri di bawah teks. */
 .aiagent-stream-caret {
   display: inline-block;
   width: 2px;
@@ -2147,6 +2179,7 @@
   border-radius: 1px;
   animation: aiagentCaretBlink 0.9s ease-in-out infinite alternate;
 }
+.aiagent-message-bubble--streaming p:last-of-type { display: inline; }
 
 @keyframes aiagentCaretBlink {
   from { opacity: 1; }

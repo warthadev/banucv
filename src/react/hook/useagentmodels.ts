@@ -8,6 +8,13 @@ export const ROUTER_CREDENTIAL_UPDATED_EVENT = "openRouterCredentialUpdated";
 
 export const useAgentModels = () => {
   const [isLoading, setIsLoading] = useState(true);
+  // `isLoading` = login Firebase belum beres (halaman masih <Loading />).
+  // `checking` = cek akun Cloud manual sedang berjalan (popover tetap tampil).
+  const [checking, setChecking] = useState(false);
+  // Akun Cloud TIDAK pernah dicek otomatis: login / buka halaman tidak menyentuh
+  // apa-apa. Cek hanya saat pengguna menekan "Check Cloud account", atau saat
+  // key baru disimpan (RouterAuthModal / Settings).
+  const [checked, setChecked] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
   const [hasSavedKey, setHasSavedKey] = useState(false);
   const [provider, setProvider] = useState<string | null>(null);
@@ -16,6 +23,7 @@ export const useAgentModels = () => {
   const [configurationError, setConfigurationError] = useState<string | null>(null);
   const mountedRef = useRef(true);
   const requestIdRef = useRef(0);
+  const userRef = useRef<User | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -35,11 +43,12 @@ export const useAgentModels = () => {
       setProvider(null);
       setCatalogError(null);
       setConfigurationError(null);
+      setChecked(false);
       setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
+    setChecking(true);
     setRouterModels([]);
     setCatalogError(null);
     setConfigurationError(null);
@@ -71,9 +80,20 @@ export const useAgentModels = () => {
       setProvider(null);
       setRouterModels([]);
     } finally {
-      if (mountedRef.current && requestId === requestIdRef.current) setIsLoading(false);
+      if (mountedRef.current && requestId === requestIdRef.current) {
+        setIsLoading(false);
+        setChecking(false);
+        setChecked(true);
+      }
     }
   }, []);
+
+  // Cek akun Cloud secara manual: hanya ini yang boleh memanggil refreshAccount
+  // dari UI (tombol "Check Cloud account" di popover). Simpan key baru juga
+  // memicu refreshAccount lewat event di bawah.
+  const checkAccount = useCallback(() => {
+    void refreshAccount(userRef.current);
+  }, [refreshAccount]);
 
   useEffect(() => {
     let unsubscribe = () => {};
@@ -85,8 +105,20 @@ export const useAgentModels = () => {
 
     getAuth().then((firebaseAuth) => {
       if (disposed) return;
+      // Login saja tidak mengecek akun Cloud: catat user-nya, kosongkan hasil
+      // cek lama, lalu selesai loading. Halaman agent tampil tanpa tahu
+      // status Cloud sampai pengguna mengecek manual.
       unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
-        void refreshAccount(user);
+        userRef.current = user;
+        if (!mountedRef.current) return;
+        setChecked(false);
+        setRouterModels([]);
+        setIsConfigured(false);
+        setHasSavedKey(false);
+        setProvider(null);
+        setCatalogError(null);
+        setConfigurationError(null);
+        setIsLoading(false);
       });
     }).catch((error: unknown) => {
       if (!mountedRef.current) return;
@@ -107,6 +139,9 @@ export const useAgentModels = () => {
 
   return {
     isLoading,
+    checking,
+    checked,
+    checkAccount,
     isConfigured,
     hasSavedKey,
     provider,

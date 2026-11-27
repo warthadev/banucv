@@ -176,7 +176,7 @@ const authedFetch = async (path: string, init?: RequestInit) => {
 };
 
 export const useAgentLocal = () => {
-  const [status, setStatus] = useState<AgentLocalStatus>("checking-credentials");
+  const [status, setStatus] = useState<AgentLocalStatus>("disconnected");
   const [modelId, setModelId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [kaggleState, setKaggleState] = useState<string | null>(null);
@@ -184,12 +184,13 @@ export const useAgentLocal = () => {
   const [checks, setChecks] = useState<AgentLocalCheck[]>([]);
   const [kernelExists, setKernelExists] = useState<boolean | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  // Worker TIDAK pernah dinyalakan otomatis (F5 / buka tab / kembali ke tab hanya MEMERIKSA status).
-  // Hanya klik tombol Run / Restart yang boleh menyentuh Kaggle.
+  // Worker TIDAK pernah dinyalakan otomatis, dan akun Kaggle TIDAK pernah dicek otomatis
+  // saat buka tab / F5 / kembali ke tab. Pengecekan akun terjadi sekali saat tombol
+  // Run pertama kali muncul (popover Local dibuka), dan sebagai pengaman saat Run ditekan.
   const pollRef = useRef<number | null>(null);
   const mountedRef = useRef(true);
   const bootStartedAtRef = useRef<number | null>(null);
-  const statusRef = useRef<AgentLocalStatus>("checking-credentials");
+  const statusRef = useRef<AgentLocalStatus>("disconnected");
   const busyRef = useRef(false); // cegah klik ganda Run/Restart/Stop
   const setStatusTracked = useCallback((next: AgentLocalStatus) => {
     statusRef.current = next;
@@ -326,16 +327,18 @@ export const useAgentLocal = () => {
   }, [refreshStatus]);
 
   useEffect(() => {
-    void checkCredentials();
+    // Sengaja TIDAK memeriksa akun Kaggle atau status worker saat mount:
+    // pengecekan hanya terjadi saat user menekan Run (atau menyimpan kredensial di modal).
     return () => stopPolling();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Kembali ke tab/aplikasi setelah lama ditinggal -> langsung cek ulang, jangan nunggu timer.
+  // Kembali ke tab/aplikasi setelah lama ditinggal -> cek ulang hanya kalau worker
+  // lagi jalan/bertransisi; kalau idle, jangan sentuh apa-apa.
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState !== "visible") return;
-      if (["ready", "booting", "stopping", "offline", "disconnected", "blocked"].includes(statusRef.current)) void refreshStatus();
+      if (["ready", "booting", "stopping", "offline"].includes(statusRef.current)) void refreshStatus();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
@@ -368,12 +371,30 @@ export const useAgentLocal = () => {
   }, [refreshStatus, stopPolling, setStatusTracked]);
 
   // Satu tombol Run untuk semua keadaan: worker sudah ready -> muat ulang model
-  // di worker yang sama (restart); belum ada / belum ready -> pakai lagi kalau
-  // ada, kalau tidak ada buat worker baru. Tidak ada lagi tombol Restart terpisah.
-  const run = useCallback(() => {
+  // di worker yang sama (restart); belum ada / belum ready -> cek akun Kaggle dulu,
+  // lalu backend cek live Kaggle (pakai lagi kalau ada, buat baru kalau tidak ada).
+  // Cek akun utama terjadi saat tombol Run pertama kali muncul; di sini sebagai
+  // pengaman kalau status masih belum dicek.
+  const run = useCallback(async () => {
+    if (busyRef.current) return;
     if (statusRef.current === "ready") return launch("/agent/local/restart");
+    setStatusTracked("checking-credentials");
+    setError(null);
+    try {
+      const credentials = await loadKaggleCredentials();
+      if (!mountedRef.current) return;
+      if (!credentials) {
+        setStatusTracked("needs-credentials");
+        return;
+      }
+    } catch (err) {
+      if (!mountedRef.current) return;
+      setStatusTracked("error");
+      setError(err instanceof Error ? err.message : "Could not check the Kaggle credentials.");
+      return;
+    }
     return launch("/agent/local/connect");
-  }, [launch]);
+  }, [launch, setStatusTracked]);
 
   // Stop: hentikan sesi worker di Kaggle (GPU dilepas). Bisa dipakai saat booting maupun saat sudah siap.
   const stop = useCallback(async () => {

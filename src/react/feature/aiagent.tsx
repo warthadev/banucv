@@ -50,23 +50,6 @@ const terminalCommand = (detail?: string): string => {
 const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolean; onToggle: () => void; onStop?: () => void }> = ({ steps, live, open, onToggle, onStop }) => {
   const lang = detectAgentLanguage();
   const strings = getAgentProcessStrings(lang);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const copyStepOutput = async (step: ProcessStep) => {
-    const text = step.output || "";
-    if (!text) return;
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      const area = document.createElement("textarea");
-      area.value = text;
-      document.body.appendChild(area);
-      area.select();
-      try { document.execCommand("copy"); } catch { /* abaikan */ }
-      document.body.removeChild(area);
-    }
-    setCopiedId(step.id);
-    window.setTimeout(() => setCopiedId((current) => (current === step.id ? null : current)), 1500);
-  };
   const running = steps.filter((step) => step.status === "running");
   const failed = steps.filter((step) => step.status === "error").length;
   const toolCount = steps.filter((step) => step.kind === "tool").length;
@@ -113,17 +96,11 @@ const ProcessBlock: React.FC<{ steps: ProcessStep[]; live: boolean; open: boolea
                 {step.output ? (
                   step.kind === "tool" ? (
                     <div className="aiagent-process-terminal-wrap">
-                      <button type="button" className="aiagent-process-copy" onClick={() => void copyStepOutput(step)}>
-                        {copiedId === step.id ? strings.copied : strings.copy}
-                      </button>
                       <pre className="aiagent-process-terminal">{step.output}</pre>
                     </div>
                   ) : (
                     <details className="aiagent-process-output">
                       <summary>{strings.viewThought}</summary>
-                      <button type="button" className="aiagent-process-copy" onClick={() => void copyStepOutput(step)}>
-                        {copiedId === step.id ? strings.copied : strings.copy}
-                      </button>
                       <pre>{step.output}</pre>
                     </details>
                   )
@@ -1581,7 +1558,7 @@ const AIAgent: React.FC = () => {
     setUploadedImages(prev => prev.filter((_, i) => i !== index));
     setUploadNotice(null);
   };
-  // Hasil crop 1:1 menggantikan gambar yang di-staging (file asli tidak diubah).
+  // Hasil crop bebas menggantikan gambar yang di-staging (file asli tidak diubah).
   const handleCropDone = (result: CroppedImage) => {
     if (!cropTarget) return;
     const { index, name } = cropTarget;
@@ -2195,7 +2172,26 @@ const AIAgent: React.FC = () => {
 
   const copyMessage = (content: string) => navigator.clipboard.writeText(content);
 
+  const cancelActiveTurn = () => {
+    if (activeRequestIdRef.current === null) return;
+    cancelRequestedRef.current = true;
+    cancelReveal();
+    if (cloudAbortRef.current) cloudAbortRef.current.abort();
+    // Cloud turns can be waiting on a Kaggle tool too; signal the worker as
+    // well as aborting the browser stream so the active subprocess is killed.
+    void agentLocal.cancelLocalChat().catch((error) => console.warn("Could not signal AI Local cancellation:", error));
+    const pid = processIdRef.current;
+    const sid = streamIdRef.current;
+    processIdRef.current = null;
+    flushStreamUpdate();
+    setMessages((prev) => prev.filter((message) => message.id !== pid && message.id !== sid));
+    activeRequestIdRef.current = null;
+    setIsLoading(false);
+    setStreamActivity(null);
+  };
+
   const clearChat = () => {
+    cancelActiveTurn();
     // Hapus total: bersihkan juga ref yang dipakai saat mengirim, supaya
     // giliran berikutnya tidak bisa lagi membawa riwayat lama ke AI.
     messagesRef.current = [];
@@ -2526,7 +2522,7 @@ const AIAgent: React.FC = () => {
                       live={msg.processLive === true}
                       open={processOpen[msg.id] ?? (msg.processLive === true)}
                       onToggle={() => setProcessOpen(prev => ({ ...prev, [msg.id]: !(prev[msg.id] ?? (msg.processLive === true)) }))}
-                      onStop={msg.processLive === true ? () => { cancelRequestedRef.current = true; if (cloudAbortRef.current) cloudAbortRef.current.abort(); else void agentLocal.cancelLocalChat(); } : undefined}
+                      onStop={msg.processLive === true ? cancelActiveTurn : undefined}
                     />
                   </div>
                 </motion.div>

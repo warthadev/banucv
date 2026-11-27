@@ -1083,22 +1083,6 @@ const AIAgent: React.FC = () => {
 
   useEffect(() => { messagesRef.current = messages; }, [messages]);
 
-  // Kalau chat dihapus di tab lain, tab ini ikut bersih — supaya riwayat lama
-  // yang masih tersimpan di state tab ini tidak keikut kekirim ke AI lagi.
-  useEffect(() => {
-    if (!currentUserUid) return;
-    const key = getAgentMessagesStorageKey(currentUserUid);
-    const onStorage = (event: StorageEvent) => {
-      if (event.key !== key) return;
-      if (event.newValue === null || event.newValue === "[]") {
-        messagesRef.current = [];
-        setMessages([]);
-      }
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, [currentUserUid]);
-
   const processIdRef = useRef<string | null>(null);
   // Id pesan streaming milik request yang sedang berjalan (unik per request),
   // supaya finalize bisa memperbarui bubble yang sama tanpa ganti id.
@@ -1214,6 +1198,51 @@ const AIAgent: React.FC = () => {
     reveal.received = "";
     reveal.shown = 0;
   };
+  // Hentikan giliran yang sedang berjalan + semua update visualnya, supaya
+  // tidak ada lagi token, langkah Proses, atau jawaban final yang muncul
+  // setelah chat dihapus. Dipakai tombol trash dan hapus dari tab lain.
+  // Giliran yang sedang jalan jadi bukan giliran aktif lagi, jadi semua
+  // callback-nya (finalize, error, retry) langsung berhenti tanpa menambah pesan.
+  const stopActiveTurn = () => {
+    if (activeRequestIdRef.current !== null) {
+      cancelRequestedRef.current = true;
+      if (cloudAbortRef.current) cloudAbortRef.current.abort();
+      else void agentLocal.cancelLocalChat();
+      activeRequestIdRef.current = null;
+      setIsLoading(false);
+      setStreamActivity(null);
+      setRetryingMessageId(null);
+    }
+    cancelReveal();
+    if (streamRafRef.current !== null) {
+      cancelAnimationFrame(streamRafRef.current);
+      streamRafRef.current = null;
+    }
+    streamPendingRef.current = null;
+    streamCreatedRef.current = false;
+    processIdRef.current = null;
+    streamIdRef.current = null;
+  };
+
+  // Kalau chat dihapus di tab lain, tab ini ikut bersih — supaya riwayat lama
+  // yang masih tersimpan di state tab ini tidak keikut kekirim ke AI lagi,
+  // dan giliran yang sedang jalan di tab ini ikut berhenti.
+  useEffect(() => {
+    if (!currentUserUid) return;
+    const key = getAgentMessagesStorageKey(currentUserUid);
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== key) return;
+      if (event.newValue === null || event.newValue === "[]") {
+        stopActiveTurn();
+        messagesRef.current = [];
+        setMessages([]);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUserUid]);
+
   const [processOpen, setProcessOpen] = useState<Record<string, boolean>>({});
 
   // Tambah / perbarui langkah pada pesan proses milik request yang sedang berjalan (dibuat saat langkah pertama datang).
@@ -2197,13 +2226,19 @@ const AIAgent: React.FC = () => {
   const copyMessage = (content: string) => navigator.clipboard.writeText(content);
 
   const clearChat = () => {
+    // Berhentiin dulu giliran yang sedang berjalan, supaya tidak ada lagi
+    // update (token, langkah Proses, jawaban final) yang mengembalikan pesan.
+    stopActiveTurn();
     // Hapus total: bersihkan juga ref yang dipakai saat mengirim, supaya
     // giliran berikutnya tidak bisa lagi membawa riwayat lama ke AI.
     messagesRef.current = [];
     setMessages([]);
-    if (currentUserUid) {
+    // Pakai ref uid (terisi sinkron saat login) supaya hapus simpanan tidak
+    // ke-skip kalau state uid belum sempat terisi.
+    const uid = currentUserUidRef.current ?? currentUserUid;
+    if (uid) {
       try {
-        localStorage.removeItem(getAgentMessagesStorageKey(currentUserUid));
+        localStorage.removeItem(getAgentMessagesStorageKey(uid));
       } catch (error) {
         console.warn("Failed to clear this account's chat history:", error);
       }

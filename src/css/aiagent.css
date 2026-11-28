@@ -2158,7 +2158,12 @@
 .aiagent-attachments { width: 100%; }
 .aiagent-message-bubble .aiagent-attachments { margin-top: 0; flex-direction: column; overflow-x: visible; }
 .aiagent-message-bubble .aiagent-message-files:last-child { margin-bottom: 0; }
-.aiagent-message.user .aiagent-message-bubble .aiagent-message-files { justify-content: flex-end; }
+/* File kiriman user rata KANAN, bukan kiri: container file itu kolom, jadi
+   yang menggeser horizontal adalah align-items (sumbu silang), bukan
+   justify-content (sumbu vertikal — aturan lama itu tidak berpengaruh).
+   Chip juga jangan lagi selebar bubble, supaya bisa nempel ke kanan. */
+.aiagent-message.user .aiagent-message-bubble .aiagent-message-files { align-items: flex-end; }
+.aiagent-message.user .aiagent-message-bubble .file-chip { width: auto; max-width: 100%; }
 .aiagent-message.user .aiagent-message-bubble .file-chip { background: transparent; border: none; color: var(--global-color-on-accent); }
 .aiagent-message.user .aiagent-message-bubble .file-chip-name { color: var(--global-color-on-accent); }
 .aiagent-message.user .aiagent-message-bubble .file-chip-meta { color: var(--global-color-on-accent); opacity: 0.75; }

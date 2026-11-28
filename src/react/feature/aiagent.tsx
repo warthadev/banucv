@@ -13,7 +13,7 @@ import { AI_AGENT_API_BASE } from "@config/api";
 import { saveOpenRouterCredentials } from "@config/routerhelper";
 import { saveKaggleCredentials } from "@config/kagglecredentials";
 import { detectAgentLanguage, detectUserContext, describeAgentTool, getAgentProcessStrings } from "@config/agentlanguage";
-import { canSendAgentModel } from "@config/agentauthflow";
+import { canSendAgentModel, shouldShowRouterAuthModal } from "@config/agentauthflow";
 import { isLocalAgentModel, isRetryableAgentAvailabilityError, resolveAgentModelRoute, shouldRetryWithNextAgentModel } from "@config/agentrouting";
 import { CloudModalKaggle } from "./cloudmodalkaggle";
 import { buildModelScopedHistory, formatAgentFileContext, getAgentRequestModels, getAgentMessagesStorageKey, getAgentPreferencesStorageKey, parseAgentModeSettings, type AgentMode } from "@config/agentmodes";
@@ -561,34 +561,15 @@ const MarkdownComponents: Components = {
   },
 };
 
-const KNOWN_FILE_EXTENSIONS = new Set([
-  "JPG", "JPEG", "PNG", "GIF", "WEBP", "BMP", "SVG", "PDF", "DOC", "DOCX",
-  "XLS", "XLSX", "PPT", "PPTX", "ZIP", "RAR", "7Z", "MP3", "MP4", "WAV",
-  "AVI", "MOV", "MKV", "GGUF", "BIN", "JSON", "XML", "CSV", "TXT", "MD",
-  "HTML", "CSS", "JS", "TS", "PY",
-]);
+const cleanMarkdown = (text: string) => text.split("\u0000").join("").replace(/\r\n/g, "\n").trim();
 
-const fixMissingSpaceAfterPeriod = (text: string): string => {
-  const fixProse = (segment: string): string =>
-    segment
-      .split(/(`[^`]*`)/g)
-      .map((part, j) =>
-        j % 2 === 1
-          ? part
-          : part.replace(
-              /([a-z])\.([A-Z]{2,}|[A-Z][a-z]+)(?![A-Za-z0-9_])/g,
-              (m, before: string, word: string) =>
-                KNOWN_FILE_EXTENSIONS.has(word.toUpperCase()) ? m : `${before}. ${word}`,
-            ),
-      )
-      .join("");
-  return text
-    .split(/(```[\s\S]*?```)/g)
-    .map((segment, i) => (i % 2 === 1 ? segment : fixProse(segment)))
-    .join("");
-};
-
-const cleanMarkdown = (text: string) => fixMissingSpaceAfterPeriod(text.split("\u0000").join("").replace(/\r\n/g, "\n")).trim();
+// Rapikan spasi setelah tanda baca kalau model menempel kata berikutnya
+// ("Halo.Disini" -> "Halo. Disini") — kejadian saat model lanjut menjawab
+// setelah putaran berpikir/tool. Hanya disisipkan bila huruf sebelum tanda
+// baca huruf kecil dan kata sesudahnya diawali huruf besar + huruf kecil,
+// jadi angka desimal (3.14), ekstensi (report.DOCX), dan tautan tak tersentuh.
+const fixSentenceSpacing = (text: string) =>
+  text.replace(/([a-z])([.!?])(?=[A-Z][a-z])/g, "$1$2 ");
 
 const formatElapsed = (totalSeconds: number) => {
   const minutes = Math.floor(totalSeconds / 60);
@@ -929,7 +910,7 @@ const splitMarkdown = (content: string) => {
 };
 
 const AIAgent: React.FC = () => {
-  const { isConfigured, hasSavedKey, provider: connectedProvider, isLoading: authLoading, checking: cloudAccountChecking, checked: cloudAccountChecked, checkAccount: checkCloudAccount, routerModels: routerModelCatalog, routerModelIds: routerModels, catalogError, configurationError } = useAgentModels();
+  const { isConfigured, hasSavedKey, provider: connectedProvider, isLoading: authLoading, routerModels: routerModelCatalog, routerModelIds: routerModels, catalogError, configurationError } = useAgentModels();
   const { aiMode } = useAudio();
   const navigate = useNavigate();
 
@@ -993,11 +974,8 @@ const AIAgent: React.FC = () => {
   const handleRouterAuthSave = async (apiKey: string) => {
     await saveOpenRouterCredentials(apiKey);
     window.dispatchEvent(new Event(ROUTER_CREDENTIAL_UPDATED_EVENT));
-    // Key tersimpan -> cek akun Cloud lagi (otomatis, karena ini aksi manual
-    // pengguna) lalu kembali ke halaman agent.
-    setIsRouterAuthModalOpen(false);
   };
-  const handleRouterAuthClose = () => setIsRouterAuthModalOpen(false);
+  const handleRouterAuthClose = () => navigate("/dashboard", { replace: true });
   const [messages, setMessages] = useState<Message[]>([]);
   const [messagesOwnerUid, setMessagesOwnerUid] = useState<string | null>(null);
   const [preferencesOwnerUid, setPreferencesOwnerUid] = useState<string | null>(null);
@@ -1022,15 +1000,9 @@ const AIAgent: React.FC = () => {
   const canSendCurrentSource = modelSource === "cloud"
     ? canSendAgentModel(isConfigured, isLocalAgentModel(selectedModel)) && Boolean(selectedModel) && modelOptions.includes(selectedModel) && requestModelOptions.length > 0
     : isLocalSourceReady;
-  // Local itu MANUAL: membuka tab Local (atau F5) dan membuka popover TIDAK
-  // memeriksa apa-apa — tidak ada cek akun Kaggle, tidak ada cek status worker.
-  // Cek akun Kaggle HANYA terjadi saat tombol Run ditekan (di run()).
-  // Cek ulang otomatis hanya kalau worker lagi jalan/bertransisi.
-  useEffect(() => {
-    if (modelSource !== "local") return;
-    if (["ready", "booting", "stopping", "offline"].includes(agentLocal.status)) void agentLocal.refreshStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modelSource]);
+  // Tidak ada pengecekan otomatis saat tab Local dibuka: status dicek manual
+  // saat user menekan Run On Kaggle (atau "Check Again" pada keadaan blocked).
+  // Sesi worker yang sudah jalan tetap dipantau lewat timer di useAgentLocal.
   const [isKaggleModalOpen, setIsKaggleModalOpen] = useState(false);
   const [isSavingKaggleCredentials, setIsSavingKaggleCredentials] = useState(false);
   const handleSaveKaggleCredentials = async (username: string, apiToken: string) => {
@@ -1042,9 +1014,12 @@ const AIAgent: React.FC = () => {
       setIsSavingKaggleCredentials(false);
     }
   };
-  // Modal OpenRouter hanya dibuka manual dari tombol "Connect OpenRouter" di
-  // bagian Cloud — tidak pernah otomatis saat halaman dimuat.
-  const [isRouterAuthModalOpen, setIsRouterAuthModalOpen] = useState(false);
+  const isRouterAuthModalOpen = shouldShowRouterAuthModal({
+    isLoading: authLoading,
+    userUid: currentUserUid,
+    isConfigured,
+    configurationError,
+  });
   useEffect(() => {
     if (!isModelPickerOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -1063,8 +1038,10 @@ const AIAgent: React.FC = () => {
   const [, setRetryingMessageId] = useState<string | null>(null);
   const [userDisplayName, setUserDisplayName] = useState<string>("User");
   const [userLocation, setUserLocation] = useState<string>("Unknown");
-  const [uploadDropdownPos, setUploadDropdownPos] = useState<{ bottom: number; left: number; maxHeight: number }>({ bottom: 0, left: 0, maxHeight: 0 });
-  const [modelPickerPos, setModelPickerPos] = useState<{ bottom: number; left: number; maxHeight: number }>({ bottom: 0, left: 0, maxHeight: 0 });
+  // Posisi popover bisa "top" (dropdown ke bawah) atau "bottom" (popup ke atas),
+  // sesuai bentuk AIAgentPopoverPosition — bukan hanya bottom.
+  const [uploadDropdownPos, setUploadDropdownPos] = useState<{ top?: number; bottom?: number; left: number; maxHeight: number }>({ bottom: 0, left: 0, maxHeight: 0 });
+  const [modelPickerPos, setModelPickerPos] = useState<{ top?: number; bottom?: number; left: number; maxHeight: number }>({ bottom: 0, left: 0, maxHeight: 0 });
   const [textareaOverflow, setTextareaOverflow] = useState<"hidden" | "auto">("hidden");
   const [sourcesVisibility, setSourcesVisibility] = useState<Record<string, boolean>>({});
   const [pendingHostAction, setPendingHostAction] = useState<HostActionPreview | null>(null);
@@ -1685,7 +1662,7 @@ const AIAgent: React.FC = () => {
           web_search: false,
           search_query: "",
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta",
-          context: detectUserContext(userDisplayName, userLocation),
+          context: detectUserContext(),
           history,
           images: images.map((image) => ({ mime_type: image.mimeType, data: image.data })),
         }),
@@ -1710,7 +1687,7 @@ const AIAgent: React.FC = () => {
             web_search: false,
             search_query: "",
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta",
-            context: detectUserContext(userDisplayName, userLocation),
+            context: detectUserContext(),
             history,
             images: images.map((image) => ({ mime_type: image.mimeType, data: image.data })),
           }),
@@ -1925,8 +1902,6 @@ const AIAgent: React.FC = () => {
           applyStreamText();
         },
         history,
-        userDisplayName,
-        userLocation,
       );
       content = result.content;
       localAttachments = result.attachments && result.attachments.length > 0 ? result.attachments : undefined;
@@ -2321,12 +2296,10 @@ const AIAgent: React.FC = () => {
     );
   }
 
-  // Halaman agent tampil tanpa menunggu Cloud: akun Cloud baru dicek kalau
-  // pengguna menekannya manual di popover, jadi Local bisa dipakai walau
-  // Cloud belum dicek / belum ada key.
   return (
     <>
-      <div className="aiagent-container global-page">
+      {isConfigured && (
+        <div className="aiagent-container global-page">
           <header className="aiagent-player-bar">
             <div className="aiagent-model-wrapper" ref={modelPickerRef}>
               <button
@@ -2417,33 +2390,10 @@ const AIAgent: React.FC = () => {
                             {isSelected && <Check size={17} aria-hidden="true" />}
                           </button>
                         );
-                      }) : !cloudAccountChecked ? (
-                        <div className="aiagent-local-status aiagent-popover" role="status" aria-live="polite">
-                          {cloudAccountChecking ? (
-                            <p>Checking your Cloud account…</p>
-                          ) : (
-                            <>
-                              <p>Cloud models are not loaded yet. Nothing is checked automatically — tap below to check this account&apos;s OpenRouter key and load its free models.</p>
-                              <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void checkCloudAccount()}>
-                                Check Cloud account
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      ) : !isConfigured ? (
-                        <div className="aiagent-local-status aiagent-popover" role="status" aria-live="polite">
-                          <p>No OpenRouter key is saved for this account yet.</p>
-                          <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => setIsRouterAuthModalOpen(true)}>
-                            Connect OpenRouter
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="aiagent-local-status aiagent-popover" role="status" aria-live="polite">
-                          <p>{getCatalogStatusMessage(catalogError)}</p>
-                          <button type="button" className="aiagent-model-option aiagent-local-connect-btn" onClick={() => void checkCloudAccount()}>
-                            Check again
-                          </button>
-                        </div>
+                      }) : (
+                        <p className="aiagent-model-empty aiagent-popover" role="status">
+                          No free Cloud models are available in this account&apos;s catalog.
+                        </p>
                       ) : (
                         <div className="aiagent-local-status aiagent-popover" role="status" aria-live="polite">
                           {agentLocal.status === "checking-credentials" && <p>Checking your Kaggle account…</p>}
@@ -2553,7 +2503,7 @@ const AIAgent: React.FC = () => {
             <button type="button" onClick={() => navigate("/dashboard")} className="aiagent-player-home" title="Back to dashboard" aria-label="Back to dashboard"><Home size={22} /></button>
             <button type="button" onClick={clearChat} className="aiagent-player-clear" title="Clear chat" aria-label="Clear chat"><Trash2 size={22} /></button>
           </header>
-          {modelSource === "cloud" && cloudAccountChecked && !cloudModelOptions.length && (
+          {modelSource === "cloud" && !cloudModelOptions.length && (
             <div className="aiagent-catalog-status" role={catalogError ? "alert" : "status"}>
               <p>{getCatalogStatusMessage(catalogError)}</p>
               <RouterLink className="aiagent-settings-link" to="/setting">Manage this account&apos;s OpenRouter key in Settings</RouterLink>
@@ -2692,14 +2642,17 @@ const AIAgent: React.FC = () => {
                                   } else if (part.type === 'table') {
                                     return <TableBlock key={index} content={part.content} />;
                                   } else {
+                                    // Caret streaming ditempel di ujung teks
+                                    // sebagai karakter (bukan span terpisah
+                                    // sesudah blok markdown) supaya selalu
+                                    // ada di baris terakhir teks, bukan
+                                    // turun ke baris sendiri di bawah bubble.
+                                    const caret = msg.streaming === true && index === lastTextIndex ? "\u258D" : "";
                                     return (
-                                      <div key={index} className={`aiagent-message-bubble${msg.streaming === true && index === lastTextIndex ? " aiagent-message-bubble--streaming" : ""}`}>
+                                      <div key={index} className="aiagent-message-bubble">
                                         <ReactMarkdown components={MarkdownComponents}>
-                                          {part.content}
+                                          {`${fixSentenceSpacing(part.content)}${caret}`}
                                         </ReactMarkdown>
-                                        {msg.streaming === true && index === lastTextIndex && (
-                                          <span className="aiagent-stream-caret" aria-hidden="true" />
-                                        )}
                                       </div>
                                     );
                                   }
@@ -2815,7 +2768,7 @@ const AIAgent: React.FC = () => {
               {uploadedImages.map((img, idx) => (
                 <div key={`img-${idx}`} className="aiagent-image-preview">
                   <img src={img.preview} alt={`Preview ${idx + 1}`} />
-                  <button type="button" onClick={() => setCropTarget({ index: idx, src: img.preview, name: img.name })} className="aiagent-image-crop" aria-label={`Crop image ${idx + 1}`} title="Potong 1:1"><Crop size={22} /></button>
+                  <button type="button" onClick={() => setCropTarget({ index: idx, src: img.preview, name: img.name })} className="aiagent-image-crop" aria-label={`Crop image ${idx + 1}`} title="Potong bebas"><Crop size={22} /></button>
                   <button type="button" onClick={() => removeImage(idx)} className="aiagent-image-remove" aria-label={`Remove image ${idx + 1}`}><X size={22} /></button>
                 </div>
               ))}
@@ -2900,6 +2853,7 @@ const AIAgent: React.FC = () => {
             onClose={() => setIsKaggleModalOpen(false)}
           />
         </div>
+      )}
     </>
   );
 };

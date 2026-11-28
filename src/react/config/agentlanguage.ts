@@ -60,24 +60,22 @@ export const AGENT_PROCESS_STRINGS: Record<AgentLanguage, AgentProcessStrings> =
 export const getAgentProcessStrings = (lang: AgentLanguage): AgentProcessStrings =>
   AGENT_PROCESS_STRINGS[lang];
 
-// Konteks waktu & wilayah user untuk AI Local: zona waktu browser, waktu lokal
-// saat ini, dan locale. Dikirim di tiap chat supaya worker tahu waktu, tanggal,
-// dan wilayah user — dan bisa membandingkannya dengan wilayahnya sendiri.
+// Konteks waktu untuk AI Local: zona waktu browser, waktu lokal saat ini, dan
+// locale. Dikirim di tiap chat supaya worker tahu waktu dan tanggal. Data diri
+// user (nama, tempat tinggal) SENGAJA tidak dikirim: AI mengetahuinya hanya
+// dari isi chat dan ingatan tersimpan, bukan dari catatan konteks.
 export interface AgentUserContext {
   timezone: string;
   local_time: string;
   locale: string;
   // Tanggal & jam yang sudah bisa dibaca manusia (mis. "Thursday, 26 November
   // 2026", "11:03") supaya AI bisa langsung menjawab pertanyaan tanggal/jam
-  // tanpa harus mengurai ISO. Nama + lokasi user — AI harus tahu keduanya
-  // dari awal, di tiap giliran chat.
+  // tanpa harus mengurai ISO.
   date: string;
   time: string;
-  user_name: string;
-  user_location: string;
 }
 
-export const detectUserContext = (userName = "", userLocation = ""): AgentUserContext => {
+export const detectUserContext = (): AgentUserContext => {
   const now = new Date();
   let timezone = "UTC";
   try {
@@ -106,16 +104,12 @@ export const detectUserContext = (userName = "", userLocation = ""): AgentUserCo
     date = "";
     time = "";
   }
-  // "User" / "Unknown" adalah nilai placeholder saat nama/lokasi belum
-  // ketemu — jangan dikirim sebagai nama/lokasi beneran.
   return {
     timezone,
     local_time: localISO,
     locale,
     date,
     time,
-    user_name: userName && userName !== "User" ? userName : "",
-    user_location: userLocation && userLocation !== "Unknown" ? userLocation : "",
   };
 };
 

@@ -176,6 +176,8 @@ const authedFetch = async (path: string, init?: RequestInit) => {
 };
 
 export const useAgentLocal = () => {
+  // Mulai dari "disconnected" TANPA pengecekan otomatis: status dicek manual
+  // saat user menekan Run On Kaggle (atau "Check Again" saat blocked).
   const [status, setStatus] = useState<AgentLocalStatus>("disconnected");
   const [modelId, setModelId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -184,9 +186,8 @@ export const useAgentLocal = () => {
   const [checks, setChecks] = useState<AgentLocalCheck[]>([]);
   const [kernelExists, setKernelExists] = useState<boolean | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  // Worker TIDAK pernah dinyalakan otomatis, dan akun Kaggle TIDAK pernah dicek otomatis
-  // saat buka tab / F5 / kembali ke tab. Pengecekan akun terjadi sekali saat tombol
-  // Run pertama kali muncul (popover Local dibuka), dan sebagai pengaman saat Run ditekan.
+  // Worker TIDAK pernah dinyalakan otomatis (F5 / buka tab / kembali ke tab hanya MEMERIKSA status).
+  // Hanya klik tombol Run / Restart yang boleh menyentuh Kaggle.
   const pollRef = useRef<number | null>(null);
   const mountedRef = useRef(true);
   const bootStartedAtRef = useRef<number | null>(null);
@@ -326,19 +327,21 @@ export const useAgentLocal = () => {
     }
   }, [refreshStatus]);
 
+  // Tidak ada pengecekan otomatis saat komponen terpasang (popover dibuka /
+  // tab Local dibuka). Pengecekan jalan saat: user menekan Run (manual),
+  // user menekan "Check Again" saat blocked, setelah kredensial disimpan,
+  // atau selama sesi worker sedang berjalan (booting/ready/stopping).
   useEffect(() => {
-    // Sengaja TIDAK memeriksa akun Kaggle atau status worker saat mount:
-    // pengecekan hanya terjadi saat user menekan Run (atau menyimpan kredensial di modal).
     return () => stopPolling();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Kembali ke tab/aplikasi setelah lama ditinggal -> cek ulang hanya kalau worker
-  // lagi jalan/bertransisi; kalau idle, jangan sentuh apa-apa.
+  // Kembali ke tab/aplikasi setelah lama ditinggal -> langsung cek ulang, jangan nunggu timer.
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState !== "visible") return;
-      if (["ready", "booting", "stopping", "offline"].includes(statusRef.current)) void refreshStatus();
+      // Hanya sesi worker yang sudah user jalankan yang ikut dipantau
+      // otomatis; keadaan idle (offline/disconnected/blocked) tidak di-ping.
+      if (["ready", "booting", "stopping", "connecting"].includes(statusRef.current)) void refreshStatus();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
@@ -371,28 +374,29 @@ export const useAgentLocal = () => {
   }, [refreshStatus, stopPolling, setStatusTracked]);
 
   // Satu tombol Run untuk semua keadaan: worker sudah ready -> muat ulang model
-  // di worker yang sama (restart); belum ada / belum ready -> cek akun Kaggle dulu
-  // (MANUAL: cek ini hanya terjadi saat Run ditekan, bukan saat popover dibuka),
-  // lalu backend cek live Kaggle (pakai lagi kalau ada, buat baru kalau tidak ada).
-  const run = useCallback(async () => {
+  // di worker yang sama (restart); belum ada / belum ready -> pakai lagi kalau
+  // ada, kalau tidak ada buat worker baru. Tidak ada lagi tombol Restart terpisah.
+  // Run = pengecekan manual pertama: kredensial Kaggle dicek di sini (bukan
+  // otomatis saat popover dibuka), baru worker dijalankan.
+  const run = useCallback(() => {
     if (busyRef.current) return;
-    if (statusRef.current === "ready") return launch("/agent/local/restart");
-    setStatusTracked("checking-credentials");
-    setError(null);
-    try {
-      const credentials = await loadKaggleCredentials();
-      if (!mountedRef.current) return;
-      if (!credentials) {
-        setStatusTracked("needs-credentials");
+    void (async () => {
+      try {
+        const credentials = await loadKaggleCredentials();
+        if (!mountedRef.current) return;
+        if (!credentials) {
+          setStatusTracked("needs-credentials");
+          return;
+        }
+      } catch (err) {
+        if (!mountedRef.current) return;
+        setStatusTracked("error");
+        setError(err instanceof Error ? err.message : "Could not check the Kaggle credentials.");
         return;
       }
-    } catch (err) {
-      if (!mountedRef.current) return;
-      setStatusTracked("error");
-      setError(err instanceof Error ? err.message : "Could not check the Kaggle credentials.");
-      return;
-    }
-    return launch("/agent/local/connect");
+      if (statusRef.current === "ready") launch("/agent/local/restart");
+      else launch("/agent/local/connect");
+    })();
   }, [launch, setStatusTracked]);
 
   // Stop: hentikan sesi worker di Kaggle (GPU dilepas). Bisa dipakai saat booting maupun saat sudah siap.
@@ -434,13 +438,11 @@ export const useAgentLocal = () => {
     images: { mimeType: string; data: string }[],
     onToken: (delta: string, segment: number) => void,
     history: Array<{ role: string; content: string }> = [],
-    userName = "",
-    userLocation = "",
   ) => {
     try {
       const response = await authedFetchRaw("/agent/local/chat-stream", {
         method: "POST",
-        body: JSON.stringify({ prompt, images: images.map((img) => ({ mime_type: img.mimeType, data: img.data })), language: detectAgentLanguage(), context: detectUserContext(userName, userLocation), history }),
+        body: JSON.stringify({ prompt, images: images.map((img) => ({ mime_type: img.mimeType, data: img.data })), language: detectAgentLanguage(), context: detectUserContext(), history }),
       });
       if (!response.ok) {
         const data = await response.json().catch(() => null);
